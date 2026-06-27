@@ -69,17 +69,26 @@ export default function CMS() {
         </div>
 
         <form onSubmit={handleSave}>
-          <div className="form-group">
-            <label style={{textTransform: 'capitalize'}}>{activeTab} Content</label>
+          <div className="input-group" style={{ marginBottom: '20px' }}>
+            <label style={{textTransform: 'capitalize', marginBottom: '8px', display: 'block', fontWeight: '500'}}>{activeTab} Content</label>
             <textarea
-              className="input"
+              className="input-field"
               rows={activeTab === 'faq' || activeTab === 'banner' ? 15 : 25}
               value={cmsData[activeTab]}
               onChange={(e) => setCmsData({...cmsData, [activeTab]: e.target.value})}
-              style={{ fontFamily: activeTab === 'faq' || activeTab === 'banner' ? 'monospace' : 'inherit' }}
+              style={{ 
+                fontFamily: activeTab === 'faq' || activeTab === 'banner' ? 'monospace' : 'inherit',
+                width: '100%',
+                minHeight: '400px',
+                resize: 'vertical',
+                padding: '16px',
+                lineHeight: '1.5'
+              }}
             ></textarea>
             {(activeTab === 'faq' || activeTab === 'banner') && (
-              <small className="text-muted">Must be valid JSON array.</small>
+              <small style={{ display: 'block', marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Must be a valid JSON array.
+              </small>
             )}
           </div>
           <button type="submit" className="btn btn-primary" disabled={saving}>

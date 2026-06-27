@@ -206,14 +206,27 @@ router.post('/blacklist', async (req, res) => {
   }
 });
 
-router.delete('/blacklist/:id', async (req, res) => {
+router.delete('/blacklist/user/:userId', async (req, res) => {
   try {
-    const { data: entry } = await supabase.from('blacklist').select('user_id').eq('id', req.params.id).single();
-    if (entry) {
-      await supabase.from('users').update({ is_blacklisted: false }).eq('id', entry.user_id);
-      await supabase.from('blacklist').delete().eq('id', req.params.id);
-    }
+    const userId = req.params.userId;
+    await supabase.from('users').update({ is_blacklisted: false }).eq('id', userId);
+    await supabase.from('blacklist').delete().eq('user_id', userId);
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Applications
+router.get('/applications', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*, artist:users(display_name, email, mobile), audition:auditions(title, category)')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

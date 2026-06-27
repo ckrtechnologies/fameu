@@ -35,7 +35,7 @@ export const adminApi = apiSlice.injectEndpoints({
     }),
     removeBlacklist: builder.mutation({
       query: (id) => ({
-        url: `/admin_panel/blacklist/${id}`,
+        url: `/admin_panel/blacklist/user/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['User'],
@@ -73,6 +73,12 @@ export const adminApi = apiSlice.injectEndpoints({
         method: 'DELETE',
       }),
       invalidatesTags: ['Audition'],
+    }),
+
+    // Applications
+    getApplications: builder.query({
+      query: () => '/admin_panel/applications',
+      providesTags: ['Application'],
     }),
 
     // Fraud Reports
@@ -123,6 +129,7 @@ export const {
   useGetAuditionsQuery,
   useFlagAuditionMutation,
   useDeleteAuditionMutation,
+  useGetApplicationsQuery,
   useGetFraudReportsQuery,
   useResolveFraudReportMutation,
   useGetPaymentsQuery,

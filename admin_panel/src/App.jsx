@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import KYCVerification from './pages/KYCVerification';
 import UserManagement from './pages/UserManagement';
 import Auditions from './pages/Auditions';
+import Applications from './pages/Applications';
 import FraudReports from './pages/FraudReports';
 import Blacklist from './pages/Blacklist';
 import Payments from './pages/Payments';
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="users/artists" element={<UserManagement role="artist" />} />
           <Route path="users/hiring" element={<UserManagement role="hiring" />} />
           <Route path="auditions" element={<Auditions />} />
+          <Route path="applications" element={<Applications />} />
           <Route path="fraud-reports" element={<FraudReports />} />
           <Route path="blacklist" element={<Blacklist />} />
           <Route path="payments" element={<Payments />} />

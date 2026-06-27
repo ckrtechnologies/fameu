@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGetFraudReportsQuery, useResolveFraudReportMutation } from '../store/api/adminEndpoints';
+import DataTable from '../components/DataTable';
 
 export default function FraudReports() {
   const { data: response, isLoading: loading } = useGetFraudReportsQuery();
@@ -24,73 +25,59 @@ export default function FraudReports() {
     }
   };
 
-  if (loading) return <div className="loading">Loading reports...</div>;
+  const columns = [
+    { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() },
+    { 
+      key: 'reporter', 
+      label: 'Reporter', 
+      render: (val, row) => (
+        <div>
+          <div>{row.reporter?.display_name || 'N/A'}</div>
+          <small style={{ color: 'var(--text-muted)' }}>{row.reporter?.email}</small>
+        </div>
+      )
+    },
+    { key: 'audition', label: 'Audition', render: (val, row) => row.audition?.title || 'N/A' },
+    { key: 'reason', label: 'Reason' },
+    { 
+      key: 'status', 
+      label: 'Status',
+      render: (val, row) => (
+        <span className={`badge badge-${row.status === 'resolved' ? 'approved' : 'pending'}`} style={{ textTransform: 'capitalize' }}>
+          {row.status}
+        </span>
+      )
+    },
+    { key: 'action_taken', label: 'Action Taken', render: (val) => val || '-' }
+  ];
+
+  if (loading) return <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading reports...</div>;
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Fraud Reports</h1>
-        <p className="page-subtitle">Review reports of scams or inappropriate content submitted by users.</p>
-      </div>
-
-      <div className="card">
-        <div className="table-responsive">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Reporter</th>
-                <th>Audition</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Action Taken</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reports.length === 0 ? (
-                <tr><td colSpan="7" style={{textAlign: 'center'}}>No fraud reports found.</td></tr>
-              ) : (
-                reports.map((report) => (
-                  <tr key={report.id}>
-                    <td>{new Date(report.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div>{report.reporter?.display_name || 'N/A'}</div>
-                      <small className="text-muted">{report.reporter?.email}</small>
-                    </td>
-                    <td>{report.audition?.title || 'N/A'}</td>
-                    <td>{report.reason}</td>
-                    <td>
-                      <span className={`status-badge status-${report.status.toLowerCase()}`}>
-                        {report.status}
-                      </span>
-                    </td>
-                    <td>{report.action_taken || '-'}</td>
-                    <td>
-                      {report.status !== 'resolved' && (
-                        <button className="btn btn-primary" onClick={() => setSelectedReport(report)}>Resolve</button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <>
+      <DataTable 
+        title="Fraud Reports"
+        subtitle="Review reports of scams or inappropriate content submitted by users."
+        columns={columns}
+        data={reports}
+        filterConfig={{ status: ['pending', 'resolved'] }}
+        onEdit={(row) => {
+          if (row.status !== 'resolved') setSelectedReport(row);
+        }}
+      />
 
       {selectedReport && (
-        <div className="modal-overlay">
-          <div className="card" style={{width: '400px', maxWidth: '90vw'}}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ width: '400px', maxWidth: '90vw', margin: 0 }}>
             <h2 style={{marginBottom: '1rem'}}>Resolve Report</h2>
             <p style={{marginBottom: '1rem'}}>
               <strong>Reason:</strong> {selectedReport.reason}
             </p>
             <form onSubmit={handleAction}>
-              <div className="form-group">
+              <div className="input-group">
                 <label>Action Taken Note:</label>
                 <textarea 
-                  className="input" 
+                  className="input-field" 
                   rows="3" 
                   value={actionText}
                   onChange={(e) => setActionText(e.target.value)}
@@ -106,6 +93,6 @@ export default function FraudReports() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

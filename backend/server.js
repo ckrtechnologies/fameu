@@ -5,7 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import 'dotenv/config';
-
+import fs from 'fs';
 import artistAppRoutes from "./src/api/artist_app/index.js";
 import hiringAppRoutes from "./src/api/hiring_app/index.js";
 import adminPanelRoutes from "./src/api/admin_panel/index.js";
@@ -40,7 +40,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
-
+app.use((req, res, next) => {
+  const logStr = `[REQ] ${req.method} ${req.url} from ${req.headers['user-agent']} body: ${JSON.stringify(req.body)}\n`;
+  fs.appendFileSync('backend.log', logStr);
+  next();
+});
 // Static files for CDN
 app.use('/uploads', express.static('uploads'));
 

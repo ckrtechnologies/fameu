@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileCheck, LogOut, Clapperboard, ShieldAlert, Ban, CreditCard, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, LogOut, Clapperboard, ShieldAlert, Ban, CreditCard, Settings, FileText } from 'lucide-react';
 
 import { Briefcase } from 'lucide-react';
 
@@ -30,6 +30,7 @@ export default function Layout() {
       title: 'Content & Moderation',
       items: [
         { name: 'Auditions', path: '/auditions', icon: <Clapperboard size={20} /> },
+        { name: 'Applications', path: '/applications', icon: <FileText size={20} /> },
         { name: 'Fraud Reports', path: '/fraud-reports', icon: <ShieldAlert size={20} /> },
         { name: 'Blacklist', path: '/blacklist', icon: <Ban size={20} /> },
       ]

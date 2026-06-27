@@ -1,56 +1,37 @@
 import { useGetPaymentsQuery } from '../store/api/adminEndpoints';
+import DataTable from '../components/DataTable';
 
 export default function Payments() {
   const { data: response, isLoading: loading } = useGetPaymentsQuery();
   const payments = response?.data || [];
 
-  if (loading) return <div className="loading">Loading payments...</div>;
+  const columns = [
+    { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() },
+    { key: 'order_id', label: 'Order ID', render: (val) => <small>{val}</small> },
+    { key: 'company_name', label: 'Company', render: (val, row) => row.hiring_profiles?.company_name || 'N/A' },
+    { key: 'type', label: 'Type', render: (val) => val || 'Standard' },
+    { key: 'amount', label: 'Amount', render: (val, row) => <strong>{row.currency} {val}</strong> },
+    { 
+      key: 'status', 
+      label: 'Status',
+      render: (val, row) => (
+        <span className={`badge badge-${row.status === 'success' ? 'approved' : row.status === 'failed' ? 'rejected' : 'pending'}`} style={{ textTransform: 'capitalize' }}>
+          {row.status}
+        </span>
+      )
+    },
+    { key: 'gateway_ref', label: 'Gateway Ref', render: (val) => <small style={{ color: 'var(--text-muted)' }}>{val || '-'}</small> }
+  ];
+
+  if (loading) return <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading payments...</div>;
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Payments Ledger</h1>
-        <p className="page-subtitle">Track all transactions, audition boosts, and platform revenue.</p>
-      </div>
-
-      <div className="card">
-        <div className="table-responsive">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Order ID</th>
-                <th>Company</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Gateway Ref</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.length === 0 ? (
-                <tr><td colSpan="7" style={{textAlign: 'center'}}>No transactions found.</td></tr>
-              ) : (
-                payments.map((pay) => (
-                  <tr key={pay.id}>
-                    <td>{new Date(pay.created_at).toLocaleDateString()}</td>
-                    <td><small>{pay.order_id}</small></td>
-                    <td>{pay.hiring_profiles?.company_name || 'N/A'}</td>
-                    <td>{pay.type || 'Standard'}</td>
-                    <td><strong>{pay.currency} {pay.amount}</strong></td>
-                    <td>
-                      <span className={`status-badge status-${pay.status.toLowerCase()}`}>
-                        {pay.status}
-                      </span>
-                    </td>
-                    <td><small className="text-muted">{pay.gateway_ref || '-'}</small></td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <DataTable 
+      title="Payments Ledger"
+      subtitle="Track all transactions, audition boosts, and platform revenue."
+      columns={columns}
+      data={payments}
+      filterConfig={{ status: ['success', 'pending', 'failed'] }}
+    />
   );
 }

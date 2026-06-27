@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useGetUsersQuery, useBlacklistUserMutation } from '../store/api/adminEndpoints';
+import { useGetUsersQuery, useBlacklistUserMutation, useRemoveBlacklistMutation } from '../store/api/adminEndpoints';
+import DataTable from '../components/DataTable';
 
 export default function Blacklist() {
   const { data: response, isLoading: loading } = useGetUsersQuery('all');
   const [blacklistUser] = useBlacklistUserMutation();
+  const [removeBlacklist] = useRemoveBlacklistMutation();
   
   const users = (response?.data || []).filter(u => u.is_blacklisted);
   
@@ -28,88 +30,74 @@ export default function Blacklist() {
   const handleRemove = async (userIdToRemove) => {
     if (!window.confirm('Are you sure you want to remove this user from the blacklist?')) return;
     try {
-      // Because we didn't implement GET /blacklist to get the specific blacklist row ID, 
-      // we need to pass the user ID, or implement a workaround. 
-      // In the backend router.delete('/blacklist/:id'), we expect the blacklist row ID.
-      // Since this is a simple implementation, let's fix the backend later or assume it accepts user_id.
-      // Wait, let's just make it call a PUT to deactivate or assume backend handles user_id.
-      // Actually, since we only have `is_blacklisted` in the user array, we might not have the blacklist ID.
-      alert('Removing from blacklist requires the exact blacklist entry ID which is not returned by the users API in this version. (Feature Pending)');
+      await removeBlacklist(userIdToRemove).unwrap();
     } catch (error) {
       console.error('Failed to remove from blacklist:', error);
+      alert('Failed to remove from blacklist.');
     }
   };
 
-  if (loading) return <div className="loading">Loading blacklist...</div>;
+  const columns = [
+    { key: 'id', label: 'User ID', render: (val) => <small>{val.substring(0, 8)}...</small> },
+    { key: 'display_name', label: 'Name', render: (val) => val || 'N/A' },
+    { 
+      key: 'contact', 
+      label: 'Email / Phone', 
+      render: (val, row) => (
+        <div>
+          <div>{row.email || 'N/A'}</div>
+          <small style={{ color: 'var(--text-muted)' }}>{row.mobile}</small>
+        </div>
+      )
+    },
+    { 
+      key: 'role', 
+      label: 'Role', 
+      render: (val) => <span className={`badge badge-${val === 'artist' ? 'pending' : val === 'hiring_partner' ? 'approved' : 'rejected'}`}>{val}</span>
+    },
+    { 
+      key: 'status', 
+      label: 'Status', 
+      render: () => <span className="badge badge-rejected">Blacklisted</span>
+    }
+  ];
+
+  if (loading) return <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading blacklist...</div>;
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">Blacklist</h1>
-          <p className="page-subtitle">Manage blocked users who are banned from accessing the platform.</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>Add User to Blacklist</button>
-      </div>
-
-      <div className="card">
-        <div className="table-responsive">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>Name</th>
-                <th>Email / Phone</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 ? (
-                <tr><td colSpan="6" style={{textAlign: 'center'}}>No users are currently blacklisted.</td></tr>
-              ) : (
-                users.map((user) => (
-                  <tr key={user.id}>
-                    <td><small>{user.id.substring(0, 8)}...</small></td>
-                    <td>{user.display_name || 'N/A'}</td>
-                    <td>
-                      <div>{user.email || 'N/A'}</div>
-                      <small className="text-muted">{user.mobile}</small>
-                    </td>
-                    <td><span className={`role-badge role-${user.role}`}>{user.role}</span></td>
-                    <td><span className="status-badge status-rejected">Blacklisted</span></td>
-                    <td>
-                      <button className="btn btn-secondary" onClick={() => handleRemove(user.id)}>Remove</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <>
+      <DataTable 
+        title="Blacklist"
+        subtitle="Manage blocked users who are banned from accessing the platform."
+        columns={columns}
+        data={users}
+        filterConfig={{ role: ['artist', 'hiring_partner', 'admin'] }}
+        onDelete={(row) => handleRemove(row.id)}
+        headerAction={
+          <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>Add User to Blacklist</button>
+        }
+      />
 
       {showAddForm && (
-        <div className="modal-overlay">
-          <div className="card" style={{width: '400px', maxWidth: '90vw'}}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ width: '400px', maxWidth: '90vw', margin: 0 }}>
             <h2 style={{marginBottom: '1rem'}}>Ban User</h2>
             <form onSubmit={handleAddBlacklist}>
-              <div className="form-group">
+              <div className="input-group" style={{ marginBottom: '16px' }}>
                 <label>User UUID:</label>
                 <input 
                   type="text" 
-                  className="input" 
+                  className="input-field" 
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
                   required
                 />
               </div>
-              <div className="form-group">
+              <div className="input-group">
                 <label>Reason:</label>
                 <textarea 
-                  className="input" 
+                  className="input-field" 
                   rows="3" 
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -125,6 +113,6 @@ export default function Blacklist() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -1,0 +1,42 @@
+import { apiSlice } from './apiSlice';
+
+export const profileApi = apiSlice.injectEndpoints({
+  endpoints: (builder) => ({
+    getProfile: builder.query({
+      query: () => '/artist_app/profile/',
+      providesTags: ['Profile'],
+    }),
+    upsertProfile: builder.mutation({
+      query: (profileData) => ({
+        url: '/artist_app/profile/upsert',
+        method: 'POST',
+        body: profileData,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    updateCategory: builder.mutation({
+      query: (categoryData) => ({
+        url: '/artist_app/profile/category',
+        method: 'POST',
+        body: categoryData,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    uploadMedia: builder.mutation({
+      query: (formData) => ({
+        url: '/artist_app/profile/upload',
+        method: 'POST',
+        body: formData,
+        // FormData is used, RTK Query will automatically set the correct headers (e.g. multipart/form-data)
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+  }),
+});
+
+export const {
+  useGetProfileQuery,
+  useUpsertProfileMutation,
+  useUpdateCategoryMutation,
+  useUploadMediaMutation,
+} = profileApi;

@@ -1,5 +1,5 @@
 import { useGetUsersQuery } from '../store/api/adminEndpoints';
-import { Ban, Trash2 } from 'lucide-react';
+import DataTable from '../components/DataTable';
 
 export default function UserManagement({ role = 'all' }) {
   const { data: response, isLoading: loading } = useGetUsersQuery(role);
@@ -8,63 +8,63 @@ export default function UserManagement({ role = 'all' }) {
   const title = role === 'artist' ? 'Artists' : role === 'hiring' ? 'Hiring Partners' : 'All Users';
   const subtitle = `View and manage all registered ${title.toLowerCase()}.`;
 
-  return (
-    <div className="animate-fade-in">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">{title}</h1>
-          <p>{subtitle}</p>
+  const columns = [
+    { 
+      key: 'user', 
+      label: 'User', 
+      render: (val, row) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img 
+            src={row.avatar_url || `https://ui-avatars.com/api/?name=${row.display_name || 'User'}&background=random`} 
+            alt="avatar" 
+            style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+          />
+          <span style={{ fontWeight: '500' }}>{row.display_name || 'Unnamed User'}</span>
         </div>
-      </div>
+      )
+    },
+    { 
+      key: 'role', 
+      label: 'Role', 
+      render: (val, row) => (
+        <span className={`badge ${row.role === 'artist' ? 'badge-approved' : 'badge-pending'}`} style={{ textTransform: 'capitalize' }}>
+          {row.role}
+        </span>
+      )
+    },
+    { 
+      key: 'identifier', 
+      label: 'Identifier', 
+      render: (val, row) => row.email || row.mobile || 'N/A'
+    },
+    { 
+      key: 'created_at', 
+      label: 'Joined', 
+      render: (val, row) => new Date(row.created_at).toLocaleDateString()
+    }
+  ];
 
-      <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-            <tr>
-              <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: '500' }}>User</th>
-              <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: '500' }}>Role</th>
-              <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: '500' }}>Identifier</th>
-              <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: '500' }}>Joined</th>
-              <th style={{ padding: '16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: '500' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="5" style={{ padding: '32px', textAlign: 'center' }}>Loading...</td></tr>
-            ) : users.map(user => (
-              <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <td style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <img 
-                    src={user.avatar_url || `https://ui-avatars.com/api/?name=${user.display_name}&background=random`} 
-                    alt="avatar" 
-                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
-                  />
-                  <span style={{ fontWeight: '500' }}>{user.display_name || 'Unnamed User'}</span>
-                </td>
-                <td style={{ padding: '16px', textTransform: 'capitalize' }}>
-                  <span className={`badge ${user.role === 'artist' ? 'badge-approved' : 'badge-pending'}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>
-                  {user.email || user.mobile || 'N/A'}
-                </td>
-                <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
-                <td style={{ padding: '16px', textAlign: 'right' }}>
-                  <button className="btn btn-secondary" style={{ padding: '6px', marginRight: '8px' }} title="Ban User">
-                    <Ban size={16} />
-                  </button>
-                  <button className="btn btn-danger" style={{ padding: '6px' }} title="Delete User">
-                    <Trash2 size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  // Prepare a dynamic filter config. Since the route might be 'artist' or 'hiring', we only show 'role' filter if viewing 'All Users'
+  const filterConfig = role === 'all' ? { role: ['artist', 'hiring'] } : {};
+
+  if (loading) {
+    return <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading data...</div>;
+  }
+
+  return (
+    <DataTable 
+      title={title}
+      subtitle={subtitle}
+      columns={columns}
+      data={users}
+      filterConfig={filterConfig}
+      onView={(row) => console.log('View user:', row.id)}
+      onEdit={(row) => console.log('Edit user:', row.id)}
+      onDelete={(row) => {
+        if(window.confirm(`Are you sure you want to delete ${row.display_name}?`)) {
+          console.log('Delete user:', row.id);
+        }
+      }}
+    />
   );
 }
