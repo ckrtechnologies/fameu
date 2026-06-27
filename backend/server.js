@@ -10,8 +10,11 @@ import artistAppRoutes from "./src/api/artist_app/index.js";
 import hiringAppRoutes from "./src/api/hiring_app/index.js";
 import adminPanelRoutes from "./src/api/admin_panel/index.js";
 import authRoutes from "./src/api/auth/index.js";
+import paymentRoutes from "./src/api/payments/index.js";
+import notificationRoutes from "./src/api/notifications/index.js";
 import errorHandler from "./src/core/middlewares/errorHandler.js";
 import socketManager from "./src/sockets/socketManager.js";
+import { startCronJobs } from "./src/jobs/index.js";
 
 // Initialize Express App
 const app = express();
@@ -46,6 +49,8 @@ app.use('/api/artist_app', artistAppRoutes);
 app.use('/api/hiring_app', hiringAppRoutes);
 app.use('/api/admin_panel', adminPanelRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -57,6 +62,9 @@ app.use(errorHandler);
 
 // Socket.io Events
 socketManager(io);
+
+// Start Cron Jobs
+startCronJobs();
 
 // Start Server
 const PORT = process.env.PORT || 3000;

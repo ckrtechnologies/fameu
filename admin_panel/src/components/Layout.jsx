@@ -1,5 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileCheck, LogOut, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, LogOut, Clapperboard, ShieldAlert, Ban, CreditCard, Settings } from 'lucide-react';
+
+import { Briefcase } from 'lucide-react';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -9,10 +11,36 @@ export default function Layout() {
     navigate('/login');
   };
 
-  const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'KYC Verification', path: '/kyc', icon: <FileCheck size={20} /> },
-    { name: 'User Management', path: '/users', icon: <Users size={20} /> },
+  const navCategories = [
+    {
+      title: 'Overview',
+      items: [
+        { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
+      ]
+    },
+    {
+      title: 'Users & Identity',
+      items: [
+        { name: 'Artists', path: '/users/artists', icon: <Users size={20} /> },
+        { name: 'Hiring Partners', path: '/users/hiring', icon: <Briefcase size={20} /> },
+        { name: 'KYC Verification', path: '/kyc', icon: <FileCheck size={20} /> },
+      ]
+    },
+    {
+      title: 'Content & Moderation',
+      items: [
+        { name: 'Auditions', path: '/auditions', icon: <Clapperboard size={20} /> },
+        { name: 'Fraud Reports', path: '/fraud-reports', icon: <ShieldAlert size={20} /> },
+        { name: 'Blacklist', path: '/blacklist', icon: <Ban size={20} /> },
+      ]
+    },
+    {
+      title: 'Finance & System',
+      items: [
+        { name: 'Payments', path: '/payments', icon: <CreditCard size={20} /> },
+        { name: 'CMS Settings', path: '/cms', icon: <Settings size={20} /> },
+      ]
+    }
   ];
 
   return (
@@ -20,28 +48,37 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-logo">F</div>
+          <div className="sidebar-logo" style={{ background: 'transparent', padding: 0 }}>
+            <img src="/logo.jpeg" alt="Fameu Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+          </div>
           <h2 style={{ fontSize: '18px', margin: 0 }}>Fameu Admin</h2>
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => 
-                isActive ? 'nav-item active' : 'nav-item'
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <div className="icon">
-                    {item.icon}
-                  </div>
-                  {item.name}
-                </>
-              )}
-            </NavLink>
+          {navCategories.map((category) => (
+            <div key={category.title} style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', margin: '0 12px 8px', letterSpacing: '1px', fontWeight: '600' }}>
+                {category.title}
+              </div>
+              {category.items.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) => 
+                    isActive ? 'nav-item active' : 'nav-item'
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <div className="icon">
+                        {item.icon}
+                      </div>
+                      {item.name}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 

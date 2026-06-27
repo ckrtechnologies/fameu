@@ -1,30 +1,15 @@
-import { useState, useEffect } from 'react';
-import api from '../lib/api';
+import { useGetPendingKYCQuery, useUpdateKYCStatusMutation } from '../store/api/adminEndpoints';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 export default function KYCVerification() {
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: response, isLoading: loading } = useGetPendingKYCQuery();
+  const [updateKYCStatus] = useUpdateKYCStatusMutation();
 
-  useEffect(() => {
-    fetchPendingDocs();
-  }, []);
-
-  const fetchPendingDocs = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get('/admin_panel/kyc/pending');
-      setDocuments(response.data.data);
-    } catch (error) {
-      console.error('Error fetching docs:', error);
-    }
-    setLoading(false);
-  };
+  const documents = response?.data || [];
 
   const handleAction = async (id, status) => {
     try {
-      await api.put(`/admin_panel/kyc/${id}/status`, { status });
-      fetchPendingDocs();
+      await updateKYCStatus({ id, status }).unwrap();
     } catch (error) {
       console.error('Error updating status:', error);
     }

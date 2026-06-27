@@ -1,52 +1,48 @@
 import { useState } from 'react';
-import api from '../lib/api';
+import { useLoginMutation } from '../store/api/adminEndpoints';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, ShieldAlert } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [login, { isLoading: loading }] = useLoginMutation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
     try {
-      const response = await api.post('/admin_panel/auth/login', {
-        email,
-        password,
-      });
-
-      const { token } = response.data;
-      localStorage.setItem('admin_token', token);
-      
+      const response = await login({ email, password }).unwrap();
+      const { token } = response;
+      dispatch(setCredentials({ user: { email }, token }));
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || err.message);
-    } finally {
-      setLoading(false);
+      setError(err?.data?.error || err.message || 'Login failed');
     }
   };
 
   return (
-    <div className="app-container" style={{ justifyContent: 'center', alignItems: 'center' }}>
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '420px', padding: '40px' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100vw', backgroundColor: 'var(--bg-dark)' }}>
+      <div className="card animate-fade-in" style={{ width: '100%', maxWidth: '420px', padding: '40px', margin: '20px' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ 
-            width: '64px', height: '64px', 
-            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-            borderRadius: '16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
-            boxShadow: '0 8px 16px rgba(99, 102, 241, 0.4)'
-          }}>
-            <ShieldAlert color="white" size={32} />
-          </div>
+          <img 
+            src="/logo.jpeg" 
+            alt="Fameu Logo" 
+            style={{ 
+              width: '80px', height: '80px', 
+              borderRadius: '16px',
+              objectFit: 'cover',
+              margin: '0 auto 16px',
+              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+              display: 'block'
+            }} 
+          />
           <h2>Fameu Admin</h2>
           <p style={{ marginTop: '8px' }}>Sign in to access the control panel</p>
         </div>

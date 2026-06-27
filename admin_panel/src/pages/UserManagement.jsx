@@ -1,56 +1,19 @@
-import { useState, useEffect } from 'react';
-import api from '../lib/api';
+import { useGetUsersQuery } from '../store/api/adminEndpoints';
 import { Ban, Trash2 } from 'lucide-react';
 
-export default function UserManagement() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+export default function UserManagement({ role = 'all' }) {
+  const { data: response, isLoading: loading } = useGetUsersQuery(role);
+  const users = response?.data || [];
 
-  useEffect(() => {
-    fetchUsers();
-  }, [filter]);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get('/admin_panel/users', {
-        params: { role: filter }
-      });
-      setUsers(response.data.data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-    setLoading(false);
-  };
+  const title = role === 'artist' ? 'Artists' : role === 'hiring' ? 'Hiring Partners' : 'All Users';
+  const subtitle = `View and manage all registered ${title.toLowerCase()}.`;
 
   return (
     <div className="animate-fade-in">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="page-title">User Management</h1>
-          <p>View and manage all registered users.</p>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px' }}>
-          {['all', 'artist', 'hiring'].map(f => (
-            <button 
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                padding: '8px 16px',
-                background: filter === f ? 'var(--bg-tertiary)' : 'transparent',
-                color: filter === f ? 'white' : 'var(--text-secondary)',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: filter === f ? '600' : '400',
-                textTransform: 'capitalize'
-              }}
-            >
-              {f}
-            </button>
-          ))}
+          <h1 className="page-title">{title}</h1>
+          <p>{subtitle}</p>
         </div>
       </div>
 

@@ -1,0 +1,25 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules/
+backend/node_modules/
+admin_panel/node_modules/
+website/node_modules/
+artist_app/node_modules/
+hiring_app/node_modules/
+
+# Environment files
+.env
+.env.*
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# MacOS
+.DS_Store

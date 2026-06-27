@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import api from './lib/api';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { useVerifySessionQuery } from './store/api/adminEndpoints';
+import { setCredentials } from './store/slices/authSlice';
 
 // Layout & Pages
 import Layout from './components/Layout';
@@ -8,32 +10,36 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import KYCVerification from './pages/KYCVerification';
 import UserManagement from './pages/UserManagement';
+import Auditions from './pages/Auditions';
+import FraudReports from './pages/FraudReports';
+import Blacklist from './pages/Blacklist';
+import Payments from './pages/Payments';
+import CMS from './pages/CMS';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem('admin_token');
+  // Only execute query if we have a token (skip otherwise so we don't send useless requests)
+  const { data, isLoading, isError } = useVerifySessionQuery(undefined, {
+    skip: !token,
+  });
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    const verifyToken = async () => {
-      try {
-        await api.get('/admin_panel/auth/me');
-        setIsAuthenticated(true);
-      } catch (error) {
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (data?.user) {
+      dispatch(setCredentials({ user: data.user, token }));
+    }
+  }, [data, dispatch, token]);
 
-    verifyToken();
-  }, []);
-
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-primary)' }}>Loading...</div>;
+  if (!token) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (!isAuthenticated) {
+  if (isLoading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-dark)' }}>Loading...</div>;
+  }
+
+  if (isError || !data?.success) {
     return <Navigate to="/login" replace />;
   }
 
@@ -57,7 +63,14 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="kyc" element={<KYCVerification />} />
-          <Route path="users" element={<UserManagement />} />
+          <Route path="users" element={<Navigate to="/users/artists" replace />} />
+          <Route path="users/artists" element={<UserManagement role="artist" />} />
+          <Route path="users/hiring" element={<UserManagement role="hiring" />} />
+          <Route path="auditions" element={<Auditions />} />
+          <Route path="fraud-reports" element={<FraudReports />} />
+          <Route path="blacklist" element={<Blacklist />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="cms" element={<CMS />} />
         </Route>
       </Routes>
     </BrowserRouter>

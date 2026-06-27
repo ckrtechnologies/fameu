@@ -14,13 +14,16 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
     "axios": "^1.18.1",
+    "cashfree-pg": "^6.0.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "firebase-admin": "^14.1.0",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "multer": "^2.2.0",
+    "node-cron": "^4.5.0",
     "socket.io": "^4.8.3",
     "uuid": "^14.0.1"
   },

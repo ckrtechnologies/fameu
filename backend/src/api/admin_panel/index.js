@@ -116,4 +116,142 @@ router.get('/users', async (req, res) => {
   }
 });
 
+// --- NEW ADMIN MODULES ---
+
+// Analytics
+router.get('/analytics', async (req, res) => {
+  try {
+    const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+    const { count: auditionsCount } = await supabase.from('auditions').select('*', { count: 'exact', head: true }).eq('status', 'active');
+    const { count: applicationsCount } = await supabase.from('applications').select('*', { count: 'exact', head: true });
+    const { data: payments } = await supabase.from('payments').select('amount').eq('status', 'success');
+    const revenue = payments ? payments.reduce((sum, p) => sum + Number(p.amount), 0) : 0;
+    
+    res.json({ 
+      success: true, 
+      data: { 
+        totalUsers: usersCount || 0, 
+        activeAuditions: auditionsCount || 0, 
+        totalApplications: applicationsCount || 0, 
+        totalRevenue: revenue 
+      } 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Auditions
+router.get('/auditions', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('auditions').select('*, hiring_profiles(company_name)').order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/auditions/:id/flag', async (req, res) => {
+  try {
+    const { error } = await supabase.from('auditions').update({ status: 'cancelled' }).eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/auditions/:id', async (req, res) => {
+  try {
+    const { error } = await supabase.from('auditions').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Fraud Reports
+router.get('/fraud-reports', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('fraud_reports').select('*, reporter:users(display_name, email), audition:auditions(title)').order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/fraud-reports/:id/action', async (req, res) => {
+  try {
+    const { action_taken, status } = req.body;
+    const { error } = await supabase.from('fraud_reports').update({ action_taken, status }).eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Blacklist
+router.post('/blacklist', async (req, res) => {
+  try {
+    const { user_id, reason } = req.body;
+    await supabase.from('blacklist').insert([{ user_id, reason, added_by: req.user.id }]);
+    await supabase.from('users').update({ is_blacklisted: true }).eq('id', user_id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/blacklist/:id', async (req, res) => {
+  try {
+    const { data: entry } = await supabase.from('blacklist').select('user_id').eq('id', req.params.id).single();
+    if (entry) {
+      await supabase.from('users').update({ is_blacklisted: false }).eq('id', entry.user_id);
+      await supabase.from('blacklist').delete().eq('id', req.params.id);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Payments
+router.get('/payments', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('payments').select('*, hiring_profiles(company_name)').order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// CMS
+router.get('/cms', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('cms_content').select('*');
+    if (error) throw error;
+    const cmsMap = {};
+    data.forEach(item => cmsMap[item.key] = item.value);
+    res.json({ success: true, data: cmsMap });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/cms', async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    const { error } = await supabase.from('cms_content').update({ value }).eq('key', key);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
