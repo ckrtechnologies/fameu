@@ -94,6 +94,20 @@ if (expectedSig !== req.headers['x-razorpay-signature']) {
 }
 ```
 
+## 2.7 Passwordless Progressive Profiling (PPP)
+
+- **Authentication Flow:** Utilize a unified OTP-based flow where "Login" and "Sign Up" are the same action. If an identifier (phone/email) doesn't exist upon OTP verification, automatically provision a new user account.
+- **Frictionless Entry:** Allow users instant access to the core application (e.g., viewing feeds, dashboards) immediately after OTP verification, even if their profile is incomplete.
+- **Progressive Data Collection:** Prompt users to fill out missing profile information (like Name, Avatar, Category) at the point of interaction (e.g., when they attempt to apply for an audition or publish content), rather than blocking their initial entry into the app.
+- **Graceful Fallbacks:** Ensure the UI (e.g., Profile screens) gracefully handles `404` errors or missing data for users who haven't completed their profiles, displaying default avatars and empty states instead of crashing.
+
+## 2.8 Auth Persistence (Keychain + MMKV)
+
+- For all React Native projects, ALWAYS persist the user's session so they stay logged in across app restarts.
+- Store sensitive tokens (JWT, Refresh Tokens) securely using `react-native-keychain`.
+- Store non-sensitive user metadata (e.g., `user` object in Redux) synchronously using `react-native-mmkv` for instant startup hydration.
+- When the user manually triggers "Logout", you MUST explicitly clear both `Keychain` and `MMKV` stores to wipe the session.
+
 ---
 
 # 3. Web Portals & Admin Panels

@@ -14,9 +14,10 @@ export const discoverApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: 'Audition', id }],
     }),
     applyToAudition: builder.mutation({
-      query: (id) => ({
+      query: ({ id, ...body }) => ({
         url: `/artist_app/discover/${id}/apply`,
         method: 'POST',
+        body,
       }),
       invalidatesTags: ['Audition'],
     }),

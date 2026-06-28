@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as Keychain from 'react-native-keychain';
+import { createMMKV } from 'react-native-mmkv';
+
+const storage = createMMKV();
 
 export const initializeAuth = createAsyncThunk(
   'auth/initializeAuth',
@@ -7,11 +10,16 @@ export const initializeAuth = createAsyncThunk(
     try {
       const credentials = await Keychain.getGenericPassword();
       if (credentials) {
-        // Here we could ideally verify the token, but for now just restore it
-        // We will assume the token is in credentials.password and user data might need to be fetched separately,
-        // or we store user in AsyncStorage and token in Keychain. 
-        // For simplicity, we just restore the token flag.
-        return { token: credentials.password, user: { id: credentials.username } };
+        let user = { id: credentials.username };
+        const storedUser = storage.getString('auth_user');
+        if (storedUser) {
+          try {
+            user = JSON.parse(storedUser);
+          } catch (e) {
+            console.error('Failed to parse stored user', e);
+          }
+        }
+        return { token: credentials.password, user };
       }
       return rejectWithValue('No credentials found');
     } catch (error) {
@@ -23,7 +31,12 @@ export const initializeAuth = createAsyncThunk(
 export const logout = createAsyncThunk(
   'auth/logout',
   async () => {
-    await Keychain.resetGenericPassword();
+    try {
+      await Keychain.resetGenericPassword();
+    } catch (e) {
+      console.log('Error clearing keychain', e);
+    }
+    storage.delete('auth_user');
     return null;
   }
 );
@@ -50,6 +63,7 @@ const authSlice = createSlice({
         Keychain.setGenericPassword(user.id, token).catch(err => 
           console.error('Failed to save to keychain', err)
         );
+        storage.set('auth_user', JSON.stringify(user));
       }
     },
   },
@@ -71,6 +85,11 @@ const authSlice = createSlice({
         state.loading = false;
       })
       .addCase(logout.fulfilled, (state) => {
+        state.isAuthenticated = false;
+        state.token = null;
+        state.user = null;
+      })
+      .addCase(logout.rejected, (state) => {
         state.isAuthenticated = false;
         state.token = null;
         state.user = null;

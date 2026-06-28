@@ -72,6 +72,16 @@ class AuthController {
       next(err);
     }
   }
+
+  async deleteAccount(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const result = await authService.deleteAccount(userId);
+      res.status(200).json({ success: true, data: result, message: 'Account deleted successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export default new AuthController();

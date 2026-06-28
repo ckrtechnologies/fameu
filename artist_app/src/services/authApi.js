@@ -23,6 +23,12 @@ export const authApi = apiSlice.injectEndpoints({
         body: roleData,
       }),
     }),
+    deleteAccount: builder.mutation({
+      query: () => ({
+        url: '/auth/delete-account',
+        method: 'DELETE',
+      }),
+    }),
   }),
 });
 
@@ -30,4 +36,5 @@ export const {
   useSendOtpMutation,
   useVerifyOtpMutation,
   useSetRoleMutation,
+  useDeleteAccountMutation,
 } = authApi;

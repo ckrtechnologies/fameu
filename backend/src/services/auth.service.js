@@ -24,6 +24,7 @@ class AuthService {
     if (error) throw new Error(`Failed to store OTP: ${error.message}`);
 
     // Call MSG91 API (Mocked if MSG91_AUTH_KEY is not present)
+    let isMocked = false;
     if (process.env.MSG91_AUTH_KEY && !identifier.includes('@')) {
       try {
         await axios.get(`https://api.msg91.com/api/v5/otp`, {
@@ -41,9 +42,10 @@ class AuthService {
       }
     } else {
       console.log(`🔧 [DEV MODE] OTP for ${identifier} is ${otp}`);
+      isMocked = true;
     }
 
-    return { message: 'OTP sent successfully' };
+    return { message: 'OTP sent successfully', devOtp: isMocked ? otp : undefined };
   }
 
   /**
@@ -136,6 +138,15 @@ class AuthService {
       secret, 
       { expiresIn: '7d' }
     );
+  }
+
+  async deleteAccount(userId) {
+    // Deleting the user from Supabase Auth will cascade delete their profile in public.users
+    const { error } = await supabase.auth.admin.deleteUser(userId);
+    if (error) {
+      throw new Error(`Failed to delete account: ${error.message}`);
+    }
+    return { success: true };
   }
 }
 

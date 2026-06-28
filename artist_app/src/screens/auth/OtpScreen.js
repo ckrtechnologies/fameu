@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, Alert, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { colors, typography, spacing } from '../../theme/theme';
@@ -15,11 +15,14 @@ export default function OtpScreen() {
   const dispatch = useDispatch();
   
   const identifier = route.params?.identifier || '';
-  // Optional params from Register screen
+  const devOtpFromRoute = route.params?.devOtp;
+  
   const name = route.params?.name;
   
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(30);
+  const [localDevOtp, setLocalDevOtp] = useState(devOtpFromRoute);
+  const [showDevModal, setShowDevModal] = useState(!!devOtpFromRoute);
   const inputRef = useRef(null);
 
   const [verifyOtp, { isLoading: isVerifying }] = useVerifyOtpMutation();
@@ -38,7 +41,7 @@ export default function OtpScreen() {
     if (otp.length !== OTP_LENGTH) return;
     try {
       const response = await verifyOtp({ identifier, otp }).unwrap();
-      const { token, user, isNewUser } = response;
+      const { token, user, isNewUser } = response.data;
       
       // Save token and user to global state (triggers AppNavigator to switch to Main Tabs)
       dispatch(setCredentials({ user, token }));
@@ -63,7 +66,11 @@ export default function OtpScreen() {
 
   const handleResend = async () => {
     try {
-      await sendOtp({ identifier }).unwrap();
+      const response = await sendOtp({ identifier }).unwrap();
+      if (response?.data?.devOtp) {
+        setLocalDevOtp(response.data.devOtp);
+        setShowDevModal(true);
+      }
       setTimer(30);
       setOtp('');
       inputRef.current?.focus();
@@ -136,6 +143,30 @@ export default function OtpScreen() {
           )}
         </View>
       </View>
+
+      {/* DEV MODE OTP MODAL */}
+      <Modal
+        visible={showDevModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>DEV MODE</Text>
+            <Text style={styles.modalBody}>
+              Your OTP is <Text style={styles.modalHighlight}>{localDevOtp}</Text>
+            </Text>
+            <CustomButton 
+              title="Auto-fill & Close" 
+              onPress={() => {
+                if (localDevOtp) setOtp(localDevOtp.toString());
+                setShowDevModal(false);
+              }} 
+            />
+          </View>
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -207,5 +238,40 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.primary,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.backgroundLight,
+    padding: spacing.xl,
+    borderRadius: 16,
+    alignItems: 'center',
+    width: '80%',
+    maxWidth: 320,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  modalTitle: {
+    ...typography.h2,
+    color: colors.primary,
+    marginBottom: spacing.m,
+  },
+  modalBody: {
+    ...typography.body,
+    color: colors.textMainLight,
+    marginBottom: spacing.xl,
+    textAlign: 'center',
+  },
+  modalHighlight: {
+    ...typography.h1,
+    color: colors.textMainLight,
+    fontWeight: 'bold',
   },
 });

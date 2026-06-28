@@ -1,24 +1,194 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography } from '../../theme/theme';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { colors, typography, spacing } from '../../theme/theme';
+import CustomButton from '../../components/CustomButton';
 
 export default function ApplicationDetailScreen() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { application } = route.params;
+
+  const audition = application.audition || application;
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'shortlisted':
+      case 'hired':
+        return colors.success;
+      case 'rejected':
+        return colors.danger;
+      case 'interview_scheduled':
+        return colors.primary;
+      case 'pending':
+      default:
+        return colors.warning;
+    }
+  };
+
+  const statusColor = getStatusColor(application.status);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>ApplicationDetailScreen</Text>
-    </View>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Application Status</Text>
+        <View style={styles.iconButton} />
+      </View>
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        {/* Status Card */}
+        <View style={styles.statusCard}>
+          <Text style={styles.statusLabel}>Current Status</Text>
+          <Text style={[styles.statusValue, { color: statusColor }]}>
+            {(application.status || 'Pending').toUpperCase()}
+          </Text>
+          
+          {application.status === 'interview_scheduled' && (
+            <View style={styles.interviewDetails}>
+              <Text style={styles.interviewText}>
+                <Text style={{ fontWeight: '700' }}>Date: </Text> 
+                {new Date(application.interview_date).toLocaleString()}
+              </Text>
+              <Text style={styles.interviewText}>
+                <Text style={{ fontWeight: '700' }}>Venue: </Text> 
+                {application.interview_venue}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Applied Role Info */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Role Details</Text>
+          <Text style={styles.title}>{audition.title}</Text>
+          <Text style={styles.subtitle}>{audition.hiring_profiles?.company_name || 'Production House'}</Text>
+          <CustomButton 
+            title="View Full Audition" 
+            onPress={() => navigation.navigate('AuditionDetail', { id: audition.id || audition.audition_id })}
+            variant="outline"
+            style={{ marginTop: spacing.m }}
+          />
+        </View>
+
+        {/* Application Data */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Application</Text>
+          <View style={styles.dataRow}>
+            <Text style={styles.dataLabel}>Applied On</Text>
+            <Text style={styles.dataValue}>
+              {new Date(application.created_at).toLocaleDateString()}
+            </Text>
+          </View>
+          {application.cover_note ? (
+            <View style={[styles.dataRow, { flexDirection: 'column', alignItems: 'flex-start' }]}>
+              <Text style={[styles.dataLabel, { marginBottom: spacing.xs }]}>Cover Note</Text>
+              <Text style={[styles.dataValue, { lineHeight: 22 }]}>{application.cover_note}</Text>
+            </View>
+          ) : null}
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: colors.backgroundLight,
   },
-  text: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.textMutedLight + '20',
+  },
+  iconButton: {
+    padding: spacing.s,
+    width: 48,
+  },
+  headerTitle: {
+    ...typography.h3,
+    color: colors.textMainLight,
+    flex: 1,
+    textAlign: 'center',
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: spacing.xl,
+  },
+  statusCard: {
+    backgroundColor: colors.surfaceLight,
+    padding: spacing.l,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.textMutedLight + '20',
+    alignItems: 'center',
+    marginBottom: spacing.xxl,
+  },
+  statusLabel: {
+    ...typography.caption,
+    color: colors.textMutedLight,
+    marginBottom: spacing.xs,
+  },
+  statusValue: {
+    ...typography.h1,
+    marginBottom: spacing.m,
+  },
+  interviewDetails: {
+    width: '100%',
+    padding: spacing.m,
+    backgroundColor: colors.primary + '10',
+    borderRadius: 8,
+    marginTop: spacing.s,
+  },
+  interviewText: {
+    ...typography.body,
+    color: colors.textMainLight,
+    marginBottom: 4,
+  },
+  section: {
+    marginBottom: spacing.xl,
+  },
+  sectionTitle: {
     ...typography.h2,
     color: colors.textMainLight,
+    marginBottom: spacing.m,
+  },
+  title: {
+    ...typography.h2,
+    color: colors.textMainLight,
+    marginBottom: 4,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMutedLight,
+  },
+  dataRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.m,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.textMutedLight + '20',
+  },
+  dataLabel: {
+    ...typography.body,
+    color: colors.textMutedLight,
+  },
+  dataValue: {
+    ...typography.body,
+    color: colors.textMainLight,
+    fontWeight: '500',
   }
 });

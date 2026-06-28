@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
@@ -13,10 +14,8 @@ export default function MyApplicationsScreen() {
 
   const { data: applications = [], isLoading, isError, refetch } = useGetMyApplicationsQuery();
 
-  const handleAuditionPress = (id) => {
-    // Note: the backend might return the audition data embedded inside the application
-    // We assume item.audition_id or item.audition.id is the target
-    navigation.navigate('AuditionDetail', { id });
+  const handleAuditionPress = (item) => {
+    navigation.navigate('ApplicationDetail', { application: item });
   };
 
   const renderEmptyState = () => (
@@ -32,7 +31,7 @@ export default function MyApplicationsScreen() {
     : [];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Applications</Text>
@@ -77,7 +76,7 @@ export default function MyApplicationsScreen() {
                 <AuditionCard 
                   // Pass the nested audition data if present, else fallback to item
                   audition={item.audition || item} 
-                  onPress={() => handleAuditionPress(item.audition_id || item.audition?.id || item.id)} 
+                  onPress={() => handleAuditionPress(item)} 
                   style={styles.fullWidthCard}
                 />
               </View>

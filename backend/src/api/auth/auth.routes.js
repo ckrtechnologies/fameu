@@ -11,5 +11,6 @@ router.post('/social-login', authController.socialLogin);
 // Protected Routes
 // Used immediately after signup to choose Artist or Hiring
 router.post('/set-role', authMiddleware, authController.setRole);
+router.delete('/delete-account', authMiddleware, authController.deleteAccount);
 
 export default router;

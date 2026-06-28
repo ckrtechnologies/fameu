@@ -46,7 +46,7 @@ CREATE TABLE artist_profiles (
   id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id               UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   full_name             TEXT,
-  category              TEXT,
+  categories            TEXT[],
   age                   INT,
   gender                TEXT,
   height                TEXT,
@@ -162,12 +162,14 @@ CREATE TABLE auditions (
   lat             DOUBLE PRECISION,
   lng             DOUBLE PRECISION,
   audition_date   DATE,
+  date            DATE,
   audition_time   TIME,
   compensation    TEXT,
   required_docs   TEXT,
   instructions    TEXT,
   status          TEXT DEFAULT 'active' CHECK (status IN ('draft', 'active', 'closed', 'cancelled')),
   view_count      INT DEFAULT 0,
+  is_live         BOOLEAN DEFAULT FALSE,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -255,6 +257,7 @@ CREATE TABLE blacklist (
 CREATE TABLE analytics_snapshots (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   snapshot_date   DATE UNIQUE,
+  date            DATE,
   total_artists   INT,
   total_hiring    INT,
   active_auditions INT,
@@ -284,10 +287,12 @@ CREATE INDEX ON followers(follower_id);
 
 CREATE TABLE conversations (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  participant1_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  participant2_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  participant1_id UUID,
+  participant2_id UUID,
   last_message    TEXT,
   updated_at      TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT fk_participant1 FOREIGN KEY (participant1_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_participant2 FOREIGN KEY (participant2_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE(participant1_id, participant2_id)
 );
 

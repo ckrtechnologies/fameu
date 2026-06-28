@@ -76,6 +76,7 @@ class AuditionService {
     if (filters.category) query = query.eq('category', filters.category);
     if (filters.gender) query = query.eq('gender', filters.gender);
     if (filters.audition_type) query = query.eq('audition_type', filters.audition_type);
+    if (filters.is_live === 'true' || filters.is_live === true) query = query.eq('is_live', true);
     
     // Simple Bounding Box approach for Google Maps
     if (filters.minLat && filters.maxLat && filters.minLng && filters.maxLng) {
@@ -106,7 +107,7 @@ class AuditionService {
     if (error) throw new Error('Audition not found');
 
     // Increment views async (don't await to save latency)
-    supabase.rpc('increment_audition_view', { audition_row_id: auditionId }).catch(() => {});
+    supabase.rpc('increment_audition_view', { audition_row_id: auditionId }).then(() => {}).catch(() => {});
 
     return data;
   }

@@ -23,9 +23,20 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+  let result = await baseQuery(args, api, extraOptions);
+  
+  if (result.error && result.error.status === 401) {
+    const { logout } = require('../store/slices/authSlice');
+    api.dispatch(logout());
+  }
+  
+  return result;
+};
+
 export const apiSlice = createApi({
   reducerPath: 'api',
-  baseQuery: baseQuery,
-  tagTypes: ['User', 'Audition', 'Profile'],
+  baseQuery: baseQueryWithReauth,
+  tagTypes: ['User', 'Audition', 'Profile', 'Chat', 'ChatMessages'],
   endpoints: (builder) => ({}),
 });

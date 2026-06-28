@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import TabNavigator from './TabNavigator';
+import DrawerNavigator from './DrawerNavigator';
 
 import AuditionDetailScreen from '../screens/artist/AuditionDetailScreen';
 import ApplyAuditionScreen from '../screens/artist/ApplyAuditionScreen';
@@ -20,14 +20,15 @@ import TrendingAuditionsScreen from '../screens/artist/TrendingAuditionsScreen';
 import UpcomingCalendarScreen from '../screens/artist/UpcomingCalendarScreen';
 import WalkInListingsScreen from '../screens/artist/WalkInListingsScreen';
 import DeleteAccountScreen from '../screens/artist/DeleteAccountScreen';
+import ChatScreen from '../screens/artist/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function MainNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Bottom Tabs is the main entry point for an authenticated artist */}
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      {/* Drawer wraps the Bottom Tabs as the main entry point */}
+      <Stack.Screen name="MainTabs" component={DrawerNavigator} />
       
       {/* Other screens that should hide the bottom tabs */}
       <Stack.Screen name="AuditionDetail" component={AuditionDetailScreen} />
@@ -47,6 +48,7 @@ export default function MainNavigator() {
       <Stack.Screen name="UpcomingCalendar" component={UpcomingCalendarScreen} />
       <Stack.Screen name="WalkInListings" component={WalkInListingsScreen} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
     </Stack.Navigator>
   );
 }

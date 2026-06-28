@@ -11,6 +11,7 @@ export const colors = {
   success: '#10B981',
   danger: '#EF4444',
   warning: '#F59E0B',
+  borderLight: '#E2E8F0',
 };
 
 export const typography = {

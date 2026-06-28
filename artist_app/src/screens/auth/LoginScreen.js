@@ -18,8 +18,8 @@ export default function LoginScreen() {
       return;
     }
     try {
-      await sendOtp({ identifier }).unwrap();
-      navigation.navigate('Otp', { identifier });
+      const response = await sendOtp({ identifier }).unwrap();
+      navigation.navigate('Otp', { identifier, devOtp: response?.data?.devOtp });
     } catch (err) {
       Alert.alert('Login Failed', err?.data?.error?.message || 'Something went wrong. Please try again.');
     }

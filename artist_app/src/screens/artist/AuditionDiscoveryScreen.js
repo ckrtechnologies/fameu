@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../theme/theme';
 import CustomInput from '../../components/CustomInput';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetFeedQuery } from '../../services/discoverApi';
 
-const CATEGORIES = ['All', 'Acting', 'Modeling', 'Voiceover', 'Dancing', 'Singing'];
+const CATEGORY_MAP = {
+  'All': 'All',
+  'Live Now': 'Live Now',
+  'Acting': 'Actor',
+  'Modeling': 'Model',
+  'Singing': 'Singer',
+  'Dancing': 'Dancer',
+  'Crew': 'Technician'
+};
+
+const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
 
 export default function AuditionDiscoveryScreen() {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
-  const { data: feedData, isLoading, isError, refetch } = useGetFeedQuery({ 
-    search, 
-    category: activeCategory !== 'All' ? activeCategory : undefined 
-  });
+  const queryParams = { search };
+  if (activeCategory === 'Live Now') {
+    queryParams.is_live = true;
+  } else if (activeCategory !== 'All') {
+    queryParams.category = CATEGORY_MAP[activeCategory];
+  }
+
+  const { data: feedData, isLoading, isError, refetch } = useGetFeedQuery(queryParams);
 
   const handleAuditionPress = (id) => {
     navigation.navigate('AuditionDetail', { id });
@@ -33,10 +48,10 @@ export default function AuditionDiscoveryScreen() {
     </TouchableOpacity>
   );
 
-  const auditions = Array.isArray(feedData) ? feedData : [];
+  const auditions = Array.isArray(feedData?.data) ? feedData.data : [];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Discover</Text>
@@ -53,7 +68,7 @@ export default function AuditionDiscoveryScreen() {
 
         <View style={styles.categoriesContainer}>
           <FlatList
-            data={CATEGORIES}
+            data={UI_CATEGORIES}
             horizontal
             showsHorizontalScrollIndicator={false}
             renderItem={renderCategory}
@@ -83,6 +98,9 @@ export default function AuditionDiscoveryScreen() {
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />
+            }
             renderItem={({ item }) => (
               <View style={styles.cardWrapper}>
                 <AuditionCard 

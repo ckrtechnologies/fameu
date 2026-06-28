@@ -16,7 +16,7 @@ class ArtistService {
     const payload = {
       user_id: userId,
       full_name: profileData.full_name,
-      category: profileData.category,
+      categories: profileData.categories,
       age: profileData.age,
       gender: profileData.gender,
       height: profileData.height,
@@ -105,26 +105,30 @@ class ArtistService {
 
     if (error || !profile) return null;
 
-    let categoryDetails = null;
+    let categoryDetails = {};
     
-    if (profile.category) {
-      let tableName = '';
-      switch (profile.category.toLowerCase()) {
-        case 'actor': tableName = 'actor_details'; break;
-        case 'singer': tableName = 'singer_details'; break;
-        case 'model': tableName = 'model_details'; break;
-        case 'dancer': tableName = 'dancer_details'; break;
-        case 'technician': tableName = 'technician_details'; break;
-      }
+    if (profile.categories && profile.categories.length > 0) {
+      await Promise.all(profile.categories.map(async (cat) => {
+        let tableName = '';
+        switch (cat.toLowerCase()) {
+          case 'actor': tableName = 'actor_details'; break;
+          case 'singer': tableName = 'singer_details'; break;
+          case 'model': tableName = 'model_details'; break;
+          case 'dancer': tableName = 'dancer_details'; break;
+          case 'technician': tableName = 'technician_details'; break;
+        }
 
-      if (tableName) {
-        const { data: details } = await supabase
-          .from(tableName)
-          .select('*')
-          .eq('artist_id', profile.id)
-          .single();
-        categoryDetails = details;
-      }
+        if (tableName) {
+          const { data: details } = await supabase
+            .from(tableName)
+            .select('*')
+            .eq('artist_id', profile.id)
+            .single();
+          if (details) {
+            categoryDetails[cat.toLowerCase()] = details;
+          }
+        }
+      }));
     }
 
     return {

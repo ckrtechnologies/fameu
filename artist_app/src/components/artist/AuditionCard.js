@@ -22,6 +22,12 @@ const AuditionCard = ({ audition, onPress, style }) => {
             <Text style={styles.urgentText}>URGENT</Text>
           </View>
         )}
+        {audition.is_live && (
+          <View style={styles.liveBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>LIVE</Text>
+          </View>
+        )}
       </View>
       
       <View style={styles.content}>
@@ -91,6 +97,30 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.backgroundLight,
     fontWeight: '800',
+  },
+  liveBadge: {
+    position: 'absolute',
+    top: spacing.s,
+    left: spacing.s,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: spacing.s,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444', // red-500
+    marginRight: 4,
+  },
+  liveText: {
+    ...typography.caption,
+    color: colors.backgroundLight,
+    fontWeight: '800',
+    fontSize: 10,
   },
   content: {
     padding: spacing.m,

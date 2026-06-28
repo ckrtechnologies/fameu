@@ -1,24 +1,269 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography } from '../../theme/theme';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { colors, typography, spacing } from '../../theme/theme';
+import { useGetAuditionDetailsQuery, useToggleBookmarkMutation } from '../../services/discoverApi';
+import CustomButton from '../../components/CustomButton';
 
 export default function AuditionDetailScreen() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { id } = route.params;
+
+  const { data: response, isLoading, isError, refetch } = useGetAuditionDetailsQuery(id);
+  const audition = response?.data;
+  const [toggleBookmark, { isLoading: isBookmarking }] = useToggleBookmarkMutation();
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.safeArea, styles.center]} edges={['top', 'bottom']}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !audition) {
+    return (
+      <SafeAreaView style={[styles.safeArea, styles.center]} edges={['top', 'bottom']}>
+        <Text style={styles.errorText}>Failed to load audition details.</Text>
+        <CustomButton title="Retry" onPress={refetch} variant="outline" style={{ marginTop: spacing.m }} />
+      </SafeAreaView>
+    );
+  }
+
+  const handleApply = () => {
+    navigation.navigate('ApplyAudition', { auditionId: id });
+  };
+
+  const handleBookmark = async () => {
+    try {
+      await toggleBookmark(id).unwrap();
+    } catch (err) {
+      console.error('Failed to bookmark', err);
+    }
+  };
+
+  const isWalkin = audition.audition_type === 'walkin';
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>AuditionDetailScreen</Text>
-    </View>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>Details</Text>
+        <TouchableOpacity onPress={handleBookmark} style={styles.iconButton} disabled={isBookmarking}>
+          <Icon name="bookmark-outline" size={24} color={colors.textMainLight} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Title Section */}
+        <View style={styles.section}>
+          <View style={styles.tagContainer}>
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>{audition.category}</Text>
+            </View>
+            {isWalkin && (
+              <View style={[styles.tag, { backgroundColor: colors.warning + '20' }]}>
+                <Text style={[styles.tagText, { color: colors.warning }]}>Walk-In</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.title}>{audition.title}</Text>
+          <Text style={styles.subtitle}>
+            {audition.hiring_profiles?.company_name || 'Production House'}
+          </Text>
+        </View>
+
+        {/* Quick Info */}
+        <View style={styles.infoRow}>
+          <View style={styles.infoCol}>
+            <Icon name="calendar-outline" size={20} color={colors.primary} />
+            <Text style={styles.infoLabel}>Date</Text>
+            <Text style={styles.infoValue}>{new Date(audition.audition_date).toLocaleDateString()}</Text>
+          </View>
+          <View style={styles.infoCol}>
+            <Icon name="time-outline" size={20} color={colors.primary} />
+            <Text style={styles.infoLabel}>Time</Text>
+            <Text style={styles.infoValue}>{audition.audition_time}</Text>
+          </View>
+          <View style={styles.infoCol}>
+            <Icon name="location-outline" size={20} color={colors.primary} />
+            <Text style={styles.infoLabel}>Location</Text>
+            <Text style={styles.infoValue} numberOfLines={1}>{audition.venue_address || 'TBA'}</Text>
+          </View>
+        </View>
+
+        {/* Details */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Role Description</Text>
+          <Text style={styles.bodyText}>{audition.role_description || 'No description provided.'}</Text>
+        </View>
+
+        {(audition.character_req || audition.age_min || audition.gender) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Requirements</Text>
+            {audition.gender && <Text style={styles.bodyText}>• Gender: {audition.gender}</Text>}
+            {(audition.age_min || audition.age_max) && (
+              <Text style={styles.bodyText}>
+                • Age: {audition.age_min || 0} - {audition.age_max || 'Any'}
+              </Text>
+            )}
+            {audition.language && audition.language.length > 0 && (
+              <Text style={styles.bodyText}>• Language: {audition.language.join(', ')}</Text>
+            )}
+            {audition.character_req && <Text style={styles.bodyText}>• {audition.character_req}</Text>}
+          </View>
+        )}
+
+        {audition.compensation && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Compensation</Text>
+            <Text style={styles.bodyText}>{audition.compensation}</Text>
+          </View>
+        )}
+
+        {audition.instructions && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Instructions</Text>
+            <Text style={styles.bodyText}>{audition.instructions}</Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Sticky Bottom Action */}
+      <View style={styles.bottomBar}>
+        <CustomButton 
+          title="Apply Now" 
+          onPress={handleApply}
+          style={{ width: '100%' }}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: colors.backgroundLight,
   },
-  text: {
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.textMutedLight + '20',
+  },
+  iconButton: {
+    padding: spacing.s,
+  },
+  headerTitle: {
+    ...typography.h3,
+    color: colors.textMainLight,
+    flex: 1,
+    textAlign: 'center',
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: spacing.xl,
+    paddingBottom: 100, // Make room for bottom bar
+  },
+  section: {
+    marginBottom: spacing.xl,
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    marginBottom: spacing.s,
+  },
+  tag: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: spacing.s,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: spacing.s,
+  },
+  tagText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  title: {
+    ...typography.h1,
+    color: colors.textMainLight,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMutedLight,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.l,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.textMutedLight + '20',
+    marginBottom: spacing.xl,
+  },
+  infoCol: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  infoLabel: {
+    ...typography.caption,
+    color: colors.textMutedLight,
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  infoValue: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.textMainLight,
+    textAlign: 'center',
+  },
+  sectionTitle: {
     ...typography.h2,
     color: colors.textMainLight,
+    marginBottom: spacing.s,
+  },
+  bodyText: {
+    ...typography.body,
+    color: colors.textMainLight,
+    lineHeight: 24,
+    marginBottom: 4,
+  },
+  errorText: {
+    ...typography.body,
+    color: colors.danger,
+    textAlign: 'center',
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: spacing.xl,
+    backgroundColor: colors.backgroundLight,
+    borderTopWidth: 1,
+    borderTopColor: colors.textMutedLight + '20',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 10,
   }
 });

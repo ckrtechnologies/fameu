@@ -12,6 +12,7 @@ import adminPanelRoutes from "./src/api/admin_panel/index.js";
 import authRoutes from "./src/api/auth/index.js";
 import paymentRoutes from "./src/api/payments/index.js";
 import notificationRoutes from "./src/api/notifications/index.js";
+import chatRoutes from "./src/api/shared/chat/chat.routes.js";
 import errorHandler from "./src/core/middlewares/errorHandler.js";
 import socketManager from "./src/sockets/socketManager.js";
 import { startCronJobs } from "./src/jobs/index.js";
@@ -55,6 +56,7 @@ app.use('/api/admin_panel', adminPanelRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

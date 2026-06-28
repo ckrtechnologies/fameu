@@ -22,9 +22,9 @@ export default function RegisterScreen() {
     }
     
     try {
-      await sendOtp({ identifier }).unwrap();
+      const response = await sendOtp({ identifier }).unwrap();
       // Pass the collected info to OTP screen so we can update profile later if needed
-      navigation.navigate('Otp', { identifier, name, email, mobile });
+      navigation.navigate('Otp', { identifier, name, email, mobile, devOtp: response?.data?.devOtp });
     } catch (err) {
       Alert.alert('Registration Failed', err?.data?.error?.message || 'Something went wrong. Please try again.');
     }
