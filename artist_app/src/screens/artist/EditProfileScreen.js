@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography } from '../../theme/theme';
-import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation } from '../../services/profileApi';
+import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery } from '../../services/profileApi';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { FIELD_CONFIGS } from './ArtistFormScreen';
 
@@ -15,6 +15,7 @@ export default function EditProfileScreen() {
   const [upsertProfile, { isLoading: isSaving }] = useUpsertProfileMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [uploadMedia, { isLoading: isUploadingMedia }] = useUploadMediaMutation();
+  const [checkUsername, { isFetching: isCheckingUsername }] = useLazyCheckUsernameQuery();
 
   const [activeTab, setActiveTab] = useState('Basic Info');
 
@@ -29,11 +30,7 @@ export default function EditProfileScreen() {
     }
     if (!res.assets?.length) return;
 
-    const artistId = profileResponse?.data?.id;
-    if (!artistId) return Alert.alert('Error', 'Profile not found.');
-
     const formData = new FormData();
-    formData.append('artistId', artistId);
     formData.append('replaceAvatar', 'true');
     formData.append('photos', {
       uri: res.assets[0].uri,
@@ -61,6 +58,7 @@ export default function EditProfileScreen() {
     bio: '',
     experience: '',
     languages: '',
+    username: '',
   });
 
   const [categoryFormData, setCategoryFormData] = useState({});
@@ -109,6 +107,7 @@ export default function EditProfileScreen() {
         bio: p.bio || '',
         experience: p.experience || '',
         languages: p.languages ? p.languages.join(', ') : '',
+        username: p.users?.username || '',
       });
 
       if (p.category_details) {
@@ -131,6 +130,20 @@ export default function EditProfileScreen() {
     }
   }, [profileResponse]);
 
+  const handleVerifyUsername = async () => {
+    if (!formData.username) return Alert.alert('Error', 'Please enter a username to verify.');
+    try {
+      const response = await checkUsername(formData.username).unwrap();
+      if (response.data.available) {
+        Alert.alert('Success', 'This username is available!');
+      } else {
+        Alert.alert('Error', 'This username is already taken. Please choose another one.');
+      }
+    } catch (err) {
+      Alert.alert('Error', err?.data?.error || 'Failed to check username.');
+    }
+  };
+
   const handleSave = async () => {
     try {
       // 1. Save Basic Info
@@ -141,12 +154,12 @@ export default function EditProfileScreen() {
         languages: formData.languages ? formData.languages.split(',').map(s => s.trim()).filter(s => s) : [],
       };
 
-      const basicInfoPromise = upsertProfile(payload).unwrap();
+      const savedProfile = await upsertProfile(payload).unwrap();
 
       // 2. Save all Category Data
-      const artistId = profileResponse?.data?.id;
+      const artistId = profileResponse?.data?.id || savedProfile?.data?.id || savedProfile?.id;
       if (!artistId) {
-        Alert.alert('Error', 'Profile ID missing.');
+        Alert.alert('Error', 'Profile ID missing after save.');
         return;
       }
 
@@ -177,7 +190,7 @@ export default function EditProfileScreen() {
       });
 
       // Run all requests concurrently
-      await Promise.all([basicInfoPromise, ...categoryPromises, ...removePromises]);
+      await Promise.all([...categoryPromises, ...removePromises]);
 
       Alert.alert('Success', 'Profile saved successfully!');
       navigation.reset({
@@ -213,7 +226,7 @@ export default function EditProfileScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={styles.headerTitle}>{route.params?.isOnboarding ? 'Complete Profile' : 'Edit Profile'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -307,8 +320,8 @@ export default function EditProfileScreen() {
                   );
                 }}
               >
-                {profileResponse?.data?.photo_urls && profileResponse.data.photo_urls.length > 0 ? (
-                  <Image source={{ uri: profileResponse.data.photo_urls[0] }} style={styles.avatarImage} />
+                {profileResponse?.data?.avatar_url ? (
+                  <Image source={{ uri: profileResponse.data.avatar_url }} style={styles.avatarImage} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Icon name="person" size={60} color={colors.borderLight} />
@@ -336,6 +349,31 @@ export default function EditProfileScreen() {
                 value={formData.full_name}
                 onChangeText={(t) => setFormData(p => ({ ...p, full_name: t }))}
               />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Username (Handle)</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                  placeholder="e.g. johndoe (must be unique)"
+                  placeholderTextColor={colors.textMutedLight}
+                  value={formData.username}
+                  onChangeText={(t) => setFormData(p => ({ ...p, username: t.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity 
+                  style={{ marginLeft: 8, backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, justifyContent: 'center' }}
+                  onPress={handleVerifyUsername}
+                  disabled={isCheckingUsername}
+                >
+                  {isCheckingUsername ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Verify</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.row}>

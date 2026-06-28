@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -39,6 +39,16 @@ export default function TabNavigator() {
           <TouchableOpacity style={{ marginLeft: spacing.xl, padding: 4 }} onPress={() => navigation.openDrawer()}>
             <Icon name="menu" size={32} color={colors.textMainLight} />
           </TouchableOpacity>
+        ),
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', marginRight: spacing.xl }}>
+            <TouchableOpacity style={{ padding: 4, marginRight: 12 }} onPress={() => navigation.navigate('Search')}>
+              <Icon name="search-outline" size={26} color={colors.textMainLight} />
+            </TouchableOpacity>
+            <TouchableOpacity style={{ padding: 4 }} onPress={() => navigation.navigate('Notifications')}>
+              <Icon name="notifications-outline" size={26} color={colors.textMainLight} />
+            </TouchableOpacity>
+          </View>
         ),
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;

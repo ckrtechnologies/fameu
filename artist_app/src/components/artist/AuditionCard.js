@@ -12,11 +12,16 @@ const AuditionCard = ({ audition, onPress, style }) => {
       style={[styles.container, style]}
     >
       <View style={styles.imageContainer}>
-        {/* Placeholder image for now */}
-        <Image
-          source={{ uri: audition.thumbnail_url || 'https://via.placeholder.com/150' }}
-          style={styles.image}
-        />
+        {audition.hiring_profiles?.logo_url ? (
+          <Image
+            source={{ uri: audition.hiring_profiles.logo_url }}
+            style={styles.image}
+          />
+        ) : (
+          <View style={styles.categoryPlaceholder}>
+            <Text style={styles.categoryText}>{audition.category || 'Audition'}</Text>
+          </View>
+        )}
         {audition.is_urgent && (
           <View style={styles.urgentBadge}>
             <Text style={styles.urgentText}>URGENT</Text>
@@ -32,15 +37,15 @@ const AuditionCard = ({ audition, onPress, style }) => {
       
       <View style={styles.content}>
         <Text style={styles.roleTitle} numberOfLines={1}>
-          {audition.role_title}
+          {audition.title || 'Untitled Audition'}
         </Text>
         <Text style={styles.productionName} numberOfLines={1}>
-          {audition.production_name}
+          {audition.hiring_profiles?.company_name || 'Production House'}
         </Text>
         
         <View style={styles.detailsRow}>
-          <Text style={styles.detailText}>📍 {audition.location}</Text>
-          <Text style={styles.detailText}>💰 {audition.compensation}</Text>
+          <Text numberOfLines={1} style={[styles.detailText, {flex: 1, marginRight: 8}]}>📍 {audition.venue_address || audition.city || 'TBA'}</Text>
+          <Text style={styles.detailText} numberOfLines={1}>💰 {audition.compensation || 'Unpaid / TFP'}</Text>
         </View>
 
         {/* Optional status pill if used in Applications view */}
@@ -76,13 +81,27 @@ const styles = StyleSheet.create({
   imageContainer: {
     height: 140,
     width: '100%',
-    backgroundColor: colors.textMutedLight,
+    backgroundColor: colors.surfaceLight,
     position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  categoryPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors.primary + '20', // Light primary color
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryText: {
+    ...typography.h2,
+    color: colors.primary,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   urgentBadge: {
     position: 'absolute',

@@ -173,27 +173,28 @@ const styles = StyleSheet.create({
     color: colors.textMainLight,
     flex: 1,
     textAlign: 'center',
+    marginHorizontal: spacing.s,
   },
   container: {
     flex: 1,
   },
   scrollContent: {
     padding: spacing.xl,
-    paddingBottom: 100, // Make room for bottom bar
+    paddingBottom: spacing.xl,
   },
   section: {
     marginBottom: spacing.xl,
   },
   tagContainer: {
     flexDirection: 'row',
+    gap: spacing.s,
     marginBottom: spacing.s,
   },
   tag: {
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.xs,
     backgroundColor: colors.primary + '20',
-    paddingHorizontal: spacing.s,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: spacing.s,
+    borderRadius: 100,
   },
   tagText: {
     ...typography.caption,
@@ -252,18 +253,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: spacing.xl,
     backgroundColor: colors.backgroundLight,
     borderTopWidth: 1,
     borderTopColor: colors.textMutedLight + '20',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 10,
   }
 });

@@ -100,13 +100,7 @@ export default function PhotoGalleryScreen() {
         return;
       }
       if (response.assets && response.assets.length > 0) {
-        if (!artistId) {
-          Alert.alert('Error', 'Profile not found. Please try again.');
-          return;
-        }
-
         const formData = new FormData();
-        formData.append('artistId', artistId);
         
         response.assets.forEach((asset) => {
           formData.append('photos', {

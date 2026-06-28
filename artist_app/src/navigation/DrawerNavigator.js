@@ -22,20 +22,11 @@ function CustomDrawerContent(props) {
   
   const fullName = profile?.full_name || user?.full_name || 'Artist';
   const username = fullName;
-  const avatarUrl = profile?.photo_urls?.[0] || user?.avatar_url || null;
+  const avatarUrl = profile?.avatar_url || user?.avatar_url || null;
 
   const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { 
-        text: 'Log Out', 
-        style: 'destructive',
-        onPress: () => {
-          dispatch(apiSlice.util.resetApiState());
-          dispatch(logout());
-        }
-      },
-    ]);
+    dispatch(apiSlice.util.resetApiState());
+    dispatch(logout());
   };
 
   const handleDeleteAccount = () => {
@@ -96,6 +87,11 @@ function CustomDrawerContent(props) {
         <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Verification')}>
           <Icon name="shield-checkmark-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Get Verified</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Search')}>
+          <Icon name="search-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>Search Users</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Notifications')}>

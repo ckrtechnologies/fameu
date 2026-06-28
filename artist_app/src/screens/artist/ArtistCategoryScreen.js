@@ -73,7 +73,7 @@ export default function ArtistCategoryScreen() {
       try {
         const response = await upsertProfile({ categories: selectedCategories }).unwrap();
         if (response.success) {
-          navigation.navigate('ArtistForm', { categories: selectedCategories });
+          navigation.navigate('EditProfile', { isOnboarding: true, categories: selectedCategories });
         }
       } catch (error) {
         console.error('Update categories error:', error);

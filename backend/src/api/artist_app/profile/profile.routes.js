@@ -9,6 +9,7 @@ router.use(authMiddleware);
 
 // Base Profile CRUD
 router.get('/', profileController.getProfile);
+router.get('/check-username/:username', profileController.checkUsername);
 router.post('/upsert', profileController.upsertProfile);
 
 // Dynamic Category Update (Actor, Singer, etc)

@@ -44,10 +44,6 @@ export default function MyApplicationsScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Applications</Text>
-          <Text style={styles.subtitle}>Track your submissions.</Text>
-        </View>
 
         {/* Custom Tab Selector */}
         <View style={styles.tabContainer}>

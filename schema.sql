@@ -2,9 +2,12 @@ CREATE TABLE users (
   id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   mobile          TEXT UNIQUE,
   email           TEXT UNIQUE,
+  username        TEXT UNIQUE,
   display_name    TEXT,
   avatar_url      TEXT,
   role            TEXT NOT NULL CHECK (role IN ('artist','hiring','admin')),
+  followers_count INT DEFAULT 0,
+  following_count INT DEFAULT 0,
   is_active       BOOLEAN DEFAULT TRUE,
   is_blacklisted  BOOLEAN DEFAULT FALSE,
   fcm_token       TEXT,
@@ -56,6 +59,7 @@ CREATE TABLE artist_profiles (
   experience            TEXT,
   languages             TEXT[],
   skills                TEXT[],
+  avatar_url            TEXT,
   photo_urls            TEXT[],
   video_url             TEXT,
   resume_url            TEXT,
@@ -314,3 +318,34 @@ CREATE TABLE checkins (
   lng             DOUBLE PRECISION,
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Connections (Followers)
+CREATE TABLE connections (
+  follower_id     UUID REFERENCES users(id) ON DELETE CASCADE,
+  following_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (follower_id, following_id)
+);
+CREATE INDEX ON connections(follower_id);
+CREATE INDEX ON connections(following_id);
+
+-- Triggers to update followers_count and following_count
+CREATE OR REPLACE FUNCTION update_connection_counts()
+RETURNS trigger AS $$
+BEGIN
+  IF (TG_OP = 'INSERT') THEN
+    UPDATE users SET following_count = following_count + 1 WHERE id = NEW.follower_id;
+    UPDATE users SET followers_count = followers_count + 1 WHERE id = NEW.following_id;
+    RETURN NEW;
+  ELSIF (TG_OP = 'DELETE') THEN
+    UPDATE users SET following_count = following_count - 1 WHERE id = OLD.follower_id;
+    UPDATE users SET followers_count = followers_count - 1 WHERE id = OLD.following_id;
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_connection_change
+  AFTER INSERT OR DELETE ON connections
+  FOR EACH ROW EXECUTE PROCEDURE update_connection_counts();

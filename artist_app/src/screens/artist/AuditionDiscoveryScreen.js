@@ -64,8 +64,6 @@ export default function AuditionDiscoveryScreen() {
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Discover</Text>
-          <Text style={styles.subtitle}>Find your next big role.</Text>
           
           <View style={styles.searchContainer}>
             <CustomInput

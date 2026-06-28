@@ -8,6 +8,17 @@ const __dirname = path.dirname(__filename);
 
 class ArtistService {
   
+  async checkUsernameAvailable(username, userId) {
+    if (!username) return false;
+    const { data } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username.toLowerCase())
+      .single();
+      
+    if (!data) return true;
+    return data.id === userId; // Available if it belongs to the current user
+  }
   /**
    * Upsert the base artist profile
    */
@@ -22,7 +33,7 @@ class ArtistService {
     const allowedFields = [
       'full_name', 'categories', 'age', 'gender', 'height', 'weight', 
       'city', 'bio', 'experience', 'languages', 'skills', 'social_links', 
-      'travel_available', 'photo_urls', 'video_url'
+      'travel_available', 'avatar_url', 'photo_urls', 'video_url'
     ];
     
     const payload = { updated_at: new Date().toISOString() };
@@ -50,6 +61,13 @@ class ArtistService {
       if (profileData.full_name) {
         await supabase.from('users').update({ display_name: profileData.full_name }).eq('id', userId);
       }
+      // Update username in users table if provided
+      if (profileData.username !== undefined) {
+        await supabase
+          .from('users')
+          .update({ username: profileData.username })
+          .eq('id', userId);
+      }
       return data;
     } else {
       // Create
@@ -62,6 +80,9 @@ class ArtistService {
       
       if (profileData.full_name) {
         await supabase.from('users').update({ display_name: profileData.full_name }).eq('id', userId);
+      }
+      if (profileData.username !== undefined) {
+        await supabase.from('users').update({ username: profileData.username }).eq('id', userId);
       }
       return data;
     }
@@ -101,10 +122,10 @@ class ArtistService {
    * Fetch full profile including dynamic category data
    */
   async getFullProfile(userId) {
-    // Get base profile
+    // Get base profile along with user data (followers, username)
     const { data: profile, error } = await supabase
       .from('artist_profiles')
-      .select('*')
+      .select('*, users!inner(username, followers_count, following_count)')
       .eq('user_id', userId)
       .single();
 
@@ -164,23 +185,27 @@ class ArtistService {
   /**
    * Upload media URLs (After Multer saves them)
    */
-  async updateMediaUrls(artistId, mediaUrls, replaceAvatar = false) {
-    // Get existing profile to handle photo appending and file deletion
-    const { data: existingProfile } = await supabase
+  async updateMediaUrls(userId, mediaUrls, replaceAvatar = false) {
+    // 1. Ensure profile exists or create a blank one
+    let { data: existingProfile } = await supabase
       .from('artist_profiles')
-      .select('photo_urls')
-      .eq('id', artistId)
+      .select('id, photo_urls, avatar_url, user_id')
+      .eq('user_id', userId)
       .single();
 
+    if (!existingProfile) {
+      existingProfile = await this.createOrUpdateProfile(userId, {});
+    }
+
     let newPhotoUrls = existingProfile?.photo_urls || [];
+    let newAvatarUrl = existingProfile?.avatar_url || null;
 
     if (mediaUrls.photos && mediaUrls.photos.length > 0) {
       if (replaceAvatar) {
         // Delete old avatar from disk if it exists
-        if (newPhotoUrls.length > 0) {
-          const oldAvatarUrl = newPhotoUrls[0];
+        if (newAvatarUrl) {
           try {
-            const filename = oldAvatarUrl.split('/').pop();
+            const filename = newAvatarUrl.split('/').pop();
             const filePath = path.join(__dirname, '../../../uploads/artist', filename);
             if (fs.existsSync(filePath)) {
               fs.unlinkSync(filePath);
@@ -188,11 +213,8 @@ class ArtistService {
           } catch (e) {
             console.error('Failed to delete old avatar:', e);
           }
-          // Replace first element
-          newPhotoUrls[0] = mediaUrls.photos[0];
-        } else {
-          newPhotoUrls.unshift(mediaUrls.photos[0]);
         }
+        newAvatarUrl = mediaUrls.photos[0];
       } else {
         // Append all new photos to the gallery
         newPhotoUrls = [...newPhotoUrls, ...mediaUrls.photos];
@@ -202,24 +224,25 @@ class ArtistService {
     const { data, error } = await supabase
       .from('artist_profiles')
       .update({
+        avatar_url: newAvatarUrl || undefined,
         photo_urls: newPhotoUrls,
         video_url: mediaUrls.video || undefined,
         resume_url: mediaUrls.resume || undefined,
         audio_url: mediaUrls.audio || undefined,
         updated_at: new Date().toISOString()
       })
-      .eq('id', artistId)
+      .eq('id', existingProfile.id)
       .select()
       .single();
 
     if (error) throw new Error(`Failed to update media: ${error.message}`);
     
-    // Update base user avatar if photo_urls[0] exists
-    if (newPhotoUrls.length > 0) {
-      await supabase.from('users').update({ avatar_url: newPhotoUrls[0] })
+    // Update base user avatar
+    if (newAvatarUrl) {
+      await supabase.from('users').update({ avatar_url: newAvatarUrl })
         .eq('id', data.user_id);
     }
-    
+
     return data;
   }
 }

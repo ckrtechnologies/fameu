@@ -13,6 +13,7 @@ import authRoutes from "./src/api/auth/index.js";
 import paymentRoutes from "./src/api/payments/index.js";
 import notificationRoutes from "./src/api/notifications/index.js";
 import chatRoutes from "./src/api/shared/chat/chat.routes.js";
+import connectionRoutes from "./src/api/connections/connections.routes.js";
 import errorHandler from "./src/core/middlewares/errorHandler.js";
 import socketManager from "./src/sockets/socketManager.js";
 import { startCronJobs } from "./src/jobs/index.js";
@@ -57,7 +58,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
-
+app.use('/api/connections', connectionRoutes);
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'FilmApp Backend is running' });

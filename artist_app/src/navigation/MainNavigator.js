@@ -21,6 +21,9 @@ import UpcomingCalendarScreen from '../screens/artist/UpcomingCalendarScreen';
 import WalkInListingsScreen from '../screens/artist/WalkInListingsScreen';
 import DeleteAccountScreen from '../screens/artist/DeleteAccountScreen';
 import ChatScreen from '../screens/artist/ChatScreen';
+import SearchScreen from '../screens/artist/SearchScreen';
+import PublicProfileScreen from '../screens/artist/PublicProfileScreen';
+import ConnectionListScreen from '../screens/artist/ConnectionListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -49,6 +52,9 @@ export default function MainNavigator() {
       <Stack.Screen name="WalkInListings" component={WalkInListingsScreen} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="Search" component={SearchScreen} />
+      <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />
+      <Stack.Screen name="ConnectionList" component={ConnectionListScreen} />
     </Stack.Navigator>
   );
 }

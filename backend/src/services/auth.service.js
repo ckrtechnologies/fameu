@@ -1,6 +1,12 @@
 import supabase from '../config/supabase.js';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class AuthService {
   /**
@@ -75,20 +81,48 @@ class AuthService {
     if (!user) {
       // If user doesn't exist, we create them via Supabase Admin API
       // so they exist in auth.users and the trigger handles public.users
-      const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
+      let authErr = null;
+      let authUser = null;
+
+      const { data: authData, error: createErr } = await supabase.auth.admin.createUser({
         email: identifier.includes('@') ? identifier : undefined,
         phone: !identifier.includes('@') ? identifier : undefined,
         email_confirm: true,
         phone_confirm: true,
       });
 
-      if (authErr) throw new Error(`Failed to create user: ${authErr.message}`);
-      user = authData.user;
+      if (createErr) {
+        if (createErr.message.includes('already registered')) {
+          // Find the user in auth.users
+          const { data: listData } = await supabase.auth.admin.listUsers();
+          const existingUser = listData?.users?.find(u => u.email === identifier || u.phone === identifier.replace('+', ''));
+          
+          if (existingUser) {
+            authUser = existingUser;
+            // Try to recreate their public.users row since it's missing
+            const { data: publicUser, error: insertErr } = await supabase.from('users').insert({
+              id: authUser.id,
+              email: authUser.email,
+              mobile: authUser.phone,
+              role: 'artist' // default role
+            }).select().single();
+            
+            if (insertErr) throw new Error(`Failed to restore public profile: ${insertErr.message}`);
+            user = publicUser;
+          } else {
+            throw new Error(`Failed to create user: ${createErr.message}`);
+          }
+        } else {
+          throw new Error(`Failed to create user: ${createErr.message}`);
+        }
+      } else {
+        authUser = authData.user;
+        // Fetch the public.users row that was just created by the trigger
+        const { data: publicUser } = await supabase.from('users').select('*').eq('id', authUser.id).single();
+        if (publicUser) user = publicUser;
+      }
+
       isNewUser = true;
-      
-      // Fetch the public.users row that was just created by the trigger
-      const { data: publicUser } = await supabase.from('users').select('*').eq('id', user.id).single();
-      if (publicUser) user = publicUser;
     }
 
     // 5. Generate JWT for the Express API
@@ -141,11 +175,59 @@ class AuthService {
   }
 
   async deleteAccount(userId) {
-    // Deleting the user from Supabase Auth will cascade delete their profile in public.users
-    const { error } = await supabase.auth.admin.deleteUser(userId);
-    if (error) {
-      throw new Error(`Failed to delete account: ${error.message}`);
+    // 1. Fetch user's profiles to get media URLs
+    const { data: artistProfile } = await supabase
+      .from('artist_profiles')
+      .select('avatar_url, photo_urls, video_url, resume_url, audio_url')
+      .eq('user_id', userId)
+      .single();
+
+    const { data: hiringProfile } = await supabase
+      .from('hiring_profiles')
+      .select('logo_url')
+      .eq('user_id', userId)
+      .single();
+
+    const filesToDelete = [];
+    
+    if (artistProfile) {
+      if (artistProfile.avatar_url) filesToDelete.push({ url: artistProfile.avatar_url, type: 'artist' });
+      if (artistProfile.photo_urls && Array.isArray(artistProfile.photo_urls)) {
+        artistProfile.photo_urls.forEach(url => filesToDelete.push({ url, type: 'artist' }));
+      }
+      if (artistProfile.video_url) filesToDelete.push({ url: artistProfile.video_url, type: 'artist' });
+      if (artistProfile.resume_url) filesToDelete.push({ url: artistProfile.resume_url, type: 'artist' });
+      if (artistProfile.audio_url) filesToDelete.push({ url: artistProfile.audio_url, type: 'artist' });
     }
+    
+    if (hiringProfile) {
+      if (hiringProfile.logo_url) filesToDelete.push({ url: hiringProfile.logo_url, type: 'company' });
+    }
+
+    // 2. Try deleting the user from Supabase Auth (cascades to public.users)
+    const { error } = await supabase.auth.admin.deleteUser(userId);
+    
+    // Fallback: manually delete from public.users if auth deletion fails or throws 500 locally
+    const { error: publicError } = await supabase.from('users').delete().eq('id', userId);
+
+    if (error && publicError) {
+      // Both failed
+      throw new Error(`Failed to delete account. Auth Error: ${error.message}. DB Error: ${publicError.message}`);
+    }
+
+    // 3. Delete physical files from disk
+    filesToDelete.forEach(file => {
+      try {
+        const filename = file.url.split('/').pop();
+        const filePath = path.join(__dirname, `../../../uploads/${file.type}`, filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (err) {
+        console.error(`Failed to delete file ${file.url}:`, err);
+      }
+    });
+
     return { success: true };
   }
 }

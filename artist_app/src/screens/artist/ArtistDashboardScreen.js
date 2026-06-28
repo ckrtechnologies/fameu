@@ -69,7 +69,7 @@ export default function ArtistDashboardScreen() {
     if (p.city) score += 10;
     if (p.bio) score += 15;
     if (p.categories && p.categories.length > 0) score += 20;
-    if (p.photo_urls && p.photo_urls.length > 0) score += 20;
+    if (p.avatar_url || (p.photo_urls && p.photo_urls.length > 0)) score += 20;
     if (p.languages && p.languages.length > 0) score += 5;
     if (p.height || p.weight) score += 5;
     return Math.min(100, score);

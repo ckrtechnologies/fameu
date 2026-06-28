@@ -23,7 +23,7 @@ export default function ApplyAuditionScreen() {
     try {
       await applyToAudition({ id: auditionId, cover_note: coverNote }).unwrap();
       Alert.alert('Success', 'Application submitted successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate('Applications') }
+        { text: 'OK', onPress: () => navigation.navigate('MainTabs', { screen: 'Tabs', params: { screen: 'Applications' } }) }
       ]);
     } catch (err) {
       console.error('Apply to audition error:', err);

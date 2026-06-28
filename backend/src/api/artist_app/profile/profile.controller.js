@@ -16,6 +16,15 @@ class ArtistProfileController {
       next(err);
     }
   }
+  async checkUsername(req, res, next) {
+    try {
+      const { username } = req.params;
+      const isAvailable = await artistService.checkUsernameAvailable(username, req.user.id);
+      res.status(200).json({ success: true, data: { available: isAvailable } });
+    } catch (err) {
+      next(err);
+    }
+  }
 
   async upsertProfile(req, res, next) {
     try {
@@ -50,10 +59,8 @@ class ArtistProfileController {
    */
   async uploadMedia(req, res, next) {
     try {
-      const { artistId, replaceAvatar } = req.body;
-      if (!artistId) {
-        return res.status(400).json({ success: false, error: 'artistId is required' });
-      }
+      const { replaceAvatar } = req.body;
+      const userId = req.user.id;
 
       const baseUrl = `${req.protocol}://${req.get('host')}/uploads/artist/`;
       const mediaUrls = { photos: [] };
@@ -75,7 +82,7 @@ class ArtistProfileController {
       }
 
       const isReplace = replaceAvatar === 'true' || replaceAvatar === true;
-      const result = await artistService.updateMediaUrls(artistId, mediaUrls, isReplace);
+      const result = await artistService.updateMediaUrls(userId, mediaUrls, isReplace);
       res.status(200).json({ success: true, data: result, message: 'Media uploaded successfully' });
     } catch (err) {
       next(err);

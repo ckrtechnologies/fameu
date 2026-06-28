@@ -22,7 +22,6 @@ export default function OtpScreen() {
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(30);
   const [localDevOtp, setLocalDevOtp] = useState(devOtpFromRoute);
-  const [showDevModal, setShowDevModal] = useState(!!devOtpFromRoute);
   const inputRef = useRef(null);
 
   const [verifyOtp, { isLoading: isVerifying }] = useVerifyOtpMutation();
@@ -34,8 +33,26 @@ export default function OtpScreen() {
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
+
+    if (devOtpFromRoute) {
+      // Small delay ensures the alert shows after navigation transition
+      setTimeout(() => {
+        Alert.alert(
+          'DEV MODE OTP',
+          `Your OTP is ${devOtpFromRoute}`,
+          [
+            { text: 'Dismiss', style: 'cancel' },
+            { 
+              text: 'Auto-fill', 
+              onPress: () => setOtp(devOtpFromRoute.toString()) 
+            }
+          ]
+        );
+      }, 500);
+    }
+
     return () => clearInterval(interval);
-  }, []);
+  }, [devOtpFromRoute]);
 
   const handleVerify = async () => {
     if (otp.length !== OTP_LENGTH) return;
@@ -69,7 +86,16 @@ export default function OtpScreen() {
       const response = await sendOtp({ identifier }).unwrap();
       if (response?.data?.devOtp) {
         setLocalDevOtp(response.data.devOtp);
-        setShowDevModal(true);
+        setTimeout(() => {
+          Alert.alert(
+            'DEV MODE OTP',
+            `Your OTP is ${response.data.devOtp}`,
+            [
+              { text: 'Dismiss', style: 'cancel' },
+              { text: 'Auto-fill', onPress: () => setOtp(response.data.devOtp.toString()) }
+            ]
+          );
+        }, 500);
       }
       setTimer(30);
       setOtp('');
@@ -145,27 +171,7 @@ export default function OtpScreen() {
       </View>
 
       {/* DEV MODE OTP MODAL */}
-      <Modal
-        visible={showDevModal}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>DEV MODE</Text>
-            <Text style={styles.modalBody}>
-              Your OTP is <Text style={styles.modalHighlight}>{localDevOtp}</Text>
-            </Text>
-            <CustomButton 
-              title="Auto-fill & Close" 
-              onPress={() => {
-                if (localDevOtp) setOtp(localDevOtp.toString());
-                setShowDevModal(false);
-              }} 
-            />
-          </View>
-        </View>
-      </Modal>
+
 
     </KeyboardAvoidingView>
   );

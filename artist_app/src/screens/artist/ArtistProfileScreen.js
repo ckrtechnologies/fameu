@@ -31,13 +31,14 @@ export default function ArtistProfileScreen() {
   };
 
   const fullName = profile?.full_name || user?.full_name || 'Artist';
-  // Use a display name for the header (like instagram username)
-  const username = (user?.full_name || 'artist').toLowerCase().replace(/\s+/g, '_');
-  const avatarUrl = profile?.photo_urls?.[0] || user?.avatar_url || 'https://via.placeholder.com/150';
+  const username = profile?.users?.username || 'user';
+  const avatarUrl = profile?.avatar_url || user?.avatar_url || 'https://via.placeholder.com/150';
   const bio = profile?.bio || 'Add a bio to let casting directors know more about you.';
   const portfolio = profile?.photo_urls || [];
   
   const stats = profile?.stats || { applications: 0, callbacks: 0, views: 0 };
+  const followersCount = profile?.users?.followers_count || 0;
+  const followingCount = profile?.users?.following_count || 0;
   const is404 = isError && error?.status === 404;
   const categories = profile?.categories || [];
   const tabs = ['Overview', ...categories];
@@ -98,24 +99,34 @@ export default function ArtistProfileScreen() {
             <Image source={{ uri: avatarUrl }} style={styles.avatarInsta} />
           </TouchableOpacity>
           <View style={styles.statsContainerInsta}>
-            <View style={styles.statBoxInsta}>
+            <TouchableOpacity 
+              style={styles.statBoxInsta}
+              onPress={() => navigation.navigate('Applications')}
+            >
               <Text style={styles.statNumberInsta}>{stats.applications}</Text>
               <Text style={styles.statLabelInsta}>Applied</Text>
-            </View>
-            <View style={styles.statBoxInsta}>
-              <Text style={styles.statNumberInsta}>{stats.callbacks}</Text>
-              <Text style={styles.statLabelInsta}>Callbacks</Text>
-            </View>
-            <View style={styles.statBoxInsta}>
-              <Text style={styles.statNumberInsta}>{stats.views}</Text>
-              <Text style={styles.statLabelInsta}>Views</Text>
-            </View>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.statBoxInsta}
+              onPress={() => profile?.user_id && navigation.navigate('ConnectionList', { type: 'followers', userId: profile.user_id })}
+            >
+              <Text style={styles.statNumberInsta}>{followersCount}</Text>
+              <Text style={styles.statLabelInsta}>Followers</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.statBoxInsta}
+              onPress={() => profile?.user_id && navigation.navigate('ConnectionList', { type: 'following', userId: profile.user_id })}
+            >
+              <Text style={styles.statNumberInsta}>{followingCount}</Text>
+              <Text style={styles.statLabelInsta}>Following</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Bio Section */}
         <View style={styles.bioSection}>
           <Text style={styles.fullNameInsta}>{fullName}</Text>
+          <Text style={{ ...typography.body, color: colors.textSecondaryLight, marginBottom: 4 }}>@{username}</Text>
           {categories.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4, marginTop: 2 }}>
               {categories.map((cat, i) => (

@@ -31,6 +31,9 @@ export const profileApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Profile'],
     }),
+    checkUsername: builder.query({
+      query: (username) => `/artist_app/profile/check-username/${username}`,
+    }),
   }),
 });
 
@@ -39,4 +42,5 @@ export const {
   useUpsertProfileMutation,
   useUpdateCategoryMutation,
   useUploadMediaMutation,
+  useLazyCheckUsernameQuery,
 } = profileApi;
