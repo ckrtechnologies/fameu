@@ -1,4 +1,10 @@
 import supabase from '../config/supabase.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class ArtistService {
   
@@ -13,23 +19,22 @@ class ArtistService {
       .eq('user_id', userId)
       .single();
 
-    const payload = {
-      user_id: userId,
-      full_name: profileData.full_name,
-      categories: profileData.categories,
-      age: profileData.age,
-      gender: profileData.gender,
-      height: profileData.height,
-      weight: profileData.weight,
-      city: profileData.city,
-      bio: profileData.bio,
-      experience: profileData.experience,
-      languages: profileData.languages,
-      skills: profileData.skills,
-      social_links: profileData.social_links,
-      travel_available: profileData.travel_available,
-      updated_at: new Date().toISOString()
-    };
+    const allowedFields = [
+      'full_name', 'categories', 'age', 'gender', 'height', 'weight', 
+      'city', 'bio', 'experience', 'languages', 'skills', 'social_links', 
+      'travel_available', 'photo_urls', 'video_url'
+    ];
+    
+    const payload = { updated_at: new Date().toISOString() };
+    if (!existing) {
+      payload.user_id = userId;
+    }
+
+    allowedFields.forEach(field => {
+      if (profileData[field] !== undefined) {
+        payload[field] = profileData[field];
+      }
+    });
 
     if (existing) {
       // Update
@@ -131,23 +136,76 @@ class ArtistService {
       }));
     }
 
+    // Compute basic stats
+    let applicationsCount = 0;
+    let callbacksCount = 0;
+    
+    const { data: apps } = await supabase
+      .from('applications')
+      .select('status')
+      .eq('artist_id', profile.id);
+      
+    if (apps) {
+      applicationsCount = apps.length;
+      callbacksCount = apps.filter(a => a.status === 'accepted').length;
+    }
+
     return {
       ...profile,
-      category_details: categoryDetails
+      category_details: categoryDetails,
+      stats: {
+        applications: applicationsCount,
+        callbacks: callbacksCount,
+        views: 0 // Placeholder for future views tracking
+      }
     };
   }
 
   /**
    * Upload media URLs (After Multer saves them)
    */
-  async updateMediaUrls(artistId, mediaUrls) {
+  async updateMediaUrls(artistId, mediaUrls, replaceAvatar = false) {
+    // Get existing profile to handle photo appending and file deletion
+    const { data: existingProfile } = await supabase
+      .from('artist_profiles')
+      .select('photo_urls')
+      .eq('id', artistId)
+      .single();
+
+    let newPhotoUrls = existingProfile?.photo_urls || [];
+
+    if (mediaUrls.photos && mediaUrls.photos.length > 0) {
+      if (replaceAvatar) {
+        // Delete old avatar from disk if it exists
+        if (newPhotoUrls.length > 0) {
+          const oldAvatarUrl = newPhotoUrls[0];
+          try {
+            const filename = oldAvatarUrl.split('/').pop();
+            const filePath = path.join(__dirname, '../../../uploads/artist', filename);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          } catch (e) {
+            console.error('Failed to delete old avatar:', e);
+          }
+          // Replace first element
+          newPhotoUrls[0] = mediaUrls.photos[0];
+        } else {
+          newPhotoUrls.unshift(mediaUrls.photos[0]);
+        }
+      } else {
+        // Append all new photos to the gallery
+        newPhotoUrls = [...newPhotoUrls, ...mediaUrls.photos];
+      }
+    }
+
     const { data, error } = await supabase
       .from('artist_profiles')
       .update({
-        photo_urls: mediaUrls.photos,
-        video_url: mediaUrls.video,
-        resume_url: mediaUrls.resume,
-        audio_url: mediaUrls.audio,
+        photo_urls: newPhotoUrls,
+        video_url: mediaUrls.video || undefined,
+        resume_url: mediaUrls.resume || undefined,
+        audio_url: mediaUrls.audio || undefined,
         updated_at: new Date().toISOString()
       })
       .eq('id', artistId)
@@ -157,8 +215,8 @@ class ArtistService {
     if (error) throw new Error(`Failed to update media: ${error.message}`);
     
     // Update base user avatar if photo_urls[0] exists
-    if (mediaUrls.photos && mediaUrls.photos.length > 0) {
-      await supabase.from('users').update({ avatar_url: mediaUrls.photos[0] })
+    if (newPhotoUrls.length > 0) {
+      await supabase.from('users').update({ avatar_url: newPhotoUrls[0] })
         .eq('id', data.user_id);
     }
     

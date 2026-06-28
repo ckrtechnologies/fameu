@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography } from '../../theme/theme';
-import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation } from '../../services/profileApi';
+import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation } from '../../services/profileApi';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { FIELD_CONFIGS } from './ArtistFormScreen';
 
 export default function EditProfileScreen() {
@@ -13,9 +14,43 @@ export default function EditProfileScreen() {
   const { data: profileResponse, isLoading: isFetching } = useGetProfileQuery();
   const [upsertProfile, { isLoading: isSaving }] = useUpsertProfileMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
+  const [uploadMedia, { isLoading: isUploadingMedia }] = useUploadMediaMutation();
 
   const [activeTab, setActiveTab] = useState('Basic Info');
-  
+
+  const [showTalentModal, setShowTalentModal] = useState(false);
+
+  const handleImageUpload = async (res) => {
+
+    if (res.didCancel) return;
+    if (res.errorMessage) {
+      Alert.alert('Camera Error', res.errorMessage);
+      return;
+    }
+    if (!res.assets?.length) return;
+
+    const artistId = profileResponse?.data?.id;
+    if (!artistId) return Alert.alert('Error', 'Profile not found.');
+
+    const formData = new FormData();
+    formData.append('artistId', artistId);
+    formData.append('replaceAvatar', 'true');
+    formData.append('photos', {
+      uri: res.assets[0].uri,
+      type: res.assets[0].type || 'image/jpeg',
+      name: res.assets[0].fileName || `avatar_${Date.now()}.jpg`,
+    });
+
+    try {
+      await uploadMedia(formData).unwrap();
+      Alert.alert('Success', 'Profile photo updated!');
+    } catch (error) {
+      console.error('Upload photo error:', error);
+      const errMsg = error?.data?.error || error?.message || 'Failed to upload photo';
+      Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+    }
+  };
+
   const [formData, setFormData] = useState({
     full_name: '',
     age: '',
@@ -39,7 +74,7 @@ export default function EditProfileScreen() {
   useEffect(() => {
     if (route.params?.updatedCategories) {
       setCategories(route.params.updatedCategories);
-      
+
       setCategoryFormData(prev => {
         const next = { ...prev };
         let changed = false;
@@ -62,7 +97,7 @@ export default function EditProfileScreen() {
         setCategories(profileResponse.data.categories || []);
       }
       isInitialized.current = true;
-      
+
       const p = profileResponse.data;
       setFormData({
         full_name: p.full_name || '',
@@ -105,7 +140,7 @@ export default function EditProfileScreen() {
         age: formData.age ? parseInt(formData.age, 10) : null,
         languages: formData.languages ? formData.languages.split(',').map(s => s.trim()).filter(s => s) : [],
       };
-      
+
       const basicInfoPromise = upsertProfile(payload).unwrap();
 
       // 2. Save all Category Data
@@ -122,7 +157,7 @@ export default function EditProfileScreen() {
         const fields = FIELD_CONFIGS[cat] || [];
         const currentData = categoryFormData[cat] || {};
         const processedData = { ...currentData };
-        
+
         fields.forEach(f => {
           if (f.isArray && processedData[f.key] && typeof processedData[f.key] === 'string') {
             processedData[f.key] = processedData[f.key].split(',').map(s => s.trim()).filter(s => s);
@@ -156,7 +191,9 @@ export default function EditProfileScreen() {
         }],
       });
     } catch (error) {
-      Alert.alert('Error', error?.data?.error || 'Failed to save profile');
+      console.error('Save profile error:', error);
+      const errMsg = error?.data?.error || error?.message || 'Failed to save profile';
+      Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   };
 
@@ -183,8 +220,8 @@ export default function EditProfileScreen() {
       <View style={styles.tabsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
           {tabs.map(tab => (
-            <TouchableOpacity 
-              key={tab} 
+            <TouchableOpacity
+              key={tab}
               style={[styles.tab, activeTab === tab && styles.tabActive]}
               onPress={() => setActiveTab(tab)}
             >
@@ -195,23 +232,99 @@ export default function EditProfileScreen() {
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        
+
         {activeTab === 'Basic Info' ? (
           <>
             <View style={{ marginBottom: 24 }}>
-               <TouchableOpacity 
-                 style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary + '15', padding: 16, borderRadius: 12 }}
-                 onPress={() => navigation.navigate('ArtistCategory', { isEditing: true, currentCategories: categories })}
-               >
-                 <Icon name="color-palette-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
-                 <View style={{ flex: 1 }}>
-                   <Text style={{ ...typography.h3, color: colors.primary }}>Manage Talents</Text>
-                   <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 4 }}>
-                     {categories.join(', ') || 'Select your talent categories'}
-                   </Text>
-                 </View>
-                 <Icon name="chevron-forward" size={20} color={colors.primary} />
-               </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary + '15', padding: 16, borderRadius: 12 }}
+                onPress={() => navigation.navigate('ArtistCategory', {
+                  isEditing: true,
+                  currentCategories: categories,
+                  onCategoriesUpdated: (newCategories) => {
+                    setCategories(newCategories);
+                    // Also wipe local form data for removed categories
+                    setCategoryFormData(prev => {
+                      const next = { ...prev };
+                      let changed = false;
+                      Object.keys(next).forEach(cat => {
+                        if (!newCategories.includes(cat)) {
+                          delete next[cat];
+                          changed = true;
+                        }
+                      });
+                      return changed ? next : prev;
+                    });
+                  }
+                })}
+              >
+                <Icon name="color-palette-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ ...typography.h3, color: colors.primary }}>Manage Talents</Text>
+                  <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 4 }}>
+                    {categories.join(', ') || 'Select your talent categories'}
+                  </Text>
+                </View>
+                <Icon name="chevron-forward" size={20} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ alignItems: 'center', marginVertical: 24 }}>
+              <TouchableOpacity
+                style={styles.avatarContainer}
+                onPress={() => {
+                  Alert.alert(
+                    'Update Profile Photo',
+                    'Choose an option to upload your photo',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Take Photo',
+                        onPress: async () => {
+                          if (Platform.OS === 'android') {
+                            try {
+                              const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+                              if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                                launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8 }, handleImageUpload);
+                              } else {
+                                Alert.alert("Error", "Camera permission denied");
+                              }
+                            } catch (err) {
+                              console.warn(err);
+                            }
+                          } else {
+                            launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8 }, handleImageUpload);
+                          }
+                        }
+                      },
+                      {
+                        text: 'Choose from Gallery',
+                        onPress: () => {
+                          launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8 }, handleImageUpload);
+                        }
+                      }
+                    ]
+                  );
+                }}
+              >
+                {profileResponse?.data?.photo_urls && profileResponse.data.photo_urls.length > 0 ? (
+                  <Image source={{ uri: profileResponse.data.photo_urls[0] }} style={styles.avatarImage} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Icon name="person" size={60} color={colors.borderLight} />
+                  </View>
+                )}
+                <View style={styles.avatarEditIcon}>
+                  {isUploadingMedia ? (
+                    <ActivityIndicator size="small" color={colors.backgroundLight} />
+                  ) : (
+                    <Icon name="camera" size={16} color={colors.backgroundLight} />
+                  )}
+                </View>
+              </TouchableOpacity>
+              <Text style={{ ...typography.caption, color: colors.textSecondaryLight, marginTop: 12 }}>
+                Tap to change profile photo
+              </Text>
             </View>
 
             <View style={styles.inputGroup}>
@@ -318,9 +431,9 @@ export default function EditProfileScreen() {
                   placeholderTextColor={colors.textMutedLight}
                   multiline={field.multiline}
                   value={categoryFormData[activeTab]?.[field.key] || ''}
-                  onChangeText={(text) => setCategoryFormData(prev => ({ 
-                    ...prev, 
-                    [activeTab]: { ...(prev[activeTab] || {}), [field.key]: text } 
+                  onChangeText={(text) => setCategoryFormData(prev => ({
+                    ...prev,
+                    [activeTab]: { ...(prev[activeTab] || {}), [field.key]: text }
                   }))}
                 />
               </View>
@@ -330,8 +443,8 @@ export default function EditProfileScreen() {
 
       </ScrollView>
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]} 
+        <TouchableOpacity
+          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={isLoading}
         >
@@ -448,7 +561,48 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   saveButtonText: {
-    ...typography.h3,
+    ...typography.h4,
     color: colors.backgroundLight,
+  },
+  avatarContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.surfaceLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.backgroundMain,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.borderLight,
+  },
+  avatarImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  avatarEditIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.backgroundLight,
   }
 });

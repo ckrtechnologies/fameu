@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../theme/theme';
@@ -14,6 +14,16 @@ export default function MyApplicationsScreen() {
 
   const { data: applications = [], isLoading, isError, refetch } = useGetMyApplicationsQuery();
 
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleAuditionPress = (item) => {
     navigation.navigate('ApplicationDetail', { application: item });
   };
@@ -26,8 +36,9 @@ export default function MyApplicationsScreen() {
   );
 
   // Filter applications based on active tab
-  const filteredApps = Array.isArray(applications) 
-    ? applications.filter(app => (app.status || 'Pending').toLowerCase() === activeTab.toLowerCase())
+  const appsList = applications?.data || applications || [];
+  const filteredApps = Array.isArray(appsList) 
+    ? appsList.filter(app => (app.status || 'Pending').toLowerCase() === activeTab.toLowerCase())
     : [];
 
   return (
@@ -70,6 +81,9 @@ export default function MyApplicationsScreen() {
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+            }
             ListEmptyComponent={renderEmptyState}
             renderItem={({ item }) => (
               <View style={styles.cardWrapper}>

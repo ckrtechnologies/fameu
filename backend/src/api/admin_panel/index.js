@@ -220,12 +220,22 @@ router.delete('/blacklist/user/:userId', async (req, res) => {
 // Applications
 router.get('/applications', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('applications')
-      .select('*, artist:users(display_name, email, mobile), audition:auditions(title, category)')
+      .select('*, artist:artist_profiles(full_name, user:users(display_name, email, mobile)), audition:auditions(title, category)')
       .order('created_at', { ascending: false });
     
     if (error) throw error;
+    
+    const data = rawData.map(app => ({
+      ...app,
+      artist: {
+        display_name: app.artist?.full_name || app.artist?.user?.display_name || 'N/A',
+        email: app.artist?.user?.email || 'N/A',
+        mobile: app.artist?.user?.mobile || 'N/A'
+      }
+    }));
+    
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

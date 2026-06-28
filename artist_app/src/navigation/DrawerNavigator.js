@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,6 +9,7 @@ import { colors, typography, spacing } from '../theme/theme';
 import { logout } from '../store/slices/authSlice';
 import { apiSlice } from '../services/apiSlice';
 import { useDeleteAccountMutation } from '../services/authApi';
+import { useGetProfileQuery } from '../services/profileApi';
 
 const Drawer = createDrawerNavigator();
 
@@ -16,7 +17,12 @@ function CustomDrawerContent(props) {
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
   const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
-  const username = (user?.full_name || 'Artist').toLowerCase().replace(/\s+/g, '_');
+  const { data: profileResponse } = useGetProfileQuery();
+  const profile = profileResponse?.data;
+  
+  const fullName = profile?.full_name || user?.full_name || 'Artist';
+  const username = fullName;
+  const avatarUrl = profile?.photo_urls?.[0] || user?.avatar_url || null;
 
   const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
@@ -58,26 +64,23 @@ function CustomDrawerContent(props) {
   return (
     <DrawerContentScrollView {...props} style={styles.drawerContainer}>
       <View style={styles.drawerHeader}>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.drawerAvatar} />
+        ) : (
+          <View style={styles.drawerAvatarPlaceholder}>
+            <Icon name="person" size={32} color={colors.textMutedLight} />
+          </View>
+        )}
         <Text style={styles.drawerUsername}>{username}</Text>
         <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 4 }}>
-          {user?.mobile || user?.phone || user?.email || 'No phone number'}
+          {user?.mobile || user?.phone || user?.email || 'No contact info'}
         </Text>
       </View>
       
       <ScrollView>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('ArtistSettings')}>
-          <Icon name="settings-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Settings</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('EditProfile')}>
           <Icon name="person-circle-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Edit Profile</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Notifications')}>
-          <Icon name="notifications-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Notifications</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('PhotoGallery')}>
@@ -93,6 +96,16 @@ function CustomDrawerContent(props) {
         <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Verification')}>
           <Icon name="shield-checkmark-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Get Verified</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Notifications')}>
+          <Icon name="notifications-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>Notifications</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('ArtistSettings')}>
+          <Icon name="settings-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>Settings</Text>
         </TouchableOpacity>
         
         <View style={styles.drawerDivider} />
@@ -140,6 +153,21 @@ const styles = StyleSheet.create({
     paddingTop: spacing.m,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderLight,
+    marginBottom: spacing.m,
+  },
+  drawerAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginBottom: spacing.m,
+  },
+  drawerAvatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.borderLight,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: spacing.m,
   },
   drawerUsername: {

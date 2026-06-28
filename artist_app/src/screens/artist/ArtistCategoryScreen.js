@@ -65,12 +65,10 @@ export default function ArtistCategoryScreen() {
     }
     
     if (route.params?.isEditing) {
-      // Just pass back to EditProfileScreen without saving to DB yet
-      navigation.navigate({
-        name: 'EditProfile',
-        params: { updatedCategories: selectedCategories },
-        merge: true,
-      });
+      if (route.params?.onCategoriesUpdated) {
+        route.params.onCategoriesUpdated(selectedCategories);
+      }
+      navigation.goBack();
     } else {
       try {
         const response = await upsertProfile({ categories: selectedCategories }).unwrap();
@@ -78,7 +76,9 @@ export default function ArtistCategoryScreen() {
           navigation.navigate('ArtistForm', { categories: selectedCategories });
         }
       } catch (error) {
-        Alert.alert('Error', error?.data?.error || 'Failed to update categories');
+        console.error('Update categories error:', error);
+        const errMsg = error?.data?.error || error?.message || 'Failed to update categories';
+        Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
       }
     }
   };
@@ -90,11 +90,10 @@ export default function ArtistCategoryScreen() {
           style={styles.backButton} 
           onPress={() => {
             if (route.params?.isEditing) {
-              navigation.navigate({
-                name: 'EditProfile',
-                params: { updatedCategories: selectedCategories },
-                merge: true,
-              });
+              if (route.params?.onCategoriesUpdated) {
+                route.params.onCategoriesUpdated(selectedCategories);
+              }
+              navigation.goBack();
             } else {
               navigation.goBack();
             }

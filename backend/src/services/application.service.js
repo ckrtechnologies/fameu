@@ -4,7 +4,7 @@ class ApplicationService {
   /**
    * Artist applies to an audition
    */
-  async applyToAudition(artistId, auditionId, applicationData) {
+  async applyToAudition(userId, auditionId, applicationData) {
     // 1. Verify audition exists and is active
     const { data: audition } = await supabase
       .from('auditions')
@@ -16,9 +16,20 @@ class ApplicationService {
       throw new Error('Audition is closed or does not exist');
     }
 
-    // 2. Insert application
+    // 2. Fetch the artist profile ID using the userId
+    const { data: profile } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+      
+    if (!profile) {
+      throw new Error('Artist profile not found');
+    }
+
+    // 3. Insert application
     const payload = {
-      artist_id: artistId,
+      artist_id: profile.id,
       audition_id: auditionId,
       cover_note: applicationData.cover_note,
       selected_video: applicationData.selected_video,
@@ -42,11 +53,21 @@ class ApplicationService {
   /**
    * Get applications submitted by an artist (for Artist App)
    */
-  async getArtistApplications(artistId) {
+  async getArtistApplications(userId) {
+    const { data: profile } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+      
+    if (!profile) {
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('applications')
       .select('*, auditions(title, venue_address, audition_date, hiring_profiles(company_name, logo_url))')
-      .eq('artist_id', artistId)
+      .eq('artist_id', profile.id)
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch applications: ${error.message}`);

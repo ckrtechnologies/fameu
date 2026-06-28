@@ -11,7 +11,7 @@ export default function ApplicationDetailScreen() {
   const navigation = useNavigation();
   const { application } = route.params;
 
-  const audition = application.audition || application;
+  const audition = application.auditions || application;
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -69,7 +69,7 @@ export default function ApplicationDetailScreen() {
           <Text style={styles.subtitle}>{audition.hiring_profiles?.company_name || 'Production House'}</Text>
           <CustomButton 
             title="View Full Audition" 
-            onPress={() => navigation.navigate('AuditionDetail', { id: audition.id || audition.audition_id })}
+            onPress={() => navigation.navigate('AuditionDetail', { id: application.audition_id })}
             variant="outline"
             style={{ marginTop: spacing.m }}
           />

@@ -12,21 +12,38 @@ export default function ArtistDashboardScreen() {
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
   
-  const { data: feedData, isLoading, isError, refetch: refetchFeed } = useGetFeedQuery();
-  const { data: liveData, isLoading: isLoadingLive, isError: isErrorLive, refetch: refetchLive } = useGetFeedQuery({ is_live: true });
   const { data: profileResponse, refetch: refetchProfile } = useGetProfileQuery();
+  const profile = profileResponse?.data;
+  
+  // Extract categories for feed filtering.
+  // We use the first category as the primary filter for now, or fall back to a reasonable default if none exists.
+  const categories = profile?.categories || [];
+  const primaryCategory = categories.length > 0 ? categories[0] : null;
+  
+  // Build query params for feed
+  const feedParams = primaryCategory ? { category: primaryCategory } : {};
+  const { data: feedData, isLoading, isError, refetch: refetchFeed } = useGetFeedQuery(feedParams);
+  const { data: liveData, isLoading: isLoadingLive, isError: isErrorLive, refetch: refetchLive } = useGetFeedQuery({ ...feedParams, is_live: true });
 
-  const handleRefresh = React.useCallback(() => {
-    refetchFeed();
-    refetchLive();
-    refetchProfile();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const handleRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchFeed(),
+        refetchLive(),
+        refetchProfile()
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
   }, [refetchFeed, refetchLive, refetchProfile]);
 
   const handleAuditionPress = (id) => {
     navigation.navigate('AuditionDetail', { id });
   };
 
-  const profile = profileResponse?.data;
   const name = profile?.full_name || user?.display_name || user?.full_name || user?.email?.split('@')[0] || 'Artist';
 
   if (isLoading || isLoadingLive) {
@@ -53,7 +70,7 @@ export default function ArtistDashboardScreen() {
     if (p.bio) score += 15;
     if (p.categories && p.categories.length > 0) score += 20;
     if (p.photo_urls && p.photo_urls.length > 0) score += 20;
-    if (p.experience) score += 5;
+    if (p.languages && p.languages.length > 0) score += 5;
     if (p.height || p.weight) score += 5;
     return Math.min(100, score);
   };
@@ -66,7 +83,7 @@ export default function ArtistDashboardScreen() {
         style={styles.container} 
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isLoading || isLoadingLive} onRefresh={handleRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }
       >
         <View style={styles.header}>
@@ -75,20 +92,22 @@ export default function ArtistDashboardScreen() {
         </View>
 
         {/* Profile Status Banner */}
-        <TouchableOpacity 
-          style={styles.profileBanner} 
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('EditProfile')}
-        >
-          <View style={styles.profileBannerContent}>
-            <Text style={styles.profileBannerTitle}>Profile Setup</Text>
-            <Text style={styles.profileBannerText}>Your profile is {profileCompletePct}% complete. Finish setting it up to get more matches!</Text>
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
+        {profileCompletePct < 100 && (
+          <TouchableOpacity 
+            style={styles.profileBanner} 
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <View style={styles.profileBannerContent}>
+              <Text style={styles.profileBannerTitle}>Profile Setup</Text>
+              <Text style={styles.profileBannerText}>Your profile is {profileCompletePct}% complete. Finish setting it up to get more matches!</Text>
+              <View style={styles.progressBarBg}>
+                <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
+              </View>
+              <Text style={styles.completeNowText}>Complete Now &gt;</Text>
             </View>
-            <Text style={styles.completeNowText}>Complete Now &gt;</Text>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
         {(isError || isErrorLive) && (
           <View style={styles.errorContainer}>

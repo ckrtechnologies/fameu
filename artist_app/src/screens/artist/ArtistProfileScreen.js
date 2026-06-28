@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -18,6 +18,17 @@ export default function ArtistProfileScreen() {
   
   const profile = profileResponse?.data;
   const [activeTab, setActiveTab] = useState('Overview');
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const fullName = profile?.full_name || user?.full_name || 'Artist';
   // Use a display name for the header (like instagram username)
@@ -75,11 +86,17 @@ export default function ArtistProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={[]}>
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
+      >
         
         {/* Instagram Profile Info Row */}
         <View style={styles.profileRow}>
-          <Image source={{ uri: avatarUrl }} style={styles.avatarInsta} />
+          <TouchableOpacity activeOpacity={0.9} onPress={() => setIsImageModalVisible(true)}>
+            <Image source={{ uri: avatarUrl }} style={styles.avatarInsta} />
+          </TouchableOpacity>
           <View style={styles.statsContainerInsta}>
             <View style={styles.statBoxInsta}>
               <Text style={styles.statNumberInsta}>{stats.applications}</Text>
@@ -212,6 +229,16 @@ export default function ArtistProfileScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Full Screen Image Modal */}
+      <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsImageModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
+            <Icon name="close" size={30} color="#fff" />
+          </TouchableOpacity>
+          <Image source={{ uri: avatarUrl }} style={styles.fullScreenImage} resizeMode="contain" />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -355,5 +382,22 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: colors.textMainLight,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeModalBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: 10,
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '80%',
   }
 });

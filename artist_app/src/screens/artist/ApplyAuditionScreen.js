@@ -23,10 +23,12 @@ export default function ApplyAuditionScreen() {
     try {
       await applyToAudition({ id: auditionId, cover_note: coverNote }).unwrap();
       Alert.alert('Success', 'Application submitted successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
+        { text: 'OK', onPress: () => navigation.navigate('Applications') }
       ]);
     } catch (err) {
-      Alert.alert('Error', err?.data?.error || 'Failed to submit application.');
+      console.error('Apply to audition error:', err);
+      const errMsg = err?.data?.error || err?.message || 'Failed to submit application.';
+      Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   };
 
@@ -43,7 +45,8 @@ export default function ApplyAuditionScreen() {
   }
 
   // PPP Check: If profile is completely missing or lacks a category, intercept the flow
-  const profileIsComplete = profile && profile.categories && profile.categories.length > 0;
+  const actualProfile = profile?.data;
+  const profileIsComplete = actualProfile && actualProfile.categories && actualProfile.categories.length > 0;
 
   if (!profileIsComplete) {
     return (

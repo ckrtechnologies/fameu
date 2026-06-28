@@ -33,6 +33,16 @@ export default function AuditionDiscoveryScreen() {
 
   const { data: feedData, isLoading, isError, refetch } = useGetFeedQuery(queryParams);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleAuditionPress = (id) => {
     navigation.navigate('AuditionDetail', { id });
   };
@@ -99,7 +109,7 @@ export default function AuditionDiscoveryScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
             refreshControl={
-              <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
             }
             renderItem={({ item }) => (
               <View style={styles.cardWrapper}>

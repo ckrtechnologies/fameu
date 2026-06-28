@@ -115,12 +115,21 @@ class AuditionService {
   /**
    * Bookmark an audition
    */
-  async toggleBookmark(artistId, auditionId) {
+  async toggleBookmark(userId, auditionId) {
+    const { data: profile } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+      
+    if (!profile) throw new Error('Artist profile not found');
+    const artistProfileId = profile.id;
+
     // Check if exists
     const { data: existing } = await supabase
       .from('bookmarks')
       .select('id')
-      .eq('artist_id', artistId)
+      .eq('artist_id', artistProfileId)
       .eq('audition_id', auditionId)
       .single();
 
@@ -128,7 +137,7 @@ class AuditionService {
       await supabase.from('bookmarks').delete().eq('id', existing.id);
       return { bookmarked: false };
     } else {
-      await supabase.from('bookmarks').insert([{ artist_id: artistId, audition_id: auditionId }]);
+      await supabase.from('bookmarks').insert([{ artist_id: artistProfileId, audition_id: auditionId }]);
       return { bookmarked: true };
     }
   }
@@ -136,10 +145,19 @@ class AuditionService {
   /**
    * Walk-in Check-in
    */
-  async checkInWalkin(artistId, auditionId, lat, lng) {
+  async checkInWalkin(userId, auditionId, lat, lng) {
+    const { data: profile } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+      
+    if (!profile) throw new Error('Artist profile not found');
+    const artistProfileId = profile.id;
+
     const { data, error } = await supabase
       .from('checkins')
-      .insert([{ artist_id: artistId, audition_id: auditionId, lat, lng }])
+      .insert([{ artist_id: artistProfileId, audition_id: auditionId, lat, lng }])
       .select()
       .single();
 

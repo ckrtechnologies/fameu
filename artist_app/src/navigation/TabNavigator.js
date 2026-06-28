@@ -35,8 +35,8 @@ export default function TabNavigator() {
           color: colors.textMainLight,
           fontWeight: '700',
         },
-        headerRight: () => (
-          <TouchableOpacity style={{ marginRight: spacing.xl, padding: 4 }} onPress={() => navigation.openDrawer()}>
+        headerLeft: () => (
+          <TouchableOpacity style={{ marginLeft: spacing.xl, padding: 4 }} onPress={() => navigation.openDrawer()}>
             <Icon name="menu" size={32} color={colors.textMainLight} />
           </TouchableOpacity>
         ),
