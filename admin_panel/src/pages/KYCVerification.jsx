@@ -37,12 +37,11 @@ export default function KYCVerification() {
               <div style={{ flex: 1 }}>
                 <h3 style={{ marginBottom: '8px' }}>{doc.hiring_profiles?.company_name || 'Unknown Company'}</h3>
                 <span className="badge badge-pending" style={{ marginBottom: '16px', display: 'inline-block' }}>{doc.status}</span>
-                
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
-                  <a href={doc.aadhaar_url} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View Aadhaar</a>
-                  <a href={doc.pan_url} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View PAN</a>
-                  <a href={doc.company_reg_url} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View Reg Cert</a>
-                  <a href={doc.gst_url} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View GST</a>
+                  <a href={doc.aadhaar_url?.replace('10.0.2.2', 'localhost')} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View Aadhaar</a>
+                  <a href={doc.pan_url?.replace('10.0.2.2', 'localhost')} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View PAN</a>
+                  <a href={doc.company_reg_url?.replace('10.0.2.2', 'localhost')} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View Reg Cert</a>
+                  <a href={doc.gst_url?.replace('10.0.2.2', 'localhost')} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '8px' }}>View GST</a>
                 </div>
               </div>
 

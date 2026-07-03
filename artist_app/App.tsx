@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import { store } from './src/store/store';
@@ -16,7 +16,11 @@ function App(): React.JSX.Element {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+        <StatusBar 
+          barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
+          translucent={true}
+          backgroundColor="transparent"
+        />
         <NavigationContainer>
           <AppNavigator />
         </NavigationContainer>

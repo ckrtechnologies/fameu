@@ -88,7 +88,8 @@ router.put('/kyc/:id/status', async (req, res) => {
     // Fetch hiring_id to update profile too
     const { data: doc } = await supabase.from('verification_documents').select('hiring_id').eq('id', id).single();
     if (doc) {
-      await supabase.from('hiring_profiles').update({ verification_status: status }).eq('id', doc.hiring_id);
+      const isVerified = status === 'approved';
+      await supabase.from('hiring_profiles').update({ verification_status: status, is_verified: isVerified }).eq('id', doc.hiring_id);
     }
     
     res.json({ success: true });
@@ -111,6 +112,37 @@ router.get('/users', async (req, res) => {
     if (error) throw error;
     
     res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Fetch User Details
+router.get('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get base user
+    const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', id).single();
+    if (userError) throw userError;
+    
+    let profile = null;
+    let documents = [];
+    
+    if (user.role === 'artist') {
+      const { data } = await supabase.from('artist_profiles').select('*').eq('id', id).single();
+      profile = data;
+    } else if (user.role === 'hiring') {
+      const { data } = await supabase.from('hiring_profiles').select('*').eq('id', id).single();
+      profile = data;
+      
+      if (profile) {
+        const { data: docs } = await supabase.from('verification_documents').select('*').eq('hiring_id', profile.id);
+        documents = docs || [];
+      }
+    }
+    
+    res.json({ success: true, data: { ...user, profile, documents } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -155,6 +187,20 @@ router.get('/auditions', async (req, res) => {
 router.put('/auditions/:id/flag', async (req, res) => {
   try {
     const { error } = await supabase.from('auditions').update({ status: 'cancelled' }).eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/auditions/:id/suspend', async (req, res) => {
+  try {
+    // The database only accepts specific statuses (like 'cancelled' or 'active').
+    // Since 'suspended' is not allowed by the check constraint, we use 'cancelled' 
+    // to effectively remove it from active listings.
+    const { error } = await supabase.from('auditions').update({ status: 'cancelled', is_live: false }).eq('id', req.params.id);
+    
     if (error) throw error;
     res.json({ success: true });
   } catch (error) {

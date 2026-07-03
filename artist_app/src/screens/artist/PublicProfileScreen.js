@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl } from 'react-native';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -20,7 +20,7 @@ export default function PublicProfileScreen() {
   const { username } = route.params;
   
   const currentUserId = useSelector((state) => state.auth.user?.id);
-  const { data: profileData, isLoading, isError, refetch } = useGetPublicProfileQuery(username);
+  const { data: profileData, isLoading, isError, refetch , isFetching} = useGetPublicProfileQuery(username)
   
   const [followUser, { isLoading: isFollowingLoad }] = useFollowUserMutation();
   const [unfollowUser, { isLoading: isUnfollowingLoad }] = useUnfollowUserMutation();
@@ -92,7 +92,7 @@ export default function PublicProfileScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
         <View style={styles.profileHeader}>
           {profileData.avatar_url ? (
             <Image source={{ uri: profileData.avatar_url }} style={styles.avatar} />

@@ -1,4 +1,5 @@
 import authService from '../../services/auth.service.js';
+import supabase from '../../config/supabase.js';
 
 class AuthController {
   
@@ -59,7 +60,7 @@ class AuthController {
         return res.status(400).json({ success: false, error: 'Invalid role' });
       }
 
-      const { data, error } = await require('../../config/supabase')
+      const { data, error } = await supabase
         .from('users')
         .update({ role })
         .eq('id', userId)

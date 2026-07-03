@@ -125,7 +125,7 @@ class ArtistService {
     // Get base profile along with user data (followers, username)
     const { data: profile, error } = await supabase
       .from('artist_profiles')
-      .select('*, users!inner(username, followers_count, following_count)')
+      .select('*, users!inner(username, avatar_url, followers_count, following_count)')
       .eq('user_id', userId)
       .single();
 
@@ -178,6 +178,70 @@ class ArtistService {
         applications: applicationsCount,
         callbacks: callbacksCount,
         views: 0 // Placeholder for future views tracking
+      }
+    };
+  }
+
+  /**
+   * Fetch full profile by artist_profiles.id
+   */
+  async getFullProfileByArtistId(artistId) {
+    // Get base profile along with user data
+    const { data: profile, error } = await supabase
+      .from('artist_profiles')
+      .select('*, users!inner(username, avatar_url, followers_count, following_count)')
+      .eq('id', artistId)
+      .single();
+
+    if (error || !profile) return null;
+
+    let categoryDetails = {};
+    
+    if (profile.categories && profile.categories.length > 0) {
+      await Promise.all(profile.categories.map(async (cat) => {
+        let tableName = '';
+        switch (cat.toLowerCase()) {
+          case 'actor': tableName = 'actor_details'; break;
+          case 'singer': tableName = 'singer_details'; break;
+          case 'model': tableName = 'model_details'; break;
+          case 'dancer': tableName = 'dancer_details'; break;
+          case 'technician': tableName = 'technician_details'; break;
+        }
+
+        if (tableName) {
+          const { data: details } = await supabase
+            .from(tableName)
+            .select('*')
+            .eq('artist_id', profile.id)
+            .single();
+          if (details) {
+            categoryDetails[cat.toLowerCase()] = details;
+          }
+        }
+      }));
+    }
+
+    // Compute basic stats
+    let applicationsCount = 0;
+    let callbacksCount = 0;
+    
+    const { data: apps } = await supabase
+      .from('applications')
+      .select('status')
+      .eq('artist_id', profile.id);
+      
+    if (apps) {
+      applicationsCount = apps.length;
+      callbacksCount = apps.filter(a => a.status === 'accepted').length;
+    }
+
+    return {
+      ...profile,
+      category_details: categoryDetails,
+      stats: {
+        applications: applicationsCount,
+        callbacks: callbacksCount,
+        views: 0
       }
     };
   }

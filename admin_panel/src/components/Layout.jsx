@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileCheck, LogOut, Clapperboard, ShieldAlert, Ban, CreditCard, Settings, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, LogOut, Clapperboard, ShieldAlert, Ban, CreditCard, Settings, FileText, Database } from 'lucide-react';
 
 import { Briefcase } from 'lucide-react';
 
@@ -39,6 +39,7 @@ export default function Layout() {
       title: 'Finance & System',
       items: [
         { name: 'Payments', path: '/payments', icon: <CreditCard size={20} /> },
+        { name: 'Professions', path: '/professions', icon: <Database size={20} /> },
         { name: 'CMS Settings', path: '/cms', icon: <Settings size={20} /> },
       ]
     }

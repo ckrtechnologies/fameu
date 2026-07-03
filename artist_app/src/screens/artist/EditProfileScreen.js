@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -11,7 +11,7 @@ import { FIELD_CONFIGS } from './ArtistFormScreen';
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { data: profileResponse, isLoading: isFetching } = useGetProfileQuery();
+  const { data: profileResponse, isLoading: isFetching , refetch} = useGetProfileQuery()
   const [upsertProfile, { isLoading: isSaving }] = useUpsertProfileMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [uploadMedia, { isLoading: isUploadingMedia }] = useUploadMediaMutation();
@@ -231,7 +231,7 @@ export default function EditProfileScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
           {tabs.map(tab => (
             <TouchableOpacity
               key={tab}

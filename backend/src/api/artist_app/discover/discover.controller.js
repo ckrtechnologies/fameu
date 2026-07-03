@@ -22,7 +22,8 @@ class ArtistDiscoverController {
   async getAuditionDetails(req, res, next) {
     try {
       const { id } = req.params;
-      const result = await auditionService.getAuditionDetails(id);
+      const userId = req.user?.id;
+      const result = await auditionService.getAuditionDetails(id, userId);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);

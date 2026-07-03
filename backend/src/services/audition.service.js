@@ -13,7 +13,8 @@ class AuditionService {
       .single();
 
     if (profErr || !profile) throw new Error('Hiring profile not found');
-    if (profile.credits <= 0) throw new Error('Insufficient credits to post an audition');
+    // For MVP testing, bypassing credit checks:
+    // if (profile.credits <= 0) throw new Error('Insufficient credits to post an audition');
 
     // 2. Insert Audition
     const payload = {
@@ -31,7 +32,7 @@ class AuditionService {
     if (error) throw new Error(`Failed to create audition: ${error.message}`);
 
     // 3. Deduct credit (Simple approach for MVP)
-    await supabase.from('hiring_profiles').update({ credits: profile.credits - 1 }).eq('id', hiringId);
+    // await supabase.from('hiring_profiles').update({ credits: profile.credits - 1 }).eq('id', hiringId);
 
     return data;
   }
@@ -53,17 +54,46 @@ class AuditionService {
   }
 
   /**
+   * Delete an audition and its related records
+   */
+  async deleteAudition(hiringId, auditionId) {
+    // Manually delete dependent records to ensure cascade behavior
+    await supabase.from('applications').delete().eq('audition_id', auditionId);
+    await supabase.from('bookmarks').delete().eq('audition_id', auditionId);
+    await supabase.from('checkins').delete().eq('audition_id', auditionId);
+
+    const { data, error } = await supabase
+      .from('auditions')
+      .delete()
+      .eq('id', auditionId)
+      .eq('hiring_id', hiringId)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to delete audition: ${error.message}`);
+    return data;
+  }
+
+  /**
    * Fetch all auditions posted by a specific hiring company
    */
   async getCompanyAuditions(hiringId) {
     const { data, error } = await supabase
       .from('auditions')
-      .select('*')
+      .select('*, applications(count)')
       .eq('hiring_id', hiringId)
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch auditions: ${error.message}`);
-    return data;
+    
+    return data.map(item => {
+      const applicant_count = item.applications?.[0]?.count || 0;
+      delete item.applications;
+      return {
+        ...item,
+        applicant_count
+      };
+    });
   }
 
   /**
@@ -97,19 +127,56 @@ class AuditionService {
   /**
    * Get Single Audition Details (Increment view count)
    */
-  async getAuditionDetails(auditionId) {
+  async getAuditionDetails(auditionId, userId = null) {
     const { data, error } = await supabase
       .from('auditions')
-      .select('*, hiring_profiles(company_name, description, logo_url, is_verified)')
+      .select('*, hiring_profiles(company_name, description, logo_url, is_verified), applications(count)')
       .eq('id', auditionId)
       .single();
 
     if (error) throw new Error('Audition not found');
 
+    let has_applied = false;
+    let is_bookmarked = false;
+
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('artist_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+        
+      if (profile) {
+        const { data: app } = await supabase
+          .from('applications')
+          .select('id')
+          .eq('artist_id', profile.id)
+          .eq('audition_id', auditionId)
+          .limit(1);
+        if (app && app.length > 0) has_applied = true;
+
+        const { data: bookmark } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('artist_id', profile.id)
+          .eq('audition_id', auditionId)
+          .limit(1);
+        if (bookmark && bookmark.length > 0) is_bookmarked = true;
+      }
+    }
+
     // Increment views async (don't await to save latency)
     supabase.rpc('increment_audition_view', { audition_row_id: auditionId }).then(() => {}).catch(() => {});
 
-    return data;
+    const applicant_count = data.applications?.[0]?.count || 0;
+    delete data.applications;
+
+    return {
+      ...data,
+      applicant_count,
+      has_applied,
+      is_bookmarked,
+    };
   }
 
   /**

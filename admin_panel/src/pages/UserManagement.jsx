@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { useGetUsersQuery } from '../store/api/adminEndpoints';
 import DataTable from '../components/DataTable';
+import UserDetailsModal from '../components/UserDetailsModal';
 
 export default function UserManagement({ role = 'all' }) {
   const { data: response, isLoading: loading } = useGetUsersQuery(role);
   const users = response?.data || [];
+  
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const title = role === 'artist' ? 'Artists' : role === 'hiring' ? 'Hiring Partners' : 'All Users';
   const subtitle = `View and manage all registered ${title.toLowerCase()}.`;
@@ -52,19 +56,27 @@ export default function UserManagement({ role = 'all' }) {
   }
 
   return (
-    <DataTable 
-      title={title}
-      subtitle={subtitle}
-      columns={columns}
-      data={users}
-      filterConfig={filterConfig}
-      onView={(row) => console.log('View user:', row.id)}
-      onEdit={(row) => console.log('Edit user:', row.id)}
-      onDelete={(row) => {
-        if(window.confirm(`Are you sure you want to delete ${row.display_name}?`)) {
-          console.log('Delete user:', row.id);
-        }
-      }}
-    />
+    <>
+      <DataTable 
+        title={title}
+        subtitle={subtitle}
+        columns={columns}
+        data={users}
+        filterConfig={filterConfig}
+        onView={(row) => setSelectedUserId(row.id)}
+        onEdit={(row) => console.log('Edit user:', row.id)}
+        onDelete={(row) => {
+          if(window.confirm(`Are you sure you want to delete ${row.display_name}?`)) {
+            console.log('Delete user:', row.id);
+          }
+        }}
+      />
+      {selectedUserId && (
+        <UserDetailsModal 
+          userId={selectedUserId} 
+          onClose={() => setSelectedUserId(null)} 
+        />
+      )}
+    </>
   );
 }

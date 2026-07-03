@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -44,7 +44,7 @@ export default function ArtistFormScreen() {
   const navigation = useNavigation();
   const { categories } = route.params || {};
 
-  const { data: profileResponse } = useGetProfileQuery();
+  const { data: profileResponse , isFetching, refetch} = useGetProfileQuery()
   const artistId = profileResponse?.data?.id;
 
   const [updateCategory, { isLoading }] = useUpdateCategoryMutation();
@@ -125,7 +125,7 @@ export default function ArtistFormScreen() {
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
           {categories.map((cat) => {
             const isActive = activeTab === cat;
             return (

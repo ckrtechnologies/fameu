@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -12,7 +12,7 @@ export default function AuditionDetailScreen() {
   const navigation = useNavigation();
   const { id } = route.params;
 
-  const { data: response, isLoading, isError, refetch } = useGetAuditionDetailsQuery(id);
+  const { data: response, isLoading, isError, refetch , isFetching} = useGetAuditionDetailsQuery(id)
   const audition = response?.data;
   const [toggleBookmark, { isLoading: isBookmarking }] = useToggleBookmarkMutation();
 
@@ -60,7 +60,7 @@ export default function AuditionDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
         {/* Title Section */}
         <View style={styles.section}>
           <View style={styles.tagContainer}>
@@ -137,11 +137,20 @@ export default function AuditionDetailScreen() {
 
       {/* Sticky Bottom Action */}
       <View style={styles.bottomBar}>
-        <CustomButton 
-          title="Apply Now" 
-          onPress={handleApply}
-          style={{ width: '100%' }}
-        />
+        {audition.has_applied ? (
+          <CustomButton 
+            title="Applied" 
+            onPress={() => {}}
+            style={{ width: '100%', backgroundColor: colors.success }}
+            disabled={true}
+          />
+        ) : (
+          <CustomButton 
+            title="Apply Now" 
+            onPress={handleApply}
+            style={{ width: '100%' }}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

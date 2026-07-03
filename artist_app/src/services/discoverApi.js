@@ -19,7 +19,7 @@ export const discoverApi = apiSlice.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Audition'],
+      invalidatesTags: (result, error, { id }) => [{ type: 'Audition', id }, 'Audition'],
     }),
     getMyApplications: builder.query({
       query: () => '/artist_app/discover/my-applications/list',

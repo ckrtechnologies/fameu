@@ -25,6 +25,10 @@ export const adminApi = apiSlice.injectEndpoints({
       query: (role = 'all') => `/admin_panel/users?role=${role}`,
       providesTags: ['User'],
     }),
+    getUserDetails: builder.query({
+      query: (id) => `/admin_panel/users/${id}`,
+      providesTags: (result, error, id) => [{ type: 'User', id }],
+    }),
     blacklistUser: builder.mutation({
       query: (body) => ({
         url: '/admin_panel/blacklist',
@@ -63,6 +67,13 @@ export const adminApi = apiSlice.injectEndpoints({
     flagAudition: builder.mutation({
       query: (id) => ({
         url: `/admin_panel/auditions/${id}/flag`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Audition'],
+    }),
+    suspendAudition: builder.mutation({
+      query: (id) => ({
+        url: `/admin_panel/auditions/${id}/suspend`,
         method: 'PUT',
       }),
       invalidatesTags: ['Audition'],
@@ -122,12 +133,14 @@ export const {
   useVerifySessionQuery,
   useGetAnalyticsQuery,
   useGetUsersQuery,
+  useGetUserDetailsQuery,
   useBlacklistUserMutation,
   useRemoveBlacklistMutation,
   useGetPendingKYCQuery,
   useUpdateKYCStatusMutation,
   useGetAuditionsQuery,
   useFlagAuditionMutation,
+  useSuspendAuditionMutation,
   useDeleteAuditionMutation,
   useGetApplicationsQuery,
   useGetFraudReportsQuery,

@@ -1,13 +1,18 @@
 import auditionService from '../../../services/audition.service.js';
 import applicationService from '../../../services/application.service.js';
+import hiringService from '../../../services/hiring.service.js';
 
 class HiringAuditionController {
   
   async createAudition(req, res, next) {
     try {
       // Hiring Profile ID (company) is required. Assuming hiringId is sent, or fetched via user.
-      const { hiringId, ...auditionData } = req.body;
-      if (!hiringId) return res.status(400).json({ success: false, error: 'hiringId is required' });
+      let { hiringId, ...auditionData } = req.body;
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
 
       const result = await auditionService.createAudition(hiringId, auditionData);
       res.status(201).json({ success: true, data: result });
@@ -19,7 +24,12 @@ class HiringAuditionController {
   async updateAudition(req, res, next) {
     try {
       const { id } = req.params;
-      const { hiringId, ...auditionData } = req.body;
+      let { hiringId, ...auditionData } = req.body;
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
       
       const result = await auditionService.updateAudition(hiringId, id, auditionData);
       res.status(200).json({ success: true, data: result });
@@ -28,10 +38,71 @@ class HiringAuditionController {
     }
   }
 
+  async deleteAudition(req, res, next) {
+    try {
+      const { id } = req.params;
+      const profile = await hiringService.getProfile(req.user.id);
+      if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+      const hiringId = profile.id;
+      
+      const result = await auditionService.deleteAudition(hiringId, id);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getMyAuditions(req, res, next) {
     try {
-      const { hiringId } = req.query;
+      let { hiringId } = req.query;
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
       const result = await auditionService.getCompanyAuditions(hiringId);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getAuditionById(req, res, next) {
+    try {
+      const { id } = req.params;
+      let { hiringId } = req.query;
+      
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
+      
+      const result = await auditionService.getAuditionDetails(id);
+      
+      // Ensure the audition belongs to the authenticated hiring profile
+      if (result && result.hiring_id !== hiringId) {
+         return res.status(403).json({ success: false, error: 'Unauthorized to view this audition' });
+      }
+      
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // ATS: Get all applicants across all auditions
+  async getAllApplicants(req, res, next) {
+    try {
+      let { hiringId } = req.query;
+      
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
+      
+      const result = await applicationService.getAllApplicantsForCompany(hiringId);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -42,7 +113,13 @@ class HiringAuditionController {
   async getApplicants(req, res, next) {
     try {
       const { auditionId } = req.params;
-      const { hiringId } = req.query;
+      let { hiringId } = req.query;
+      
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
       
       const result = await applicationService.getApplicantsForAudition(hiringId, auditionId);
       res.status(200).json({ success: true, data: result });
@@ -55,7 +132,13 @@ class HiringAuditionController {
   async updateApplicationStatus(req, res, next) {
     try {
       const { applicationId } = req.params;
-      const { hiringId, status, interview_date, interview_venue } = req.body;
+      let { hiringId, status, interview_date, interview_venue } = req.body;
+      
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
       
       const result = await applicationService.updateApplicationStatus(hiringId, applicationId, {
         status, interview_date, interview_venue

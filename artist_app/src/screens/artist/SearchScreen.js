@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -74,6 +74,7 @@ export default function SearchScreen() {
         <FlatList
           data={searchQuery.length >= 2 ? (searchResults?.data || []) : []}
           keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={() => triggerSearch(searchQuery)} tintColor={colors.primary} />}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={

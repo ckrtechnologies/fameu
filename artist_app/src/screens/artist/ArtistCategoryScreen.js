@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Dimensions, ScrollView , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -20,7 +20,7 @@ const CARD_WIDTH = (width - 48) / 2;
 export default function ArtistCategoryScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { data: profileResponse } = useGetProfileQuery();
+  const { data: profileResponse , isFetching, refetch} = useGetProfileQuery()
   const [upsertProfile, { isLoading }] = useUpsertProfileMutation();
   const [selectedCategories, setSelectedCategories] = useState([]);
 
@@ -102,7 +102,7 @@ export default function ArtistCategoryScreen() {
           <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
       </View>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
         <Text style={styles.title}>What are your talents?</Text>
         <Text style={styles.subtitle}>Select all categories that apply to help us customize your profile.</Text>
         

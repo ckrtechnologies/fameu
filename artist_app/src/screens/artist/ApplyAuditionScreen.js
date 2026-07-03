@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -16,7 +16,7 @@ export default function ApplyAuditionScreen() {
 
   const [coverNote, setCoverNote] = useState('');
   
-  const { data: profile, isLoading: isProfileLoading } = useGetProfileQuery();
+  const { data: profile, isLoading: isProfileLoading , isFetching, refetch} = useGetProfileQuery()
   const [applyToAudition, { isLoading: isApplying }] = useApplyToAuditionMutation();
 
   const handleApply = async () => {

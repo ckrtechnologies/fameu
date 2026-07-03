@@ -16,6 +16,7 @@ import FraudReports from './pages/FraudReports';
 import Blacklist from './pages/Blacklist';
 import Payments from './pages/Payments';
 import CMS from './pages/CMS';
+import ProfessionsManagement from './pages/ProfessionsManagement';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="blacklist" element={<Blacklist />} />
           <Route path="payments" element={<Payments />} />
           <Route path="cms" element={<CMS />} />
+          <Route path="professions" element={<ProfessionsManagement />} />
         </Route>
       </Routes>
     </BrowserRouter>

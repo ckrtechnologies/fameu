@@ -84,6 +84,11 @@ function CustomDrawerContent(props) {
           <Text style={styles.drawerItemText}>Video Portfolio</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Resume')}>
+          <Icon name="document-text-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>Professional Details</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Verification')}>
           <Icon name="shield-checkmark-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Get Verified</Text>

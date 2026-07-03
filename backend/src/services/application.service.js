@@ -91,11 +91,26 @@ class ApplicationService {
     // 2. Fetch applicants
     const { data, error } = await supabase
       .from('applications')
-      .select('*, artist_profiles(full_name, category, city, photo_urls, video_url)')
+      .select('*, artist_profiles(full_name, categories, city, photo_urls, video_url, users(avatar_url)), auditions!inner(hiring_id)')
       .eq('audition_id', auditionId)
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch applicants: ${error.message}`);
+    return data;
+  }
+
+  /**
+   * Get all applicants across all auditions for a specific hiring company
+   */
+  async getAllApplicantsForCompany(hiringId) {
+    // We join auditions using inner join and filter by hiring_id
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*, artist_profiles(full_name, categories, city, photo_urls, video_url, users(avatar_url)), auditions!inner(id, title, hiring_id)')
+      .eq('auditions.hiring_id', hiringId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to fetch all applicants: ${error.message}`);
     return data;
   }
 

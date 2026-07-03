@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Search, Download, FileText, Eye, Edit, Trash2 } from 'lucide-react';
-import { subDays, isBefore, parseISO, startOfDay } from 'date-fns';
+import { subDays, isBefore, isAfter, parseISO, startOfDay, endOfDay } from 'date-fns';
 import SearchableDropdown from './SearchableDropdown';
 
 export default function DataTable({ 
@@ -12,14 +12,18 @@ export default function DataTable({
   title, 
   subtitle, 
   filterConfig = {}, 
+  dateFilterFields = [],
   onView, 
   onEdit, 
   onDelete,
+  actions = [],
   headerAction
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
-  const [dateRange, setDateRange] = useState('all');
+  const [dateField, setDateField] = useState(dateFilterFields.length > 0 ? dateFilterFields[0].key : 'created_at');
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
 
   const filterKeys = Object.keys(filterConfig);
 
@@ -32,13 +36,16 @@ export default function DataTable({
 
   const filteredData = useMemo(() => {
     return data.filter(row => {
+      // 1. Search term
       if (searchTerm) {
-        const searchMatch = Object.values(row).some(val => 
-          String(val).toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        const searchMatch = columns.some(col => {
+          const val = row[col.key];
+          return String(val || '').toLowerCase().includes(searchTerm.toLowerCase());
+        });
         if (!searchMatch) return false;
       }
 
+      // 2. Exact match filters
       for (const key of filterKeys) {
         if (activeFilters[key] && activeFilters[key] !== 'all') {
           if (String(row[key]).toLowerCase() !== String(activeFilters[key]).toLowerCase()) {
@@ -47,30 +54,29 @@ export default function DataTable({
         }
       }
 
-      if (dateRange !== 'all') {
-        const rowDateStr = row.created_at || row.date;
+      // 3. Custom Date Range
+      if (dateStart || dateEnd) {
+        const rowDateStr = row[dateField];
         if (rowDateStr) {
           const rowDate = parseISO(rowDateStr);
-          const now = new Date();
-          let startDate;
           
-          if (dateRange === 'today') {
-            startDate = startOfDay(now);
-          } else if (dateRange === '7days') {
-            startDate = subDays(now, 7);
-          } else if (dateRange === '30days') {
-            startDate = subDays(now, 30);
+          if (dateStart) {
+            const startDate = startOfDay(parseISO(dateStart));
+            if (isBefore(rowDate, startDate)) return false;
           }
-
-          if (isBefore(rowDate, startDate)) {
-            return false;
+          
+          if (dateEnd) {
+            const endDate = endOfDay(parseISO(dateEnd));
+            if (isAfter(rowDate, endDate)) return false;
           }
+        } else {
+          return false; // If filtering by a date but row has no date, exclude it
         }
       }
 
       return true;
     });
-  }, [data, searchTerm, activeFilters, dateRange, filterKeys]);
+  }, [data, searchTerm, activeFilters, dateStart, dateEnd, dateField, filterKeys]);
 
   const exportPDF = () => {
     const doc = new jsPDF();
@@ -144,24 +150,61 @@ export default function DataTable({
           />
         </div>
 
-        <SearchableDropdown 
-          options={['today', '7days', '30days']}
-          value={dateRange}
-          onChange={setDateRange}
-          placeholder="Filter by date"
-          allLabel="All Time"
-        />
+        {dateFilterFields.length > 0 && (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {dateFilterFields.length > 1 && (
+              <select 
+                value={dateField} 
+                onChange={e => setDateField(e.target.value)}
+                style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-dark)', color: 'var(--text-primary)', outline: 'none' }}
+              >
+                {dateFilterFields.map(f => (
+                  <option key={f.key} value={f.key}>{f.label}</option>
+                ))}
+              </select>
+            )}
+            <input 
+              type="date" 
+              style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-dark)', color: 'var(--text-primary)', outline: 'none' }}
+              value={dateStart}
+              onChange={e => setDateStart(e.target.value)}
+              title="Start Date"
+            />
+            <span style={{ color: 'var(--text-secondary)' }}>to</span>
+            <input 
+              type="date" 
+              style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-dark)', color: 'var(--text-primary)', outline: 'none' }}
+              value={dateEnd}
+              onChange={e => setDateEnd(e.target.value)}
+              title="End Date"
+            />
+            {(dateStart || dateEnd) && (
+              <button 
+                onClick={() => { setDateStart(''); setDateEnd(''); }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px 8px' }}
+                title="Clear Dates"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
 
-        {filterKeys.map(key => (
-          <SearchableDropdown
-            key={key}
-            options={filterConfig[key]}
-            value={activeFilters[key] || 'all'}
-            onChange={(val) => handleFilterChange(key, val)}
-            placeholder={`Filter by ${key}`}
-            allLabel={`All ${key}`}
-          />
-        ))}
+        {filterKeys.map(key => {
+          // Determine title for the label based on key if it's generic, else we can pass an object.
+          // For simplicity, we just use the key.
+          const formattedKey = key.replace('_', ' ');
+          return (
+            <SearchableDropdown
+              key={key}
+              options={filterConfig[key]}
+              value={activeFilters[key] || 'all'}
+              onChange={(val) => handleFilterChange(key, val)}
+              placeholder={`Filter by ${formattedKey}`}
+              allLabel={`All ${formattedKey}`}
+            />
+          );
+        })}
       </div>
 
       <div className="card" style={{ padding: '0', overflowX: 'auto' }}>
@@ -197,22 +240,39 @@ export default function DataTable({
                     </td>
                   ))}
 
-                  {(onView || onEdit || onDelete) && (
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      {onView && (
-                        <button className="btn btn-secondary" style={{ padding: '6px', marginRight: '8px' }} onClick={() => onView(row)} title="View">
-                          <Eye size={16} />
-                        </button>
-                      )}
-                      {onEdit && (
-                        <button className="btn btn-primary" style={{ padding: '6px', marginRight: '8px' }} onClick={() => onEdit(row)} title="Edit">
-                          <Edit size={16} />
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button className="btn btn-danger" style={{ padding: '6px' }} onClick={() => onDelete(row)} title="Delete">
-                          <Trash2 size={16} />
-                        </button>
+                  {(onView || onEdit || onDelete || actions?.length > 0) && (
+                    <td style={{ padding: '16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {actions?.length > 0 ? (
+                        actions.map((action, i) => (
+                          <button 
+                            key={i}
+                            type="button"
+                            className={`btn btn-${action.variant || 'secondary'}`} 
+                            style={{ padding: '6px 10px', marginRight: i === actions.length - 1 ? 0 : '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} 
+                            onClick={() => action.onClick(row)} 
+                            title={action.label}
+                          >
+                            {action.icon && React.createElement(action.icon, { size: 14 })} {action.label}
+                          </button>
+                        ))
+                      ) : (
+                        <>
+                          {onView && (
+                            <button type="button" className="btn btn-secondary" style={{ padding: '6px 10px', marginRight: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={() => onView(row)} title="View">
+                              <Eye size={14} /> View
+                            </button>
+                          )}
+                          {onEdit && (
+                            <button type="button" className="btn btn-primary" style={{ padding: '6px 10px', marginRight: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={() => onEdit(row)} title="Edit">
+                              <Edit size={14} /> Edit
+                            </button>
+                          )}
+                          {onDelete && (
+                            <button type="button" className="btn btn-danger" style={{ padding: '6px 10px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={() => onDelete(row)} title="Delete">
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          )}
+                        </>
                       )}
                     </td>
                   )}

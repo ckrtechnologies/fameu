@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions, ActivityIndicator, Alert, Modal, PermissionsAndroid, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions, ActivityIndicator, Alert, Modal, PermissionsAndroid, Platform , RefreshControl } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
@@ -14,7 +14,7 @@ const IMAGE_SIZE = (width - 32 - (COLUMN_COUNT - 1) * 8) / COLUMN_COUNT;
 export default function PhotoGalleryScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { data: profileResponse, isLoading: isLoadingProfile } = useGetProfileQuery();
+  const { data: profileResponse, isLoading: isLoadingProfile , isFetching, refetch} = useGetProfileQuery()
   const [uploadMedia, { isLoading: isUploading }] = useUploadMediaMutation();
   const [upsertProfile] = useUpsertProfileMutation();
 
@@ -164,9 +164,10 @@ export default function PhotoGalleryScreen() {
           ) : (
             <FlatList
               data={photos}
-              keyExtractor={(item, index) => index.toString()}
-              numColumns={COLUMN_COUNT}
               renderItem={renderItem}
+              keyExtractor={(item, index) => index.toString()}
+              refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
+              numColumns={COLUMN_COUNT}
               contentContainerStyle={styles.listContent}
               columnWrapperStyle={styles.row}
             />

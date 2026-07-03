@@ -1,4 +1,5 @@
 import supabase from "../../../config/supabase.js";
+import artistService from "../../../services/artist.service.js";
 
 const artistsController = {
   // Search and Discover Artists
@@ -11,9 +12,10 @@ const artistsController = {
         .from('artist_profiles')
         .select(`
           *,
-          user:users (
-            name,
-            email
+          users (
+            display_name,
+            email,
+            username
           )
         `);
 
@@ -41,19 +43,8 @@ const artistsController = {
   getArtistDetails: async (req, res, next) => {
     try {
       const { id } = req.params;
-      const { data, error } = await supabase
-        .from('artist_profiles')
-        .select(`
-          *,
-          user:users (
-            name,
-            email
-          )
-        `)
-        .eq('id', id)
-        .single();
+      const data = await artistService.getFullProfileByArtistId(id);
 
-      if (error) throw error;
       if (!data) return res.status(404).json({ success: false, error: 'Artist not found' });
 
       res.status(200).json({ success: true, data });

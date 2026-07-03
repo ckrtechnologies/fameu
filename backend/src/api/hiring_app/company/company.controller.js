@@ -31,8 +31,12 @@ class HiringCompanyController {
 
   async uploadLogo(req, res, next) {
     try {
-      const { hiringId } = req.body;
-      if (!hiringId) return res.status(400).json({ success: false, error: 'hiringId is required' });
+      let { hiringId } = req.body;
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
 
       if (!req.file) return res.status(400).json({ success: false, error: 'Logo image is required' });
 
@@ -47,8 +51,12 @@ class HiringCompanyController {
 
   async uploadKYC(req, res, next) {
     try {
-      const { hiringId } = req.body;
-      if (!hiringId) return res.status(400).json({ success: false, error: 'hiringId is required' });
+      let { hiringId } = req.body;
+      if (!hiringId) {
+        const profile = await hiringService.getProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Hiring profile not found' });
+        hiringId = profile.id;
+      }
 
       const baseUrl = `${req.protocol}://${req.get('host')}/uploads/hiring/`;
       const docsUrls = {};

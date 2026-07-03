@@ -40,11 +40,17 @@ class ArtistProfileController {
 
   async updateCategoryDetails(req, res, next) {
     try {
-      const { artistId, category, detailsData } = req.body;
+      let { artistId, category, detailsData } = req.body;
       
       // Basic check
-      if (!artistId || !category) {
-        return res.status(400).json({ success: false, error: 'artistId and category are required' });
+      if (!category) {
+        return res.status(400).json({ success: false, error: 'category is required' });
+      }
+      
+      if (!artistId) {
+        const profile = await artistService.getFullProfile(req.user.id);
+        if (!profile) return res.status(404).json({ success: false, error: 'Artist profile not found' });
+        artistId = profile.id;
       }
 
       const result = await artistService.updateCategoryDetails(artistId, category, detailsData);
