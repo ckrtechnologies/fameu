@@ -27,4 +27,9 @@ router.post('/upload',
   profileController.uploadMedia
 );
 
+router.post('/upload-file',
+  uploadArtistMedia.single('file'),
+  profileController.uploadFile
+);
+
 export default router;

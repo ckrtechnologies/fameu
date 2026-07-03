@@ -1,55 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import DocumentPicker from 'react-native-document-picker';
 import { colors, typography } from '../../theme/theme';
-import { useUpdateCategoryMutation, useGetProfileQuery } from '../../services/profileApi';
-
-export const FIELD_CONFIGS = {
-  Actor: [
-    { key: 'body_type', label: 'Body Type', placeholder: 'e.g. Athletic, Slim, Curvy' },
-    { key: 'skin_tone', label: 'Skin Tone', placeholder: 'e.g. Fair, Medium, Dark' },
-    { key: 'hair_color', label: 'Hair Color', placeholder: 'e.g. Black, Brown, Blonde' },
-    { key: 'eye_color', label: 'Eye Color', placeholder: 'e.g. Black, Brown, Blue' },
-    { key: 'acting_exp', label: 'Acting Experience', placeholder: 'Years of experience or key roles', multiline: true },
-  ],
-  Singer: [
-    { key: 'vocal_range', label: 'Vocal Range', placeholder: 'e.g. Soprano, Tenor, Baritone' },
-    { key: 'singing_genre', label: 'Singing Genres', placeholder: 'e.g. Pop, Classical (comma separated)', isArray: true },
-    { key: 'instruments', label: 'Instruments Played', placeholder: 'e.g. Guitar, Piano (comma separated)', isArray: true },
-    { key: 'singing_exp', label: 'Singing Experience', placeholder: 'Years of experience or key performances', multiline: true },
-  ],
-  Model: [
-    { key: 'measurements', label: 'Measurements', placeholder: 'e.g. 36-24-36' },
-    { key: 'shoe_size', label: 'Shoe Size', placeholder: 'e.g. 8 UK' },
-    { key: 'ramp_exp', label: 'Ramp Experience', placeholder: 'Years or key shows', multiline: true },
-    { key: 'brand_history', label: 'Brand History', placeholder: 'Brands you have worked with', multiline: true },
-  ],
-  Dancer: [
-    { key: 'dance_styles', label: 'Dance Styles', placeholder: 'e.g. Hip-Hop, Classical (comma separated)', isArray: true },
-    { key: 'training', label: 'Training Background', placeholder: 'Where did you train?', multiline: true },
-    { key: 'competition_history', label: 'Competition History', placeholder: 'Awards or key events', multiline: true },
-  ],
-  Technician: [
-    { key: 'sub_category', label: 'Specialization', placeholder: 'e.g. Cinematography, Editing, Lighting' },
-    { key: 'equipment', label: 'Equipment Owned', placeholder: 'e.g. RED Komodo, Sony A7SIII', multiline: true },
-    { key: 'software_skills', label: 'Software Skills', placeholder: 'e.g. Premiere Pro, Resolve (comma separated)', isArray: true },
-    { key: 'work_exp', label: 'Work Experience', placeholder: 'Key projects or years of experience', multiline: true },
-  ],
-};
+import { useUpdateCategoryMutation, useGetProfileQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
 
 export default function ArtistFormScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { categories } = route.params || {};
 
-  const { data: profileResponse , isFetching, refetch} = useGetProfileQuery()
+  const { data: profileResponse, isFetching, refetch } = useGetProfileQuery();
+  const { data: professionsResponse, isLoading: isLoadingProfessions } = useGetProfessionsQuery();
+  
   const artistId = profileResponse?.data?.id;
+  const professionsList = professionsResponse?.data || [];
 
   const [updateCategory, { isLoading }] = useUpdateCategoryMutation();
   const [activeTab, setActiveTab] = useState(categories?.[0]);
   const [formData, setFormData] = useState({});
+
+  useEffect(() => {
+    if (profileResponse?.data?.dynamic_details) {
+      setFormData(profileResponse.data.dynamic_details);
+    }
+  }, [profileResponse]);
 
   const handleTextChange = (category, key, text) => {
     setFormData(prev => ({
@@ -61,6 +38,75 @@ export default function ArtistFormScreen() {
     }));
   };
 
+  const handleSelectToggle = (category, key, option, isMulti) => {
+    setFormData(prev => {
+      const catData = prev[category] || {};
+      const currentVal = catData[key] || [];
+      let newVal;
+      
+      if (isMulti) {
+        if (currentVal.includes(option)) {
+          newVal = currentVal.filter(o => o !== option);
+        } else {
+          newVal = [...currentVal, option];
+        }
+      } else {
+        newVal = [option]; // Single select
+      }
+
+      return {
+        ...prev,
+        [category]: {
+          ...catData,
+          [key]: newVal
+        }
+      };
+    });
+  };
+
+  const handleDeleteFile = (category, key) => {
+    setFormData(prev => ({
+      ...prev,
+      [category]: {
+        ...(prev[category] || {}),
+        [key]: null
+      }
+    }));
+  };
+
+  const handleFileUpload = async (category, key) => {
+    try {
+      const res = await DocumentPicker.pickSingle({
+        type: [DocumentPicker.types.allFiles],
+      });
+      
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', {
+        uri: res.uri,
+        type: res.type,
+        name: res.name || `file_${Date.now()}`,
+      });
+
+      const response = await uploadGenericFile(formDataUpload).unwrap();
+      
+      if (response.success && response.url) {
+        setFormData(prev => ({
+          ...prev,
+          [category]: {
+            ...(prev[category] || {}),
+            [key]: response.url
+          }
+        }));
+        Alert.alert('Success', 'File uploaded successfully!');
+      }
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        return;
+      }
+      Alert.alert('Error', err?.data?.error || err.message || 'Upload failed');
+    }
+  };
+
   const handleSave = async () => {
     if (!artistId) {
       Alert.alert('Error', 'Profile not found. Please complete base profile first.');
@@ -69,18 +115,8 @@ export default function ArtistFormScreen() {
 
     try {
       const promises = categories.map(cat => {
-        const fields = FIELD_CONFIGS[cat] || [];
         const catData = formData[cat] || {};
-        
-        // Process array fields
-        const processedData = { ...catData };
-        fields.forEach(f => {
-          if (f.isArray && processedData[f.key] && typeof processedData[f.key] === 'string') {
-            processedData[f.key] = processedData[f.key].split(',').map(s => s.trim()).filter(s => s);
-          }
-        });
-
-        return updateCategory({ artistId, category: cat, detailsData: processedData }).unwrap();
+        return updateCategory({ artistId, category: cat, detailsData: catData }).unwrap();
       });
 
       await Promise.all(promises);
@@ -111,7 +147,8 @@ export default function ArtistFormScreen() {
     );
   }
 
-  const fields = FIELD_CONFIGS[activeTab] || [];
+  const currentProfession = professionsList.find(p => p.name === activeTab);
+  const fields = currentProfession?.profession_fields || [];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -125,7 +162,7 @@ export default function ArtistFormScreen() {
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll} refreshControl={<RefreshControl refreshing={isFetching || isLoadingProfessions || false} onRefresh={refetch} tintColor={colors.primary} />}>
           {categories.map((cat) => {
             const isActive = activeTab === cat;
             return (
@@ -144,17 +181,68 @@ export default function ArtistFormScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.subtitle}>Fill in your {activeTab.toLowerCase()} specific details to stand out.</Text>
 
-        {fields.map((field) => (
-          <View key={field.key} style={styles.inputGroup}>
-            <Text style={styles.label}>{field.label}</Text>
-            <TextInput
-              style={[styles.input, field.multiline && styles.inputMultiline]}
-              placeholder={field.placeholder}
-              placeholderTextColor={colors.textMutedLight}
-              multiline={field.multiline}
-              value={formData[activeTab]?.[field.key] || ''}
-              onChangeText={(text) => handleTextChange(activeTab, field.key, text)}
-            />
+        {isLoadingProfessions ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+        ) : fields.length === 0 ? (
+          <Text style={styles.noFieldsText}>No custom fields required for this profession.</Text>
+        ) : fields.map((field) => (
+          <View key={field.field_name} style={styles.inputGroup}>
+            <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''}</Text>
+            
+            {(field.field_type === 'text' || field.field_type === 'number') && (
+              <TextInput
+                style={styles.input}
+                placeholder={`Enter ${field.field_label.toLowerCase()}`}
+                placeholderTextColor={colors.textMutedLight}
+                keyboardType={field.field_type === 'number' ? 'numeric' : 'default'}
+                value={formData[activeTab]?.[field.field_name] || ''}
+                onChangeText={(text) => handleTextChange(activeTab, field.field_name, text)}
+              />
+            )}
+
+            {(field.field_type === 'select' || field.field_type === 'multiselect') && field.options && (
+              <View style={styles.optionsContainer}>
+                {field.options.map(option => {
+                  const isSelected = (formData[activeTab]?.[field.field_name] || []).includes(option);
+                  return (
+                    <TouchableOpacity 
+                      key={option}
+                      style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                      onPress={() => handleSelectToggle(activeTab, field.field_name, option, field.field_type === 'multiselect')}
+                    >
+                      <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+
+            {field.field_type === 'file' && (
+              <>
+                {formData[activeTab]?.[field.field_name] ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: colors.borderLight }}>
+                    <Icon name="document-attach-outline" size={24} color={colors.primary} />
+                    <Text style={{ flex: 1, marginLeft: 12, color: colors.textMainLight, fontSize: 13 }} numberOfLines={1}>
+                      {String(formData[activeTab][field.field_name]).split('/').pop() || 'Uploaded File'}
+                    </Text>
+                    <TouchableOpacity onPress={() => handleFileUpload(activeTab, field.field_name)} style={{ padding: 4 }}>
+                      <Icon name="pencil-outline" size={20} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteFile(activeTab, field.field_name)} style={{ padding: 4, marginLeft: 8 }}>
+                      <Icon name="trash-outline" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.fileButton}
+                    onPress={() => handleFileUpload(activeTab, field.field_name)}
+                  >
+                    <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
+                    <Text style={styles.fileButtonText}>Upload File</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
           </View>
         ))}
 
@@ -258,9 +346,55 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textMainLight,
   },
-  inputMultiline: {
-    minHeight: 100,
-    textAlignVertical: 'top',
+  optionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  optionPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  optionPillSelected: {
+    backgroundColor: colors.primary + '15',
+    borderColor: colors.primary,
+  },
+  optionText: {
+    ...typography.body,
+    color: colors.textMainLight,
+    fontSize: 14,
+  },
+  optionTextSelected: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  fileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    backgroundColor: colors.primary + '10',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary + '40',
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  fileButtonText: {
+    ...typography.body,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  noFieldsText: {
+    ...typography.body,
+    color: colors.textMutedLight,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 20,
   },
   footer: {
     padding: 16,

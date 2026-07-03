@@ -57,7 +57,7 @@ class AuthService {
   /**
    * Verify OTP and issue JWT
    */
-  async verifyOtp(identifier, otp) {
+  async verifyOtp(identifier, otp, role) {
     // 1. Check OTP in DB
     const { data, error } = await supabase
       .from('otp_store')
@@ -108,6 +108,11 @@ class AuthService {
             }).select().single();
             
             if (insertErr) throw new Error(`Failed to restore public profile: ${insertErr.message}`);
+            
+            if (role && role !== 'artist') {
+              await supabase.from('users').update({ role }).eq('id', authUser.id);
+            }
+            
             user = publicUser;
           } else {
             throw new Error(`Failed to create user: ${createErr.message}`);
@@ -117,6 +122,12 @@ class AuthService {
         }
       } else {
         authUser = authData.user;
+        
+        // Update the role immediately if provided
+        if (role) {
+          await supabase.from('users').update({ role }).eq('id', authUser.id);
+        }
+        
         // Fetch the public.users row that was just created by the trigger
         const { data: publicUser } = await supabase.from('users').select('*').eq('id', authUser.id).single();
         if (publicUser) user = publicUser;

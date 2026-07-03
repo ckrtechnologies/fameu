@@ -5,6 +5,8 @@ import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import { initializeAuth } from '../store/slices/authSlice';
 import { colors } from '../theme/theme';
+import SocketService from '../services/SocketService';
+import * as Keychain from 'react-native-keychain';
 
 export default function AppNavigator() {
   const dispatch = useDispatch();
@@ -13,6 +15,18 @@ export default function AppNavigator() {
   useEffect(() => {
     dispatch(initializeAuth());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      Keychain.getGenericPassword().then(credentials => {
+        if (credentials && credentials.password) {
+          SocketService.connect(credentials.password);
+        }
+      });
+    } else {
+      SocketService.disconnect();
+    }
+  }, [isAuthenticated]);
 
   if (loading) {
     return (

@@ -12,7 +12,7 @@ export const professionService = {
         profession_fields (*)
       `)
       .eq('is_active', true)
-      .order('priority', { ascending: true, nullsFirst: false });
+      .order('name', { ascending: true });
 
     if (error) throw error;
     return data;
@@ -24,7 +24,10 @@ export const professionService = {
   async getAllProfessionsAdmin() {
     const { data, error } = await supabase
       .from('artist_professions')
-      .select('*')
+      .select(`
+        *,
+        profession_fields (*)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -61,12 +64,41 @@ export const professionService = {
   },
 
   /**
+   * Admin: Hard Delete a profession
+   */
+  async deleteProfession(id) {
+    const { data, error } = await supabase
+      .from('artist_professions')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
    * Admin: Add a field to a profession
    */
   async addProfessionField(professionId, fieldPayload) {
     const { data, error } = await supabase
       .from('profession_fields')
       .insert({ ...fieldPayload, profession_id: professionId })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Admin: Update a profession field
+   */
+  async updateProfessionField(fieldId, fieldPayload) {
+    const { data, error } = await supabase
+      .from('profession_fields')
+      .update({ ...fieldPayload, updated_at: new Date().toISOString() })
+      .eq('id', fieldId)
       .select()
       .single();
 

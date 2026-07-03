@@ -1,14 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { setConversations } from '../../store/slices/chatSlice';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
 import { useGetInboxQuery } from '../../services/chatApi';
 
 export default function InboxScreen() {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const { data: response, isLoading, isError, refetch } = useGetInboxQuery();
+  
+  const conversations = useSelector(state => state.chat.conversations);
+
+  React.useEffect(() => {
+    if (response?.data) {
+      dispatch(setConversations(response.data));
+    }
+  }, [response, dispatch]);
   
   const [refreshing, setRefreshing] = React.useState(false);
   const handleRefresh = async () => {
@@ -19,7 +30,6 @@ export default function InboxScreen() {
       setRefreshing(false);
     }
   };
-  const conversations = response?.data || [];
 
   const handleChatPress = (chat) => {
     navigation.navigate('Chat', {
@@ -37,7 +47,14 @@ export default function InboxScreen() {
     return (
       <TouchableOpacity style={styles.chatItem} onPress={() => handleChatPress(item)}>
         <View style={styles.avatar}>
-          <Icon name="person" size={24} color={colors.textMutedLight} />
+          {other_participant?.avatar_url || other_participant?.artist_profiles?.photo_urls?.[0] || other_participant?.hiring_profiles?.logo_url ? (
+            <Image 
+              source={{ uri: other_participant?.avatar_url || other_participant?.artist_profiles?.photo_urls?.[0] || other_participant?.hiring_profiles?.logo_url }} 
+              style={{ width: '100%', height: '100%', borderRadius: 25 }} 
+            />
+          ) : (
+            <Icon name="person" size={24} color={colors.textMutedLight} />
+          )}
         </View>
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
@@ -46,9 +63,16 @@ export default function InboxScreen() {
               {updated_at ? new Date(updated_at).toLocaleDateString() : ''}
             </Text>
           </View>
-          <Text style={styles.lastMessage} numberOfLines={1}>
-            {last_message || 'No messages yet'}
-          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+            <Text style={styles.lastMessage} numberOfLines={1}>
+              {item.last_message || 'No messages yet'}
+            </Text>
+            {item.unread_count > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>{item.unread_count}</Text>
+              </View>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );

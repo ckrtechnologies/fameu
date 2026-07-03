@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform , RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform , RefreshControl, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import DocumentPicker from 'react-native-document-picker';
+import Video from 'react-native-video';
 import { colors, typography } from '../../theme/theme';
-import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery } from '../../services/profileApi';
+import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import { FIELD_CONFIGS } from './ArtistFormScreen';
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
@@ -15,7 +16,10 @@ export default function EditProfileScreen() {
   const [upsertProfile, { isLoading: isSaving }] = useUpsertProfileMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [uploadMedia, { isLoading: isUploadingMedia }] = useUploadMediaMutation();
+  const [uploadGenericFile, { isLoading: isUploadingFile }] = useUploadGenericFileMutation();
   const [checkUsername, { isFetching: isCheckingUsername }] = useLazyCheckUsernameQuery();
+  const { data: professionsResponse, isLoading: isLoadingProfessions } = useGetProfessionsQuery();
+  const professionsList = professionsResponse?.data || [];
 
   const [activeTab, setActiveTab] = useState('Basic Info');
 
@@ -113,16 +117,9 @@ export default function EditProfileScreen() {
       if (p.category_details) {
         const catData = {};
         (p.categories || []).forEach(cat => {
-          const details = p.category_details[cat.toLowerCase()];
+          const details = p.category_details[cat] || p.category_details[cat.toLowerCase()];
           if (details) {
-            const processed = { ...details };
-            const fields = FIELD_CONFIGS[cat] || [];
-            fields.forEach(f => {
-              if (f.isArray && Array.isArray(processed[f.key])) {
-                processed[f.key] = processed[f.key].join(', ');
-              }
-            });
-            catData[cat] = processed;
+            catData[cat] = { ...details };
           }
         });
         setCategoryFormData(catData);
@@ -141,6 +138,102 @@ export default function EditProfileScreen() {
       }
     } catch (err) {
       Alert.alert('Error', err?.data?.error || 'Failed to check username.');
+    }
+  };
+
+  const handleTextChange = (category, key, text) => {
+    setCategoryFormData(prev => ({
+      ...prev,
+      [category]: {
+        ...(prev[category] || {}),
+        [key]: text
+      }
+    }));
+  };
+
+  const handleSelectToggle = (category, key, option, isMulti) => {
+    setCategoryFormData(prev => {
+      const currentVal = prev[category]?.[key] || [];
+      let newVal = [];
+      if (isMulti) {
+        if (currentVal.includes(option)) newVal = currentVal.filter(item => item !== option);
+        else newVal = [...currentVal, option];
+      } else {
+        newVal = [option];
+      }
+      return {
+        ...prev,
+        [category]: {
+          ...(prev[category] || {}),
+          [key]: newVal
+        }
+      };
+    });
+  };
+
+  const handleDeleteFile = (category, key, fileUrlToRemove) => {
+    setCategoryFormData(prev => {
+      const currentVal = prev[category]?.[key];
+      if (Array.isArray(currentVal)) {
+        return {
+          ...prev,
+          [category]: {
+            ...(prev[category] || {}),
+            [key]: currentVal.filter(url => url !== fileUrlToRemove)
+          }
+        };
+      }
+      return {
+        ...prev,
+        [category]: {
+          ...(prev[category] || {}),
+          [key]: null
+        }
+      };
+    });
+  };
+
+  const handleFileUpload = async (category, key) => {
+    try {
+      const res = await DocumentPicker.pickSingle({
+        type: [DocumentPicker.types.allFiles],
+      });
+      
+      const formData = new FormData();
+      formData.append('file', {
+        uri: res.uri,
+        type: res.type,
+        name: res.name || `file_${Date.now()}`,
+      });
+
+      const response = await uploadGenericFile(formData).unwrap();
+      
+      if (response.success && response.url) {
+        setCategoryFormData(prev => {
+          const existing = prev[category]?.[key];
+          let newVal;
+          if (Array.isArray(existing)) {
+            newVal = [...existing, response.url];
+          } else if (typeof existing === 'string' && existing !== '') {
+            newVal = [existing, response.url];
+          } else {
+            newVal = [response.url];
+          }
+          return {
+            ...prev,
+            [category]: {
+              ...(prev[category] || {}),
+              [key]: newVal
+            }
+          };
+        });
+        Alert.alert('Success', 'File uploaded successfully!');
+      }
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        return;
+      }
+      Alert.alert('Error', err?.data?.error || err.message || 'Upload failed');
     }
   };
 
@@ -167,26 +260,12 @@ export default function EditProfileScreen() {
       const removedCategories = originalCategories.filter(c => !categories.includes(c));
 
       const categoryPromises = categories.map(cat => {
-        const fields = FIELD_CONFIGS[cat] || [];
         const currentData = categoryFormData[cat] || {};
-        const processedData = { ...currentData };
-
-        fields.forEach(f => {
-          if (f.isArray && processedData[f.key] && typeof processedData[f.key] === 'string') {
-            processedData[f.key] = processedData[f.key].split(',').map(s => s.trim()).filter(s => s);
-          }
-        });
-
-        return updateCategory({ artistId, category: cat, detailsData: processedData }).unwrap();
+        return updateCategory({ artistId, category: cat, detailsData: currentData }).unwrap();
       });
 
       const removePromises = removedCategories.map(cat => {
-        const emptyData = {};
-        const fields = FIELD_CONFIGS[cat] || [];
-        fields.forEach(f => {
-          emptyData[f.key] = f.isArray ? [] : null;
-        });
-        return updateCategory({ artistId, category: cat, detailsData: emptyData }).unwrap();
+        return updateCategory({ artistId, category: cat, detailsData: {} }).unwrap();
       });
 
       // Run all requests concurrently
@@ -460,22 +539,105 @@ export default function EditProfileScreen() {
         ) : (
           <>
             <Text style={styles.subtitle}>Fill in your {activeTab.toLowerCase()} specific details to stand out.</Text>
-            {(FIELD_CONFIGS[activeTab] || []).map((field) => (
-              <View key={field.key} style={styles.inputGroup}>
-                <Text style={styles.label}>{field.label}</Text>
-                <TextInput
-                  style={[styles.input, field.multiline && styles.inputMultiline]}
-                  placeholder={field.placeholder}
-                  placeholderTextColor={colors.textMutedLight}
-                  multiline={field.multiline}
-                  value={categoryFormData[activeTab]?.[field.key] || ''}
-                  onChangeText={(text) => setCategoryFormData(prev => ({
-                    ...prev,
-                    [activeTab]: { ...(prev[activeTab] || {}), [field.key]: text }
-                  }))}
-                />
-              </View>
-            ))}
+            {isLoadingProfessions ? (
+              <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+            ) : (() => {
+              const currentProfession = professionsList.find(p => p.name === activeTab);
+              const fields = currentProfession?.profession_fields || [];
+              if (fields.length === 0) {
+                return <Text style={{ color: colors.textMutedLight, marginTop: 16 }}>No custom fields required for this profession.</Text>;
+              }
+              return fields.map((field) => (
+                <View key={field.field_name} style={styles.inputGroup}>
+                  <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''}</Text>
+                  
+                  {(field.field_type === 'text' || field.field_type === 'number') && (
+                    <TextInput
+                      style={styles.input}
+                      placeholder={`Enter ${field.field_label.toLowerCase()}`}
+                      placeholderTextColor={colors.textMutedLight}
+                      keyboardType={field.field_type === 'number' ? 'numeric' : 'default'}
+                      value={categoryFormData[activeTab]?.[field.field_name] || ''}
+                      onChangeText={(text) => handleTextChange(activeTab, field.field_name, text)}
+                    />
+                  )}
+
+                  {(field.field_type === 'select' || field.field_type === 'multiselect') && field.options && (
+                    <View style={styles.optionsContainer}>
+                      {field.options.map(option => {
+                        const isSelected = (categoryFormData[activeTab]?.[field.field_name] || []).includes(option);
+                        return (
+                          <TouchableOpacity 
+                            key={option}
+                            style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                            onPress={() => handleSelectToggle(activeTab, field.field_name, option, field.field_type === 'multiselect')}
+                          >
+                            <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {field.field_type === 'file' && (
+                    <View style={{ marginTop: 8 }}>
+                      {(() => {
+                        const existingVal = categoryFormData[activeTab]?.[field.field_name];
+                        const files = Array.isArray(existingVal) ? existingVal : (existingVal ? [existingVal] : []);
+                        
+                        return (
+                          <>
+                            {files.map((fileUrl, index) => {
+                              const isVideo = typeof fileUrl === 'string' && fileUrl.match(/\.(mp4|mov)$/i);
+                              const isAudio = typeof fileUrl === 'string' && fileUrl.match(/\.(mp3|wav|aac|ogg|webm)$/i);
+                              const isImage = typeof fileUrl === 'string' && fileUrl.match(/\.(jpg|jpeg|png|webp)$/i);
+                              
+                              return (
+                                <View key={index} style={{ marginBottom: 12, backgroundColor: colors.surfaceLight, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}>
+                                  {(isVideo || isAudio) ? (
+                                    <Video 
+                                      source={{ uri: fileUrl }} 
+                                      style={{ width: '100%', height: isVideo ? 200 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }} 
+                                      controls={true}
+                                      resizeMode={isVideo ? "cover" : "contain"}
+                                      paused={true}
+                                    />
+                                  ) : isImage ? (
+                                    <Image source={{ uri: fileUrl }} style={{ width: '100%', height: 200, borderRadius: 8, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
+                                  ) : (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                                      <Icon name="document-attach-outline" size={24} color={colors.primary} />
+                                      <Text style={{ flex: 1, marginLeft: 12, color: colors.textMainLight, fontSize: 13 }} numberOfLines={1}>
+                                        {String(fileUrl).split('/').pop()}
+                                      </Text>
+                                    </View>
+                                  )}
+                                  
+                                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                                    <TouchableOpacity onPress={() => handleDeleteFile(activeTab, field.field_name, fileUrl)} style={{ padding: 4, flexDirection: 'row', alignItems: 'center' }}>
+                                      <Icon name="trash-outline" size={16} color="#ef4444" />
+                                      <Text style={{ color: '#ef4444', fontSize: 12, marginLeft: 4 }}>Remove</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                </View>
+                              );
+                            })}
+                            
+                            <TouchableOpacity 
+                              style={[styles.fileButton, { marginTop: files.length > 0 ? 4 : 0 }]}
+                              onPress={() => handleFileUpload(activeTab, field.field_name)}
+                            >
+                              <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
+                              <Text style={styles.fileButtonText}>{files.length > 0 ? "Add Another File" : "Upload File"}</Text>
+                            </TouchableOpacity>
+                          </>
+                        );
+                      })()}
+                    </View>
+                  )}
+                </View>
+              ));
+            })()}
           </>
         )}
 
@@ -579,8 +741,52 @@ const styles = StyleSheet.create({
     color: colors.textMainLight,
   },
   inputMultiline: {
-    minHeight: 100,
+    height: 100,
     textAlignVertical: 'top',
+  },
+  optionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  optionPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  optionPillSelected: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
+  },
+  optionText: {
+    ...typography.body,
+    color: colors.textMainLight,
+  },
+  optionTextSelected: {
+    color: colors.primary,
+    fontWeight: 'bold',
+  },
+  fileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    backgroundColor: colors.primaryLight + '20',
+  },
+  fileButtonText: {
+    ...typography.body,
+    color: colors.primary,
+    marginLeft: 8,
+    fontWeight: 'bold',
   },
   footer: {
     padding: 16,

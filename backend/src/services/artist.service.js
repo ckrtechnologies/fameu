@@ -92,29 +92,19 @@ class ArtistService {
    * Update dynamic category details (Actor, Singer, Model, etc)
    */
   async updateCategoryDetails(artistId, category, detailsData) {
-    let tableName = '';
-    
-    switch (category?.toLowerCase()) {
-      case 'actor': tableName = 'actor_details'; break;
-      case 'singer': tableName = 'singer_details'; break;
-      case 'model': tableName = 'model_details'; break;
-      case 'dancer': tableName = 'dancer_details'; break;
-      case 'technician': tableName = 'technician_details'; break;
-      default: throw new Error(`Unsupported category: ${category}`);
-    }
-
     const payload = {
       artist_id: artistId,
-      ...detailsData
+      category_name: category,
+      details: detailsData
     };
 
     const { data, error } = await supabase
-      .from(tableName)
-      .upsert(payload, { onConflict: 'artist_id' })
+      .from('artist_dynamic_details')
+      .upsert(payload, { onConflict: 'artist_id, category_name' })
       .select()
       .single();
 
-    if (error) throw new Error(`Failed to update ${tableName}: ${error.message}`);
+    if (error) throw new Error(`Failed to update details for ${category}: ${error.message}`);
     return data;
   }
 
@@ -134,27 +124,17 @@ class ArtistService {
     let categoryDetails = {};
     
     if (profile.categories && profile.categories.length > 0) {
-      await Promise.all(profile.categories.map(async (cat) => {
-        let tableName = '';
-        switch (cat.toLowerCase()) {
-          case 'actor': tableName = 'actor_details'; break;
-          case 'singer': tableName = 'singer_details'; break;
-          case 'model': tableName = 'model_details'; break;
-          case 'dancer': tableName = 'dancer_details'; break;
-          case 'technician': tableName = 'technician_details'; break;
-        }
-
-        if (tableName) {
-          const { data: details } = await supabase
-            .from(tableName)
-            .select('*')
-            .eq('artist_id', profile.id)
-            .single();
-          if (details) {
-            categoryDetails[cat.toLowerCase()] = details;
-          }
-        }
-      }));
+      const { data: details } = await supabase
+        .from('artist_dynamic_details')
+        .select('*')
+        .eq('artist_id', profile.id)
+        .in('category_name', profile.categories);
+        
+      if (details) {
+        details.forEach(d => {
+          categoryDetails[d.category_name] = d.details;
+        });
+      }
     }
 
     // Compute basic stats
@@ -198,27 +178,17 @@ class ArtistService {
     let categoryDetails = {};
     
     if (profile.categories && profile.categories.length > 0) {
-      await Promise.all(profile.categories.map(async (cat) => {
-        let tableName = '';
-        switch (cat.toLowerCase()) {
-          case 'actor': tableName = 'actor_details'; break;
-          case 'singer': tableName = 'singer_details'; break;
-          case 'model': tableName = 'model_details'; break;
-          case 'dancer': tableName = 'dancer_details'; break;
-          case 'technician': tableName = 'technician_details'; break;
-        }
-
-        if (tableName) {
-          const { data: details } = await supabase
-            .from(tableName)
-            .select('*')
-            .eq('artist_id', profile.id)
-            .single();
-          if (details) {
-            categoryDetails[cat.toLowerCase()] = details;
-          }
-        }
-      }));
+      const { data: details } = await supabase
+        .from('artist_dynamic_details')
+        .select('*')
+        .eq('artist_id', profile.id)
+        .in('category_name', profile.categories);
+        
+      if (details) {
+        details.forEach(d => {
+          categoryDetails[d.category_name] = d.details;
+        });
+      }
     }
 
     // Compute basic stats

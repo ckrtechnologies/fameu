@@ -11,9 +11,11 @@ router.get('/', professionsController.getProfessions);
 router.get('/admin', professionsController.getAllProfessionsAdmin);
 router.post('/admin', professionsController.createProfession);
 router.put('/admin/:id', professionsController.updateProfession);
+router.delete('/admin/:id', professionsController.deleteProfession);
 
 // Manage Dynamic Fields
 router.post('/admin/:id/fields', professionsController.addProfessionField);
+router.put('/admin/fields/:fieldId', professionsController.updateProfessionField);
 router.delete('/admin/fields/:fieldId', professionsController.deleteProfessionField);
 
 export default router;

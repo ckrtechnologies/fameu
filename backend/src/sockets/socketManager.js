@@ -60,7 +60,24 @@ export default (io) => {
       }
     });
 
-    // 4. Typing Indicators
+    // 4. Mark Messages as Read
+    socket.on('mark_read', async ({ conversationId }) => {
+      try {
+        if (!conversationId) return;
+        
+        await chatService.markMessagesAsRead(conversationId, socket.user.id);
+        
+        // Notify the other user that their messages were read (optional, for read receipts feature)
+        socket.to(conversationId).emit('messages_read', { 
+          conversationId, 
+          readByUserId: socket.user.id 
+        });
+      } catch (err) {
+        console.error('Socket Mark Read Error:', err);
+      }
+    });
+
+    // 5. Typing Indicators
     socket.on('typing', ({ conversationId, isTyping }) => {
       // Broadcast to the room, EXCEPT the sender
       socket.to(conversationId).emit('user_typing', { 

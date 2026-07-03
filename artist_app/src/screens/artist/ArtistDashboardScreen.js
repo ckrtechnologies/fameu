@@ -23,6 +23,7 @@ export default function ArtistDashboardScreen() {
   // Build query params for feed
   const feedParams = primaryCategory ? { category: primaryCategory } : {};
   const { data: feedData, isLoading, isError, refetch: refetchFeed } = useGetFeedQuery(feedParams);
+  const { data: allFeedData, isLoading: isLoadingAll, refetch: refetchAll } = useGetFeedQuery({});
   const { data: liveData, isLoading: isLoadingLive, isError: isErrorLive, refetch: refetchLive } = useGetFeedQuery({ ...feedParams, is_live: true });
 
   const [refreshing, setRefreshing] = React.useState(false);
@@ -32,13 +33,14 @@ export default function ArtistDashboardScreen() {
     try {
       await Promise.all([
         refetchFeed(),
+        refetchAll(),
         refetchLive(),
         refetchProfile()
       ]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchFeed, refetchLive, refetchProfile]);
+  }, [refetchFeed, refetchAll, refetchLive, refetchProfile]);
 
   const handleAuditionPress = (id) => {
     navigation.navigate('AuditionDetail', { id });
@@ -46,7 +48,7 @@ export default function ArtistDashboardScreen() {
 
   const name = profile?.full_name || user?.display_name || user?.full_name || user?.email?.split('@')[0] || 'Artist';
 
-  if (isLoading || isLoadingLive) {
+  if (isLoading || isLoadingLive || isLoadingAll) {
     return (
       <SafeAreaView style={styles.loadingSafeArea} edges={['left', 'right']}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -54,10 +56,12 @@ export default function ArtistDashboardScreen() {
     );
   }
 
-  // Assuming feedData is an array of auditions. We will split it into two for display purposes 
-  // (or backend could return { nearby: [], trending: [] })
-  // For now, if it's a flat array, we just show it under "Recommended"
-  const auditions = Array.isArray(feedData?.data) ? feedData.data : (Array.isArray(feedData) ? feedData : []);
+  const recommendedAuditions = Array.isArray(feedData?.data) ? feedData.data : (Array.isArray(feedData) ? feedData : []);
+  const allAuditions = Array.isArray(allFeedData?.data) ? allFeedData.data : (Array.isArray(allFeedData) ? allFeedData : []);
+  
+  // If no recommended auditions for their specific category, fall back to showing all available auditions
+  const displayAuditions = recommendedAuditions.length > 0 ? recommendedAuditions : allAuditions;
+  const recommendedTitle = recommendedAuditions.length > 0 ? "Recommended for You" : "Explore Auditions";
   const liveAuditions = Array.isArray(liveData?.data) ? liveData.data : (Array.isArray(liveData) ? liveData : []);
   
   const calculateProfileCompletion = (p) => {
@@ -142,15 +146,15 @@ export default function ArtistDashboardScreen() {
         {/* Recommended Auditions Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recommended for You</Text>
+            <Text style={styles.sectionTitle}>{recommendedTitle}</Text>
             <Text style={styles.seeAll}>See All</Text>
           </View>
           
-          {auditions.length === 0 && !isError ? (
+          {displayAuditions.length === 0 && !isError ? (
             <Text style={styles.emptyText}>No auditions available right now.</Text>
           ) : (
             <FlatList
-              data={auditions}
+              data={displayAuditions}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={item => item.id}

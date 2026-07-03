@@ -4,14 +4,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography } from '../../theme/theme';
-import { useUpsertProfileMutation, useGetProfileQuery } from '../../services/profileApi';
+import { useUpsertProfileMutation, useGetProfileQuery, useGetProfessionsQuery } from '../../services/profileApi';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: 'Actor', title: 'Actor', icon: 'film-outline', color: '#FF6B6B' },
   { id: 'Model', title: 'Model', icon: 'camera-outline', color: '#4ECDC4' },
   { id: 'Singer', title: 'Singer', icon: 'mic-outline', color: '#45B7D1' },
   { id: 'Dancer', title: 'Dancer', icon: 'body-outline', color: '#96CEB4' },
   { id: 'Technician', title: 'Technician', icon: 'construct-outline', color: '#FFEEAD' },
+];
+
+const FALLBACK_ICONS = [
+  { icon: 'star-outline', color: '#A78BFA' },
+  { icon: 'person-outline', color: '#F472B6' },
+  { icon: 'briefcase-outline', color: '#60A5FA' },
+  { icon: 'color-palette-outline', color: '#34D399' },
+  { icon: 'videocam-outline', color: '#FBBF24' }
 ];
 
 const { width } = Dimensions.get('window');
@@ -21,8 +29,23 @@ export default function ArtistCategoryScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { data: profileResponse , isFetching, refetch} = useGetProfileQuery()
+  const { data: professionsResponse, isLoading: isLoadingProfessions } = useGetProfessionsQuery();
   const [upsertProfile, { isLoading }] = useUpsertProfileMutation();
   const [selectedCategories, setSelectedCategories] = useState([]);
+
+  const categoriesList = (professionsResponse?.data || []).map((prof, index) => {
+    const match = DEFAULT_CATEGORIES.find(c => c.id.toLowerCase() === prof.name.toLowerCase());
+    if (match) {
+      return { ...match, id: prof.name, title: prof.name };
+    }
+    const fallback = FALLBACK_ICONS[index % FALLBACK_ICONS.length];
+    return {
+      id: prof.name,
+      title: prof.name,
+      icon: fallback.icon,
+      color: fallback.color
+    };
+  });
 
   useEffect(() => {
     if (route.params?.currentCategories) {
@@ -107,7 +130,9 @@ export default function ArtistCategoryScreen() {
         <Text style={styles.subtitle}>Select all categories that apply to help us customize your profile.</Text>
         
         <View style={styles.grid}>
-          {CATEGORIES.map((cat) => {
+          {isLoadingProfessions ? (
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+          ) : categoriesList.map((cat) => {
             const isSelected = selectedCategories.includes(cat.id);
             return (
               <TouchableOpacity

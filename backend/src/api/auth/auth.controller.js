@@ -19,12 +19,12 @@ class AuthController {
 
   async verifyOtp(req, res, next) {
     try {
-      const { identifier, otp } = req.body;
+      const { identifier, otp, role } = req.body;
       if (!identifier || !otp) {
         return res.status(400).json({ success: false, error: 'Identifier and OTP are required' });
       }
 
-      const result = await authService.verifyOtp(identifier, otp);
+      const result = await authService.verifyOtp(identifier, otp, role);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       // If error is incorrect otp, return 400 instead of 500

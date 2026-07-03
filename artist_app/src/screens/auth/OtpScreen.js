@@ -57,24 +57,15 @@ export default function OtpScreen() {
   const handleVerify = async () => {
     if (otp.length !== OTP_LENGTH) return;
     try {
-      const response = await verifyOtp({ identifier, otp }).unwrap();
+      const response = await verifyOtp({ identifier, otp, role: 'artist' }).unwrap();
       const { token, user, isNewUser } = response.data;
       
       // Save token and user to global state (triggers AppNavigator to switch to Main Tabs)
       dispatch(setCredentials({ user, token }));
 
-      // If new user, set their role to 'artist' in the backend
+      // If new user, they are already 'artist' in the DB now
       if (isNewUser) {
-        try {
-           // We might need to handle this carefully since the apiSlice might not 
-           // immediately have the token available if Keychain is slow. 
-           // In a real app we'd dispatch a thunk or wait for state.
-           // For now, we will assume it works or handle in a background sync.
-           setRole({ role: 'artist' });
-           // TODO: Call an updateProfile API here using `name` from route.params if provided
-        } catch(e) {
-           console.log("Failed to set role or profile", e);
-        }
+        // TODO: Call an updateProfile API here using `name` from route.params if provided
       }
     } catch (err) {
       Alert.alert('Verification Failed', err?.data?.error || 'Invalid OTP. Please try again.');

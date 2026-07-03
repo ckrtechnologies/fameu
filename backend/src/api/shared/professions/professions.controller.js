@@ -62,12 +62,42 @@ export const professionsController = {
   },
 
   /**
+   * Hard Delete a profession (Admin only)
+   */
+  async deleteProfession(req, res, next) {
+    try {
+      await professionService.deleteProfession(req.params.id);
+      return res.status(200).json({
+        success: true,
+        message: 'Profession permanently deleted'
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * Add a dynamic field to a profession (Admin only)
    */
   async addProfessionField(req, res, next) {
     try {
       const field = await professionService.addProfessionField(req.params.id, req.body);
       return res.status(201).json({
+        success: true,
+        data: field
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Update a dynamic field (Admin only)
+   */
+  async updateProfessionField(req, res, next) {
+    try {
+      const field = await professionService.updateProfessionField(req.params.fieldId, req.body);
+      return res.status(200).json({
         success: true,
         data: field
       });

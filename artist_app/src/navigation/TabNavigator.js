@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -16,6 +17,7 @@ const Tab = createBottomTabNavigator();
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabNavigator() {
+  const totalUnreadCount = useSelector((state) => state.chat.totalUnreadCount);
   const insets = useSafeAreaInsets();
 
   return (
@@ -106,8 +108,12 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="Inbox" 
-        component={InboxScreen} 
-        options={{ tabBarLabel: 'Messages' }}
+        component={InboxScreen}
+        options={{
+          tabBarLabel: 'Messages',
+          tabBarBadge: totalUnreadCount > 0 ? totalUnreadCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.white }
+        }}
       />
     </Tab.Navigator>
   );

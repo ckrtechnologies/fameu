@@ -32,13 +32,14 @@ const fileFilter = (req, file, cb) => {
   const allowedMimes = [
     'image/jpeg', 'image/png', 'image/webp', // Images
     'video/mp4', 'video/quicktime',          // Videos
-    'application/pdf'                        // Resumes/KYC
+    'application/pdf',                       // Resumes/KYC
+    'audio/mpeg', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/webm', 'audio/mp4' // Audio
   ];
   
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`Invalid file type: ${file.mimetype}. Allowed types: JPEG, PNG, WEBP, MP4, MOV, PDF.`), false);
+    cb(new Error(`Invalid file type: ${file.mimetype}. Allowed types: Images, Videos, Audio, PDF.`), false);
   }
 };
 

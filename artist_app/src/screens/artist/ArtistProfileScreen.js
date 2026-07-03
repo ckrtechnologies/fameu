@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl } from 'react-native';
+import Video from 'react-native-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -224,11 +225,56 @@ export default function ArtistProfileScreen() {
                   <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>{activeTab} Details</Text>
                   {entries.map(([k,v]) => {
                     const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    const value = Array.isArray(v) ? v.join(', ') : String(v);
+
+                    const renderMediaItem = (itemValue, index) => {
+                      const strVal = String(itemValue);
+                      const isVideo = strVal.match(/\.(mp4|mov)$/i);
+                      const isAudio = strVal.match(/\.(mp3|wav|aac|ogg|webm)$/i);
+                      const isImage = strVal.match(/\.(jpg|jpeg|png|webp)$/i);
+
+                      if (isVideo || isAudio) {
+                        return (
+                          <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
+                            {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
+                            <Video 
+                              source={{ uri: strVal }} 
+                              style={{ width: '100%', height: isVideo ? 250 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }} 
+                              controls={true}
+                              resizeMode={isVideo ? "cover" : "contain"}
+                              paused={true}
+                            />
+                          </View>
+                        );
+                      }
+
+                      if (isImage) {
+                        return (
+                          <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
+                            {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
+                            <Image source={{ uri: strVal }} style={{ width: '100%', height: 250, borderRadius: 8, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
+                          </View>
+                        );
+                      }
+                      return null;
+                    };
+
+                    const mediaRegex = /\.(mp4|mov|mp3|wav|aac|ogg|webm|jpg|jpeg|png|webp)$/i;
+                    const isMediaArray = Array.isArray(v) && v.some(val => String(val).match(mediaRegex));
+                    const isSingleMedia = typeof v === 'string' && String(v).match(mediaRegex);
+
+                    if (isMediaArray) {
+                      return <View key={k}>{v.map((item, idx) => renderMediaItem(item, idx))}</View>;
+                    }
+
+                    if (isSingleMedia) {
+                      return <View key={k}>{renderMediaItem(v, 0)}</View>;
+                    }
+
+                    const textValue = Array.isArray(v) ? v.join(', ') : String(v);
                     return (
                       <View key={k} style={{ marginBottom: 8 }}>
                         <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{label}</Text>
-                        <Text style={{ ...typography.body, color: colors.textMainLight }}>{value}</Text>
+                        <Text style={{ ...typography.body, color: colors.textMainLight }}>{textValue}</Text>
                       </View>
                     );
                   })}

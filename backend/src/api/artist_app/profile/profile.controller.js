@@ -94,6 +94,22 @@ class ArtistProfileController {
       next(err);
     }
   }
+
+  /**
+   * Generic file upload (returns URL only)
+   */
+  async uploadFile(req, res, next) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file uploaded' });
+      }
+      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/artist/`;
+      const fileUrl = baseUrl + req.file.filename;
+      res.status(200).json({ success: true, url: fileUrl });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export default new ArtistProfileController();

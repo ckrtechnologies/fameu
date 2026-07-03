@@ -1,4 +1,5 @@
 import supabase from '../config/supabase.js';
+import notificationService from './notification.service.js';
 
 class ChatService {
   /**
@@ -48,6 +49,20 @@ class ChatService {
 
     if (error) throw new Error(`Failed to fetch inbox: ${error.message}`);
 
+    // Fetch unread messages count for this user
+    const { data: unreadMessages } = await supabase
+      .from('messages')
+      .select('conversation_id')
+      .neq('sender_id', userId)
+      .eq('is_read', false);
+
+    const unreadMap = {};
+    if (unreadMessages) {
+      unreadMessages.forEach(msg => {
+        unreadMap[msg.conversation_id] = (unreadMap[msg.conversation_id] || 0) + 1;
+      });
+    }
+
     // Map to an easier format for the frontend (which expects 'other_participant' and last_message)
     const formattedData = data.map(conv => {
       const isParticipant1 = conv.participant1_id === userId;
@@ -57,6 +72,7 @@ class ChatService {
         id: conv.id,
         updated_at: conv.updated_at,
         last_message: conv.last_message,
+        unread_count: unreadMap[conv.id] || 0,
         other_participant: otherParticipant
       };
     });
@@ -96,14 +112,47 @@ class ChatService {
     if (error) throw new Error(`Failed to save message: ${error.message}`);
     
     // Update the last_message and updated_at on conversations
-    await supabase
+    const { data: conv } = await supabase
       .from('conversations')
       .update({ 
         updated_at: new Date().toISOString(),
         last_message: content
       })
-      .eq('id', conversationId);
+      .eq('id', conversationId)
+      .select('participant1_id, participant2_id')
+      .single();
     
+    if (conv) {
+      const receiverId = conv.participant1_id === senderId ? conv.participant2_id : conv.participant1_id;
+      
+      const { data: sender } = await supabase.from('users').select('display_name').eq('id', senderId).single();
+      const senderName = sender?.display_name || 'Someone';
+
+      // Send push notification
+      await notificationService.sendPushNotification(
+        receiverId,
+        `New message from ${senderName}`,
+        content,
+        { type: 'chat_message', conversationId }
+      );
+    }
+    
+    return data;
+  }
+
+  /**
+   * Mark messages as read in a conversation
+   */
+  async markMessagesAsRead(conversationId, userId) {
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', userId)
+      .eq('is_read', false)
+      .select();
+
+    if (error) throw new Error(`Failed to mark messages as read: ${error.message}`);
     return data;
   }
 }

@@ -2,15 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { io } from 'socket.io-client';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
 import { useGetMessagesQuery, chatApi } from '../../services/chatApi';
-import { useDispatch } from 'react-redux';
+import SocketService from '../../services/SocketService';
+import { markConversationAsRead } from '../../store/slices/chatSlice';
 
 // Use the same base URL as API
-const SOCKET_URL = 'http://10.0.2.2:8000'; // For Android emulator, adjust if needed for real device/iOS
+// Removed hardcoded SOCKET_URL
 
 export default function ChatScreen() {
   const route = useRoute();
@@ -42,21 +43,16 @@ export default function ChatScreen() {
     }
   }, [messagesResponse]);
 
-  // Setup Socket
+  // Setup Socket Listeners
   useEffect(() => {
-    if (!token) return;
+    const socket = SocketService.getSocket();
+    if (!socket) return;
+    
+    socketRef.current = socket;
 
-    socketRef.current = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket'], // Avoid long-polling issues
-    });
-
-    const socket = socketRef.current;
-
-    socket.on('connect', () => {
-      console.log('Socket connected');
-      socket.emit('join_conversation', conversationId);
-    });
+    socket.emit('join_conversation', conversationId);
+    socket.emit('mark_read', { conversationId });
+    dispatch(markConversationAsRead({ conversationId }));
 
     socket.on('receive_message', (newMessage) => {
       // Prepend to messages (newest first)
@@ -77,11 +73,10 @@ export default function ChatScreen() {
     });
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      socket.off('receive_message');
+      socket.off('user_typing');
     };
-  }, [conversationId, token, myId, dispatch]);
+  }, [conversationId, dispatch]);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
