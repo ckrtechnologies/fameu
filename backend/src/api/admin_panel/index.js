@@ -148,6 +148,73 @@ router.get('/users/:id', async (req, res) => {
   }
 });
 
+// Update User Basic Details
+router.put('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { display_name, mobile } = req.body;
+    
+    const { error } = await supabase.from('users').update({ display_name, mobile }).eq('id', id);
+    if (error) throw error;
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete User completely
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Auth admin API allows fully deleting the user from Auth, 
+    // which cascades to public.users and everything else because of ON DELETE CASCADE
+    const { error } = await supabase.auth.admin.deleteUser(id);
+    if (error) throw error;
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Fetch all conversations for monitoring
+router.get('/conversations', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select(`
+        *,
+        participant1:users!fk_participant1(id, display_name, email, role),
+        participant2:users!fk_participant2(id, display_name, email, role)
+      `)
+      .order('updated_at', { ascending: false });
+      
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Fetch messages for a specific conversation
+router.get('/conversations/:id/messages', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*, sender:users!messages_sender_id_fkey(display_name)')
+      .eq('conversation_id', id)
+      .order('created_at', { ascending: true });
+      
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // --- NEW ADMIN MODULES ---
 
 // Analytics
@@ -318,6 +385,73 @@ router.put('/cms', async (req, res) => {
     const { error } = await supabase.from('cms_content').update({ value }).eq('key', key);
     if (error) throw error;
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Notification Management System (NMS)
+router.post('/notifications/send', async (req, res) => {
+  try {
+    const { title, body, target, targetUserId, deepLink } = req.body;
+    let query = supabase.from('users').select('id, fcm_token').not('fcm_token', 'is', null);
+    
+    if (target === 'artists') {
+      query = query.eq('role', 'artist');
+    } else if (target === 'hiring') {
+      query = query.eq('role', 'hiring');
+    } else if (target === 'specific' && targetUserId) {
+      query = query.eq('id', targetUserId);
+    }
+
+    const { data: users, error } = await query;
+    if (error) throw error;
+
+    const tokens = users.map(u => u.fcm_token).filter(t => t);
+    
+    // Import notification service dynamically to avoid circular dependencies if any
+    const notificationService = (await import('../../services/notification.service.js')).default;
+    
+    let result = { successCount: 0, failureCount: 0 };
+    if (tokens.length > 0) {
+      result = await notificationService.sendBulkPushNotification(tokens, title, body, {
+        type: 'admin_broadcast',
+        deepLink: deepLink || '',
+      });
+    }
+
+    // Save broadcast history to notifications table using admin's user_id
+    await supabase.from('notifications').insert([{
+      user_id: req.user.id,
+      title,
+      body,
+      type: 'admin_broadcast',
+      data: {
+        target,
+        targetUserId,
+        deepLink,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        totalAttempted: tokens.length
+      }
+    }]);
+
+    res.json({ success: true, data: { ...result, totalAttempted: tokens.length } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/notifications/history', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('type', 'admin_broadcast')
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

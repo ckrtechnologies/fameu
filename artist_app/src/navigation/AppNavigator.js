@@ -7,6 +7,7 @@ import { initializeAuth } from '../store/slices/authSlice';
 import { colors } from '../theme/theme';
 import SocketService from '../services/SocketService';
 import * as Keychain from 'react-native-keychain';
+import { setupPushNotifications } from '../services/PushNotificationService';
 
 export default function AppNavigator() {
   const dispatch = useDispatch();
@@ -23,6 +24,7 @@ export default function AppNavigator() {
           SocketService.connect(credentials.password);
         }
       });
+      setupPushNotifications();
     } else {
       SocketService.disconnect();
     }

@@ -1,5 +1,5 @@
 import messaging from '@react-native-firebase/messaging';
-import { Platform } from 'react-native';
+import { Platform, PermissionsAndroid } from 'react-native';
 import * as Keychain from 'react-native-keychain';
 import { BASE_URL } from './apiSlice';
 
@@ -13,6 +13,12 @@ export const setupPushNotifications = async () => {
 
       if (!enabled) {
         console.log('FCM Permission not granted');
+        return null;
+      }
+    } else if (Platform.OS === 'android' && Platform.Version >= 33) {
+      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('FCM Permission not granted for Android');
         return null;
       }
     }
@@ -38,7 +44,7 @@ export const sendTokenToBackend = async (fcmToken) => {
     const credentials = await Keychain.getGenericPassword();
     if (!credentials || !credentials.password) return;
 
-    const response = await fetch(`${BASE_URL}/api/notifications/fcm-token`, {
+    const response = await fetch(`${BASE_URL}/notifications/fcm-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

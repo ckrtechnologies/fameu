@@ -11,8 +11,8 @@ export const chatSlice = createSlice({
   reducers: {
     setConversations: (state, action) => {
       state.conversations = action.payload;
-      // Recalculate total unread
-      state.totalUnreadCount = action.payload.reduce((total, conv) => total + (conv.unread_count || 0), 0);
+      // Recalculate total unread (count of unique conversations with unread messages)
+      state.totalUnreadCount = action.payload.filter(conv => (conv.unread_count || 0) > 0).length;
     },
     updateConversationLastMessage: (state, action) => {
       const { conversationId, lastMessage } = action.payload;
@@ -29,15 +29,21 @@ export const chatSlice = createSlice({
       const { conversationId } = action.payload;
       const conv = state.conversations.find(c => c.id === conversationId);
       if (conv) {
+        if (!conv.unread_count) {
+          state.totalUnreadCount += 1;
+        }
         conv.unread_count = (conv.unread_count || 0) + 1;
+      } else {
+        // Stub conversation so badge updates even if inbox hasn't fetched yet
+        state.conversations.push({ id: conversationId, unread_count: 1 });
+        state.totalUnreadCount += 1;
       }
-      state.totalUnreadCount += 1;
     },
     markConversationAsRead: (state, action) => {
       const { conversationId } = action.payload;
       const conv = state.conversations.find(c => c.id === conversationId);
       if (conv && conv.unread_count > 0) {
-        state.totalUnreadCount -= conv.unread_count;
+        state.totalUnreadCount -= 1;
         conv.unread_count = 0;
       }
     }

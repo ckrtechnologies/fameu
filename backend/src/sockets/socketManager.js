@@ -35,6 +35,11 @@ export default (io) => {
       console.log(`User ${socket.user.id} joined conversation: ${conversationId}`);
     });
 
+    socket.on('leave_conversation', (conversationId) => {
+      socket.leave(conversationId);
+      console.log(`User ${socket.user.id} left conversation: ${conversationId}`);
+    });
+
     // 3. Send Message
     socket.on('send_message', async (data, callback) => {
       try {
@@ -45,11 +50,30 @@ export default (io) => {
           return;
         }
 
+        // Check if the receiving user is currently in this conversation room
+        let skipPushNotification = false;
+        const room = io.sockets.adapter.rooms.get(conversationId);
+        if (room) {
+          for (const socketId of room) {
+            const clientSocket = io.sockets.sockets.get(socketId);
+            if (clientSocket && clientSocket.user.id !== socket.user.id) {
+              // The receiver is actively connected to this chat room
+              skipPushNotification = true;
+              break;
+            }
+          }
+        }
+
         // Save to Supabase DB via ChatService
-        const savedMessage = await chatService.saveMessage(conversationId, socket.user.id, content);
+        const savedMessage = await chatService.saveMessage(conversationId, socket.user.id, content, skipPushNotification);
 
         // Broadcast to everyone in that conversation room
         io.to(conversationId).emit('receive_message', savedMessage);
+        
+        // Also emit to the receiver's personal room so their global socket listener picks it up
+        if (savedMessage.receiver_id) {
+          io.to(savedMessage.receiver_id).emit('receive_message', savedMessage);
+        }
         
         // Callback to sender for UI confirmation
         if (typeof callback === 'function') callback({ success: true, data: savedMessage });

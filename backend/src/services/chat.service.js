@@ -98,7 +98,7 @@ class ChatService {
   /**
    * Save a new message (Used by Socket.io)
    */
-  async saveMessage(conversationId, senderId, content) {
+  async saveMessage(conversationId, senderId, content, skipPushNotification = false) {
     const { data, error } = await supabase
       .from('messages')
       .insert([{
@@ -122,22 +122,41 @@ class ChatService {
       .select('participant1_id, participant2_id')
       .single();
     
+    let receiverId = null;
     if (conv) {
-      const receiverId = conv.participant1_id === senderId ? conv.participant2_id : conv.participant1_id;
+      receiverId = conv.participant1_id === senderId ? conv.participant2_id : conv.participant1_id;
       
-      const { data: sender } = await supabase.from('users').select('display_name').eq('id', senderId).single();
-      const senderName = sender?.display_name || 'Someone';
+      if (!skipPushNotification) {
+        const { data: sender } = await supabase.from('users').select('display_name, avatar_url, artist_profiles(photo_urls), hiring_profiles(logo_url)').eq('id', senderId).single();
+        const senderName = sender?.display_name || 'Someone';
+        const senderAvatar = sender?.avatar_url || sender?.artist_profiles?.photo_urls?.[0] || sender?.hiring_profiles?.logo_url || null;
 
-      // Send push notification
-      await notificationService.sendPushNotification(
-        receiverId,
-        `New message from ${senderName}`,
-        content,
-        { type: 'chat_message', conversationId }
-      );
+        // Count unread messages in this conversation for the receiver
+        const { count: unreadCount } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conversationId)
+          .eq('sender_id', senderId)
+          .eq('is_read', false);
+
+        const title = unreadCount && unreadCount > 1 
+          ? `${unreadCount} new messages from ${senderName}` 
+          : `New message from ${senderName}`;
+
+        await notificationService.sendPushNotification(
+          receiverId,
+          title,
+          content,
+          { 
+            type: 'chat_message', 
+            conversationId: String(conversationId),
+            avatarUrl: senderAvatar || ''
+          }
+        );
+      }
     }
     
-    return data;
+    return { ...data, receiver_id: receiverId };
   }
 
   /**

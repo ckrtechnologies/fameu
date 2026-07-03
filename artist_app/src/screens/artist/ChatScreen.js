@@ -54,27 +54,37 @@ export default function ChatScreen() {
     socket.emit('mark_read', { conversationId });
     dispatch(markConversationAsRead({ conversationId }));
 
-    socket.on('receive_message', (newMessage) => {
+    const handleReceiveMessage = (newMessage) => {
       // Prepend to messages (newest first)
-      setMessages((prev) => [newMessage, ...prev]);
+      setMessages((prev) => {
+        if (prev.some(msg => msg.id === newMessage.id)) {
+          return prev;
+        }
+        return [newMessage, ...prev];
+      });
       
       // Also invalidate inbox cache so the last message updates
       dispatch(chatApi.util.invalidateTags(['Chat']));
-    });
+    };
+    
+    socket.on('receive_message', handleReceiveMessage);
 
-    socket.on('user_typing', ({ userId, isTyping: typingStatus }) => {
+    const handleUserTyping = ({ userId, isTyping: typingStatus }) => {
       if (userId !== myId) {
         setOtherUserTyping(typingStatus);
       }
-    });
+    };
+    
+    socket.on('user_typing', handleUserTyping);
 
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err);
     });
 
     return () => {
-      socket.off('receive_message');
-      socket.off('user_typing');
+      socket.emit('leave_conversation', conversationId);
+      socket.off('receive_message', handleReceiveMessage);
+      socket.off('user_typing', handleUserTyping);
     };
   }, [conversationId, dispatch]);
 

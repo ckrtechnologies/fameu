@@ -1,75 +1,87 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setConversations } from '../../store/slices/chatSlice';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { format } from 'date-fns';
+
 import { colors, typography, spacing } from '../../theme/theme';
 import { useGetInboxQuery } from '../../services/chatApi';
 
 export default function InboxScreen() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { data: response, isLoading, isError, refetch } = useGetInboxQuery();
-  
+  const { data: response, isLoading, isFetching, refetch } = useGetInboxQuery();
+  const { user } = useSelector((state) => state.auth);
   const conversations = useSelector(state => state.chat.conversations);
+  
+  const [searchQuery, setSearchQuery] = useState('');
 
   React.useEffect(() => {
     if (response?.data) {
       dispatch(setConversations(response.data));
     }
   }, [response, dispatch]);
-  
-  const [refreshing, setRefreshing] = React.useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
-  const handleChatPress = (chat) => {
-    navigation.navigate('Chat', {
-      conversationId: chat.id,
-      otherParticipant: chat.other_participant
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim() || !conversations) return conversations;
+    const query = searchQuery.toLowerCase();
+    return conversations.filter(item => {
+      const otherParticipant = item.other_participant;
+      const name = otherParticipant?.artist_profiles?.full_name || otherParticipant?.display_name || 'Unknown User';
+      return name.toLowerCase().includes(query);
     });
-  };
+  }, [conversations, searchQuery]);
 
-  const renderItem = ({ item }) => {
-    const { other_participant, last_message, updated_at } = item;
+  const renderConversationItem = ({ item }) => {
+    const otherParticipant = item.other_participant;
     
-    // Fallback names
-    const displayName = other_participant?.artist_profiles?.full_name || other_participant?.display_name || other_participant?.hiring_profiles?.company_name || 'Unknown User';
-    
+    const unreadCount = item.unread_count || 0;
+
     return (
-      <TouchableOpacity style={styles.chatItem} onPress={() => handleChatPress(item)}>
-        <View style={styles.avatar}>
-          {other_participant?.avatar_url || other_participant?.artist_profiles?.photo_urls?.[0] || other_participant?.hiring_profiles?.logo_url ? (
+      <TouchableOpacity 
+        style={styles.card}
+        onPress={() => navigation.navigate('Chat', { 
+          conversationId: item.id, 
+          otherParticipant: item.other_participant
+        })}
+      >
+        <View style={styles.avatarContainer}>
+          {otherParticipant?.avatar_url || otherParticipant?.artist_profiles?.photo_urls?.[0] || otherParticipant?.hiring_profiles?.logo_url ? (
             <Image 
-              source={{ uri: other_participant?.avatar_url || other_participant?.artist_profiles?.photo_urls?.[0] || other_participant?.hiring_profiles?.logo_url }} 
+              source={{ uri: otherParticipant?.avatar_url || otherParticipant?.artist_profiles?.photo_urls?.[0] || otherParticipant?.hiring_profiles?.logo_url }} 
               style={{ width: '100%', height: '100%', borderRadius: 25 }} 
             />
           ) : (
-            <Icon name="person" size={24} color={colors.textMutedLight} />
+            <Text style={styles.avatarText}>
+              {otherParticipant?.artist_profiles?.full_name 
+                ? otherParticipant.artist_profiles.full_name.charAt(0).toUpperCase() 
+                : (otherParticipant?.display_name ? otherParticipant.display_name.charAt(0).toUpperCase() : '?')}
+            </Text>
           )}
         </View>
-        <View style={styles.chatInfo}>
-          <View style={styles.chatHeader}>
-            <Text style={styles.chatName}>{displayName}</Text>
-            <Text style={styles.chatTime}>
-              {updated_at ? new Date(updated_at).toLocaleDateString() : ''}
+
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.name} numberOfLines={1}>
+              {otherParticipant?.artist_profiles?.full_name || otherParticipant?.display_name || 'Unknown User'}
             </Text>
+            {item.updated_at && (
+              <Text style={styles.timeText}>
+                {format(new Date(item.updated_at), 'MMM dd')}
+              </Text>
+            )}
           </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-            <Text style={styles.lastMessage} numberOfLines={1}>
+          
+          <View style={styles.cardFooter}>
+            <Text style={[styles.messageText, unreadCount > 0 && styles.unreadText]} numberOfLines={1}>
               {item.last_message || 'No messages yet'}
             </Text>
-            {item.unread_count > 0 && (
-              <View style={styles.unreadBadge}>
-                <Text style={styles.unreadBadgeText}>{item.unread_count}</Text>
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount}</Text>
               </View>
             )}
           </View>
@@ -80,111 +92,174 @@ export default function InboxScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.safeArea, styles.center]} edges={['left', 'right']}>
+      <View style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" color={colors.primary} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity onPress={refetch}>
-          <Icon name="refresh" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-      </View>
-      
-      {isError ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Failed to load messages</Text>
-        </View>
-      ) : conversations.length === 0 ? (
-        <View style={styles.center}>
-          <Icon name="chatbubble-ellipses-outline" size={64} color={colors.textMutedLight} />
-          <Text style={styles.emptyText}>No conversations yet.</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={conversations}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <View style={styles.searchContainer}>
+        <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search chats..."
+          placeholderTextColor={colors.textMutedLight}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
         />
-      )}
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+            <Icon name="close-circle" size={20} color={colors.textMutedLight} />
+          </TouchableOpacity>
+        )}
+      </View>
+      <FlatList
+        data={filteredConversations}
+        keyExtractor={(item) => item.id}
+        renderItem={renderConversationItem}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
+        }
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <Icon name={searchQuery ? "search-outline" : "chatbubbles-outline"} size={48} color={colors.borderLight} />
+            <Text style={styles.emptyTitle}>{searchQuery ? "No Results" : "No Messages"}</Text>
+            <Text style={styles.emptyText}>{searchQuery ? "No chats match your search." : "You haven't started any conversations yet."}</Text>
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
   center: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.xl,
+  listContent: {
     paddingBottom: spacing.m,
   },
-  headerTitle: {
-    ...typography.h1,
-    color: colors.textMainLight,
-  },
-  listContent: {
-    paddingHorizontal: spacing.m,
-  },
-  chatItem: {
+  card: {
     flexDirection: 'row',
-    paddingVertical: spacing.l,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.textMutedLight + '20',
+    backgroundColor: colors.backgroundLight,
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.m,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
+    alignItems: 'center',
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.surfaceLight,
+  avatarContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.m,
   },
-  chatInfo: {
-    flex: 1,
-    justifyContent: 'center',
+  avatarText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  chatHeader: {
+  cardContent: {
+    flex: 1,
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 4,
   },
-  chatName: {
-    ...typography.h3,
+  name: {
+    ...typography.body,
+    fontSize: 16,
     color: colors.textMainLight,
+    fontWeight: '700',
+    flex: 1,
   },
-  chatTime: {
+  timeText: {
     ...typography.caption,
     color: colors.textMutedLight,
+    marginLeft: spacing.s,
   },
-  lastMessage: {
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  messageText: {
     ...typography.body,
+    fontSize: 14,
     color: colors.textMutedLight,
+    flex: 1,
+    marginRight: spacing.m,
   },
-  errorText: {
-    ...typography.body,
-    color: colors.danger,
+  unreadText: {
+    color: colors.textMainLight,
+    fontWeight: '600',
+  },
+  badge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xxl,
+    marginTop: 60,
+  },
+  emptyTitle: {
+    ...typography.h3,
+    color: colors.textMainLight,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
   },
   emptyText: {
     ...typography.body,
+    fontSize: 14,
     color: colors.textMutedLight,
-    marginTop: spacing.m,
-  }
+    textAlign: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceLight,
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
+  },
+  searchIcon: {
+    marginRight: spacing.s,
+  },
+  searchInput: {
+    flex: 1,
+    ...typography.body,
+    fontSize: 16,
+    color: colors.textMainLight,
+    paddingVertical: spacing.xs,
+  },
+  clearButton: {
+    padding: spacing.xs,
+  },
 });

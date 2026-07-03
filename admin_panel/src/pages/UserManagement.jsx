@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { useGetUsersQuery } from '../store/api/adminEndpoints';
+import { useGetUsersQuery, useDeleteUserMutation } from '../store/api/adminEndpoints';
 import DataTable from '../components/DataTable';
 import UserDetailsModal from '../components/UserDetailsModal';
+import EditUserModal from '../components/EditUserModal';
 
 export default function UserManagement({ role = 'all' }) {
   const { data: response, isLoading: loading } = useGetUsersQuery(role);
+  const [deleteUser] = useDeleteUserMutation();
   const users = response?.data || [];
   
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [editUserId, setEditUserId] = useState(null);
 
   const title = role === 'artist' ? 'Artists' : role === 'hiring' ? 'Hiring Partners' : 'All Users';
   const subtitle = `View and manage all registered ${title.toLowerCase()}.`;
@@ -64,10 +67,15 @@ export default function UserManagement({ role = 'all' }) {
         data={users}
         filterConfig={filterConfig}
         onView={(row) => setSelectedUserId(row.id)}
-        onEdit={(row) => console.log('Edit user:', row.id)}
-        onDelete={(row) => {
-          if(window.confirm(`Are you sure you want to delete ${row.display_name}?`)) {
-            console.log('Delete user:', row.id);
+        onEdit={(row) => setEditUserId(row.id)}
+        onDelete={async (row) => {
+          if(window.confirm(`Are you sure you want to permanently delete ${row.display_name || 'this user'}? This action cannot be undone.`)) {
+            try {
+              await deleteUser(row.id).unwrap();
+              alert('User deleted successfully.');
+            } catch (error) {
+              alert(`Failed to delete user: ${error.message || 'Unknown error'}`);
+            }
           }
         }}
       />
@@ -75,6 +83,12 @@ export default function UserManagement({ role = 'all' }) {
         <UserDetailsModal 
           userId={selectedUserId} 
           onClose={() => setSelectedUserId(null)} 
+        />
+      )}
+      {editUserId && (
+        <EditUserModal 
+          userId={editUserId} 
+          onClose={() => setEditUserId(null)} 
         />
       )}
     </>

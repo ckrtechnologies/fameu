@@ -17,6 +17,8 @@ import Blacklist from './pages/Blacklist';
 import Payments from './pages/Payments';
 import CMS from './pages/CMS';
 import ProfessionsManagement from './pages/ProfessionsManagement';
+import NMS from './pages/NMS';
+import Messaging from './pages/Messaging';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -65,9 +67,10 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="kyc" element={<KYCVerification />} />
-          <Route path="users" element={<Navigate to="/users/artists" replace />} />
-          <Route path="users/artists" element={<UserManagement role="artist" />} />
+          <Route path="users" element={<Navigate to="/users/artist" replace />} />
+          <Route path="users/artist" element={<UserManagement role="artist" />} />
           <Route path="users/hiring" element={<UserManagement role="hiring" />} />
+          <Route path="messaging" element={<Messaging />} />
           <Route path="auditions" element={<Auditions />} />
           <Route path="applications" element={<Applications />} />
           <Route path="fraud-reports" element={<FraudReports />} />
@@ -75,6 +78,7 @@ export default function App() {
           <Route path="payments" element={<Payments />} />
           <Route path="cms" element={<CMS />} />
           <Route path="professions" element={<ProfessionsManagement />} />
+          <Route path="nms" element={<NMS />} />
         </Route>
       </Routes>
     </BrowserRouter>

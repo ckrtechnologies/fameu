@@ -3,6 +3,8 @@ import { BASE_URL } from './apiSlice';
 import { store } from '../store/store';
 import { incrementUnreadCount, updateConversationLastMessage } from '../store/slices/chatSlice';
 
+import { chatApi } from './chatApi';
+
 class SocketService {
   constructor() {
     this.socket = null;
@@ -37,6 +39,37 @@ class SocketService {
       const currentUserId = store.getState().auth.user?.id;
       if (message.sender_id !== currentUserId) {
         store.dispatch(incrementUnreadCount({ conversationId: message.conversation_id }));
+      }
+      
+      // 3. Invalidate chat cache so Inbox updates and recalcs unread properly
+      store.dispatch(chatApi.util.invalidateTags(['Chat']));
+
+      // 4. Show Toast notification if we received a message from someone else
+      // and we are not currently on that ChatScreen
+      if (message.sender_id !== currentUserId) {
+        const { navigationRef } = require('../../App');
+        const currentRoute = navigationRef.isReady() ? navigationRef.getCurrentRoute() : null;
+        
+        const isCurrentlyViewingChat = 
+          currentRoute?.name === 'Chat' && 
+          currentRoute?.params?.conversationId === message.conversation_id;
+
+        if (!isCurrentlyViewingChat) {
+          const Toast = require('react-native-toast-message').default;
+          Toast.show({
+            type: 'customNotification',
+            text1: `New message from ${message.sender?.display_name || 'Someone'}`,
+            text2: message.content,
+            onPress: () => {
+              if (navigationRef.isReady()) {
+                navigationRef.navigate('Chat', {
+                  conversationId: message.conversation_id,
+                  otherParticipant: message.sender,
+                });
+              }
+            },
+          });
+        }
       }
     });
 

@@ -29,6 +29,21 @@ export const adminApi = apiSlice.injectEndpoints({
       query: (id) => `/admin_panel/users/${id}`,
       providesTags: (result, error, id) => [{ type: 'User', id }],
     }),
+    updateUser: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/admin_panel/users/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'User', id }, 'User'],
+    }),
+    deleteUser: builder.mutation({
+      query: (id) => ({
+        url: `/admin_panel/users/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['User', 'Analytics'],
+    }),
     blacklistUser: builder.mutation({
       query: (body) => ({
         url: '/admin_panel/blacklist',
@@ -125,6 +140,30 @@ export const adminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['CMS'],
     }),
+    
+    // Notifications (NMS)
+    getNotificationHistory: builder.query({
+      query: () => '/admin_panel/notifications/history',
+      providesTags: ['Notification'],
+    }),
+    sendNotification: builder.mutation({
+      query: (body) => ({
+        url: '/admin_panel/notifications/send',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Notification'],
+    }),
+
+    // Messaging
+    getConversations: builder.query({
+      query: () => '/admin_panel/conversations',
+      providesTags: ['Conversation'],
+    }),
+    getConversationMessages: builder.query({
+      query: (id) => `/admin_panel/conversations/${id}/messages`,
+      providesTags: (result, error, id) => [{ type: 'Message', id }],
+    }),
   }),
 });
 
@@ -134,6 +173,8 @@ export const {
   useGetAnalyticsQuery,
   useGetUsersQuery,
   useGetUserDetailsQuery,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
   useBlacklistUserMutation,
   useRemoveBlacklistMutation,
   useGetPendingKYCQuery,
@@ -148,4 +189,8 @@ export const {
   useGetPaymentsQuery,
   useGetCMSQuery,
   useUpdateCMSMutation,
+  useGetNotificationHistoryQuery,
+  useSendNotificationMutation,
+  useGetConversationsQuery,
+  useGetConversationMessagesQuery,
 } = adminApi;
