@@ -1,8 +1,9 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, Image, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useGetProfileQuery } from '../services/profileApi';
 
 import ArtistDashboardScreen from '../screens/artist/ArtistDashboardScreen';
 import AuditionDiscoveryScreen from '../screens/artist/AuditionDiscoveryScreen';
@@ -18,7 +19,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabNavigator() {
   const totalUnreadCount = useSelector((state) => state.chat.totalUnreadCount);
+  const user = useSelector(state => state.auth.user);
+  const { data: profileResponse } = useGetProfileQuery();
   const insets = useSafeAreaInsets();
+  
+  const profile = profileResponse?.data;
+  const fullName = profile?.full_name || user?.full_name || 'Artist';
+  const avatarUrl = profile?.avatar_url || user?.avatar_url || null;
 
   return (
     <Tab.Navigator
@@ -39,7 +46,13 @@ export default function TabNavigator() {
         },
         headerLeft: () => (
           <TouchableOpacity style={{ marginLeft: spacing.xl, padding: 4 }} onPress={() => navigation.openDrawer()}>
-            <Icon name="menu" size={32} color={colors.textMainLight} />
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} />
+            ) : (
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>{fullName.charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         ),
         headerRight: () => (
@@ -72,12 +85,17 @@ export default function TabNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMutedLight,
         tabBarStyle: {
-          backgroundColor: colors.backgroundLight,
+          backgroundColor: '#FFFFFF',
           borderTopColor: colors.borderLight,
-          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopWidth: 1,
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom || 10,
           paddingTop: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 5,
         },
         tabBarLabelStyle: {
           fontFamily: typography.fontFamily,

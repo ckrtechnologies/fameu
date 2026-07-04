@@ -403,6 +403,7 @@ export default function ProfessionsManagement() {
                     <option value="select">Dropdown (Single Select)</option>
                     <option value="multiselect">Dropdown (Multi Select)</option>
                     <option value="file">File Upload (e.g. Audio, Video, PDF)</option>
+                    <option value="url">URL Link (e.g. YouTube, Instagram)</option>
                   </select>
                 </div>
 

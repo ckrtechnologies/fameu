@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl } from 'react-native';
+import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -13,14 +14,25 @@ import {
   useUnfollowUserMutation 
 } from '../../services/connectionsApi';
 import { useStartConversationMutation } from '../../services/chatApi';
+import CommentsSection from '../../components/CommentsSection';
 
 export default function PublicProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { username } = route.params;
+  const { username, scrollToComments } = route.params;
   
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const { data: profileData, isLoading, isError, refetch , isFetching} = useGetPublicProfileQuery(username)
+  
+  const scrollViewRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (scrollToComments && !isLoading && profileData) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 500);
+    }
+  }, [scrollToComments, isLoading, profileData]);
   
   const [followUser, { isLoading: isFollowingLoad }] = useFollowUserMutation();
   const [unfollowUser, { isLoading: isUnfollowingLoad }] = useUnfollowUserMutation();
@@ -92,7 +104,8 @@ export default function PublicProfileScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+      <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+        {/* Cover Photo / Header Area */}
         <View style={styles.profileHeader}>
           {profileData.avatar_url ? (
             <Image source={{ uri: profileData.avatar_url }} style={styles.avatar} />
@@ -230,7 +243,7 @@ export default function PublicProfileScreen() {
             ) : (
               <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
                 {(() => {
-                  const details = profileData.profile.category_details?.[activeTab.toLowerCase()];
+                  const details = profileData.profile.category_details?.[activeTab];
                   if (!details) {
                     return (
                       <View style={styles.emptyPortfolio}>
@@ -253,11 +266,111 @@ export default function PublicProfileScreen() {
                       <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>{activeTab} Details</Text>
                       {entries.map(([k,v]) => {
                         const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        const value = Array.isArray(v) ? v.join(', ') : String(v);
+                        const renderMediaItem = (itemValue, index) => {
+                          const strVal = String(itemValue);
+                          const isVideo = strVal.match(/\.(mp4|mov|avi|wmv|mkv)$/i);
+                          const isAudio = strVal.match(/\.(mp3|wav|aac|ogg|webm|m4a|flac)$/i);
+                          const isImage = strVal.match(/\.(jpg|jpeg|png|webp)$/i);
+
+                          if (isVideo || isAudio) {
+                            return (
+                              <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
+                                {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
+                                <Video 
+                                  source={{ uri: strVal }} 
+                                  style={{ width: '100%', height: isVideo ? 250 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }} 
+                                  controls={true}
+                                  resizeMode={isVideo ? "cover" : "contain"}
+                                  paused={true}
+                                />
+                              </View>
+                            );
+                          }
+
+                          if (isImage) {
+                            return (
+                              <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
+                                {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
+                                <Image source={{ uri: strVal }} style={{ width: '100%', height: 250, borderRadius: 8, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
+                              </View>
+                            );
+                          }
+                          return null;
+                        };
+
+                        const mediaRegex = /\.(mp4|mov|avi|wmv|mkv|mp3|wav|aac|ogg|webm|m4a|flac|jpg|jpeg|png|webp)$/i;
+                        const isMediaArray = Array.isArray(v) && v.some(val => String(val).match(mediaRegex));
+                        const isSingleMedia = typeof v === 'string' && String(v).match(mediaRegex);
+
+                        if (isMediaArray) {
+                          return <View key={k}>{v.map((item, idx) => renderMediaItem(item, idx))}</View>;
+                        }
+
+                        if (isSingleMedia) {
+                          return <View key={k}>{renderMediaItem(v, 0)}</View>;
+                        }
+
+                        const urlStr = typeof v === 'string' ? v.trim() : '';
+                        const urlRegex = /^(https?:\/\/[^\s]+)$/i;
+                        const isUrl = urlRegex.test(urlStr);
+
+                        if (isUrl) {
+                          const isYoutube = urlStr.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                          const isInstagram = urlStr.match(/instagram\.com/i);
+
+                          if (isYoutube) {
+                            const videoId = isYoutube[1];
+                            const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                            return (
+                              <View key={k} style={{ marginBottom: 16 }}>
+                                <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                                <TouchableOpacity 
+                                  onPress={() => Linking.openURL(urlStr)}
+                                  style={{ position: 'relative', width: '100%', height: 200, borderRadius: 12, overflow: 'hidden' }}
+                                >
+                                  <Image source={{ uri: thumbnailUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                    <Icon name="logo-youtube" size={48} color="#ef4444" />
+                                  </View>
+                                </TouchableOpacity>
+                              </View>
+                            );
+                          }
+                          
+                          if (isInstagram) {
+                            return (
+                              <View key={k} style={{ marginBottom: 16 }}>
+                                <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                                <TouchableOpacity 
+                                  onPress={() => Linking.openURL(urlStr)}
+                                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fdf4ff', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#fbcfe8' }}
+                                >
+                                  <Icon name="logo-instagram" size={24} color="#db2777" style={{ marginRight: 12 }} />
+                                  <Text style={{ ...typography.body, color: '#db2777', fontWeight: 'bold' }}>View on Instagram</Text>
+                                </TouchableOpacity>
+                              </View>
+                            );
+                          }
+
+                          return (
+                            <View key={k} style={{ marginBottom: 16 }}>
+                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                              <TouchableOpacity 
+                                onPress={() => Linking.openURL(urlStr)}
+                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12 }}
+                              >
+                                <Icon name="link-outline" size={20} color={colors.primary} style={{ marginRight: 12 }} />
+                                <Text style={{ ...typography.body, color: colors.primary, flex: 1 }} numberOfLines={1}>{urlStr}</Text>
+                              </TouchableOpacity>
+                            </View>
+                          );
+                        }
+
+                        const textValue = Array.isArray(v) ? v.join(', ') : String(v);
                         return (
                           <View key={k} style={{ marginBottom: 8 }}>
                             <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{label}</Text>
-                            <Text style={{ ...typography.body, color: colors.textMainLight }}>{value}</Text>
+                            <Text style={{ ...typography.body, color: colors.textMainLight }}>{textValue}</Text>
                           </View>
                         );
                       })}
@@ -266,6 +379,50 @@ export default function PublicProfileScreen() {
                 })()}
               </View>
             )}
+            
+            {/* Artist Profile Comments */}
+            {profileData.profile && profileData.profile.id && (
+              <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
+                <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />
+              </View>
+            )}
+          </View>
+        ) : profileData.role === 'hiring' && profileData.profile ? (
+          <View style={styles.detailsSection}>
+            <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
+              <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Company Overview</Text>
+              {(() => {
+                const hiringProfile = Array.isArray(profileData.profile) ? profileData.profile[0] : profileData.profile;
+                if (!hiringProfile) return null;
+                
+                return (
+                  <View>
+                    {hiringProfile.description ? (
+                      <Text style={{ ...typography.body, color: colors.textMainLight, marginBottom: 16 }}>
+                        {hiringProfile.description}
+                      </Text>
+                    ) : (
+                      <Text style={{ color: colors.textMutedLight, fontStyle: 'italic', marginBottom: 16 }}>
+                        No description provided.
+                      </Text>
+                    )}
+                  </View>
+                );
+              })()}
+            </View>
+
+            {/* Hiring Profile Comments */}
+            {(() => {
+              const hiringProfile = Array.isArray(profileData.profile) ? profileData.profile[0] : profileData.profile;
+              if (hiringProfile && hiringProfile.id) {
+                return (
+                  <View style={{ marginHorizontal: spacing.xl, marginBottom: 24 }}>
+                    <CommentsSection targetType="profile" targetId={hiringProfile.id} />
+                  </View>
+                );
+              }
+              return null;
+            })()}
           </View>
         ) : null}
       </ScrollView>

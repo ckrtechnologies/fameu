@@ -26,3 +26,13 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export const getImageUrl = (url) => {
+  if (!url) return null;
+  if (url.includes('/uploads/')) {
+    const path = url.substring(url.indexOf('/uploads/'));
+    const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+    return baseUrl + path;
+  }
+  return url;
+};

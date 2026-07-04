@@ -41,8 +41,8 @@ class ChatService {
       .from('conversations')
       .select(`
         *,
-        participant1:users!fk_participant1(id, email, role, display_name, avatar_url, artist_profiles(full_name, photo_urls), hiring_profiles(company_name, logo_url)),
-        participant2:users!fk_participant2(id, email, role, display_name, avatar_url, artist_profiles(full_name, photo_urls), hiring_profiles(company_name, logo_url))
+        participant1:users!fk_participant1(id, email, username, role, display_name, avatar_url, artist_profiles(id, full_name, photo_urls), hiring_profiles(id, company_name, logo_url)),
+        participant2:users!fk_participant2(id, email, username, role, display_name, avatar_url, artist_profiles(id, full_name, photo_urls), hiring_profiles(id, company_name, logo_url))
       `)
       .or(`participant1_id.eq.${userId},participant2_id.eq.${userId}`)
       .order('updated_at', { ascending: false });
@@ -150,7 +150,8 @@ class ChatService {
           { 
             type: 'chat_message', 
             conversationId: String(conversationId),
-            avatarUrl: senderAvatar || ''
+            avatarUrl: senderAvatar || '',
+            senderName: senderName || ''
           }
         );
       }

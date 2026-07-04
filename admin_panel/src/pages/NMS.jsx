@@ -53,7 +53,7 @@ export default function NMS() {
       }).slice(0, 10);
 
   return (
-    <div className="fade-in" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="animate-fade-in">
       <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
         <h1 className="page-title">Notification Management</h1>
         <p className="page-subtitle">Broadcast push notifications to users.</p>

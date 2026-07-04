@@ -71,18 +71,24 @@ const AuditionCard = ({ audition, onPress, style }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    overflow: 'hidden',
     width: 260, // Fixed width for horizontal scroll
     marginRight: spacing.l,
-    ...shadows.medium,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
   },
   imageContainer: {
     height: 140,
     width: '100%',
     backgroundColor: colors.surfaceLight,
     position: 'relative',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
   },
   image: {
     width: '100%',

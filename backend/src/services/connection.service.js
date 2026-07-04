@@ -155,14 +155,17 @@ class ConnectionService {
    * Get public profile by username
    */
   async getPublicProfile(username, currentUserId) {
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
+    const queryColumn = isUUID ? 'id' : 'username';
+
     const { data: user, error } = await supabase
       .from('users')
       .select(`
         id, username, display_name, avatar_url, followers_count, following_count, role,
-        artist_profiles (full_name, bio, categories, city, photo_urls, video_url, audio_url),
-        hiring_profiles (company_name, description, logo_url)
+        artist_profiles (id, full_name, bio, categories, city, photo_urls, video_url, audio_url),
+        hiring_profiles (id, company_name, description, logo_url)
       `)
-      .eq('username', username)
+      .eq(queryColumn, username)
       .single();
 
     if (error || !user) throw new Error('User not found');

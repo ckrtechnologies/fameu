@@ -50,19 +50,10 @@ export default (io) => {
           return;
         }
 
-        // Check if the receiving user is currently in this conversation room
+        // We ALWAYS send the push notification because on mobile, the socket might still be 
+        // technically connected for a few seconds after the app is minimized (backgrounded).
+        // The frontend App.tsx handles suppressing the notification toast if the user is active in the chat.
         let skipPushNotification = false;
-        const room = io.sockets.adapter.rooms.get(conversationId);
-        if (room) {
-          for (const socketId of room) {
-            const clientSocket = io.sockets.sockets.get(socketId);
-            if (clientSocket && clientSocket.user.id !== socket.user.id) {
-              // The receiver is actively connected to this chat room
-              skipPushNotification = true;
-              break;
-            }
-          }
-        }
 
         // Save to Supabase DB via ChatService
         const savedMessage = await chatService.saveMessage(conversationId, socket.user.id, content, skipPushNotification);

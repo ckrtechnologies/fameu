@@ -27,24 +27,55 @@ export const profileApi = apiSlice.injectEndpoints({
       invalidatesTags: ['Profile'],
     }),
     uploadMedia: builder.mutation({
-      query: (formData) => ({
-        url: '/artist_app/profile/upload',
-        method: 'POST',
-        body: formData,
-      }),
+      queryFn: async (formData, api) => {
+        try {
+          const token = api.getState().auth?.token;
+          const { BASE_URL } = require('./apiSlice');
+          const response = await fetch(`${BASE_URL}/artist_app/profile/upload`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            return { error: data };
+          }
+          return { data };
+        } catch (error) {
+          return { error: { error: error.message || 'Upload failed' } };
+        }
+      },
       invalidatesTags: ['Profile'],
     }),
     uploadGenericFile: builder.mutation({
-      query: (formData) => ({
-        url: '/artist_app/profile/upload-file',
-        method: 'POST',
-        body: formData,
-      }),
+      queryFn: async (formData, api) => {
+        try {
+          const token = api.getState().auth?.token;
+          const { BASE_URL } = require('./apiSlice');
+          const response = await fetch(`${BASE_URL}/artist_app/profile/upload-file`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            return { error: data };
+          }
+          return { data };
+        } catch (error) {
+          return { error: { error: error.message || 'Upload failed' } };
+        }
+      },
     }),
     checkUsername: builder.query({
       query: (username) => `/artist_app/profile/check-username/${username}`,
     }),
   }),
+  overrideExisting: true,
 });
 
 export const {

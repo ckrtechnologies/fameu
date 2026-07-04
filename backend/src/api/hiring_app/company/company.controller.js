@@ -5,7 +5,7 @@ class HiringCompanyController {
   async getProfile(req, res, next) {
     try {
       const userId = req.user.id;
-      const profile = await hiringService.getProfile(userId);
+      const profile = await hiringService.getProfile(userId); console.log("FETCHED PROFILE FOR USER", userId, "IS", profile);
       
       if (!profile) {
         return res.status(404).json({ success: false, error: 'Company profile not found' });

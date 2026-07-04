@@ -90,10 +90,6 @@ export default function ArtistDashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }
       >
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Hello, {name} 👋</Text>
-          <Text style={styles.subtitle}>Here are your matches for today</Text>
-        </View>
 
         {/* Profile Status Banner */}
         {profileCompletePct < 100 && (
@@ -189,12 +185,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.l,
   },
   greeting: {
-    ...typography.h1,
+    ...typography.h2,
     color: colors.textMainLight,
     marginBottom: spacing.xs,
   },
   subtitle: {
-    ...typography.body,
+    ...typography.caption,
     color: colors.textMutedLight,
   },
   section: {
@@ -227,11 +223,14 @@ const styles = StyleSheet.create({
   profileBanner: {
     marginHorizontal: spacing.xl,
     marginBottom: spacing.xl,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   profileBannerContent: {
     padding: spacing.l,

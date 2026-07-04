@@ -3,6 +3,7 @@ import { useGetUsersQuery, useDeleteUserMutation } from '../store/api/adminEndpo
 import DataTable from '../components/DataTable';
 import UserDetailsModal from '../components/UserDetailsModal';
 import EditUserModal from '../components/EditUserModal';
+import { getImageUrl } from '../lib/api';
 
 export default function UserManagement({ role = 'all' }) {
   const { data: response, isLoading: loading } = useGetUsersQuery(role);
@@ -22,9 +23,13 @@ export default function UserManagement({ role = 'all' }) {
       render: (val, row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <img 
-            src={row.avatar_url || `https://ui-avatars.com/api/?name=${row.display_name || 'User'}&background=random`} 
+            src={getImageUrl(row.avatar_url) || `https://ui-avatars.com/api/?name=${row.display_name || 'User'}&background=random`} 
             alt="avatar" 
             style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = `https://ui-avatars.com/api/?name=${row.display_name || 'User'}&background=random`;
+            }}
           />
           <span style={{ fontWeight: '500' }}>{row.display_name || 'Unnamed User'}</span>
         </div>

@@ -22,21 +22,48 @@ const storage = (folderName) => multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // Generate unique filename: uuid-timestamp.ext
-    const ext = path.extname(file.originalname);
+    let ext = path.extname(file.originalname);
+    
+    // Fallback if no extension in originalname
+    if (!ext) {
+      const mimeMap = {
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'image/webp': '.webp',
+        'video/mp4': '.mp4',
+        'video/quicktime': '.mov',
+        'application/pdf': '.pdf',
+        'audio/mpeg': '.mp3',
+        'audio/wav': '.wav',
+        'audio/aac': '.aac',
+        'audio/ogg': '.ogg',
+        'audio/webm': '.webm',
+        'audio/mp4': '.m4a',
+        'audio/x-m4a': '.m4a'
+      };
+      ext = mimeMap[file.mimetype];
+      if (!ext) {
+        const mimeLower = file.mimetype.toLowerCase();
+        if (mimeLower.includes('audio')) ext = '.mp3';
+        else if (mimeLower.includes('video')) ext = '.mp4';
+        else if (mimeLower.includes('image')) ext = '.jpg';
+        else ext = '';
+      }
+    }
+
     const uniqueName = `${uuidv4()}-${Date.now()}${ext}`;
     cb(null, uniqueName);
   }
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedMimes = [
-    'image/jpeg', 'image/png', 'image/webp', // Images
-    'video/mp4', 'video/quicktime',          // Videos
-    'application/pdf',                       // Resumes/KYC
-    'audio/mpeg', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/webm', 'audio/mp4' // Audio
-  ];
-  
-  if (allowedMimes.includes(file.mimetype)) {
+  const mime = file.mimetype.toLowerCase();
+  const isImage = mime.startsWith('image/');
+  const isVideo = mime.startsWith('video/');
+  const isAudio = mime.startsWith('audio/') || mime.includes('audio');
+  const isPdf = mime === 'application/pdf';
+
+  if (isImage || isVideo || isAudio || isPdf) {
     cb(null, true);
   } else {
     cb(new Error(`Invalid file type: ${file.mimetype}. Allowed types: Images, Videos, Audio, PDF.`), false);

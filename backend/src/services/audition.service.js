@@ -231,6 +231,35 @@ class AuditionService {
     if (error) throw new Error(`Check-in failed: ${error.message}`);
     return data;
   }
+  /**
+   * Get saved auditions
+   */
+  async getSavedAuditions(userId) {
+    const { data: profile } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+      
+    if (!profile) return [];
+
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .select('audition_id, created_at, auditions(*, hiring_profiles(company_name, logo_url))')
+      .eq('artist_id', profile.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to fetch bookmarks: ${error.message}`);
+    
+    // Transform into standard audition feed format and filter out nulls
+    return data
+      .filter(b => b.auditions != null)
+      .map(b => ({
+        ...b.auditions,
+        bookmarked_at: b.created_at,
+        is_bookmarked: true
+      }));
+  }
 }
 
 export default new AuditionService();

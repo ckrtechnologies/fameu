@@ -37,8 +37,22 @@ export default function NotificationsScreen() {
       }
     }
     
-    if (notification.type === 'message') {
-      // Could navigate to chat here
+    if (notification.type === 'message' || notification.type === 'chat_message') {
+      const data = typeof notification.data === 'string' ? JSON.parse(notification.data) : (notification.data || {});
+      const conversationId = data.conversationId;
+      if (conversationId) {
+        navigation.navigate('Chat', { conversationId });
+      }
+    } else if (notification.type === 'comment' || notification.type === 'comment_reply') {
+      const data = typeof notification.data === 'string' ? JSON.parse(notification.data) : (notification.data || {});
+      const targetId = data.targetId;
+      const targetType = data.targetType;
+      
+      if (targetType === 'audition' && targetId) {
+        navigation.navigate('AuditionDetail', { id: targetId, scrollToComments: true });
+      } else if (targetType === 'profile' && targetId) {
+        navigation.navigate('PublicProfile', { username: targetId, scrollToComments: true });
+      }
     }
   };
 

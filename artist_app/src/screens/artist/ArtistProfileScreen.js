@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking } from 'react-native';
 import Video from 'react-native-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +20,7 @@ export default function ArtistProfileScreen() {
   const profile = profileResponse?.data;
   const [activeTab, setActiveTab] = useState('Overview');
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -181,28 +182,50 @@ export default function ArtistProfileScreen() {
               })}
             </View>
 
-            {portfolio.length > 0 ? (
-              <View style={styles.galleryGrid}>
-                {portfolio.map((imgUrl, index) => (
-                  <Image 
-                    key={index} 
-                    source={{ uri: imgUrl }} 
-                    style={styles.galleryItem} 
-                  />
-                ))}
-              </View>
-            ) : (
-              <View style={styles.emptyPortfolio}>
-                <Text style={{ color: colors.textMutedLight, textAlign: 'center' }}>
-                  No photos in portfolio.
-                </Text>
-              </View>
-            )}
+            <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+              <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Text>
+              
+              {(!profile.photo_urls || profile.photo_urls.length === 0) && !profile.video_url ? (
+                <View style={styles.emptyPortfolio}>
+                  <Text style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Text>
+                </View>
+              ) : (
+                <View>
+                  {/* Video Section */}
+                  {profile.video_url ? (
+                    <TouchableOpacity 
+                      style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => Linking.openURL(profile.video_url)}
+                    >
+                      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                        <Icon name="play" size={20} color={colors.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: 'bold' }}>Watch Video Portfolio</Text>
+                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Tap to open video</Text>
+                      </View>
+                      <Icon name="chevron-forward" size={20} color={colors.textMutedLight} />
+                    </TouchableOpacity>
+                  ) : null}
+
+                  {/* Photo Section */}
+                  {profile.photo_urls && profile.photo_urls.length > 0 ? (
+                    <View style={[styles.galleryGrid, { marginHorizontal: 0 }]}>
+                      {profile.photo_urls.map((imgUrl, index) => (
+                        <TouchableOpacity key={index} onPress={() => { setSelectedImage(imgUrl); setIsImageModalVisible(true); }}>
+                          <Image source={{ uri: imgUrl }} style={styles.galleryItem} />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
+              )}
+            </View>
           </View>
         ) : (
           <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
             {(() => {
-              const details = profile.category_details?.[activeTab.toLowerCase()];
+              const details = profile.category_details?.[activeTab];
               if (!details) {
                 return (
                   <View style={styles.emptyPortfolio}>
@@ -228,8 +251,8 @@ export default function ArtistProfileScreen() {
 
                     const renderMediaItem = (itemValue, index) => {
                       const strVal = String(itemValue);
-                      const isVideo = strVal.match(/\.(mp4|mov)$/i);
-                      const isAudio = strVal.match(/\.(mp3|wav|aac|ogg|webm)$/i);
+                      const isVideo = strVal.match(/\.(mp4|mov|avi|wmv|mkv)$/i);
+                      const isAudio = strVal.match(/\.(mp3|wav|aac|ogg|webm|m4a|flac)$/i);
                       const isImage = strVal.match(/\.(jpg|jpeg|png|webp)$/i);
 
                       if (isVideo || isAudio) {
@@ -258,7 +281,7 @@ export default function ArtistProfileScreen() {
                       return null;
                     };
 
-                    const mediaRegex = /\.(mp4|mov|mp3|wav|aac|ogg|webm|jpg|jpeg|png|webp)$/i;
+                    const mediaRegex = /\.(mp4|mov|avi|wmv|mkv|mp3|wav|aac|ogg|webm|m4a|flac|jpg|jpeg|png|webp)$/i;
                     const isMediaArray = Array.isArray(v) && v.some(val => String(val).match(mediaRegex));
                     const isSingleMedia = typeof v === 'string' && String(v).match(mediaRegex);
 
@@ -268,6 +291,49 @@ export default function ArtistProfileScreen() {
 
                     if (isSingleMedia) {
                       return <View key={k}>{renderMediaItem(v, 0)}</View>;
+                    }
+
+                    const urlStr = typeof v === 'string' ? v.trim() : '';
+                    const urlRegex = /^(https?:\/\/[^\s]+)$/i;
+                    const isUrl = urlRegex.test(urlStr);
+
+                    if (isUrl) {
+                      const isYoutube = urlStr.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                      const isInstagram = urlStr.match(/instagram\.com/i);
+
+                      if (isYoutube) {
+                        const videoId = isYoutube[1];
+                        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                        return (
+                          <View key={k} style={{ marginBottom: 16 }}>
+                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                            <TouchableOpacity 
+                              onPress={() => Linking.openURL(urlStr)}
+                              style={{ position: 'relative', width: '100%', height: 200, borderRadius: 12, overflow: 'hidden' }}
+                            >
+                              <Image source={{ uri: thumbnailUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon name="logo-youtube" size={48} color="#ef4444" />
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      }
+                      
+                      if (isInstagram) {
+                        return (
+                          <View key={k} style={{ marginBottom: 16 }}>
+                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                            <TouchableOpacity 
+                              onPress={() => Linking.openURL(urlStr)}
+                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fdf4ff', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#fbcfe8' }}
+                            >
+                              <Icon name="logo-instagram" size={24} color="#db2777" style={{ marginRight: 12 }} />
+                              <Text style={{ ...typography.body, color: '#db2777', fontWeight: 'bold' }}>View on Instagram</Text>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      }
                     }
 
                     const textValue = Array.isArray(v) ? v.join(', ') : String(v);
@@ -288,12 +354,12 @@ export default function ArtistProfileScreen() {
       </ScrollView>
 
       {/* Full Screen Image Modal */}
-      <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsImageModalVisible(false)}>
+      <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => { setIsImageModalVisible(false); setSelectedImage(null); }}>
         <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
+          <TouchableOpacity style={styles.closeModalBtn} onPress={() => { setIsImageModalVisible(false); setSelectedImage(null); }}>
             <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
-          <Image source={{ uri: avatarUrl }} style={styles.fullScreenImage} resizeMode="contain" />
+          <Image source={{ uri: selectedImage || avatarUrl }} style={styles.fullScreenImage} resizeMode="contain" />
         </View>
       </Modal>
     </SafeAreaView>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGetUserDetailsQuery } from '../store/api/adminEndpoints';
 import { X, ExternalLink } from 'lucide-react';
+import { getImageUrl } from '../lib/api';
 
 export default function UserDetailsModal({ userId, onClose }) {
   const { data: response, isLoading, error } = useGetUserDetailsQuery(userId, {
@@ -69,9 +70,13 @@ export default function UserDetailsModal({ userId, onClose }) {
             {/* Header */}
             <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
               <img 
-                src={response?.data?.avatar_url || `https://ui-avatars.com/api/?name=${response?.data?.display_name || 'User'}&background=random&size=100`} 
+                src={getImageUrl(response?.data?.avatar_url) || `https://ui-avatars.com/api/?name=${response?.data?.display_name || 'User'}&background=random&size=100`} 
                 alt="avatar" 
                 style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--border)' }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://ui-avatars.com/api/?name=${response?.data?.display_name || 'User'}&background=random&size=100`;
+                }}
               />
               <div>
                 <h2 style={{ fontSize: '24px', marginBottom: '8px', color: 'var(--text-primary)' }}>

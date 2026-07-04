@@ -68,6 +68,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="kyc" element={<KYCVerification />} />
           <Route path="users" element={<Navigate to="/users/artist" replace />} />
+          <Route path="users/artists" element={<Navigate to="/users/artist" replace />} />
           <Route path="users/artist" element={<UserManagement role="artist" />} />
           <Route path="users/hiring" element={<UserManagement role="hiring" />} />
           <Route path="messaging" element={<Messaging />} />

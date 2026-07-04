@@ -1,8 +1,8 @@
 export const colors = {
   primary: '#0033FF',
-  backgroundLight: '#FFFFFF',
+  backgroundLight: '#F2F2F7',
   backgroundDark: '#121212',
-  surfaceLight: '#F8FAFC',
+  surfaceLight: '#FFFFFF',
   surfaceDark: '#1E1E1E',
   textMainLight: '#0F172A',
   textMainDark: '#F8FAFC',

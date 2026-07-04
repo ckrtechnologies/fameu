@@ -24,6 +24,7 @@ import ChatScreen from '../screens/artist/ChatScreen';
 import SearchScreen from '../screens/artist/SearchScreen';
 import PublicProfileScreen from '../screens/artist/PublicProfileScreen';
 import ConnectionListScreen from '../screens/artist/ConnectionListScreen';
+import SavedAuditionsScreen from '../screens/artist/SavedAuditionsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -55,6 +56,7 @@ export default function MainNavigator() {
       <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />
       <Stack.Screen name="ConnectionList" component={ConnectionListScreen} />
+      <Stack.Screen name="SavedAuditions" component={SavedAuditionsScreen} />
     </Stack.Navigator>
   );
 }

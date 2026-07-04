@@ -25,6 +25,10 @@ export const discoverApi = apiSlice.injectEndpoints({
       query: () => '/artist_app/discover/my-applications/list',
       providesTags: ['Audition'],
     }),
+    getSavedAuditions: builder.query({
+      query: () => '/artist_app/discover/saved/list',
+      providesTags: ['Audition'],
+    }),
     toggleBookmark: builder.mutation({
       query: (id) => ({
         url: `/artist_app/discover/${id}/bookmark`,
@@ -47,6 +51,7 @@ export const {
   useGetAuditionDetailsQuery,
   useApplyToAuditionMutation,
   useGetMyApplicationsQuery,
+  useGetSavedAuditionsQuery,
   useToggleBookmarkMutation,
   useCheckInMutation,
 } = discoverApi;

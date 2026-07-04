@@ -6,15 +6,25 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
 import { useGetAuditionDetailsQuery, useToggleBookmarkMutation } from '../../services/discoverApi';
 import CustomButton from '../../components/CustomButton';
+import CommentsSection from '../../components/CommentsSection';
 
 export default function AuditionDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { id } = route.params;
+  const { id, scrollToComments } = route.params;
 
   const { data: response, isLoading, isError, refetch , isFetching} = useGetAuditionDetailsQuery(id)
   const audition = response?.data;
   const [toggleBookmark, { isLoading: isBookmarking }] = useToggleBookmarkMutation();
+  const scrollViewRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (scrollToComments && !isLoading && audition) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 500);
+    }
+  }, [scrollToComments, isLoading, audition]);
 
   if (isLoading) {
     return (
@@ -56,11 +66,11 @@ export default function AuditionDetailScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Details</Text>
         <TouchableOpacity onPress={handleBookmark} style={styles.iconButton} disabled={isBookmarking}>
-          <Icon name="bookmark-outline" size={24} color={colors.textMainLight} />
+          <Icon name={audition.is_bookmarked ? "bookmark" : "bookmark-outline"} size={24} color={audition.is_bookmarked ? colors.primary : colors.textMainLight} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+      <ScrollView ref={scrollViewRef} style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
         {/* Title Section */}
         <View style={styles.section}>
           <View style={styles.tagContainer}>
@@ -133,6 +143,8 @@ export default function AuditionDetailScreen() {
             <Text style={styles.bodyText}>{audition.instructions}</Text>
           </View>
         )}
+
+        <CommentsSection targetType="audition" targetId={id} />
       </ScrollView>
 
       {/* Sticky Bottom Action */}

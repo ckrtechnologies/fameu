@@ -91,6 +91,19 @@ class ArtistDiscoverController {
       next(err);
     }
   }
+
+  /**
+   * Get Saved Auditions (Bookmarks)
+   */
+  async getSavedAuditions(req, res, next) {
+    try {
+      const artistId = req.user.id;
+      const result = await auditionService.getSavedAuditions(artistId);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export default new ArtistDiscoverController();

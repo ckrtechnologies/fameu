@@ -19,6 +19,7 @@ export default function ArtistFormScreen() {
   const professionsList = professionsResponse?.data || [];
 
   const [updateCategory, { isLoading }] = useUpdateCategoryMutation();
+  const [uploadGenericFile] = useUploadGenericFileMutation();
   const [activeTab, setActiveTab] = useState(categories?.[0]);
   const [formData, setFormData] = useState({});
 
@@ -113,6 +114,30 @@ export default function ArtistFormScreen() {
       return;
     }
 
+    let hasInvalidUrls = false;
+    categories.forEach(cat => {
+      const currentProf = professionsList.find(p => p.name === cat);
+      if (currentProf && currentProf.profession_fields) {
+        currentProf.profession_fields.forEach(field => {
+          if (field.field_type === 'url') {
+            const val = formData[cat]?.[field.field_name];
+            if (val && val.trim().length > 0) {
+              const isYoutube = val.match(/(?:youtube\.com|youtu\.be)/i);
+              const isInstagram = val.match(/instagram\.com/i);
+              if (!isYoutube && !isInstagram) {
+                hasInvalidUrls = true;
+              }
+            }
+          }
+        });
+      }
+    });
+
+    if (hasInvalidUrls) {
+      Alert.alert('Invalid Link', 'Please only use Instagram or YouTube links.');
+      return;
+    }
+
     try {
       const promises = categories.map(cat => {
         const catData = formData[cat] || {};
@@ -187,14 +212,16 @@ export default function ArtistFormScreen() {
           <Text style={styles.noFieldsText}>No custom fields required for this profession.</Text>
         ) : fields.map((field) => (
           <View key={field.field_name} style={styles.inputGroup}>
-            <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''}</Text>
+            <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''} ({field.field_type})</Text>
             
-            {(field.field_type === 'text' || field.field_type === 'number') && (
+            {(field.field_type === 'text' || field.field_type === 'number' || field.field_type === 'url') && (
               <TextInput
                 style={styles.input}
                 placeholder={`Enter ${field.field_label.toLowerCase()}`}
                 placeholderTextColor={colors.textMutedLight}
-                keyboardType={field.field_type === 'number' ? 'numeric' : 'default'}
+                keyboardType={field.field_type === 'number' ? 'numeric' : field.field_type === 'url' ? 'url' : 'default'}
+                autoCapitalize={field.field_type === 'url' ? 'none' : 'sentences'}
+                autoCorrect={field.field_type !== 'url'}
                 value={formData[activeTab]?.[field.field_name] || ''}
                 onChangeText={(text) => handleTextChange(activeTab, field.field_name, text)}
               />

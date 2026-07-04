@@ -239,6 +239,30 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     try {
+      let hasInvalidUrls = false;
+      categories.forEach(cat => {
+        const currentProf = professionsList.find(p => p.name === cat);
+        if (currentProf && currentProf.profession_fields) {
+          currentProf.profession_fields.forEach(field => {
+            if (field.field_type === 'url') {
+              const val = categoryFormData[cat]?.[field.field_name];
+              if (val && val.trim().length > 0) {
+                const isYoutube = val.match(/(?:youtube\.com|youtu\.be)/i);
+                const isInstagram = val.match(/instagram\.com/i);
+                if (!isYoutube && !isInstagram) {
+                  hasInvalidUrls = true;
+                }
+              }
+            }
+          });
+        }
+      });
+
+      if (hasInvalidUrls) {
+        Alert.alert('Invalid Link', 'Please only use Instagram or YouTube links.');
+        return;
+      }
+
       // 1. Save Basic Info
       const payload = {
         ...formData,
@@ -551,12 +575,14 @@ export default function EditProfileScreen() {
                 <View key={field.field_name} style={styles.inputGroup}>
                   <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''}</Text>
                   
-                  {(field.field_type === 'text' || field.field_type === 'number') && (
+                  {(field.field_type === 'text' || field.field_type === 'number' || field.field_type === 'url') && (
                     <TextInput
                       style={styles.input}
                       placeholder={`Enter ${field.field_label.toLowerCase()}`}
                       placeholderTextColor={colors.textMutedLight}
-                      keyboardType={field.field_type === 'number' ? 'numeric' : 'default'}
+                      keyboardType={field.field_type === 'number' ? 'numeric' : field.field_type === 'url' ? 'url' : 'default'}
+                      autoCapitalize={field.field_type === 'url' ? 'none' : 'sentences'}
+                      autoCorrect={field.field_type !== 'url'}
                       value={categoryFormData[activeTab]?.[field.field_name] || ''}
                       onChangeText={(text) => handleTextChange(activeTab, field.field_name, text)}
                     />

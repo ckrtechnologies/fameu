@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { io } from 'socket.io-client';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
-import { useGetMessagesQuery, chatApi } from '../../services/chatApi';
+import { useGetMessagesQuery, useGetInboxQuery, chatApi } from '../../services/chatApi';
 import SocketService from '../../services/SocketService';
 import { markConversationAsRead } from '../../store/slices/chatSlice';
 
@@ -22,26 +22,54 @@ export default function ChatScreen() {
   const token = useSelector((state) => state.auth.token);
   const myId = useSelector((state) => state.auth.user?.id);
 
-  const { data: messagesResponse, isLoading } = useGetMessagesQuery(conversationId);
+  const { data: messagesResponse, isLoading, refetch } = useGetMessagesQuery(conversationId);
+  const { data: inboxData } = useGetInboxQuery();
+
+  // Find otherParticipant from inbox if missing in route params (e.g. opened from notification)
+  const resolvedParticipant = otherParticipant || 
+    inboxData?.data?.find(c => String(c.id) === String(conversationId))?.other_participant;
   
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const flatListRef = useRef(null);
 
-  const displayName = otherParticipant?.artist_profiles?.full_name || otherParticipant?.display_name || otherParticipant?.hiring_profiles?.company_name || 'Chat';
+  const displayName = resolvedParticipant?.artist_profiles?.full_name || resolvedParticipant?.display_name || resolvedParticipant?.hiring_profiles?.company_name || 'Chat';
+  const avatarUrl = resolvedParticipant?.avatar_url || resolvedParticipant?.artist_profiles?.photo_urls?.[0] || resolvedParticipant?.hiring_profiles?.logo_url;
+
+  const handleHeaderPress = () => {
+    console.log('Header pressed, resolvedParticipant:', resolvedParticipant);
+    const identifier = resolvedParticipant?.username || resolvedParticipant?.id;
+    if (identifier) {
+      navigation.navigate('PublicProfile', { username: identifier });
+    }
+  };
 
   // Set initial messages from API
   useEffect(() => {
     if (messagesResponse?.data) {
-      // API returns desc order usually for chats (newest first). Let's keep it that way for inverted FlatList
+      // API returns desc order usually for chats (newest first).
       setMessages(messagesResponse.data);
     }
   }, [messagesResponse]);
+
+  // Refetch messages when app comes to foreground to catch missed socket events
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        refetch();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [refetch]);
 
   // Setup Socket Listeners
   useEffect(() => {
@@ -150,13 +178,34 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{displayName}</Text>
-          {otherUserTyping && <Text style={styles.typingText}>typing...</Text>}
-        </View>
+
+        <TouchableOpacity 
+          style={styles.headerTitleContainer} 
+          onPress={handleHeaderPress}
+          activeOpacity={0.7}
+        >
+          {avatarUrl && !imageError ? (
+            <Image 
+              source={{ uri: avatarUrl }} 
+              style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+              <Text style={{ color: colors.backgroundLight, fontWeight: 'bold' }}>
+                {displayName ? displayName.charAt(0).toUpperCase() : '?'}
+              </Text>
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle} numberOfLines={1}>{displayName}</Text>
+            {otherUserTyping && <Text style={styles.typingText}>typing...</Text>}
+          </View>
+        </TouchableOpacity>
+
         <View style={styles.iconButton} />
       </View>
 
@@ -230,7 +279,9 @@ const styles = StyleSheet.create({
   },
   headerTitleContainer: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     ...typography.h3,

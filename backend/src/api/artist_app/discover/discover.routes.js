@@ -13,6 +13,9 @@ router.get('/:id', discoverController.getAuditionDetails);
 router.post('/:id/apply', discoverController.applyToAudition);
 router.get('/my-applications/list', discoverController.getMyApplications);
 
+// Saved Auditions
+router.get('/saved/list', discoverController.getSavedAuditions);
+
 // Interactions
 router.post('/:id/bookmark', discoverController.toggleBookmark);
 router.post('/:id/check-in', discoverController.checkIn);

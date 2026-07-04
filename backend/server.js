@@ -15,6 +15,7 @@ import notificationRoutes from "./src/api/notifications/index.js";
 import chatRoutes from "./src/api/shared/chat/chat.routes.js";
 import connectionRoutes from "./src/api/connections/connections.routes.js";
 import professionRoutes from "./src/api/shared/professions/professions.routes.js";
+import commentsRoutes from "./src/api/comments/comments.routes.js";
 import errorHandler from "./src/core/middlewares/errorHandler.js";
 import socketManager from "./src/sockets/socketManager.js";
 import { startCronJobs } from "./src/jobs/index.js";
@@ -38,7 +39,7 @@ app.use((req, res, next) => {
 });
 
 // Middleware
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -61,6 +62,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/professions', professionRoutes);
+app.use('/api/comments', commentsRoutes);
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'FilmApp Backend is running' });

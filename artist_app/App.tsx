@@ -97,11 +97,30 @@ function App(): React.JSX.Element {
             avatarUrl: remoteMessage.data?.avatarUrl
           },
           onPress: () => {
+             const type = remoteMessage.data?.type;
+             const conversationId = remoteMessage.data?.conversationId;
+             const targetId = remoteMessage.data?.targetId;
+             const targetType = remoteMessage.data?.targetType;
+
              if (remoteMessage.data?.deepLink) {
                 // handle navigation if possible
-             } else if (remoteMessage.data?.type === 'chat_message' && remoteMessage.data?.conversationId) {
+             } else if (type === 'chat_message' && conversationId) {
                 if (navigationRef.isReady()) {
-                  navigationRef.navigate('Chat', { conversationId: remoteMessage.data.conversationId });
+                  navigationRef.navigate('Chat', { 
+                    conversationId,
+                    otherParticipant: {
+                      display_name: remoteMessage.data?.senderName || 'Chat',
+                      avatar_url: remoteMessage.data?.avatarUrl
+                    }
+                  });
+                }
+             } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'audition' && targetId) {
+                if (navigationRef.isReady()) {
+                  navigationRef.navigate('AuditionDetail', { id: targetId, scrollToComments: true });
+                }
+             } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'profile') {
+                if (navigationRef.isReady()) {
+                  navigationRef.navigate('PublicProfile', { username: targetId, scrollToComments: true });
                 }
              }
              Toast.hide();
@@ -113,9 +132,28 @@ function App(): React.JSX.Element {
     // Handle notification tap when app is in background
     messaging().onNotificationOpenedApp(remoteMessage => {
       console.log('Notification caused app to open from background state:', remoteMessage);
-      if (remoteMessage.data?.type === 'chat_message' && remoteMessage.data?.conversationId) {
+      const type = remoteMessage.data?.type;
+      const conversationId = remoteMessage.data?.conversationId;
+      const targetId = remoteMessage.data?.targetId;
+      const targetType = remoteMessage.data?.targetType;
+      
+      if (type === 'chat_message' && conversationId) {
         if (navigationRef.isReady()) {
-          navigationRef.navigate('Chat', { conversationId: remoteMessage.data.conversationId });
+          navigationRef.navigate('Chat', { 
+            conversationId,
+            otherParticipant: {
+              display_name: remoteMessage.data?.senderName || 'Chat',
+              avatar_url: remoteMessage.data?.avatarUrl
+            }
+          });
+        }
+      } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'audition' && targetId) {
+        if (navigationRef.isReady()) {
+          navigationRef.navigate('AuditionDetail', { id: targetId, scrollToComments: true });
+        }
+      } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'profile') {
+        if (navigationRef.isReady()) {
+          navigationRef.navigate('PublicProfile', { username: targetId, scrollToComments: true });
         }
       }
     });
@@ -126,15 +164,27 @@ function App(): React.JSX.Element {
       .then(remoteMessage => {
         if (remoteMessage) {
           console.log('Notification caused app to open from quit state:', remoteMessage);
+          const type = remoteMessage.data?.type;
           const conversationId = remoteMessage.data?.conversationId;
-          if (remoteMessage.data?.type === 'chat_message' && typeof conversationId === 'string') {
-            // Need to wait slightly for navigation to mount from quit state
-            setTimeout(() => {
-              if (navigationRef.isReady()) {
-                navigationRef.navigate('Chat', { conversationId });
-              }
-            }, 1000);
-          }
+          const targetId = remoteMessage.data?.targetId;
+          const targetType = remoteMessage.data?.targetType;
+
+          setTimeout(() => {
+            if (!navigationRef.isReady()) return;
+            if (type === 'chat_message' && conversationId) {
+              navigationRef.navigate('Chat', { 
+                conversationId,
+                otherParticipant: {
+                  display_name: remoteMessage.data?.senderName || 'Chat',
+                  avatar_url: remoteMessage.data?.avatarUrl
+                }
+              });
+            } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'audition' && targetId) {
+              navigationRef.navigate('AuditionDetail', { id: targetId, scrollToComments: true });
+            } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'profile') {
+              navigationRef.navigate('PublicProfile', { username: targetId, scrollToComments: true });
+            }
+          }, 1000);
         }
       });
 
