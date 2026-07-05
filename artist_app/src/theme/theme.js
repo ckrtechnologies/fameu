@@ -1,35 +1,53 @@
 export const colors = {
-  primary: '#0033FF',
-  backgroundLight: '#F2F2F7',
-  backgroundDark: '#121212',
-  surfaceLight: '#FFFFFF',
-  surfaceDark: '#1E1E1E',
-  textMainLight: '#0F172A',
-  textMainDark: '#F8FAFC',
-  textMutedLight: '#64748B',
+  // Brand
+  primary: '#007AFF', // Vibrant Blue
+  secondary: '#1E3A8A',
+  accent: '#007AFF',
+  white: '#FFFFFF',
+  
+  // Backgrounds
+  background: '#FFFFFF', // Crisp White
+  backgroundDark: '#F8FAFC', 
+  backgroundLight: '#FFFFFF',
+  surface: '#F1F5F9', 
+  surfaceLight: '#F1F5F9',
+  card: '#FFFFFF',
+  
+  // Typography
+  textMain: '#1E293B', // Slate dark text for light mode
+  textMuted: '#64748B', 
+  textMainDark: '#FFFFFF', // For text on blue buttons
   textMutedDark: '#94A3B8',
+  textMainLight: '#1E293B',
+  textMutedLight: '#64748B',
+  
+  // Status
   success: '#10B981',
   danger: '#EF4444',
+  error: '#EF4444',
   warning: '#F59E0B',
+  
+  // Borders
   borderLight: '#E2E8F0',
+  borderDark: '#CBD5E1', 
 };
 
 export const typography = {
-  fontFamily: 'Inter', // Global mobile font
+  fontFamily: 'Comic Sans MS', // Strict Requirement
   h1: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
   },
   h2: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
   },
   h3: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '500',
   },
   body: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '400',
   },
   caption: {
@@ -41,32 +59,29 @@ export const typography = {
 export const spacing = {
   xs: 4,
   s: 8,
-  m: 16,
-  l: 24,
-  xl: 32,
-  xxl: 48,
+  m: 12, // Compact
+  l: 16, // Compact
+  xl: 24,
+  xxl: 32,
 };
 
-export const shadows = {
-  small: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+export const globalStyles = {
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  medium: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+  primaryButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.l,
+    paddingHorizontal: spacing.xl,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  large: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+  primaryButtonText: {
+    color: colors.textMainDark,
+    fontSize: typography.h3.fontSize,
+    fontWeight: typography.h3.fontWeight,
+    fontFamily: typography.fontFamily,
   },
 };

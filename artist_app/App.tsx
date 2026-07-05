@@ -4,7 +4,7 @@
 
 import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme, Alert } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { View, Text, Image, TouchableOpacity, Vibration } from 'react-native';
@@ -19,6 +19,15 @@ import Toast from 'react-native-toast-message';
 
 export type RootStackParamList = {
   [key: string]: any;
+};
+
+const GlobalStatusBar = () => {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#000000', zIndex: 99999 }}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" translucent={true} />
+    </View>
+  );
 };
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -194,11 +203,7 @@ function App(): React.JSX.Element {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <StatusBar 
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
-          translucent={true}
-          backgroundColor="transparent"
-        />
+        <GlobalStatusBar />
         <NavigationContainer ref={navigationRef}>
           <AppNavigator />
         </NavigationContainer>

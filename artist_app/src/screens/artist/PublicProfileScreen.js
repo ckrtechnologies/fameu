@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { ArrowLeft, User, Play, ChevronRight, Youtube, Instagram, Link, X } from 'lucide-react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { colors, typography, spacing } from '../../theme/theme';
-import CustomButton from '../../components/CustomButton';
+import Typography from '../../components/core/Typography';
+import CustomButton from '../../components/forms/CustomButton';
 import { 
   useGetPublicProfileQuery, 
   useFollowUserMutation, 
@@ -86,7 +87,7 @@ export default function PublicProfileScreen() {
   if (isError || !profileData) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>User not found</Text>
+        <Typography variant="body" style={styles.errorText}>User not found</Typography>
         <CustomButton title="Go Back" onPress={() => navigation.goBack()} type="outline" style={{marginTop: spacing.m}} />
       </View>
     );
@@ -98,9 +99,9 @@ export default function PublicProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>@{profileData.username}</Text>
+        <Typography variant="body" style={styles.headerTitle}>@{profileData.username}</Typography>
         <View style={{ width: 40 }} />
       </View>
 
@@ -111,7 +112,7 @@ export default function PublicProfileScreen() {
             <Image source={{ uri: profileData.avatar_url }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Icon name="person" size={40} color={colors.textSecondaryLight} />
+              <User size={40} color={colors.primary} />
             </View>
           )}
           
@@ -120,27 +121,27 @@ export default function PublicProfileScreen() {
               style={styles.statItem}
               onPress={() => profileData?.id && navigation.navigate('ConnectionList', { type: 'followers', userId: profileData.id })}
             >
-              <Text style={styles.statValue}>{profileData.followers_count}</Text>
-              <Text style={styles.statLabel}>Followers</Text>
+              <Typography variant="body" style={styles.statValue}>{profileData.followers_count}</Typography>
+              <Typography variant="body" style={styles.statLabel}>Followers</Typography>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.statItem}
               onPress={() => profileData?.id && navigation.navigate('ConnectionList', { type: 'following', userId: profileData.id })}
             >
-              <Text style={styles.statValue}>{profileData.following_count}</Text>
-              <Text style={styles.statLabel}>Following</Text>
+              <Typography variant="body" style={styles.statValue}>{profileData.following_count}</Typography>
+              <Typography variant="body" style={styles.statLabel}>Following</Typography>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.bioSection}>
-          <Text style={styles.nameText}>{profileData.name}</Text>
-          <Text style={styles.roleText}>{profileData.role === 'artist' ? 'Artist' : 'Recruiter'}</Text>
+          <Typography variant="body" style={styles.nameText}>{profileData.name}</Typography>
+          <Typography variant="body" style={styles.roleText}>{profileData.role === 'artist' ? 'Artist' : 'Recruiter'}</Typography>
           {profileData.profile?.bio && (
-            <Text style={styles.bioText}>{profileData.profile.bio}</Text>
+            <Typography variant="body" style={styles.bioText}>{profileData.profile.bio}</Typography>
           )}
           {profileData.profile?.description && (
-            <Text style={styles.bioText}>{profileData.profile.description}</Text>
+            <Typography variant="body" style={styles.bioText}>{profileData.profile.description}</Typography>
           )}
         </View>
 
@@ -176,7 +177,7 @@ export default function PublicProfileScreen() {
                     style={[styles.tab, activeTab === tab && styles.tabActive]}
                     onPress={() => setActiveTab(tab)}
                   >
-                    <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+                    <Typography variant="body" style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Typography>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -185,7 +186,7 @@ export default function PublicProfileScreen() {
             {activeTab === 'Overview' ? (
               <View style={styles.portfolioSection}>
                 <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
-                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Basic Info</Text>
+                  <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Basic Info</Typography>
                   {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills'].map((k) => {
                     const v = profileData.profile[k];
                     if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
@@ -193,19 +194,19 @@ export default function PublicProfileScreen() {
                     const value = Array.isArray(v) ? v.join(', ') : String(v);
                     return (
                       <View key={k} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                        <Text style={{ ...typography.caption, color: colors.textMutedLight, width: 80 }}>{label}</Text>
-                        <Text style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>{value}</Text>
+                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, width: 80 }}>{label}</Typography>
+                        <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>{value}</Typography>
                       </View>
                     );
                   })}
                 </View>
                 
                 <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Text>
+                  <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Typography>
                   
                   {(!profileData.profile.photo_urls || profileData.profile.photo_urls.length === 0) && !profileData.profile.video_url ? (
                     <View style={styles.emptyPortfolio}>
-                      <Text style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Text>
+                      <Typography variant="body" style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Typography>
                     </View>
                   ) : (
                     <View>
@@ -216,13 +217,13 @@ export default function PublicProfileScreen() {
                           onPress={() => Linking.openURL(profileData.profile.video_url)}
                         >
                           <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                            <Icon name="play" size={20} color={colors.primary} />
+                            <Play size={20} color={colors.primary} />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: 'bold' }}>Watch Video Portfolio</Text>
-                            <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Tap to open video</Text>
+                            <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, fontWeight: 'bold' }}>Watch Video Portfolio</Typography>
+                            <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>Tap to open video</Typography>
                           </View>
-                          <Icon name="chevron-forward" size={20} color={colors.textMutedLight} />
+                          <ChevronRight size={20} color={colors.textMutedLight} />
                         </TouchableOpacity>
                       ) : null}
 
@@ -247,7 +248,7 @@ export default function PublicProfileScreen() {
                   if (!details) {
                     return (
                       <View style={styles.emptyPortfolio}>
-                        <Text style={{ color: colors.textMutedLight }}>No {activeTab} details added.</Text>
+                        <Typography variant="body" style={{ color: colors.textMutedLight }}>No {activeTab} details added.</Typography>
                       </View>
                     );
                   }
@@ -256,14 +257,14 @@ export default function PublicProfileScreen() {
                   if (entries.length === 0) {
                     return (
                       <View style={styles.emptyPortfolio}>
-                        <Text style={{ color: colors.textMutedLight }}>No {activeTab} details added.</Text>
+                        <Typography variant="body" style={{ color: colors.textMutedLight }}>No {activeTab} details added.</Typography>
                       </View>
                     );
                   }
                   
                   return (
                     <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 12 }}>
-                      <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>{activeTab} Details</Text>
+                      <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>{activeTab} Details</Typography>
                       {entries.map(([k,v]) => {
                         const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                         const renderMediaItem = (itemValue, index) => {
@@ -275,7 +276,7 @@ export default function PublicProfileScreen() {
                           if (isVideo || isAudio) {
                             return (
                               <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
-                                {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
+                                {index === 0 && <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Typography>}
                                 <Video 
                                   source={{ uri: strVal }} 
                                   style={{ width: '100%', height: isVideo ? 250 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }} 
@@ -290,7 +291,7 @@ export default function PublicProfileScreen() {
                           if (isImage) {
                             return (
                               <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
-                                {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
+                                {index === 0 && <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Typography>}
                                 <Image source={{ uri: strVal }} style={{ width: '100%', height: 250, borderRadius: 8, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
                               </View>
                             );
@@ -323,14 +324,14 @@ export default function PublicProfileScreen() {
                             const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
                             return (
                               <View key={k} style={{ marginBottom: 16 }}>
-                                <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                                <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Typography>
                                 <TouchableOpacity 
                                   onPress={() => Linking.openURL(urlStr)}
                                   style={{ position: 'relative', width: '100%', height: 200, borderRadius: 12, overflow: 'hidden' }}
                                 >
                                   <Image source={{ uri: thumbnailUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                                   <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
-                                    <Icon name="logo-youtube" size={48} color="#ef4444" />
+                                    <Youtube size={48} color="#ef4444" />
                                   </View>
                                 </TouchableOpacity>
                               </View>
@@ -340,13 +341,13 @@ export default function PublicProfileScreen() {
                           if (isInstagram) {
                             return (
                               <View key={k} style={{ marginBottom: 16 }}>
-                                <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                                <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Typography>
                                 <TouchableOpacity 
                                   onPress={() => Linking.openURL(urlStr)}
                                   style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fdf4ff', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#fbcfe8' }}
                                 >
-                                  <Icon name="logo-instagram" size={24} color="#db2777" style={{ marginRight: 12 }} />
-                                  <Text style={{ ...typography.body, color: '#db2777', fontWeight: 'bold' }}>View on Instagram</Text>
+                                  <Instagram size={24} color="#db2777" style={{ marginRight: 12 }} />
+                                  <Typography variant="body" style={{ ...typography.body, color: '#db2777', fontWeight: 'bold' }}>View on Instagram</Typography>
                                 </TouchableOpacity>
                               </View>
                             );
@@ -354,13 +355,13 @@ export default function PublicProfileScreen() {
 
                           return (
                             <View key={k} style={{ marginBottom: 16 }}>
-                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
+                              <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Typography>
                               <TouchableOpacity 
                                 onPress={() => Linking.openURL(urlStr)}
                                 style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12 }}
                               >
-                                <Icon name="link-outline" size={20} color={colors.primary} style={{ marginRight: 12 }} />
-                                <Text style={{ ...typography.body, color: colors.primary, flex: 1 }} numberOfLines={1}>{urlStr}</Text>
+                                <Link size={20} color={colors.primary} style={{ marginRight: 12 }} />
+                                <Typography variant="body" style={{ ...typography.body, color: colors.primary, flex: 1 }} numberOfLines={1}>{urlStr}</Typography>
                               </TouchableOpacity>
                             </View>
                           );
@@ -369,8 +370,8 @@ export default function PublicProfileScreen() {
                         const textValue = Array.isArray(v) ? v.join(', ') : String(v);
                         return (
                           <View key={k} style={{ marginBottom: 8 }}>
-                            <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{label}</Text>
-                            <Text style={{ ...typography.body, color: colors.textMainLight }}>{textValue}</Text>
+                            <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>{label}</Typography>
+                            <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight }}>{textValue}</Typography>
                           </View>
                         );
                       })}
@@ -390,7 +391,7 @@ export default function PublicProfileScreen() {
         ) : profileData.role === 'hiring' && profileData.profile ? (
           <View style={styles.detailsSection}>
             <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
-              <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Company Overview</Text>
+              <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Company Overview</Typography>
               {(() => {
                 const hiringProfile = Array.isArray(profileData.profile) ? profileData.profile[0] : profileData.profile;
                 if (!hiringProfile) return null;
@@ -398,13 +399,13 @@ export default function PublicProfileScreen() {
                 return (
                   <View>
                     {hiringProfile.description ? (
-                      <Text style={{ ...typography.body, color: colors.textMainLight, marginBottom: 16 }}>
+                      <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, marginBottom: 16 }}>
                         {hiringProfile.description}
-                      </Text>
+                      </Typography>
                     ) : (
-                      <Text style={{ color: colors.textMutedLight, fontStyle: 'italic', marginBottom: 16 }}>
+                      <Typography variant="body" style={{ color: colors.textMutedLight, fontStyle: 'italic', marginBottom: 16 }}>
                         No description provided.
-                      </Text>
+                      </Typography>
                     )}
                   </View>
                 );
@@ -430,7 +431,7 @@ export default function PublicProfileScreen() {
       <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsImageModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
-            <Icon name="close" size={30} color="#fff" />
+            <X size={30} color="#fff" />
           </TouchableOpacity>
           {selectedImage && <Image source={{ uri: selectedImage }} style={styles.fullScreenImage} resizeMode="contain" />}
         </View>
@@ -488,7 +489,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: 'rgba(0, 51, 255, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -4,6 +4,7 @@ import { TouchableOpacity, StyleSheet, View, Image, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGetProfileQuery } from '../services/profileApi';
+import { useGetInboxQuery } from '../services/chatApi';
 
 import ArtistDashboardScreen from '../screens/artist/ArtistDashboardScreen';
 import AuditionDiscoveryScreen from '../screens/artist/AuditionDiscoveryScreen';
@@ -20,7 +21,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabNavigator() {
   const totalUnreadCount = useSelector((state) => state.chat.totalUnreadCount);
   const user = useSelector(state => state.auth.user);
+  
+  // Global Prefetching
   const { data: profileResponse } = useGetProfileQuery();
+  useGetInboxQuery(undefined, { skip: !user });
   const insets = useSafeAreaInsets();
   
   const profile = profileResponse?.data;

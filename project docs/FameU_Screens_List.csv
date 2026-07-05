@@ -1,0 +1,70 @@
+App,Section,Screen Name
+Artist App,Auth & Onboarding,SplashScreen (Done)
+Artist App,Auth & Onboarding,OnboardingScreen
+Artist App,Auth & Onboarding,LoginScreen
+Artist App,Auth & Onboarding,OtpScreen
+Artist App,Auth & Onboarding,ForgotPasswordScreen
+Artist App,Auth & Onboarding,ResetPasswordScreen
+Artist App,Auth & Onboarding,SocialLoginScreen
+Artist App,Main Dashboard,ArtistDashboardScreen
+Artist App,Main Dashboard,AuditionDiscoveryScreen
+Artist App,Main Dashboard,TrendingAuditionsScreen
+Artist App,Main Dashboard,WalkInListingsScreen
+Artist App,Main Dashboard,AuditionSearchScreen
+Artist App,Main Dashboard,AuditionDetailScreen
+Artist App,Applications,ApplyAuditionScreen
+Artist App,Applications,MyApplicationsScreen
+Artist App,Applications,ApplicationDetailScreen
+Artist App,Applications,SavedAuditionsScreen
+Artist App,Profile & Portfolio,ArtistProfileScreen
+Artist App,Profile & Portfolio,ArtistFormScreen
+Artist App,Profile & Portfolio,EditProfileScreen
+Artist App,Profile & Portfolio,PhotoGalleryScreen
+Artist App,Profile & Portfolio,VideoPortfolioScreen
+Artist App,Profile & Portfolio,ResumeScreen
+Artist App,Profile & Portfolio,VerificationScreen
+Artist App,Profile & Portfolio,ArtistCategoryScreen
+Artist App,Networking,PublicProfileScreen
+Artist App,Networking,SearchScreen (Universal Search)
+Artist App,Networking,ConnectionListScreen
+Artist App,Communication,InboxScreen
+Artist App,Communication,ChatScreen
+Artist App,Communication,NotificationsScreen
+Artist App,Settings,UpcomingCalendarScreen
+Artist App,Settings,ArtistSettingsScreen
+Artist App,Settings,DeleteAccountScreen
+Hiring App,Auth & Onboarding,SplashScreen (Done)
+Hiring App,Auth & Onboarding,OnboardingScreen
+Hiring App,Auth & Onboarding,LoginScreen
+Hiring App,Auth & Onboarding,OtpScreen
+Hiring App,Auth & Onboarding,ForgotPasswordScreen
+Hiring App,Auth & Onboarding,ResetPasswordScreen
+Hiring App,Auth & Onboarding,SocialLoginScreen
+Hiring App,Dashboard & Auditions,HiringDashboardScreen
+Hiring App,Dashboard & Auditions,CreateAuditionScreen
+Hiring App,Dashboard & Auditions,MyAuditionsScreen
+Hiring App,Dashboard & Auditions,AuditionDetailsScreen
+Hiring App,Applicant Tracking,ApplicantTrackingScreen
+Hiring App,Applicant Tracking,AllApplicantsScreen
+Hiring App,Applicant Tracking,TalentSearchScreen
+Hiring App,Applicant Tracking,ArtistProfileScreen
+Hiring App,Company Profile,CompanyProfileScreen
+Hiring App,Company Profile,CompanyKycScreen
+Hiring App,Networking,PublicProfileScreen
+Hiring App,Networking,SearchScreen (Universal Search)
+Hiring App,Communication,InboxScreen
+Hiring App,Communication,ChatScreen
+Hiring App,Communication,NotificationsScreen
+Admin Panel,Authentication,Login
+Admin Panel,Dashboard,Dashboard
+Admin Panel,User Management,UserManagement
+Admin Panel,User Management,ProfessionsManagement
+Admin Panel,Audition Management,Auditions
+Admin Panel,Audition Management,Applications
+Admin Panel,Moderation,KYCVerification
+Admin Panel,Moderation,FraudReports
+Admin Panel,Moderation,Blacklist
+Admin Panel,System,NMS (Notifications)
+Admin Panel,System,CMS (Content)
+Admin Panel,System,Messaging
+Admin Panel,System,Payments

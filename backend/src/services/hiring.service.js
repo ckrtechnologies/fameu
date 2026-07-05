@@ -61,6 +61,52 @@ class HiringService {
       .single();
 
     if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch profile: ${error.message}`);
+    
+    if (data) {
+      // Calculate stats
+      const stats = {
+        followers: 0,
+        auditions_posted: 0,
+        hired_artists: 0,
+        profile_visits: data.profile_visits || 0
+      };
+
+      // 1. Followers Count
+      const { count: followersCount } = await supabase
+        .from('connections')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', userId);
+      stats.followers = followersCount || 0;
+
+      // 2. Auditions Posted
+      const { count: auditionsCount } = await supabase
+        .from('auditions')
+        .select('*', { count: 'exact', head: true })
+        .eq('hiring_id', data.id);
+      stats.auditions_posted = auditionsCount || 0;
+
+      // 3. Hired Artists
+      // Fetch all auditions for this hiring profile
+      const { data: auditions } = await supabase
+        .from('auditions')
+        .select('applications(status)')
+        .eq('hiring_id', data.id);
+      
+      if (auditions) {
+        let hiredCount = 0;
+        auditions.forEach(aud => {
+          if (aud.applications) {
+            aud.applications.forEach(app => {
+              if (app.status === 'hired') hiredCount++;
+            });
+          }
+        });
+        stats.hired_artists = hiredCount;
+      }
+
+      data.stats = stats;
+    }
+
     return data;
   }
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,7 +7,8 @@ import { setConversations } from '../../store/slices/chatSlice';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { format } from 'date-fns';
 
-import { colors, typography, spacing } from '../../theme/theme';
+import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import Typography from '../../components/core/Typography';
 import { useGetInboxQuery } from '../../services/chatApi';
 
 export default function InboxScreen() {
@@ -55,33 +56,33 @@ export default function InboxScreen() {
               style={{ width: '100%', height: '100%', borderRadius: 25 }} 
             />
           ) : (
-            <Text style={styles.avatarText}>
+            <Typography style={styles.avatarText}>
               {otherParticipant?.artist_profiles?.full_name 
                 ? otherParticipant.artist_profiles.full_name.charAt(0).toUpperCase() 
                 : (otherParticipant?.display_name ? otherParticipant.display_name.charAt(0).toUpperCase() : '?')}
-            </Text>
+            </Typography>
           )}
         </View>
 
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
-            <Text style={styles.name} numberOfLines={1}>
+            <Typography variant="body" style={styles.name} numberOfLines={1}>
               {otherParticipant?.artist_profiles?.full_name || otherParticipant?.display_name || 'Unknown User'}
-            </Text>
+            </Typography>
             {item.updated_at && (
-              <Text style={styles.timeText}>
+              <Typography variant="caption" style={styles.timeText}>
                 {format(new Date(item.updated_at), 'MMM dd')}
-              </Text>
+              </Typography>
             )}
           </View>
           
           <View style={styles.cardFooter}>
-            <Text style={[styles.messageText, unreadCount > 0 && styles.unreadText]} numberOfLines={1}>
+            <Typography variant="body" style={[styles.messageText, unreadCount > 0 && styles.unreadText]} numberOfLines={1}>
               {item.last_message || 'No messages yet'}
-            </Text>
+            </Typography>
             {unreadCount > 0 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadCount}</Text>
+                <Typography variant="caption" style={styles.badgeText}>{unreadCount}</Typography>
               </View>
             )}
           </View>
@@ -92,14 +93,14 @@ export default function InboxScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View style={[globalStyles.container, styles.center]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={globalStyles.container} edges={['bottom', 'left', 'right']}>
       <View style={styles.searchContainer}>
         <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
         <TextInput
@@ -128,8 +129,8 @@ export default function InboxScreen() {
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <Icon name={searchQuery ? "search-outline" : "chatbubbles-outline"} size={48} color={colors.borderLight} />
-            <Text style={styles.emptyTitle}>{searchQuery ? "No Results" : "No Messages"}</Text>
-            <Text style={styles.emptyText}>{searchQuery ? "No chats match your search." : "You haven't started any conversations yet."}</Text>
+            <Typography variant="h3" style={styles.emptyTitle}>{searchQuery ? "No Results" : "No Messages"}</Typography>
+            <Typography variant="body" style={styles.emptyText}>{searchQuery ? "No chats match your search." : "You haven't started any conversations yet."}</Typography>
           </View>
         )}
       />
@@ -138,10 +139,6 @@ export default function InboxScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.backgroundLight,
-  },
   center: {
     justifyContent: 'center',
     alignItems: 'center',

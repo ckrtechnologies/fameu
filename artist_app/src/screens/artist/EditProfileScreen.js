@@ -66,6 +66,7 @@ export default function EditProfileScreen() {
   });
 
   const [categoryFormData, setCategoryFormData] = useState({});
+  const [genderModalVisible, setGenderModalVisible] = useState(false);
 
   const categoriesFromApi = profileResponse?.data?.categories || [];
   const [categories, setCategories] = useState([]);
@@ -239,6 +240,24 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     try {
+      if (!formData.full_name || !formData.full_name.trim()) {
+        Alert.alert('Validation Error', 'Full Name is required.');
+        return;
+      }
+      if (!formData.username || !formData.username.trim()) {
+        Alert.alert('Validation Error', 'Username (Handle) is required.');
+        return;
+      }
+      if (!formData.age || !String(formData.age).trim()) {
+        Alert.alert('Validation Error', 'Age is required.');
+        return;
+      }
+      if (!formData.gender || !formData.gender.trim()) {
+        Alert.alert('Validation Error', 'Gender is required.');
+        return;
+      }
+
+
       let hasInvalidUrls = false;
       categories.forEach(cat => {
         const currentProf = professionsList.find(p => p.name === cat);
@@ -347,6 +366,35 @@ export default function EditProfileScreen() {
         </ScrollView>
       </View>
 
+      <Modal
+        visible={genderModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setGenderModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setGenderModalVisible(false)}
+        >
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: colors.textMainLight }}>Select Gender</Text>
+            {['Male', 'Female', 'Other'].map(opt => (
+              <TouchableOpacity 
+                key={opt} 
+                style={{ paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}
+                onPress={() => {
+                  setFormData(p => ({ ...p, gender: opt }));
+                  setGenderModalVisible(false);
+                }}
+              >
+                <Text style={{ fontSize: 16, color: formData.gender === opt ? colors.primary : colors.textMainLight }}>{opt}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
         {activeTab === 'Basic Info' ? (
@@ -444,7 +492,7 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={styles.label}>Full Name *</Text>
               <TextInput
                 style={styles.input}
                 placeholder="e.g. John Doe"
@@ -455,7 +503,7 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Username (Handle)</Text>
+              <Text style={styles.label}>Username (Handle) *</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TextInput
                   style={[styles.input, { flex: 1, marginBottom: 0 }]}
@@ -481,7 +529,7 @@ export default function EditProfileScreen() {
 
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.label}>Age</Text>
+                <Text style={styles.label}>Age *</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. 24"
@@ -492,14 +540,15 @@ export default function EditProfileScreen() {
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.label}>Gender</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Male"
-                  placeholderTextColor={colors.textMutedLight}
-                  value={formData.gender}
-                  onChangeText={(t) => setFormData(p => ({ ...p, gender: t }))}
-                />
+                <Text style={styles.label}>Gender *</Text>
+                <TouchableOpacity 
+                  style={[styles.input, { justifyContent: 'center' }]} 
+                  onPress={() => setGenderModalVisible(true)}
+                >
+                  <Text style={{ color: formData.gender ? colors.textMainLight : colors.textMutedLight }}>
+                    {formData.gender || 'Select Gender'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 

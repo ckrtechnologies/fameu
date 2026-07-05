@@ -2,8 +2,12 @@ import express from 'express';
 const router = express.Router();
 import auditionController from './audition.controller.js';
 import authMiddleware from '../../../core/middlewares/auth.middleware.js';
+import { uploadHiringDocs } from '../../../core/middlewares/upload.middleware.js';
 
 router.use(authMiddleware);
+
+// PDF Upload for Audition description
+router.post('/upload-pdf', uploadHiringDocs.single('pdf'), auditionController.uploadDescriptionPdf);
 
 // Audition CRUD
 router.post('/', auditionController.createAudition);

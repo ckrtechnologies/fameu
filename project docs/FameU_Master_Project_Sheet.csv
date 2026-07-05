@@ -1,0 +1,47 @@
+Sno,App,Module,Feature Name,Description,Associated Screens
+1,Both Apps,Authentication,Passwordless Login,Login using Mobile Number & OTP Verification via MSG91. No separate sign-up required (auto-registration).,"SplashScreen, OnboardingScreen, LoginScreen, OtpScreen"
+2,Both Apps,Communication,Real-Time Chat,Instant 1-on-1 messaging system between Artists and Hiring Managers.,"ChatScreen, InboxScreen"
+3,Both Apps,Communication,Push Notifications,"Alerts for new messages, application status changes, and new audition postings.",NotificationsScreen
+4,Both Apps,Networking,Universal Search,Search bar to find and view the public profile of any Artist or Production House.,SearchScreen
+5,Both Apps,Networking,Social Follows,Ability to view public profiles and Follow/Unfollow other users.,"PublicProfileScreen, ConnectionListScreen"
+6,Both Apps,Account Management,Data Privacy,Secure options to Logout or permanently Delete Account and associated data.,"ArtistSettingsScreen, DeleteAccountScreen"
+7,Artist App,Profile Management,Dynamic Profile,"Setup and edit personal details, physical attributes, and categories.","ArtistProfileScreen, ArtistFormScreen, EditProfileScreen, ArtistCategoryScreen"
+8,Artist App,Profile Management,Media Gallery,Upload and manage headshots and portfolio photos.,PhotoGalleryScreen
+9,Artist App,Profile Management,Video Showreels,Upload and showcase acting/performance video clips.,VideoPortfolioScreen
+10,Artist App,Profile Management,Professional Documents,Upload audio reels and attach a professional Resume/CV.,ResumeScreen
+11,Artist App,Profile Management,KYC Verification,Submit KYC documents to earn a verified 'Blue Tick' badge on the profile.,VerificationScreen
+12,Artist App,Auditions,Dashboard Feed,Curated feed of trending and recently posted auditions.,"ArtistDashboardScreen, TrendingAuditionsScreen, UpcomingCalendarScreen"
+13,Artist App,Auditions,Advanced Search,"Find specific auditions based on keywords, categories, or locations.","AuditionDiscoveryScreen, AuditionSearchScreen"
+14,Artist App,Auditions,Bookmarks,Save interesting auditions into a dedicated 'Saved Auditions' list to review later.,SavedAuditionsScreen
+15,Artist App,Auditions,Walk-in Listings,Special section dedicated to discovering physical walk-in auditions.,WalkInListingsScreen
+16,Artist App,Applications,One-Tap Apply,Apply to an audition instantly using the pre-built digital portfolio.,"AuditionDetailScreen, ApplyAuditionScreen"
+17,Artist App,Applications,Application History,View a complete list of all submitted applications.,MyApplicationsScreen
+18,Artist App,Applications,Live Status Updates,"Track application status (Applied, Shortlisted, Selected, Rejected).",ApplicationDetailScreen
+19,Hiring App,Company Management,Company Profile,"Setup and manage production house details, including the company logo.",CompanyProfileScreen
+20,Hiring App,Company Management,Corporate KYC,Submit company registration documents to get verified as a legitimate recruiter.,CompanyKycScreen
+21,Hiring App,Auditions,Create Auditions,"Post detailed job requirements including casting categories, age brackets, gender preferences, and locations.",CreateAuditionScreen
+22,Hiring App,Auditions,Manage Listings,View a complete list of all active and closed auditions the company has posted.,"HiringDashboardScreen, MyAuditionsScreen"
+23,Hiring App,Auditions,Edit/Close Listings,Update audition details or close them once casting is complete.,AuditionDetailsScreen
+24,Hiring App,Applicant Tracking,Centralized Dashboard,Overview of total applications received across all postings.,ApplicantTrackingScreen
+25,Hiring App,Applicant Tracking,Candidate Review,"Open an applicant's profile to view their photos, videos, resume, and physical attributes directly.","AllApplicantsScreen, ArtistProfileScreen"
+26,Hiring App,Applicant Tracking,Status Management,"Move candidates through the hiring pipeline by marking them as Shortlisted, Selected, or Rejected.","ApplicantTrackingScreen, AllApplicantsScreen"
+27,Hiring App,Applicant Tracking,Direct Outreach,Initiate a direct 1-on-1 chat with an applicant straight from their application page.,"AllApplicantsScreen, ChatScreen"
+28,Hiring App,Talent Discovery,Talent Search,Proactively search for artists based on filters without waiting for applications.,TalentSearchScreen
+29,Admin Panel,Dashboard,Platform Analytics,"Overview metrics, total users, total auditions, and daily activity charts.",Dashboard
+30,Admin Panel,User Management,Manage Users,"View all registered artists and production houses, view their profiles, ban/suspend users.",UserManagement
+31,Admin Panel,User Management,Professions Management,"Add, edit, or remove artist categories and sub-categories (e.g., Actor, Singer, Dancer).",ProfessionsManagement
+32,Admin Panel,Moderation,Audition Moderation,"View all posted auditions, remove inappropriate content, monitor platform activity.",Auditions
+33,Admin Panel,Moderation,KYC Approvals,"Review uploaded KYC documents (IDs, Certificates) and approve/reject verified status.",KYCVerification
+34,Admin Panel,Moderation,Fraud & Reports,Manage user reports of fake profiles or scam auditions.,FraudReports
+35,Admin Panel,Moderation,Blacklist,Maintain a list of banned users and blocked phone numbers.,Blacklist
+36,Admin Panel,System,Application Tracking,View system-wide applications connecting artists and recruiters.,Applications
+37,Admin Panel,System,Push Notifications (NMS),Send global or targeted push notifications to mobile app users.,NMS
+38,Admin Panel,System,Content Management (CMS),"Manage static content, FAQs, privacy policies, and app configurations.",CMS
+39,Admin Panel,System,Support Messaging,View direct support messages or send platform-wide broadcasts.,Messaging
+40,Admin Panel,System,Payments,Manage platform monetization and transaction history.,Payments
+41,Future Feature,Both Apps,Video/Voice Calling,In-app video and voice calling for remote live auditions.,TBD
+42,Future Feature,Both Apps,Subscriptions,Premium plans offering advanced analytics and top placement in search.,TBD
+43,Future Feature,Both Apps,In-App Contracts,Legally binding E-Signatures and digital contract management between artists and production houses.,TBD
+44,Future Feature,Artist App,Social Feed,A short-form video feed (Reels/Shorts style) to discover talent natively.,TBD
+45,Future Feature,Hiring App,AI Talent Matching,Machine learning engine that suggests the perfect candidates for a role.,TBD
+46,Future Feature,Admin Panel,Auto-Moderation,AI-powered fraud detection to automatically suspend scam accounts.,TBD

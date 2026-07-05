@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { colors, typography, spacing } from '../../theme/theme';
+import Typography from '../../components/core/Typography';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetFeedQuery } from '../../services/discoverApi';
 import { useGetProfileQuery } from '../../services/profileApi';
@@ -99,20 +100,20 @@ export default function ArtistDashboardScreen() {
             onPress={() => navigation.navigate('EditProfile')}
           >
             <View style={styles.profileBannerContent}>
-              <Text style={styles.profileBannerTitle}>Profile Setup</Text>
-              <Text style={styles.profileBannerText}>Your profile is {profileCompletePct}% complete. Finish setting it up to get more matches!</Text>
+              <Typography variant="body" style={styles.profileBannerTitle}>Profile Setup</Typography>
+              <Typography variant="body" style={styles.profileBannerText}>Your profile is {profileCompletePct}% complete. Finish setting it up to get more matches!</Typography>
               <View style={styles.progressBarBg}>
                 <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
               </View>
-              <Text style={styles.completeNowText}>Complete Now &gt;</Text>
+              <Typography variant="body" style={styles.completeNowText}>Complete Now &gt;</Typography>
             </View>
           </TouchableOpacity>
         )}
 
         {(isError || isErrorLive) && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Failed to load some auditions.</Text>
-            <Text onPress={handleRefresh} style={styles.retryText}>Retry</Text>
+            <Typography variant="body" style={styles.errorText}>Failed to load some auditions.</Typography>
+            <Typography variant="body" onPress={handleRefresh} style={styles.retryText}>Retry</Typography>
           </View>
         )}
 
@@ -120,8 +121,8 @@ export default function ArtistDashboardScreen() {
         {liveAuditions.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>🔴 Live Auditions</Text>
-              <Text style={styles.seeAll}>See All</Text>
+              <Typography variant="body" style={styles.sectionTitle}>🔴 Live Auditions</Typography>
+              <Typography variant="body" style={styles.seeAll}>See All</Typography>
             </View>
             <FlatList
               data={liveAuditions}
@@ -142,12 +143,12 @@ export default function ArtistDashboardScreen() {
         {/* Recommended Auditions Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{recommendedTitle}</Text>
-            <Text style={styles.seeAll}>See All</Text>
+            <Typography variant="body" style={styles.sectionTitle}>{recommendedTitle}</Typography>
+            <Typography variant="body" style={styles.seeAll}>See All</Typography>
           </View>
           
           {displayAuditions.length === 0 && !isError ? (
-            <Text style={styles.emptyText}>No auditions available right now.</Text>
+            <Typography variant="body" style={styles.emptyText}>No auditions available right now.</Typography>
           ) : (
             <FlatList
               data={displayAuditions}
@@ -223,12 +224,12 @@ const styles = StyleSheet.create({
   profileBanner: {
     marginHorizontal: spacing.xl,
     marginBottom: spacing.xl,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(0, 51, 255, 0.03)',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.03,
     shadowRadius: 12,
     elevation: 3,
   },

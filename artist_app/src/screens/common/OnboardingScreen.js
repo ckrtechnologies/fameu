@@ -1,26 +1,31 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions, Animated, ImageBackground, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../theme/theme';
-import CustomButton from '../../components/CustomButton';
+import CustomButton from '../../components/forms/CustomButton';
+import LinearGradient from 'react-native-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
 const SLIDES = [
   {
     id: '1',
-    title: 'Discover Auditions',
-    description: 'Find top-tier auditions and casting calls updated daily, tailored to your profile.',
+    title: 'DISCOVER AUDITIONS',
+    description: 'Find top-tier casting calls updated daily, perfectly tailored to your profile.',
+    image: require('../../assets/images/onboarding_1.png'),
   },
   {
     id: '2',
-    title: 'Apply With One Click',
-    description: 'Create your digital portfolio once and apply to hundreds of roles instantly.',
+    title: 'BUILD YOUR FAME',
+    description: 'Create a stunning digital portfolio that casting directors simply cannot ignore.',
+    image: require('../../assets/images/onboarding_2.png'),
   },
   {
     id: '3',
-    title: 'Get Discovered',
-    description: 'Let casting directors find you through our advanced talent discovery engine.',
+    title: 'APPLY WITH ONE CLICK',
+    description: 'Submit your profile instantly and track your application status live.',
+    image: require('../../assets/images/onboarding_3.png'),
   }
 ];
 
@@ -46,15 +51,42 @@ export default function OnboardingScreen() {
     }
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index }) => {
+    const inputRange = [
+      (index - 1) * width,
+      index * width,
+      (index + 1) * width
+    ];
+
+    const translateX = scrollX.interpolate({
+      inputRange,
+      outputRange: [-width * 0.7, 0, width * 0.7],
+    });
+
+    const scale = scrollX.interpolate({
+      inputRange,
+      outputRange: [1.2, 1, 1.2],
+    });
+
     return (
       <View style={styles.slide}>
-        {/* Placeholder for illustration */}
-        <View style={styles.imagePlaceholder}>
-           <Text style={styles.imageText}>🖼️</Text>
+        <View style={StyleSheet.absoluteFillObject}>
+          <Animated.Image
+            source={item.image}
+            style={[styles.image, { transform: [{ translateX }, { scale }] }]}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={['transparent', 'transparent', 'rgba(0,0,0,0.8)', '#000000']}
+            locations={[0, 0.4, 0.7, 1]}
+            style={StyleSheet.absoluteFillObject}
+          />
         </View>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
+        
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.description}>{item.description}</Text>
+        </View>
       </View>
     );
   };
@@ -66,12 +98,12 @@ export default function OnboardingScreen() {
           const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
           const dotWidth = scrollX.interpolate({
             inputRange,
-            outputRange: [10, 20, 10],
+            outputRange: [10, 30, 10],
             extrapolate: 'clamp',
           });
           const opacity = scrollX.interpolate({
             inputRange,
-            outputRange: [0.3, 1, 0.3],
+            outputRange: [0.4, 1, 0.4],
             extrapolate: 'clamp',
           });
           return (
@@ -87,32 +119,35 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.sliderContainer}>
-        <FlatList
-          data={SLIDES}
-          renderItem={renderItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled
-          bounces={false}
-          keyExtractor={(item) => item.id}
-          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-            useNativeDriver: false,
-          })}
-          onViewableItemsChanged={viewableItemsChanged}
-          viewabilityConfig={viewConfig}
-          ref={slidesRef}
-        />
-      </View>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       
-      {renderPaginator()}
-
-      <View style={styles.footer}>
-        <CustomButton
-          title={currentIndex === SLIDES.length - 1 ? "Get Started" : "Next"}
-          onPress={handleNext}
-        />
-      </View>
+      <Animated.FlatList
+        data={SLIDES}
+        renderItem={renderItem}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        pagingEnabled
+        bounces={false}
+        keyExtractor={(item) => item.id}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+          useNativeDriver: false,
+        })}
+        onViewableItemsChanged={viewableItemsChanged}
+        viewabilityConfig={viewConfig}
+        ref={slidesRef}
+      />
+      
+      <SafeAreaView edges={['bottom']} style={styles.bottomOverlay}>
+        {renderPaginator()}
+        <View style={styles.footer}>
+          <CustomButton
+            title={currentIndex === SLIDES.length - 1 ? "GET STARTED" : "NEXT"}
+            onPress={handleNext}
+            style={styles.button}
+            textStyle={styles.buttonText}
+          />
+        </View>
+      </SafeAreaView>
     </View>
   );
 }
@@ -120,56 +155,79 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundLight,
-  },
-  sliderContainer: {
-    flex: 3,
+    backgroundColor: '#000',
   },
   slide: {
     width,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
+    height,
   },
-  imagePlaceholder: {
-    width: width * 0.7,
-    height: width * 0.7,
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xl,
+  image: {
+    width,
+    height,
   },
-  imageText: {
-    fontSize: 64,
+  contentContainer: {
+    position: 'absolute',
+    bottom: height * 0.18,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
   },
   title: {
-    ...typography.h2,
-    color: colors.textMainLight,
+    ...typography.h1,
+    color: '#FFFFFF',
     marginBottom: spacing.m,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   description: {
     ...typography.body,
-    color: colors.textMutedLight,
+    color: '#E2E8F0',
     textAlign: 'center',
-    paddingHorizontal: spacing.l,
-    lineHeight: 24,
+    lineHeight: 26,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  bottomOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: spacing.xxl,
   },
   paginatorContainer: {
     flexDirection: 'row',
-    height: 64,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
   dot: {
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.primary,
-    marginHorizontal: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FBBF24',
+    marginHorizontal: 6,
   },
   footer: {
-    padding: spacing.xl,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.xl,
+    marginTop: spacing.s,
   },
+  button: {
+    backgroundColor: '#FBBF24',
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#FBBF24',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+  },
+  buttonText: {
+    color: '#000000',
+    fontWeight: '700',
+    letterSpacing: 1,
+  }
 });

@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator , RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator , RefreshControl, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
 import { useGetAuditionDetailsQuery, useToggleBookmarkMutation } from '../../services/discoverApi';
-import CustomButton from '../../components/CustomButton';
+import CustomButton from '../../components/forms/CustomButton';
 import CommentsSection from '../../components/CommentsSection';
 
 export default function AuditionDetailScreen() {
@@ -84,6 +84,7 @@ export default function AuditionDetailScreen() {
             )}
           </View>
           <Text style={styles.title}>{audition.title}</Text>
+          {audition.project_type && <Text style={styles.projectTypeBadge}>{audition.project_type}</Text>}
           <Text style={styles.subtitle}>
             {audition.hiring_profiles?.company_name || 'Production House'}
           </Text>
@@ -114,10 +115,10 @@ export default function AuditionDetailScreen() {
           <Text style={styles.bodyText}>{audition.role_description || 'No description provided.'}</Text>
         </View>
 
-        {(audition.character_req || audition.age_min || audition.gender) && (
+        {(audition.character_req || audition.age_min || audition.gender || audition.gender_req) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Requirements</Text>
-            {audition.gender && <Text style={styles.bodyText}>• Gender: {audition.gender}</Text>}
+            {(audition.gender || audition.gender_req) && <Text style={styles.bodyText}>• Gender: {audition.gender_req || audition.gender}</Text>}
             {(audition.age_min || audition.age_max) && (
               <Text style={styles.bodyText}>
                 • Age: {audition.age_min || 0} - {audition.age_max || 'Any'}
@@ -130,10 +131,12 @@ export default function AuditionDetailScreen() {
           </View>
         )}
 
-        {audition.compensation && (
+        {(audition.compensation || audition.budget || audition.duration_type || audition.city) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Compensation</Text>
-            <Text style={styles.bodyText}>{audition.compensation}</Text>
+            <Text style={styles.sectionTitle}>Other Details</Text>
+            {(audition.compensation || audition.budget) && <Text style={styles.bodyText}>• Compensation/Budget: {audition.budget || audition.compensation}</Text>}
+            {audition.duration_type && <Text style={styles.bodyText}>• Duration Type: {audition.duration_type}</Text>}
+            {audition.city && <Text style={styles.bodyText}>• City: {audition.city}</Text>}
           </View>
         )}
 
@@ -141,6 +144,16 @@ export default function AuditionDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Instructions</Text>
             <Text style={styles.bodyText}>{audition.instructions}</Text>
+          </View>
+        )}
+
+        {audition.description_pdf_url && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Additional Documents</Text>
+            <TouchableOpacity style={styles.pdfButton} onPress={() => Linking.openURL(audition.description_pdf_url)}>
+              <Icon name="document-text" size={20} color={colors.primary} />
+              <Text style={styles.pdfButtonText}>Download Brief (PDF)</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -278,5 +291,30 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderTopWidth: 1,
     borderTopColor: colors.textMutedLight + '20',
+  },
+  projectTypeBadge: {
+    ...typography.caption,
+    color: colors.primary,
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: spacing.s,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.s,
+  },
+  pdfButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.m,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  pdfButtonText: {
+    ...typography.body2,
+    color: colors.primary,
+    marginLeft: spacing.s,
+    fontWeight: 'bold',
   }
 });

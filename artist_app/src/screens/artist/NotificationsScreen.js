@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { ArrowLeft, MessageCircle, Bell, BellOff } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { formatDistanceToNow } from 'date-fns';
 
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import Typography from '../../components/core/Typography';
 import { 
   useGetNotificationsQuery, 
   useMarkNotificationReadMutation, 
@@ -64,18 +65,18 @@ export default function NotificationsScreen() {
         onPress={() => handleNotificationPress(item)}
       >
         <View style={styles.iconContainer}>
-          <Icon 
-            name={item.type === 'message' ? 'chatbubble-outline' : 'notifications-outline'} 
-            size={20} 
-            color={colors.primary} 
-          />
+          {item.type === 'message' || item.type === 'chat_message' ? (
+            <MessageCircle size={20} color={colors.primary} />
+          ) : (
+            <Bell size={20} color={colors.primary} />
+          )}
         </View>
         <View style={styles.contentContainer}>
-          <Text style={styles.titleText}>{item.title}</Text>
-          <Text style={styles.bodyText}>{item.body}</Text>
-          <Text style={styles.timeText}>
+          <Typography variant="body" style={styles.titleText}>{item.title}</Typography>
+          <Typography variant="caption" style={styles.bodyText}>{item.body}</Typography>
+          <Typography variant="caption" style={styles.timeText}>
             {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-          </Text>
+          </Typography>
         </View>
         {isUnread && <View style={styles.unreadDot} />}
       </TouchableOpacity>
@@ -86,11 +87,11 @@ export default function NotificationsScreen() {
     <SafeAreaView style={globalStyles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Typography variant="h3" style={styles.headerTitle}>Notifications</Typography>
         <TouchableOpacity style={styles.markAllButton} onPress={handleMarkAllRead}>
-          <Text style={styles.markAllText}>Mark all read</Text>
+          <Typography variant="caption" style={styles.markAllText}>Mark all read</Typography>
         </TouchableOpacity>
       </View>
 
@@ -109,8 +110,8 @@ export default function NotificationsScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Icon name="notifications-off-outline" size={48} color={colors.textMutedLight} />
-              <Text style={styles.emptyText}>No notifications yet</Text>
+              <BellOff size={48} color={colors.textMutedLight} />
+              <Typography variant="body" style={styles.emptyText}>No notifications yet</Typography>
             </View>
           }
         />
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   unreadCard: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(0, 51, 255, 0.05)',
     borderColor: colors.primary,
   },
   iconContainer: {

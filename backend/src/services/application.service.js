@@ -77,7 +77,7 @@ class ApplicationService {
   /**
    * Get applicants for a specific audition (for Hiring App ATS)
    */
-  async getApplicantsForAudition(hiringId, auditionId) {
+  async getApplicantsForAudition(hiringId, auditionId, filters = {}) {
     // 1. Verify the hiring company owns this audition
     const { data: audition } = await supabase
       .from('auditions')
@@ -89,29 +89,94 @@ class ApplicationService {
     if (!audition) throw new Error('Unauthorized or Audition not found');
 
     // 2. Fetch applicants
-    const { data, error } = await supabase
+    let query = supabase
       .from('applications')
-      .select('*, artist_profiles(full_name, categories, city, photo_urls, video_url, users(avatar_url)), auditions!inner(hiring_id)')
-      .eq('audition_id', auditionId)
-      .order('created_at', { ascending: false });
+      .select('*, artist_profiles!inner(full_name, categories, city, photo_urls, video_url, gender, age, users(avatar_url)), auditions!inner(hiring_id)')
+      .eq('audition_id', auditionId);
 
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.gender) query = query.eq('artist_profiles.gender', filters.gender);
+    if (filters.city) query = query.ilike('artist_profiles.city', `%${filters.city}%`);
+
+    if (filters.age_min || filters.age_max) {
+      const today = new Date();
+      if (filters.age_min) {
+        const minDate = new Date(today.getFullYear() - filters.age_min, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+        query = query.gte('artist_profiles.age', filters.age_min);
+      }
+      if (filters.age_max) {
+        query = query.lte('artist_profiles.age', filters.age_max);
+      }
+    }
+
+    if (filters.sort_by === 'Recent') {
+      query = query.order('created_at', { ascending: false });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    const { data, error } = await query;
     if (error) throw new Error(`Failed to fetch applicants: ${error.message}`);
-    return data;
+    return data.map(app => {
+      if (app.auditions && app.auditions.instructions) {
+        try {
+          const meta = typeof app.auditions.instructions === 'string' ? JSON.parse(app.auditions.instructions) : app.auditions.instructions;
+          Object.assign(app.auditions, meta);
+        } catch(e) {}
+      }
+      return app;
+    });
   }
 
   /**
    * Get all applicants across all auditions for a specific hiring company
    */
-  async getAllApplicantsForCompany(hiringId) {
-    // We join auditions using inner join and filter by hiring_id
-    const { data, error } = await supabase
+  async getAllApplicantsForCompany(hiringId, filters = {}) {
+    let query = supabase
       .from('applications')
-      .select('*, artist_profiles(full_name, categories, city, photo_urls, video_url, users(avatar_url)), auditions!inner(id, title, hiring_id)')
-      .eq('auditions.hiring_id', hiringId)
-      .order('created_at', { ascending: false });
+      .select('*, artist_profiles!inner(full_name, categories, city, photo_urls, video_url, gender, age, users(avatar_url)), auditions!inner(id, title, hiring_id, audition_type, audition_date, instructions)')
+      .eq('auditions.hiring_id', hiringId);
 
+    // Apply Filters
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.audition_type) query = query.eq('auditions.audition_type', filters.audition_type);
+    
+    // Note: filtering on nested tables requires the !inner join which we have above.
+    if (filters.gender) query = query.eq('artist_profiles.gender', filters.gender);
+    if (filters.city) query = query.ilike('artist_profiles.city', `%${filters.city}%`);
+
+    // For Age Range, it's complex to filter dob purely via Supabase PostgREST if it's string or date math without RPC, 
+    // but we'll try to filter it post-query or assume a simple dob date filter.
+    if (filters.age_min || filters.age_max) {
+      const today = new Date();
+      if (filters.age_min) {
+        const minDate = new Date(today.getFullYear() - filters.age_min, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+        query = query.gte('artist_profiles.age', filters.age_min);
+      }
+      if (filters.age_max) {
+        query = query.lte('artist_profiles.age', filters.age_max);
+      }
+    }
+
+    // Apply Sorting
+    if (filters.sort_by === 'Recent') {
+      query = query.order('created_at', { ascending: false });
+    } else {
+      // default fallback
+      query = query.order('created_at', { ascending: false });
+    }
+
+    const { data, error } = await query;
     if (error) throw new Error(`Failed to fetch all applicants: ${error.message}`);
-    return data;
+    return data.map(app => {
+      if (app.auditions && app.auditions.instructions) {
+        try {
+          const meta = typeof app.auditions.instructions === 'string' ? JSON.parse(app.auditions.instructions) : app.auditions.instructions;
+          Object.assign(app.auditions, meta);
+        } catch(e) {}
+      }
+      return app;
+    });
   }
 
   /**

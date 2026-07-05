@@ -1,274 +1,160 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, Alert, Modal } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React from 'react';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Image, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Typography from '../../components/core/Typography';
+import CustomButton from '../../components/forms/CustomButton';
+import CustomOtpInput from '../../components/forms/CustomOtpInput';
+import { spacing, colors } from '../../theme/theme';
 import { useDispatch } from 'react-redux';
-import { colors, typography, spacing } from '../../theme/theme';
-import CustomButton from '../../components/CustomButton';
-import { useVerifyOtpMutation, useSendOtpMutation, useSetRoleMutation } from '../../services/authApi';
 import { setCredentials } from '../../store/slices/authSlice';
+import { useVerifyOtpMutation } from '../../services/authApi';
+import { Alert, ActivityIndicator } from 'react-native';
 
-const OTP_LENGTH = 4;
-
-export default function OtpScreen() {
-  const navigation = useNavigation();
-  const route = useRoute();
+const OtpScreen = ({ route, navigation }) => {
+  const autoFillOtp = route?.params?.autoFillOtp || '';
+  const identifier = route?.params?.identifier || '';
+  const [otpCode, setOtpCode] = React.useState(autoFillOtp);
+  
   const dispatch = useDispatch();
-  
-  const identifier = route.params?.identifier || '';
-  const devOtpFromRoute = route.params?.devOtp;
-  
-  const name = route.params?.name;
-  
-  const [otp, setOtp] = useState('');
-  const [timer, setTimer] = useState(30);
-  const [localDevOtp, setLocalDevOtp] = useState(devOtpFromRoute);
-  const inputRef = useRef(null);
-
-  const [verifyOtp, { isLoading: isVerifying }] = useVerifyOtpMutation();
-  const [sendOtp] = useSendOtpMutation();
-  const [setRole] = useSetRoleMutation();
-
-  useEffect(() => {
-    inputRef.current?.focus();
-    const interval = setInterval(() => {
-      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-
-    if (devOtpFromRoute) {
-      // Small delay ensures the alert shows after navigation transition
-      setTimeout(() => {
-        Alert.alert(
-          'DEV MODE OTP',
-          `Your OTP is ${devOtpFromRoute}`,
-          [
-            { text: 'Dismiss', style: 'cancel' },
-            { 
-              text: 'Auto-fill', 
-              onPress: () => setOtp(devOtpFromRoute.toString()) 
-            }
-          ]
-        );
-      }, 500);
-    }
-
-    return () => clearInterval(interval);
-  }, [devOtpFromRoute]);
+  const [verifyOtp, { isLoading }] = useVerifyOtpMutation();
 
   const handleVerify = async () => {
-    if (otp.length !== OTP_LENGTH) return;
+    if (!otpCode || otpCode.length < 4) {
+      Alert.alert('Error', 'Please enter the full 4-digit OTP');
+      return;
+    }
+    
     try {
-      const response = await verifyOtp({ identifier, otp, role: 'artist' }).unwrap();
-      const { token, user, isNewUser } = response.data;
-      
-      // Save token and user to global state (triggers AppNavigator to switch to Main Tabs)
-      dispatch(setCredentials({ user, token }));
-
-      // If new user, they are already 'artist' in the DB now
-      if (isNewUser) {
-        // TODO: Call an updateProfile API here using `name` from route.params if provided
+      const response = await verifyOtp({ identifier, otp: otpCode, role: 'artist' }).unwrap();
+      if (response.data) {
+        dispatch(setCredentials({ 
+          user: response.data.user, 
+          token: response.data.token 
+        }));
       }
-    } catch (err) {
-      Alert.alert('Verification Failed', err?.data?.error || 'Invalid OTP. Please try again.');
+    } catch (error) {
+      Alert.alert('Error', error?.data?.error || error?.message || 'Invalid OTP');
     }
-  };
-
-  const handleResend = async () => {
-    try {
-      const response = await sendOtp({ identifier }).unwrap();
-      if (response?.data?.devOtp) {
-        setLocalDevOtp(response.data.devOtp);
-        setTimeout(() => {
-          Alert.alert(
-            'DEV MODE OTP',
-            `Your OTP is ${response.data.devOtp}`,
-            [
-              { text: 'Dismiss', style: 'cancel' },
-              { text: 'Auto-fill', onPress: () => setOtp(response.data.devOtp.toString()) }
-            ]
-          );
-        }, 500);
-      }
-      setTimer(30);
-      setOtp('');
-      inputRef.current?.focus();
-    } catch (err) {
-      Alert.alert('Error', err?.data?.error || 'Failed to resend OTP.');
-    }
-  };
-
-  const renderOtpBoxes = () => {
-    const boxes = [];
-    for (let i = 0; i < OTP_LENGTH; i++) {
-      const char = otp[i];
-      const isFocused = otp.length === i;
-      boxes.push(
-        <View key={i} style={[styles.box, isFocused && styles.boxFocused]}>
-          <Text style={styles.boxText}>{char || ''}</Text>
-        </View>
-      );
-    }
-    return boxes;
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Verify Account</Text>
-          <Text style={styles.subtitle}>Enter the {OTP_LENGTH}-digit code we sent to {identifier}</Text>
-        </View>
-
-        <TouchableOpacity 
-          activeOpacity={1} 
-          onPress={() => inputRef.current?.focus()} 
-          style={styles.otpContainer}
-        >
-          {renderOtpBoxes()}
-          <TextInput
-            ref={inputRef}
-            value={otp}
-            onChangeText={(val) => {
-              const cleaned = val.replace(/[^0-9]/g, '');
-              if (cleaned.length <= OTP_LENGTH) {
-                setOtp(cleaned);
-              }
-            }}
-            keyboardType="number-pad"
-            style={styles.hiddenInput}
-            maxLength={OTP_LENGTH}
-          />
-        </TouchableOpacity>
-
-        <CustomButton 
-          title="Verify OTP" 
-          onPress={handleVerify} 
-          loading={isVerifying}
-          disabled={otp.length !== OTP_LENGTH}
-          style={styles.verifyBtn}
-        />
-
-        <View style={styles.resendContainer}>
-          {timer > 0 ? (
-            <Text style={styles.resendText}>Resend code in {timer}s</Text>
-          ) : (
-            <TouchableOpacity onPress={handleResend}>
-              <Text style={styles.resendActionText}>Resend Code</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      {/* Top Half - Dark */}
+      <View style={styles.topHalf}>
+        <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
+          <View style={styles.logoWrapper}>
+            <View style={styles.logoContainer}>
+              <Image 
+                source={require('../../assets/images/logo.jpeg')} 
+                style={styles.logoImage}
+              />
+            </View>
+          </View>
+        </SafeAreaView>
       </View>
 
-      {/* DEV MODE OTP MODAL */}
+      {/* Bottom Half - Light */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.bottomHalf}
+      >
+        <Typography variant="h1" style={styles.title}>Verify OTP</Typography>
+        <Typography variant="body" style={styles.subtitle}>
+          Enter the 4-digit code sent to your phone
+        </Typography>
+        
+        <CustomOtpInput 
+          length={4} 
+          initialCode={autoFillOtp} 
+          onComplete={(code) => setOtpCode(code)} 
+        />
 
+        <View style={styles.buttonContainer}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (
+            <CustomButton 
+              title="Verify & Login" 
+              onPress={handleVerify} 
+              variant="primary"
+            />
+          )}
+        </View>
 
-    </KeyboardAvoidingView>
+        <View style={styles.footer}>
+          <Typography variant="caption" style={styles.resendText}>
+            Resend Code in 00:54
+          </Typography>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: colors.background,
   },
-  content: {
+  topHalf: {
+    backgroundColor: '#0F172A', 
+    height: '35%',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    justifyContent: 'center',
+  },
+  safeAreaTop: {
     flex: 1,
-    padding: spacing.xl,
     justifyContent: 'center',
   },
-  header: {
-    marginBottom: spacing.xxl,
+  logoWrapper: {
+    alignItems: 'center',
   },
-  title: {
-    ...typography.h1,
-    color: colors.textMainLight,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMutedLight,
-    lineHeight: 24,
-  },
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xxl,
-  },
-  box: {
-    width: 60,
-    height: 70,
-    borderWidth: 1,
-    borderColor: colors.textMutedLight,
-    borderRadius: 12,
+  logoContainer: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-  },
-  boxFocused: {
-    borderColor: colors.primary,
-    borderWidth: 2,
-    backgroundColor: colors.primary + '10', // 10% opacity
-  },
-  boxText: {
-    ...typography.h2,
-    color: colors.textMainLight,
-  },
-  hiddenInput: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
-    opacity: 0,
-  },
-  verifyBtn: {
-    marginBottom: spacing.xl,
-  },
-  resendContainer: {
-    alignItems: 'center',
-  },
-  resendText: {
-    ...typography.body,
-    color: colors.textMutedLight,
-  },
-  resendActionText: {
-    ...typography.body,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: colors.backgroundLight,
-    padding: spacing.xl,
-    borderRadius: 16,
-    alignItems: 'center',
-    width: '80%',
-    maxWidth: 320,
-    elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 8,
+    overflow: 'hidden',
   },
-  modalTitle: {
-    ...typography.h2,
-    color: colors.primary,
-    marginBottom: spacing.m,
+  logoImage: {
+    width: 125,
+    height: 125,
+    resizeMode: 'contain',
   },
-  modalBody: {
-    ...typography.body,
-    color: colors.textMainLight,
-    marginBottom: spacing.xl,
+  bottomHalf: {
+    flex: 1,
+    paddingHorizontal: spacing.l,
+    paddingTop: spacing.xl,
+  },
+  title: {
     textAlign: 'center',
+    marginBottom: spacing.s,
   },
-  modalHighlight: {
-    ...typography.h1,
-    color: colors.textMainLight,
-    fontWeight: 'bold',
+  subtitle: {
+    textAlign: 'center',
+    color: colors.textMuted,
+    marginBottom: spacing.l,
   },
+  buttonContainer: {
+    marginTop: spacing.l,
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: spacing.xxl,
+  },
+  resendText: {
+    color: colors.primary,
+    fontWeight: '700',
+  }
 });
+
+export default OtpScreen;

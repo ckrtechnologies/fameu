@@ -6,8 +6,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
 import { useGetProfileQuery } from '../../services/profileApi';
 import { useApplyToAuditionMutation } from '../../services/discoverApi';
-import CustomButton from '../../components/CustomButton';
-import CustomInput from '../../components/CustomInput';
+import CustomButton from '../../components/forms/CustomButton';
+import CustomInput from '../../components/forms/CustomInput';
 
 export default function ApplyAuditionScreen() {
   const route = useRoute();

@@ -119,10 +119,18 @@ class ConnectionService {
       .from('artist_profiles')
       .select('user_id')
       .ilike('full_name', searchTerm);
+
+    const { data: hiringData, error: hiringErr } = await supabase
+      .from('hiring_profiles')
+      .select('user_id')
+      .ilike('company_name', searchTerm);
       
     let additionalIds = [];
     if (!artistErr && artistData) {
-        additionalIds = artistData.map(a => a.user_id);
+        additionalIds = additionalIds.concat(artistData.map(a => a.user_id));
+    }
+    if (!hiringErr && hiringData) {
+        additionalIds = additionalIds.concat(hiringData.map(a => a.user_id));
     }
     
     // Fetch those additional users if any

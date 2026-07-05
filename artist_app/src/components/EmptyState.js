@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import CustomButton from './CustomButton';
+import CustomButton from './forms/CustomButton';
 import { colors, typography, spacing } from '../theme/theme';
 
 const EmptyState = ({

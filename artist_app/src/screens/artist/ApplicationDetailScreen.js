@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
-import CustomButton from '../../components/CustomButton';
+import CustomButton from '../../components/forms/CustomButton';
 
 export default function ApplicationDetailScreen() {
   const route = useRoute();

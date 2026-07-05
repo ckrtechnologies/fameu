@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator , RefreshControl } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { ArrowLeft, User, Users } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../theme/theme';
+import Typography from '../../components/core/Typography';
 import { useGetFollowersQuery, useGetFollowingQuery } from '../../services/connectionsApi';
 
 export default function ConnectionListScreen() {
@@ -25,18 +26,18 @@ export default function ConnectionListScreen() {
   const renderItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.userCard}
-      onPress={() => navigation.push('PublicProfile', { username: item.username })}
+      onPress={() => navigation.push('PublicProfile', { username: item.username || item.id })}
     >
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
       ) : (
         <View style={styles.avatarPlaceholder}>
-          <Icon name="person" size={24} color={colors.textSecondaryLight} />
+          <User size={24} color={colors.primary} />
         </View>
       )}
       <View style={styles.userInfo}>
-        <Text style={styles.nameText}>{item.name}</Text>
-        <Text style={styles.handleText}>@{item.username}</Text>
+        <Typography variant="body" style={styles.nameText}>{item.name}</Typography>
+        {item.username ? <Typography variant="caption" style={styles.handleText}>@{item.username}</Typography> : null}
       </View>
     </TouchableOpacity>
   );
@@ -47,11 +48,11 @@ export default function ConnectionListScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
+        <Typography variant="h3" style={styles.headerTitle}>
           {isFollowers ? 'Followers' : 'Following'}
-        </Text>
+        </Typography>
         <View style={{ width: 40 }} />
       </View>
 
@@ -61,9 +62,9 @@ export default function ConnectionListScreen() {
         </View>
       ) : isError ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>Failed to load users.</Text>
+          <Typography variant="h4" style={styles.errorText}>Failed to load users.</Typography>
           <TouchableOpacity style={styles.retryButton} onPress={refetch}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Typography variant="body" style={styles.retryButtonText}>Retry</Typography>
           </TouchableOpacity>
         </View>
       ) : (
@@ -75,10 +76,10 @@ export default function ConnectionListScreen() {
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Icon name="people-outline" size={64} color={colors.borderLight} />
-              <Text style={styles.emptyText}>
+              <Users size={64} color={colors.borderLight} />
+              <Typography variant="body" style={styles.emptyText}>
                 {isFollowers ? "No followers yet" : "Not following anyone yet"}
-              </Text>
+              </Typography>
             </View>
           }
         />
@@ -105,7 +106,6 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   headerTitle: {
-    ...typography.h3,
     fontWeight: '700',
     color: colors.textMainLight,
   },
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: 'rgba(0, 51, 255, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -141,16 +141,13 @@ const styles = StyleSheet.create({
     marginLeft: spacing.m,
   },
   nameText: {
-    ...typography.body,
     fontWeight: '600',
     color: colors.textMainLight,
   },
   handleText: {
-    ...typography.caption,
     color: colors.textSecondaryLight,
   },
   errorText: {
-    ...typography.h4,
     color: colors.error,
     marginBottom: spacing.s,
   },
@@ -170,7 +167,6 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   emptyText: {
-    ...typography.body,
     color: colors.textSecondaryLight,
     marginTop: spacing.m,
   }

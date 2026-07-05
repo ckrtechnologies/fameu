@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing } from '../theme/theme';
+import { View, TextInput, StyleSheet } from 'react-native';
+import { colors, spacing } from '../../theme/theme';
+import Typography from '../core/Typography';
 
 const CustomInput = ({
   label,
@@ -10,35 +11,43 @@ const CustomInput = ({
   placeholder,
   secureTextEntry,
   disabled = false,
+  labelStyle,
+  inputContainerStyle,
+  inputStyle,
+  leftIcon,
+  rightIcon,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Typography variant="caption" style={[styles.label, labelStyle]}>{label}</Typography>}
       <View
         style={[
           styles.inputContainer,
           isFocused && styles.inputFocused,
           error && styles.inputError,
           disabled && styles.inputDisabled,
+          inputContainerStyle,
         ]}
       >
+        {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
         <TextInput
-          style={styles.input}
+          style={[styles.input, inputStyle]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={colors.textMutedLight}
+          placeholderTextColor={colors.textMuted}
           secureTextEntry={secureTextEntry}
           editable={!disabled}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           {...props}
         />
+        {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Typography variant="caption" style={styles.errorText}>{error}</Typography>}
     </View>
   );
 };
@@ -48,19 +57,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
   },
   label: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.body.fontSize,
-    color: colors.textMainLight,
+    color: colors.textMutedDark,
     marginBottom: spacing.xs,
   },
   inputContainer: {
     borderWidth: 1,
-    borderColor: colors.textMutedLight,
+    borderColor: colors.borderDark,
     borderRadius: 8,
-    backgroundColor: colors.surfaceLight,
-    paddingHorizontal: spacing.s,
+    backgroundColor: colors.card,
     height: 48,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.s,
   },
   inputFocused: {
     borderColor: colors.primary,
@@ -69,17 +77,23 @@ const styles = StyleSheet.create({
     borderColor: colors.danger,
   },
   inputDisabled: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#334155',
+    opacity: 0.6,
+  },
+  leftIcon: {
+    marginRight: spacing.s,
+  },
+  rightIcon: {
+    marginLeft: spacing.s,
   },
   input: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.body.fontSize,
-    color: colors.textMainLight,
+    flex: 1,
     height: '100%',
+    color: colors.textMain,
+    fontFamily: 'Comic Sans MS',
+    fontSize: 16,
   },
   errorText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.caption.fontSize,
     color: colors.danger,
     marginTop: spacing.xs,
   },

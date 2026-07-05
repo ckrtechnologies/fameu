@@ -1,0 +1,45 @@
+App,Module,Feature,Description
+Both Apps,Authentication,Passwordless Login,Login using Mobile Number & OTP Verification via MSG91. No separate sign-up required (auto-registration).
+Both Apps,Communication,Real-Time Chat,Instant 1-on-1 messaging system between Artists and Hiring Managers.
+Both Apps,Communication,Push Notifications,"Alerts for new messages, application status changes, and new audition postings."
+Both Apps,Networking,Universal Search,Search bar to find and view the public profile of any Artist or Production House.
+Both Apps,Networking,Social Follows,Ability to view public profiles and Follow/Unfollow other users.
+Both Apps,Account Management,Data Privacy,Secure options to Logout or permanently Delete Account and associated data.
+Artist App,Profile Management,Dynamic Profile,"Setup and edit personal details, physical attributes, and categories."
+Artist App,Profile Management,Media Gallery,Upload and manage headshots and portfolio photos.
+Artist App,Profile Management,Video Showreels,Upload and showcase acting/performance video clips.
+Artist App,Profile Management,Professional Documents,Upload audio reels and attach a professional Resume/CV.
+Artist App,Profile Management,KYC Verification,Submit KYC documents to earn a verified 'Blue Tick' badge on the profile.
+Artist App,Auditions,Dashboard Feed,Curated feed of trending and recently posted auditions.
+Artist App,Auditions,Advanced Search,"Find specific auditions based on keywords, categories, or locations."
+Artist App,Auditions,Bookmarks,Save interesting auditions into a dedicated 'Saved Auditions' list to review later.
+Artist App,Auditions,Walk-in Listings,Special section dedicated to discovering physical walk-in auditions.
+Artist App,Applications,One-Tap Apply,Apply to an audition instantly using the pre-built digital portfolio.
+Artist App,Applications,Application History,View a complete list of all submitted applications.
+Artist App,Applications,Live Status Updates,"Track application status (Applied, Shortlisted, Selected, Rejected)."
+Hiring App,Company Management,Company Profile,"Setup and manage production house details, including the company logo."
+Hiring App,Company Management,Corporate KYC,Submit company registration documents to get verified as a legitimate recruiter.
+Hiring App,Auditions,Create Auditions,"Post detailed job requirements including casting categories, age brackets, gender preferences, and locations."
+Hiring App,Auditions,Manage Listings,View a complete list of all active and closed auditions the company has posted.
+Hiring App,Auditions,Edit/Close Listings,Update audition details or close them once casting is complete.
+Hiring App,Applicant Tracking,Centralized Dashboard,Overview of total applications received across all postings.
+Hiring App,Applicant Tracking,Candidate Review,"Open an applicant's profile to view their photos, videos, resume, and physical attributes directly."
+Hiring App,Applicant Tracking,Status Management,"Move candidates through the hiring pipeline by marking them as Shortlisted, Selected, or Rejected."
+Hiring App,Applicant Tracking,Direct Outreach,Initiate a direct 1-on-1 chat with an applicant straight from their application page.
+Admin Panel,Dashboard,Platform Analytics,"Overview metrics, total users, total auditions, and daily activity charts."
+Admin Panel,User Management,Manage Users,"View all registered artists and production houses, view their profiles, ban/suspend users."
+Admin Panel,User Management,Professions Management,"Add, edit, or remove artist categories and sub-categories (e.g., Actor, Singer, Dancer)."
+Admin Panel,Moderation,Audition Moderation,"View all posted auditions, remove inappropriate content, monitor platform activity."
+Admin Panel,Moderation,KYC Approvals,"Review uploaded KYC documents (IDs, Certificates) and approve/reject verified status."
+Admin Panel,Moderation,Fraud & Reports,Manage user reports of fake profiles or scam auditions.
+Admin Panel,Moderation,Blacklist,Maintain a list of banned users and blocked phone numbers.
+Admin Panel,System,Push Notifications (NMS),Send global or targeted push notifications to mobile app users.
+Admin Panel,System,Content Management (CMS),"Manage static content, FAQs, privacy policies, and app configurations."
+Admin Panel,System,Support Messaging,View direct support messages or send platform-wide broadcasts.
+Admin Panel,System,Payments,Manage platform monetization and transaction history.
+Future Features,Both Apps,Video/Voice Calling,In-app video and voice calling for remote live auditions.
+Future Features,Both Apps,Subscriptions,Premium plans offering advanced analytics and top placement in search.
+Future Features,Both Apps,In-App Contracts,"Legally binding E-Signatures and digital contract management between artists and production houses."
+Future Features,Artist App,Social Feed,"A short-form video feed (Reels/Shorts style) to discover talent natively."
+Future Features,Hiring App,AI Talent Matching,Machine learning engine that suggests the perfect candidates for a role.
+Future Features,Admin Panel,Auto-Moderation,AI-powered fraud detection to automatically suspend scam accounts.

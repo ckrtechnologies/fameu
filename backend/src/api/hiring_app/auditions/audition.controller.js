@@ -94,7 +94,7 @@ class HiringAuditionController {
   // ATS: Get all applicants across all auditions
   async getAllApplicants(req, res, next) {
     try {
-      let { hiringId } = req.query;
+      let { hiringId, ...filters } = req.query;
       
       if (!hiringId) {
         const profile = await hiringService.getProfile(req.user.id);
@@ -102,7 +102,7 @@ class HiringAuditionController {
         hiringId = profile.id;
       }
       
-      const result = await applicationService.getAllApplicantsForCompany(hiringId);
+      const result = await applicationService.getAllApplicantsForCompany(hiringId, filters);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -113,7 +113,7 @@ class HiringAuditionController {
   async getApplicants(req, res, next) {
     try {
       const { auditionId } = req.params;
-      let { hiringId } = req.query;
+      let { hiringId, ...filters } = req.query;
       
       if (!hiringId) {
         const profile = await hiringService.getProfile(req.user.id);
@@ -121,8 +121,21 @@ class HiringAuditionController {
         hiringId = profile.id;
       }
       
-      const result = await applicationService.getApplicantsForAudition(hiringId, auditionId);
+      const result = await applicationService.getApplicantsForAudition(hiringId, auditionId, filters);
       res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // Upload PDF for Audition
+  async uploadDescriptionPdf(req, res, next) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No PDF file provided' });
+      }
+      const fileUrl = `${process.env.API_URL || 'http://10.0.2.2:3000'}/uploads/hiring/${req.file.filename}`;
+      res.status(200).json({ success: true, data: { url: fileUrl } });
     } catch (err) {
       next(err);
     }

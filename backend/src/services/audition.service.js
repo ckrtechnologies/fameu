@@ -17,9 +17,16 @@ class AuditionService {
     // if (profile.credits <= 0) throw new Error('Insufficient credits to post an audition');
 
     // 2. Insert Audition
+    const { project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
+    const extraMeta = JSON.stringify({
+      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date
+    });
+
     const payload = {
       hiring_id: hiringId,
-      ...auditionData,
+      ...restData,
+      compensation: budget || restData.compensation,
+      instructions: extraMeta,
       status: 'active'
     };
 
@@ -41,9 +48,21 @@ class AuditionService {
    * Update an existing audition
    */
   async updateAudition(hiringId, auditionId, auditionData) {
+    const { project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
+    const extraMeta = JSON.stringify({
+      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date
+    });
+    
+    const payload = {
+      ...restData,
+      instructions: extraMeta,
+      updated_at: new Date().toISOString()
+    };
+    if (budget) payload.compensation = budget;
+
     const { data, error } = await supabase
       .from('auditions')
-      .update({ ...auditionData, updated_at: new Date().toISOString() })
+      .update(payload)
       .eq('id', auditionId)
       .eq('hiring_id', hiringId) // Security check
       .select()
@@ -89,8 +108,11 @@ class AuditionService {
     return data.map(item => {
       const applicant_count = item.applications?.[0]?.count || 0;
       delete item.applications;
+      let extraMeta = {};
+      try { if (item.instructions && item.instructions.startsWith('{')) extraMeta = JSON.parse(item.instructions); } catch(e) {}
       return {
         ...item,
+        ...extraMeta,
         applicant_count
       };
     });
@@ -103,11 +125,17 @@ class AuditionService {
   async discoverAuditions(filters = {}) {
     let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url)').eq('status', 'active');
 
+    // Existing Filters
     if (filters.category) query = query.eq('category', filters.category);
-    if (filters.gender) query = query.eq('gender', filters.gender);
     if (filters.audition_type) query = query.eq('audition_type', filters.audition_type);
     if (filters.is_live === 'true' || filters.is_live === true) query = query.eq('is_live', true);
     
+    // Note: project_type, city, duration_type, budget are stored in JSON inside instructions
+    // we will filter them in JS below.
+    if (filters.gender_req) query = query.eq('gender', filters.gender_req);
+    if (filters.age_min) query = query.lte('age_min', filters.age_min);
+    if (filters.age_max) query = query.gte('age_max', filters.age_max);
+
     // Simple Bounding Box approach for Google Maps
     if (filters.minLat && filters.maxLat && filters.minLng && filters.maxLng) {
       query = query
@@ -117,11 +145,36 @@ class AuditionService {
         .lte('lng', filters.maxLng);
     }
 
-    query = query.order('created_at', { ascending: false }).limit(50);
+    // Sorting
+    if (filters.sort_by === 'Popular') {
+      // For popular, we would sort by applicant_count or views if tracked.
+      // Since we don't track applicant_count in auditions table directly without aggregation, 
+      // fallback to basic created_at or if you have a view_count column:
+      query = query.order('created_at', { ascending: false }); 
+    } else if (filters.sort_by === 'Recent') {
+      query = query.order('created_at', { ascending: false });
+    } else {
+      // 'Relevant' or default
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.limit(200); // fetch more to filter locally
 
     const { data, error } = await query;
     if (error) throw new Error(`Failed to fetch discover feed: ${error.message}`);
-    return data;
+    
+    let results = data.map(item => {
+      let extraMeta = {};
+      try { if (item.instructions && item.instructions.startsWith('{')) extraMeta = JSON.parse(item.instructions); } catch(e) {}
+      return { ...item, ...extraMeta };
+    });
+
+    if (filters.project_type) results = results.filter(i => i.project_type === filters.project_type);
+    if (filters.city) results = results.filter(i => i.city && i.city.toLowerCase() === filters.city.toLowerCase());
+    if (filters.duration_type) results = results.filter(i => i.duration_type === filters.duration_type);
+    if (filters.budget) results = results.filter(i => i.budget === filters.budget || i.compensation === filters.budget);
+    
+    return results.slice(0, 50);
   }
 
   /**
@@ -133,6 +186,10 @@ class AuditionService {
       .select('*, hiring_profiles(company_name, description, logo_url, is_verified), applications(count)')
       .eq('id', auditionId)
       .single();
+      
+    if (data) {
+      try { if (data.instructions && data.instructions.startsWith('{')) Object.assign(data, JSON.parse(data.instructions)); } catch(e) {}
+    }
 
     if (error) throw new Error('Audition not found');
 

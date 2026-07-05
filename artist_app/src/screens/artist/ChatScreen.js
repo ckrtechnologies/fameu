@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image, AppState } from 'react-native';
+import { View, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { io } from 'socket.io-client';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
+import Typography from '../../components/core/Typography';
 import { useGetMessagesQuery, useGetInboxQuery, chatApi } from '../../services/chatApi';
 import SocketService from '../../services/SocketService';
 import { markConversationAsRead } from '../../store/slices/chatSlice';
@@ -164,12 +165,12 @@ export default function ChatScreen() {
     const isMe = item.sender_id === myId;
     return (
       <View style={[styles.messageBubble, isMe ? styles.messageMe : styles.messageThem]}>
-        <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>
+        <Typography variant="body" style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>
           {item.content}
-        </Text>
-        <Text style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
+        </Typography>
+        <Typography variant="caption" style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
           {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </Text>
+        </Typography>
       </View>
     );
   };
@@ -195,14 +196,14 @@ export default function ChatScreen() {
             />
           ) : (
             <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-              <Text style={{ color: colors.backgroundLight, fontWeight: 'bold' }}>
+              <Typography style={{ color: colors.backgroundLight, fontWeight: 'bold' }}>
                 {displayName ? displayName.charAt(0).toUpperCase() : '?'}
-              </Text>
+              </Typography>
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle} numberOfLines={1}>{displayName}</Text>
-            {otherUserTyping && <Text style={styles.typingText}>typing...</Text>}
+            <Typography variant="h3" style={styles.headerTitle} numberOfLines={1}>{displayName}</Typography>
+            {otherUserTyping && <Typography variant="caption" style={styles.typingText}>typing...</Typography>}
           </View>
         </TouchableOpacity>
 
@@ -301,8 +302,9 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     maxWidth: '80%',
-    padding: spacing.m,
-    borderRadius: 16,
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.m,
+    borderRadius: 20,
     marginBottom: spacing.s,
   },
   messageMe: {
@@ -315,7 +317,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceLight,
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: colors.textMutedLight + '20',
+    borderColor: colors.borderLight,
   },
   messageText: {
     ...typography.body,
@@ -342,23 +344,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     padding: spacing.m,
-    borderTopWidth: 1,
-    borderTopColor: colors.textMutedLight + '20',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.borderLight,
     backgroundColor: colors.backgroundLight,
   },
   input: {
     flex: 1,
     backgroundColor: colors.surfaceLight,
-    borderRadius: 20,
-    paddingHorizontal: spacing.m,
+    borderRadius: 24,
+    paddingHorizontal: spacing.l,
     paddingTop: 12,
     paddingBottom: 12,
-    minHeight: 40,
+    minHeight: 44,
     maxHeight: 100,
     ...typography.body,
     color: colors.textMainLight,
     borderWidth: 1,
-    borderColor: colors.textMutedLight + '20',
+    borderColor: colors.borderLight,
   },
   sendButton: {
     width: 44,
@@ -368,7 +370,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: spacing.s,
-    marginBottom: 2,
+    marginBottom: 0,
   },
   sendButtonDisabled: {
     backgroundColor: colors.textMutedLight,

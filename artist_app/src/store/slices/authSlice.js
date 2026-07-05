@@ -36,7 +36,7 @@ export const logout = createAsyncThunk(
     } catch (e) {
       console.log('Error clearing keychain', e);
     }
-    storage.delete('auth_user');
+    storage.clearAll();
     return null;
   }
 );
@@ -88,11 +88,13 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.token = null;
         state.user = null;
+        state.loading = false;
       })
       .addCase(logout.rejected, (state) => {
         state.isAuthenticated = false;
         state.token = null;
         state.user = null;
+        state.loading = false;
       });
   },
 });

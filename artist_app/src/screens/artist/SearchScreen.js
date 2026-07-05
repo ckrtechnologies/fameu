@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator , RefreshControl } from 'react-native';
+import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { ArrowLeft, Search, XCircle, User, Search as SearchOutline } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../theme/theme';
+import Typography from '../../components/core/Typography';
 import { useLazySearchUsersQuery } from '../../services/connectionsApi';
 
 export default function SearchScreen() {
@@ -21,18 +22,18 @@ export default function SearchScreen() {
   const renderItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.userCard}
-      onPress={() => navigation.navigate('PublicProfile', { username: item.username })}
+      onPress={() => navigation.navigate('PublicProfile', { username: item.username || item.id })}
     >
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
       ) : (
         <View style={styles.avatarPlaceholder}>
-          <Icon name="person" size={24} color={colors.textSecondaryLight} />
+          <User size={24} color={colors.primary} />
         </View>
       )}
       <View style={styles.userInfo}>
-        <Text style={styles.nameText}>{item.name}</Text>
-        <Text style={styles.handleText}>@{item.username}</Text>
+        <Typography variant="h4" style={styles.nameText}>{item.name}</Typography>
+        {item.username ? <Typography variant="body" style={styles.handleText}>@{item.username}</Typography> : null}
       </View>
     </TouchableOpacity>
   );
@@ -41,10 +42,10 @@ export default function SearchScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
+          <Search size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search users..."
@@ -56,7 +57,7 @@ export default function SearchScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearButton}>
-              <Icon name="close-circle" size={20} color={colors.textSecondaryLight} />
+              <XCircle size={20} color={colors.textSecondaryLight} />
             </TouchableOpacity>
           )}
         </View>
@@ -68,7 +69,7 @@ export default function SearchScreen() {
         </View>
       ) : error ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>Error fetching results. Please try again.</Text>
+          <Typography variant="body" style={styles.errorText}>Error fetching results. Please try again.</Typography>
         </View>
       ) : (
         <FlatList
@@ -80,12 +81,12 @@ export default function SearchScreen() {
           ListEmptyComponent={
             searchQuery.length >= 2 ? (
               <View style={styles.centerContainer}>
-                <Text style={styles.emptyText}>No users found</Text>
+                <Typography variant="body" style={styles.emptyText}>No users found</Typography>
               </View>
             ) : (
               <View style={styles.centerContainer}>
-                <Icon name="search-outline" size={64} color={colors.borderLight} />
-                <Text style={styles.promptText}>Search for artists and recruiters</Text>
+                <SearchOutline size={64} color={colors.borderLight} />
+                <Typography variant="h4" style={styles.promptText}>Search for artists and recruiters</Typography>
               </View>
             )
           }
@@ -117,12 +118,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
-    borderRadius: 8,
-    paddingHorizontal: spacing.s,
-    height: 40,
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
+    paddingHorizontal: spacing.m,
+    height: 44,
   },
   searchIcon: {
-    marginRight: spacing.xs,
+    marginRight: spacing.s,
   },
   searchInput: {
     flex: 1,
@@ -152,7 +155,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: 'rgba(0, 51, 255, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -177,15 +180,12 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   errorText: {
-    ...typography.body,
     color: colors.error,
   },
   emptyText: {
-    ...typography.body,
     color: colors.textSecondaryLight,
   },
   promptText: {
-    ...typography.h4,
     color: colors.textSecondaryLight,
     marginTop: spacing.m,
     textAlign: 'center',
