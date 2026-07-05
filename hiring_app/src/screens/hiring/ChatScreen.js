@@ -184,7 +184,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
@@ -236,6 +236,7 @@ export default function ChatScreen() {
             renderItem={renderMessage}
             contentContainerStyle={styles.listContent}
             inverted // Messages typically newest at bottom
+            keyboardShouldPersistTaps="handled"
           />
         )}
 

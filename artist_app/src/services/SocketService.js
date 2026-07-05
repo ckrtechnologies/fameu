@@ -20,7 +20,6 @@ class SocketService {
 
     this.socket = io(socketUrl, {
       auth: { token },
-      transports: ['websocket'],
     });
 
     this.socket.on('connect', () => {

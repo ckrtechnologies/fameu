@@ -1,6 +1,8 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Image, StatusBar } from 'react-native';
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+
+import { View, StyleSheet, Platform, Image, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Typography from '../../components/core/Typography';
 import CustomAlert from '../../components/core/CustomAlert';
@@ -54,7 +56,7 @@ const LoginScreen = ({ navigation }) => {
       </View>
 
       {/* Bottom Half - Light */}
-      <KeyboardAvoidingView 
+      <KeyboardAwareScrollView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.bottomHalf}
       >
@@ -81,7 +83,7 @@ const LoginScreen = ({ navigation }) => {
             />
           )}
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
 
       <CustomAlert 
         visible={alertVisible}

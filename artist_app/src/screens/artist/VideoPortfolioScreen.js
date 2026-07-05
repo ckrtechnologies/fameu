@@ -164,11 +164,16 @@ export default function VideoPortfolioScreen() {
         <Typography variant="h3" style={styles.headerTitle}>Video Portfolio</Typography>
       </View>
 
-      <FlatList
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <FlatList
         data={videos}
         keyExtractor={(item, index) => index.toString()}
         renderItem={renderVideoItem}
         contentContainerStyle={styles.listContainer}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Typography variant="body" style={{color: colors.textSecondaryLight}}>No videos uploaded yet.</Typography>
@@ -194,6 +199,7 @@ export default function VideoPortfolioScreen() {
           ) : null
         }
       />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

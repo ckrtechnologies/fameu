@@ -1,6 +1,7 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, FlatList, Animated, Easing, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, Modal, FlatList, Animated, Easing, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from '@react-navigation/native';
 import { Camera, Calendar, MonitorPlay, MapPin, Mic2, Clapperboard, Briefcase, Clock, User, Users, Globe, Building2, CheckSquare, Film, Star } from 'lucide-react-native';
 import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
@@ -239,8 +240,7 @@ export default function CreateAuditionScreen({ route }) {
         <Text style={styles.headerTitle}>{isEditMode ? 'Edit Audition' : 'Post New Audition'}</Text>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAwareScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
         
         <View style={styles.formGroup}>
           <Text style={styles.label}>Audition Title *</Text>
@@ -461,7 +461,7 @@ export default function CreateAuditionScreen({ route }) {
           </View>
         )}
 
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom + 24, 40) : Math.max(insets.bottom + 12, spacing.xl) }]}>
         <TouchableOpacity 
@@ -476,7 +476,6 @@ export default function CreateAuditionScreen({ route }) {
           )}
         </TouchableOpacity>
       </View>
-      </KeyboardAvoidingView>
       <Modal visible={showCategoryModal} animationType="slide" transparent={true} onRequestClose={() => setShowCategoryModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>

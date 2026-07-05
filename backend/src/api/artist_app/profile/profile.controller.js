@@ -68,7 +68,7 @@ class ArtistProfileController {
       const { replaceAvatar } = req.body;
       const userId = req.user.id;
 
-      const baseUrl = `${process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
+      const baseUrl = process.env.CDN_URL ? `${process.env.CDN_URL}/artist/` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
       const mediaUrls = { photos: [] };
 
       // Multer stores files in req.files if multiple fields used
@@ -113,7 +113,7 @@ class ArtistProfileController {
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
       }
-      const baseUrl = `${process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
+      const baseUrl = process.env.CDN_URL ? `${process.env.CDN_URL}/artist/` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
       const fileUrl = baseUrl + req.file.filename;
       res.status(200).json({ success: true, url: fileUrl });
     } catch (err) {

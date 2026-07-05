@@ -1,6 +1,7 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator , RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator , RefreshControl } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -203,7 +204,7 @@ export default function ArtistFormScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={isFetching || isLoadingProfessions || false} onRefresh={refetch} tintColor={colors.primary} />}>
+      <KeyboardAwareScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={isFetching || isLoadingProfessions || false} onRefresh={refetch} tintColor={colors.primary} />}>
         <Text style={styles.subtitle}>Fill in your {activeTab.toLowerCase()} specific details to stand out.</Text>
 
         {isLoadingProfessions ? (

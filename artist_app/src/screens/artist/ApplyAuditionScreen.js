@@ -1,6 +1,7 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert, ActivityIndicator , RefreshControl } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -76,7 +77,7 @@ export default function ApplyAuditionScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Apply for Role</Text>
       </View>
-      <View style={styles.container}>
+      <KeyboardAwareScrollView style={styles.container}>
         <Text style={styles.label}>Cover Note (Optional)</Text>
         <TextInput
           style={styles.textArea}
@@ -101,7 +102,7 @@ export default function ApplyAuditionScreen() {
           loading={isApplying}
           style={{ marginTop: 'auto', marginBottom: spacing.xl }}
         />
-      </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

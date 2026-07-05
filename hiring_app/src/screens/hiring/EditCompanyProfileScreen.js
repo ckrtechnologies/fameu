@@ -1,5 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image , RefreshControl } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSelector } from 'react-redux';
@@ -127,7 +128,7 @@ export default function EditCompanyProfileScreen() {
   const currentLogo = logoUri || profile?.logo_url;
 
   return (
-    <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+    <KeyboardAwareScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
       
       <View style={styles.logoSection}>
         <TouchableOpacity style={styles.logoContainer} onPress={handleSelectLogo}>
@@ -227,7 +228,7 @@ export default function EditCompanyProfileScreen() {
         <CommentsSection targetType="profile" targetId={profile.id} disableComment={true} />
       )}
 
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
