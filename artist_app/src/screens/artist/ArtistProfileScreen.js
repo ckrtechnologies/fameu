@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 
 import { colors, typography, spacing } from '../../theme/theme';
 import { useGetProfileQuery } from '../../services/profileApi';
+import CommentsSection from '../../components/CommentsSection';
 
 const { width } = Dimensions.get('window');
 
@@ -122,6 +123,10 @@ export default function ArtistProfileScreen() {
               <Text style={styles.statNumberInsta}>{followingCount}</Text>
               <Text style={styles.statLabelInsta}>Following</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.statBoxInsta}>
+              <Text style={styles.statNumberInsta}>{stats.views || 0}</Text>
+              <Text style={styles.statLabelInsta}>Visits</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -193,19 +198,19 @@ export default function ArtistProfileScreen() {
                 <View>
                   {/* Video Section */}
                   {profile.video_url ? (
-                    <TouchableOpacity 
-                      style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}
-                      onPress={() => Linking.openURL(profile.video_url)}
-                    >
-                      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                        <Icon name="play" size={20} color={colors.primary} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: 'bold' }}>Watch Video Portfolio</Text>
-                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Tap to open video</Text>
-                      </View>
-                      <Icon name="chevron-forward" size={20} color={colors.textMutedLight} />
-                    </TouchableOpacity>
+                    <View style={[styles.galleryGrid, { marginHorizontal: 0, marginBottom: 16 }]}>
+                      {profile.video_url.split(',').map((vidUrl, index) => (
+                        <TouchableOpacity 
+                          key={index} 
+                          onPress={() => {
+                            navigation.navigate('VideoPortfolio', { videos: profile.video_url.split(','), initialIndex: index });
+                          }}
+                          style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark }]}
+                        >
+                          <Icon name="play" size={40} color={colors.primary} />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   ) : null}
 
                   {/* Photo Section */}
@@ -225,7 +230,7 @@ export default function ArtistProfileScreen() {
         ) : (
           <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
             {(() => {
-              const details = profile.category_details?.[activeTab];
+              const details = profile.category_details?.[activeTab] || profile.category_details?.[activeTab.toLowerCase()];
               if (!details) {
                 return (
                   <View style={styles.emptyPortfolio}>
@@ -347,6 +352,12 @@ export default function ArtistProfileScreen() {
                 </View>
               );
             })()}
+          </View>
+        )}
+
+        {profile && profile.id && (
+          <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
+            <CommentsSection targetType="artist_profile" targetId={profile.id} />
           </View>
         )}
 

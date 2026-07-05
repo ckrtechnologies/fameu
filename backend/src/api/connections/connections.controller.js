@@ -66,6 +66,17 @@ class ConnectionsController {
       next(error);
     }
   }
+
+  async recordProfileVisit(req, res, next) {
+    try {
+      const profileUserId = req.params.userId;
+      const viewerId = req.user ? req.user.id : null;
+      await connectionService.recordProfileVisit(profileUserId, viewerId);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new ConnectionsController();

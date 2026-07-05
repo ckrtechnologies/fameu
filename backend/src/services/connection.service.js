@@ -110,7 +110,7 @@ class ConnectionService {
         hiring_profiles (company_name)
       `)
       .neq('id', currentUserId)
-      .or(`username.ilike.${searchTerm},display_name.ilike.${searchTerm}`)
+      .or(`username.ilike.${searchTerm},display_name.ilike.${searchTerm},email.ilike.${searchTerm},mobile.ilike.${searchTerm}`)
       .limit(50);
 
     if (error) throw new Error(error.message);
@@ -162,6 +162,68 @@ class ConnectionService {
   /**
    * Get public profile by username
    */
+  /**
+   * Record a profile visit — directly increments visit_count on the profile table.
+   * Skips self-visits. Requires only: ALTER TABLE artist_profiles ADD COLUMN visit_count INTEGER DEFAULT 0;
+   *                                    ALTER TABLE hiring_profiles ADD COLUMN visit_count INTEGER DEFAULT 0;
+   */
+  async recordProfileVisit(profileUserId, viewerId) {
+    // Skip self-visits
+    if (viewerId && viewerId === profileUserId) return;
+
+    try {
+      // Get the user's role to know which profile table to update
+      const { data: userRow, error: userErr } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', profileUserId)
+        .single();
+
+      if (userErr || !userRow) return;
+
+      if (userRow.role === 'artist') {
+        // Read current visit_count then increment
+        const { data: ap, error: readErr } = await supabase
+          .from('artist_profiles')
+          .select('visit_count')
+          .eq('user_id', profileUserId)
+          .single();
+
+        if (readErr) { console.warn('Visit read error (artist):', readErr.message); return; }
+
+        const newCount = (ap?.visit_count || 0) + 1;
+        const { error: updateErr } = await supabase
+          .from('artist_profiles')
+          .update({ visit_count: newCount })
+          .eq('user_id', profileUserId);
+
+        if (updateErr) console.warn('Visit update error (artist):', updateErr.message);
+
+      } else if (userRow.role === 'hiring') {
+        const { data: hp, error: readErr } = await supabase
+          .from('hiring_profiles')
+          .select('visit_count')
+          .eq('user_id', profileUserId)
+          .single();
+
+        if (readErr) { console.warn('Visit read error (hiring):', readErr.message); return; }
+
+        const newCount = (hp?.visit_count || 0) + 1;
+        const { error: updateErr } = await supabase
+          .from('hiring_profiles')
+          .update({ visit_count: newCount })
+          .eq('user_id', profileUserId);
+
+        if (updateErr) console.warn('Visit update error (hiring):', updateErr.message);
+      }
+    } catch (err) {
+      console.warn('recordProfileVisit error:', err.message);
+    }
+  }
+
+  /**
+   * Get public profile by username
+   */
   async getPublicProfile(username, currentUserId) {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
     const queryColumn = isUUID ? 'id' : 'username';
@@ -170,13 +232,32 @@ class ConnectionService {
       .from('users')
       .select(`
         id, username, display_name, avatar_url, followers_count, following_count, role,
-        artist_profiles (id, full_name, bio, categories, city, photo_urls, video_url, audio_url),
-        hiring_profiles (id, company_name, description, logo_url)
+        artist_profiles (*),
+        hiring_profiles (*)
       `)
       .eq(queryColumn, username)
       .single();
 
     if (error || !user) throw new Error('User not found');
+
+    let profile = user.role === 'artist' ? user.artist_profiles : user.hiring_profiles;
+
+    if (user.role === 'artist' && profile) {
+      profile.category_details = {};
+      if (profile.categories && profile.categories.length > 0) {
+        const { data: details } = await supabase
+          .from('artist_dynamic_details')
+          .select('*')
+          .eq('artist_id', profile.id)
+          .in('category_name', profile.categories);
+          
+        if (details) {
+          details.forEach(d => {
+            profile.category_details[d.category_name] = d.details;
+          });
+        }
+      }
+    }
 
     // Check if current user is following this profile
     let isFollowing = false;
@@ -190,18 +271,25 @@ class ConnectionService {
       if (conn) isFollowing = true;
     }
 
+    const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', user.id)
+    ]);
+
     return {
       id: user.id,
       username: user.username,
       avatar_url: user.avatar_url,
       name: user.display_name || user.artist_profiles?.full_name || user.hiring_profiles?.company_name || 'User',
-      followers_count: user.followers_count || 0,
-      following_count: user.following_count || 0,
+      followers_count: followersCount || 0,
+      following_count: followingCount || 0,
+      visit_count: profile?.visit_count || 0,
       is_following: isFollowing,
       role: user.role,
-      profile: user.role === 'artist' ? user.artist_profiles : user.hiring_profiles
+      profile: profile
     };
   }
 }
 
 export default new ConnectionService();
+

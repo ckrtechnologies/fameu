@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing } from '../../theme/theme';
 import CustomInput from '../../components/forms/CustomInput';
@@ -22,8 +22,9 @@ const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
 
 export default function AuditionDiscoveryScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'All');
 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({

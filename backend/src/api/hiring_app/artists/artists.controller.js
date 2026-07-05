@@ -19,7 +19,10 @@ const artistsController = {
           )
         `);
 
-      if (category) query = query.eq('category', category);
+      if (category) {
+        const cats = category.split(',').map(c => c.trim().toLowerCase());
+        query = query.overlaps('categories', cats);
+      }
       if (gender) query = query.eq('gender', gender);
       if (location) query = query.ilike('location', `%${location}%`);
       if (minAge) query = query.gte('age', minAge);

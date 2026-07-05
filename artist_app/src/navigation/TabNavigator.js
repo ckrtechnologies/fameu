@@ -11,6 +11,7 @@ import AuditionDiscoveryScreen from '../screens/artist/AuditionDiscoveryScreen';
 import MyApplicationsScreen from '../screens/artist/MyApplicationsScreen';
 import ArtistProfileScreen from '../screens/artist/ArtistProfileScreen';
 import InboxScreen from '../screens/artist/InboxScreen';
+import ArtistDiscoveryScreen from '../screens/artist/ArtistDiscoveryScreen';
 
 import { colors, typography, spacing } from '../theme/theme';
 
@@ -82,6 +83,8 @@ export default function TabNavigator() {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'Inbox') {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          } else if (route.name === 'Discover') {
+            iconName = focused ? 'search' : 'search-outline';
           }
 
           return <Icon name={iconName} size={size} color={color} />;
@@ -116,7 +119,12 @@ export default function TabNavigator() {
       <Tab.Screen 
         name="Profile" 
         component={ArtistProfileScreen} 
-        options={{ tabBarLabel: 'Profile', headerTitle: 'artist' }}
+        options={{ tabBarLabel: 'Profile', headerTitle: 'Artist' }}
+      />
+      <Tab.Screen 
+        name="Discover" 
+        component={ArtistDiscoveryScreen} 
+        options={{ tabBarLabel: 'Discover' }}
       />
       <Tab.Screen 
         name="Auditions" 

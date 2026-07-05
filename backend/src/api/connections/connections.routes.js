@@ -15,5 +15,6 @@ router.get('/:userId/following', connectionsController.getFollowing);
 
 router.get('/search/users', connectionsController.searchUsers);
 router.get('/profile/:username', connectionsController.getPublicProfile);
+router.post('/profile/:userId/visit', connectionsController.recordProfileVisit);
 
 export default router;

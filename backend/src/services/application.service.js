@@ -66,7 +66,7 @@ class ApplicationService {
 
     const { data, error } = await supabase
       .from('applications')
-      .select('*, auditions(title, venue_address, audition_date, hiring_profiles(company_name, logo_url))')
+      .select('*, auditions(title, venue_address, audition_date, hiring_profiles(company_name, logo_url, users(username)))')
       .eq('artist_id', profile.id)
       .order('created_at', { ascending: false });
 
@@ -91,7 +91,7 @@ class ApplicationService {
     // 2. Fetch applicants
     let query = supabase
       .from('applications')
-      .select('*, artist_profiles!inner(full_name, categories, city, photo_urls, video_url, gender, age, users(avatar_url)), auditions!inner(hiring_id)')
+      .select('*, artist_profiles!inner(user_id, full_name, categories, city, photo_urls, video_url, gender, age, users(avatar_url)), auditions!inner(hiring_id)')
       .eq('audition_id', auditionId);
 
     if (filters.status) query = query.eq('status', filters.status);
@@ -134,7 +134,7 @@ class ApplicationService {
   async getAllApplicantsForCompany(hiringId, filters = {}) {
     let query = supabase
       .from('applications')
-      .select('*, artist_profiles!inner(full_name, categories, city, photo_urls, video_url, gender, age, users(avatar_url)), auditions!inner(id, title, hiring_id, audition_type, audition_date, instructions)')
+      .select('*, artist_profiles!inner(user_id, full_name, categories, city, photo_urls, video_url, gender, age, users(avatar_url)), auditions!inner(id, title, hiring_id, audition_type, audition_date, instructions)')
       .eq('auditions.hiring_id', hiringId);
 
     // Apply Filters

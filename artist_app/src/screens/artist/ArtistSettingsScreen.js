@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +9,6 @@ import { logout } from '../../store/slices/authSlice';
 import { apiSlice } from '../../services/apiSlice';
 import { useDeleteAccountMutation } from '../../services/authApi';
 import { colors, typography, spacing } from '../../theme/theme';
-
 export default function ArtistSettingsScreen() {
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -48,7 +48,7 @@ export default function ArtistSettingsScreen() {
               dispatch(apiSlice.util.resetApiState());
               dispatch(logout());
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete account. Please try again later.');
+              showError('', 'Failed to delete account. Please try again later.');
               console.error('Delete account error:', error);
             }
           }

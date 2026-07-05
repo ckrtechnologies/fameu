@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +9,6 @@ import { useGetProfileQuery } from '../../services/profileApi';
 import { useApplyToAuditionMutation } from '../../services/discoverApi';
 import CustomButton from '../../components/forms/CustomButton';
 import CustomInput from '../../components/forms/CustomInput';
-
 export default function ApplyAuditionScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -22,13 +22,13 @@ export default function ApplyAuditionScreen() {
   const handleApply = async () => {
     try {
       await applyToAudition({ id: auditionId, cover_note: coverNote }).unwrap();
-      Alert.alert('Success', 'Application submitted successfully!', [
+      showSuccess('', 'Application submitted successfully!', [
         { text: 'OK', onPress: () => navigation.navigate('MainTabs', { screen: 'Tabs', params: { screen: 'Applications' } }) }
       ]);
     } catch (err) {
       console.error('Apply to audition error:', err);
       const errMsg = err?.data?.error || err?.message || 'Failed to submit application.';
-      Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+      showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   };
 

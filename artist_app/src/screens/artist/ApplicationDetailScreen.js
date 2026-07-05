@@ -66,7 +66,17 @@ export default function ApplicationDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Role Details</Text>
           <Text style={styles.title}>{audition.title}</Text>
-          <Text style={styles.subtitle}>{audition.hiring_profiles?.company_name || 'Production House'}</Text>
+          <TouchableOpacity 
+            onPress={() => {
+              if (audition.hiring_profiles?.users?.username) {
+                navigation.navigate('PublicProfile', { username: audition.hiring_profiles.users.username });
+              }
+            }}
+          >
+            <Text style={[styles.subtitle, { color: colors.primary, textDecorationLine: 'underline' }]}>
+              {audition.hiring_profiles?.company_name || 'Production House'}
+            </Text>
+          </TouchableOpacity>
           <CustomButton 
             title="View Full Audition" 
             onPress={() => navigation.navigate('AuditionDetail', { id: application.audition_id })}

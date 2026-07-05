@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl } from 'react-native';
 import Video from 'react-native-video';
@@ -12,18 +13,23 @@ import CustomButton from '../../components/forms/CustomButton';
 import { 
   useGetPublicProfileQuery, 
   useFollowUserMutation, 
-  useUnfollowUserMutation 
+  useUnfollowUserMutation,
+  useRecordVisitMutation
 } from '../../services/connectionsApi';
 import { useStartConversationMutation } from '../../services/chatApi';
+import { useGetFeedQuery } from '../../services/discoverApi';
+import { Video as IconVideo, Camera as IconCamera } from 'lucide-react-native';
 import CommentsSection from '../../components/CommentsSection';
-
 export default function PublicProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { username, scrollToComments } = route.params;
   
   const currentUserId = useSelector((state) => state.auth.user?.id);
-  const { data: profileData, isLoading, isError, refetch , isFetching} = useGetPublicProfileQuery(username)
+  const { data: profileData, isLoading, isError, refetch , isFetching} = useGetPublicProfileQuery(username);
+
+  const hiringId = profileData?.role === 'hiring' ? profileData?.profile?.id : null;
+  const { data: auditions, isLoading: isAuditionsLoading } = useGetFeedQuery({ hiring_id: hiringId }, { skip: !hiringId });
   
   const scrollViewRef = React.useRef(null);
 
@@ -38,6 +44,14 @@ export default function PublicProfileScreen() {
   const [followUser, { isLoading: isFollowingLoad }] = useFollowUserMutation();
   const [unfollowUser, { isLoading: isUnfollowingLoad }] = useUnfollowUserMutation();
   const [startConversation, { isLoading: isStartingChat }] = useStartConversationMutation();
+  const [recordVisit] = useRecordVisitMutation();
+
+  // Record a profile visit when the profile loads (skip self-views)
+  React.useEffect(() => {
+    if (profileData?.id && currentUserId !== profileData.id) {
+      recordVisit(profileData.id).catch(() => {}); // Fire-and-forget
+    }
+  }, [profileData?.id]);
   
   const [activeTab, setActiveTab] = useState('Overview');
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
@@ -59,7 +73,7 @@ export default function PublicProfileScreen() {
       }
       refetch(); // Refetch to update counts
     } catch (error) {
-      Alert.alert('Error', error?.data?.error || 'Failed to update follow status');
+      showError('', error?.data?.error || 'Failed to update follow status');
     }
   };
 
@@ -72,7 +86,7 @@ export default function PublicProfileScreen() {
         otherParticipant: profileData,
       });
     } catch (error) {
-      Alert.alert('Error', error?.data?.error || 'Failed to start conversation');
+      showError('', error?.data?.error || 'Failed to start conversation');
     }
   };
 
@@ -131,6 +145,10 @@ export default function PublicProfileScreen() {
               <Typography variant="body" style={styles.statValue}>{profileData.following_count}</Typography>
               <Typography variant="body" style={styles.statLabel}>Following</Typography>
             </TouchableOpacity>
+            <View style={styles.statItem}>
+              <Typography variant="body" style={styles.statValue}>{profileData.visit_count || 0}</Typography>
+              <Typography variant="body" style={styles.statLabel}>Visits</Typography>
+            </View>
           </View>
         </View>
 
@@ -212,19 +230,19 @@ export default function PublicProfileScreen() {
                     <View>
                       {/* Video Section */}
                       {profileData.profile.video_url ? (
-                        <TouchableOpacity 
-                          style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}
-                          onPress={() => Linking.openURL(profileData.profile.video_url)}
-                        >
-                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                            <Play size={20} color={colors.primary} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, fontWeight: 'bold' }}>Watch Video Portfolio</Typography>
-                            <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>Tap to open video</Typography>
-                          </View>
-                          <ChevronRight size={20} color={colors.textMutedLight} />
-                        </TouchableOpacity>
+                        <View style={[styles.galleryGrid, { marginHorizontal: 0, marginBottom: 16 }]}>
+                          {profileData.profile.video_url.split(',').map((vidUrl, index) => (
+                            <TouchableOpacity 
+                              key={index} 
+                              onPress={() => {
+                                navigation.navigate('VideoPortfolio', { videos: profileData.profile.video_url.split(','), initialIndex: index });
+                              }}
+                              style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark }]}
+                            >
+                              <Play size={40} color={colors.primary} />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
                       ) : null}
 
                       {/* Photo Section */}
@@ -244,7 +262,7 @@ export default function PublicProfileScreen() {
             ) : (
               <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
                 {(() => {
-                  const details = profileData.profile.category_details?.[activeTab];
+                  const details = profileData.profile.category_details?.[activeTab.toLowerCase()];
                   if (!details) {
                     return (
                       <View style={styles.emptyPortfolio}>
@@ -388,44 +406,99 @@ export default function PublicProfileScreen() {
               </View>
             )}
           </View>
-        ) : profileData.role === 'hiring' && profileData.profile ? (
-          <View style={styles.detailsSection}>
-            <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
-              <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Company Overview</Typography>
-              {(() => {
-                const hiringProfile = Array.isArray(profileData.profile) ? profileData.profile[0] : profileData.profile;
-                if (!hiringProfile) return null;
-                
-                return (
-                  <View>
-                    {hiringProfile.description ? (
-                      <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, marginBottom: 16 }}>
-                        {hiringProfile.description}
-                      </Typography>
-                    ) : (
-                      <Typography variant="body" style={{ color: colors.textMutedLight, fontStyle: 'italic', marginBottom: 16 }}>
-                        No description provided.
-                      </Typography>
-                    )}
-                  </View>
-                );
-              })()}
-            </View>
+        ) : profileData.role === 'hiring' && profileData.profile ? (() => {
+          const hiringProfile = Array.isArray(profileData.profile) ? profileData.profile[0] : profileData.profile;
 
-            {/* Hiring Profile Comments */}
-            {(() => {
-              const hiringProfile = Array.isArray(profileData.profile) ? profileData.profile[0] : profileData.profile;
-              if (hiringProfile && hiringProfile.id) {
-                return (
-                  <View style={{ marginHorizontal: spacing.xl, marginBottom: 24 }}>
-                    <CommentsSection targetType="profile" targetId={hiringProfile.id} />
+          const grouped = (auditions?.data || []).reduce((acc, curr) => {
+            const cat = curr.category || 'Other';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(curr);
+            return acc;
+          }, {});
+        
+          const categoriesData = Object.keys(grouped).map(key => ({
+            category: key.charAt(0).toUpperCase() + key.slice(1),
+            data: grouped[key].slice(0, 5),
+            total: grouped[key].length
+          }));
+
+          return (
+            <View style={{ paddingHorizontal: spacing.m, marginTop: spacing.l }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: spacing.l }}>
+                <View style={{ alignItems: 'center' }}>
+                  <Typography variant="h3" style={{ fontWeight: '700', color: colors.textMainLight }}>{auditions?.data?.length || 0}</Typography>
+                  <Typography variant="caption" style={{ color: colors.textSecondaryLight }}>Posts</Typography>
+                </View>
+                <View style={{ alignItems: 'center' }}>
+                  <Typography variant="h3" style={{ fontWeight: '700', color: colors.textMainLight }}>0</Typography>
+                  <Typography variant="caption" style={{ color: colors.textSecondaryLight }}>Hired</Typography>
+                </View>
+                <View style={{ alignItems: 'center' }}>
+                  <Typography variant="h3" style={{ fontWeight: '700', color: colors.textMainLight }}>0</Typography>
+                  <Typography variant="caption" style={{ color: colors.textSecondaryLight }}>Visits</Typography>
+                </View>
+              </View>
+              <View style={{ marginBottom: spacing.l }}>
+                <Typography variant="h4" style={{ fontWeight: 'bold', color: colors.textMainLight, marginBottom: 2 }}>{hiringProfile.company_name || 'Company Name'}</Typography>
+                <Typography variant="body2" style={{ color: colors.primary, marginBottom: 4 }}>@{profileData.username}</Typography>
+                {hiringProfile.description && (
+                  <Typography variant="body2" style={{ color: colors.textMainLight, lineHeight: 20 }}>{hiringProfile.description}</Typography>
+                )}
+              </View>
+
+              <View style={{ height: 1, backgroundColor: colors.borderLight, marginBottom: spacing.m }} />
+              
+              {categoriesData.length === 0 ? (
+                <View style={{ alignItems: 'center', marginTop: spacing.xl }}>
+                  <IconCamera size={48} color={colors.borderLight} />
+                  <Typography variant="body2" style={{ color: colors.textMutedLight, marginTop: spacing.s }}>No posts yet</Typography>
+                </View>
+              ) : (
+                categoriesData.map((catItem, catIndex) => (
+                  <View key={catIndex} style={{ marginBottom: spacing.m }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.s }}>
+                      <Typography variant="h3" style={{ fontWeight: 'bold', color: colors.textMainLight }}>{catItem.category}s</Typography>
+                      {catItem.total > 5 && (
+                        <TouchableOpacity>
+                          <Typography variant="body2" style={{ color: colors.primary, fontWeight: '600' }}>See all</Typography>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: spacing.m }}>
+                      {catItem.data.map((item, index) => (
+                          <TouchableOpacity 
+                          key={item.id}
+                          style={{ width: 140, height: 140, marginRight: spacing.m, backgroundColor: colors.surfaceLight, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderLight }}
+                          onPress={() => navigation.navigate('AuditionDetail', { id: item.id })}
+                        >
+                          {item.thumbnail_url ? (
+                            <View style={{ flex: 1, width: '100%', height: '100%', position: 'relative' }}>
+                              <Image source={{ uri: item.thumbnail_url }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                              <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.xs }}>
+                                <Typography variant="caption" style={{ textAlign: 'center', color: '#fff' }} numberOfLines={2}>{item.title}</Typography>
+                              </View>
+                            </View>
+                          ) : (
+                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.s }}>
+                              <IconVideo size={28} color={colors.textMutedLight} />
+                              <Typography variant="caption" style={{ marginTop: spacing.xs, textAlign: 'center', color: colors.textMutedLight }} numberOfLines={2}>{item.title}</Typography>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
                   </View>
-                );
-              }
-              return null;
-            })()}
-          </View>
-        ) : null}
+                ))
+              )}
+
+              {hiringProfile && hiringProfile.id && (
+                <View style={{ marginBottom: 24, marginTop: spacing.l }}>
+                  <CommentsSection targetType="profile" targetId={hiringProfile.id} />
+                </View>
+              )}
+            </View>
+          );
+        })() : null}
       </ScrollView>
       
       <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsImageModalVisible(false)}>

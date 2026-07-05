@@ -8,6 +8,8 @@ router.use(authMiddleware);
 
 // PDF Upload for Audition description
 router.post('/upload-pdf', uploadHiringDocs.single('pdf'), auditionController.uploadDescriptionPdf);
+// Thumbnail Upload
+router.post('/upload-thumbnail', uploadHiringDocs.single('thumbnail'), auditionController.uploadThumbnail);
 
 // Audition CRUD
 router.post('/', auditionController.createAudition);

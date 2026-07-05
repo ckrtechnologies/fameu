@@ -25,7 +25,7 @@ export default function ArtistDashboardScreen() {
   const feedParams = primaryCategory ? { category: primaryCategory } : {};
   const { data: feedData, isLoading, isError, refetch: refetchFeed } = useGetFeedQuery(feedParams);
   const { data: allFeedData, isLoading: isLoadingAll, refetch: refetchAll } = useGetFeedQuery({});
-  const { data: liveData, isLoading: isLoadingLive, isError: isErrorLive, refetch: refetchLive } = useGetFeedQuery({ ...feedParams, is_live: true });
+  const { data: liveData, isLoading: isLoadingLive, isError: isErrorLive, refetch: refetchLive } = useGetFeedQuery({ is_live: true });
 
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -122,7 +122,13 @@ export default function ArtistDashboardScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Typography variant="body" style={styles.sectionTitle}>🔴 Live Auditions</Typography>
-              <Typography variant="body" style={styles.seeAll}>See All</Typography>
+              <Typography 
+                variant="body" 
+                style={styles.seeAll}
+                onPress={() => navigation.navigate('AuditionDiscovery', { initialCategory: 'Live Now' })}
+              >
+                See All
+              </Typography>
             </View>
             <FlatList
               data={liveAuditions}
@@ -165,6 +171,19 @@ export default function ArtistDashboardScreen() {
             />
           )}
         </View>
+
+        {/* Discover Artists Banner */}
+        <TouchableOpacity 
+          style={[styles.profileBanner, { backgroundColor: 'rgba(255, 102, 0, 0.05)', marginTop: spacing.xl }]} 
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('ArtistDiscovery')}
+        >
+          <View style={styles.profileBannerContent}>
+            <Typography variant="h3" style={styles.profileBannerTitle}>Discover Artists</Typography>
+            <Typography variant="body" style={styles.profileBannerText}>Connect and collaborate with other talented artists on Fameu.</Typography>
+            <Typography variant="body" style={[styles.completeNowText, { color: '#FF6600' }]}>Explore Talent &gt;</Typography>
+          </View>
+        </TouchableOpacity>
         
         {/* Bottom padding for tab bar */}
         <View style={styles.bottomSpacer} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator , RefreshControl, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator , RefreshControl, Linking, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -15,6 +15,13 @@ export default function AuditionDetailScreen() {
 
   const { data: response, isLoading, isError, refetch , isFetching} = useGetAuditionDetailsQuery(id)
   const audition = response?.data;
+
+  let parsedInstructions = {};
+  if (audition?.instructions) {
+    try {
+      parsedInstructions = JSON.parse(audition.instructions);
+    } catch(e) {}
+  }
   const [toggleBookmark, { isLoading: isBookmarking }] = useToggleBookmarkMutation();
   const scrollViewRef = React.useRef(null);
 
@@ -55,6 +62,8 @@ export default function AuditionDetailScreen() {
     }
   };
 
+
+
   const isWalkin = audition.audition_type === 'walkin';
 
   return (
@@ -71,6 +80,14 @@ export default function AuditionDetailScreen() {
       </View>
 
       <ScrollView ref={scrollViewRef} style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+        {/* Thumbnail Section */}
+        {(audition.thumbnail_url || parsedInstructions.thumbnail_url) && (
+          <Image 
+            source={{ uri: audition.thumbnail_url || parsedInstructions.thumbnail_url }} 
+            style={{ width: '100%', height: 200, resizeMode: 'cover' }} 
+          />
+        )}
+        
         {/* Title Section */}
         <View style={styles.section}>
           <View style={styles.tagContainer}>
@@ -85,9 +102,18 @@ export default function AuditionDetailScreen() {
           </View>
           <Text style={styles.title}>{audition.title}</Text>
           {audition.project_type && <Text style={styles.projectTypeBadge}>{audition.project_type}</Text>}
-          <Text style={styles.subtitle}>
-            {audition.hiring_profiles?.company_name || 'Production House'}
-          </Text>
+          <TouchableOpacity 
+            onPress={() => {
+              const profileParam = audition.hiring_profiles?.users?.username || audition.hiring_profiles?.user_id;
+              if (profileParam) {
+                navigation.navigate('PublicProfile', { username: profileParam });
+              }
+            }}
+          >
+            <Text style={[styles.subtitle, { color: colors.primary, textDecorationLine: 'underline' }]}>
+              {audition.hiring_profiles?.company_name || 'Production House'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Info */}
@@ -115,42 +141,63 @@ export default function AuditionDetailScreen() {
           <Text style={styles.bodyText}>{audition.role_description || 'No description provided.'}</Text>
         </View>
 
-        {(audition.character_req || audition.age_min || audition.gender || audition.gender_req) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Requirements</Text>
-            {(audition.gender || audition.gender_req) && <Text style={styles.bodyText}>• Gender: {audition.gender_req || audition.gender}</Text>}
-            {(audition.age_min || audition.age_max) && (
-              <Text style={styles.bodyText}>
-                • Age: {audition.age_min || 0} - {audition.age_max || 'Any'}
-              </Text>
-            )}
-            {audition.language && audition.language.length > 0 && (
-              <Text style={styles.bodyText}>• Language: {audition.language.join(', ')}</Text>
-            )}
-            {audition.character_req && <Text style={styles.bodyText}>• {audition.character_req}</Text>}
-          </View>
-        )}
+        {/* Merged Requirements from normal fields + parsedInstructions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Requirements & Details</Text>
+          {(audition.gender || audition.gender_req || parsedInstructions.gender_req) && (
+            <View style={styles.detailRow}>
+              <Icon name="male-female-outline" size={16} color={colors.textMutedLight} style={styles.detailIcon} />
+              <Text style={styles.bodyText}>Gender: {audition.gender_req || parsedInstructions.gender_req || audition.gender}</Text>
+            </View>
+          )}
+          
+          {(audition.age_min || audition.age_max) && (
+            <View style={styles.detailRow}>
+              <Icon name="person-outline" size={16} color={colors.textMutedLight} style={styles.detailIcon} />
+              <Text style={styles.bodyText}>Age: {audition.age_min || 0} - {audition.age_max || 'Any'}</Text>
+            </View>
+          )}
 
-        {(audition.compensation || audition.budget || audition.duration_type || audition.city) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Other Details</Text>
-            {(audition.compensation || audition.budget) && <Text style={styles.bodyText}>• Compensation/Budget: {audition.budget || audition.compensation}</Text>}
-            {audition.duration_type && <Text style={styles.bodyText}>• Duration Type: {audition.duration_type}</Text>}
-            {audition.city && <Text style={styles.bodyText}>• City: {audition.city}</Text>}
-          </View>
-        )}
+          {(audition.city || parsedInstructions.city) && (
+            <View style={styles.detailRow}>
+              <Icon name="location-outline" size={16} color={colors.textMutedLight} style={styles.detailIcon} />
+              <Text style={styles.bodyText}>Location: {audition.city || parsedInstructions.city}</Text>
+            </View>
+          )}
+          
+          {(audition.budget || audition.compensation || parsedInstructions.budget) && (
+            <View style={styles.detailRow}>
+              <Icon name="cash-outline" size={16} color={colors.textMutedLight} style={styles.detailIcon} />
+              <Text style={styles.bodyText}>Compensation: {audition.budget || parsedInstructions.budget || audition.compensation}</Text>
+            </View>
+          )}
+          
+          {(audition.project_type || parsedInstructions.project_type) && (
+            <View style={styles.detailRow}>
+              <Icon name="videocam-outline" size={16} color={colors.textMutedLight} style={styles.detailIcon} />
+              <Text style={styles.bodyText}>Project Type: {audition.project_type || parsedInstructions.project_type}</Text>
+            </View>
+          )}
+          
+          {(audition.duration_type || parsedInstructions.duration_type) && (
+            <View style={styles.detailRow}>
+              <Icon name="time-outline" size={16} color={colors.textMutedLight} style={styles.detailIcon} />
+              <Text style={styles.bodyText}>Duration: {audition.duration_type || parsedInstructions.duration_type}</Text>
+            </View>
+          )}
+          
+          {((audition.specific_start_date || parsedInstructions.specific_start_date) && (audition.specific_end_date || parsedInstructions.specific_end_date)) && (
+            <View style={styles.detailRow}>
+              <Icon name="calendar-outline" size={16} color={colors.textMutedLight} style={styles.detailIcon} />
+              <Text style={styles.bodyText}>Dates: {audition.specific_start_date || parsedInstructions.specific_start_date} to {audition.specific_end_date || parsedInstructions.specific_end_date}</Text>
+            </View>
+          )}
+        </View>
 
-        {audition.instructions && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Instructions</Text>
-            <Text style={styles.bodyText}>{audition.instructions}</Text>
-          </View>
-        )}
-
-        {audition.description_pdf_url && (
+        {(audition.description_pdf_url || parsedInstructions.description_pdf_url) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Additional Documents</Text>
-            <TouchableOpacity style={styles.pdfButton} onPress={() => Linking.openURL(audition.description_pdf_url)}>
+            <TouchableOpacity style={styles.pdfButton} onPress={() => Linking.openURL(audition.description_pdf_url || parsedInstructions.description_pdf_url)}>
               <Icon name="document-text" size={20} color={colors.primary} />
               <Text style={styles.pdfButtonText}>Download Brief (PDF)</Text>
             </TouchableOpacity>

@@ -17,7 +17,7 @@ class AuditionService {
     // if (profile.credits <= 0) throw new Error('Insufficient credits to post an audition');
 
     // 2. Insert Audition
-    const { project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
+    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
     const extraMeta = JSON.stringify({
       project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date
     });
@@ -27,6 +27,7 @@ class AuditionService {
       ...restData,
       compensation: budget || restData.compensation,
       instructions: extraMeta,
+      thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
       status: 'active'
     };
 
@@ -48,7 +49,7 @@ class AuditionService {
    * Update an existing audition
    */
   async updateAudition(hiringId, auditionId, auditionData) {
-    const { project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
+    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
     const extraMeta = JSON.stringify({
       project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date
     });
@@ -56,6 +57,7 @@ class AuditionService {
     const payload = {
       ...restData,
       instructions: extraMeta,
+      thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
       updated_at: new Date().toISOString()
     };
     if (budget) payload.compensation = budget;
@@ -123,11 +125,12 @@ class AuditionService {
    * Supports filtering by category, gender, and geographic bounding box (for map)
    */
   async discoverAuditions(filters = {}) {
-    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url)').eq('status', 'active');
+    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username))').eq('status', 'active');
 
     // Existing Filters
     if (filters.category) query = query.eq('category', filters.category);
     if (filters.audition_type) query = query.eq('audition_type', filters.audition_type);
+    if (filters.hiring_id) query = query.eq('hiring_id', filters.hiring_id);
     if (filters.is_live === 'true' || filters.is_live === true) query = query.eq('is_live', true);
     
     // Note: project_type, city, duration_type, budget are stored in JSON inside instructions
@@ -183,7 +186,7 @@ class AuditionService {
   async getAuditionDetails(auditionId, userId = null) {
     const { data, error } = await supabase
       .from('auditions')
-      .select('*, hiring_profiles(company_name, description, logo_url, is_verified), applications(count)')
+      .select('*, hiring_profiles(user_id, company_name, description, logo_url, is_verified, users(username)), applications(count)')
       .eq('id', auditionId)
       .single();
       

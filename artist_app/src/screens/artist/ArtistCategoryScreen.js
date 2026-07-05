@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Dimensions, ScrollView , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -5,7 +6,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography } from '../../theme/theme';
 import { useUpsertProfileMutation, useGetProfileQuery, useGetProfessionsQuery } from '../../services/profileApi';
-
 const DEFAULT_CATEGORIES = [
   { id: 'Actor', title: 'Actor', icon: 'film-outline', color: '#FF6B6B' },
   { id: 'Model', title: 'Model', icon: 'camera-outline', color: '#4ECDC4' },
@@ -101,7 +101,7 @@ export default function ArtistCategoryScreen() {
       } catch (error) {
         console.error('Update categories error:', error);
         const errMsg = error?.data?.error || error?.message || 'Failed to update categories';
-        Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+        showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
       }
     }
   };

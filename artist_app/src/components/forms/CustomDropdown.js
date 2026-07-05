@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, TouchableOpacity, Modal, FlatList, StyleSheet, TextInput } from 'react-native';
 import { colors, spacing } from '../../theme/theme';
 import Typography from '../core/Typography';
 
@@ -8,11 +8,18 @@ const CustomDropdown = ({
   options = [], 
   selectedValue, 
   onSelect, 
-  placeholder = "Select an option" 
+  placeholder = "Select an option",
+  searchable = false
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const selectedOption = options.find(opt => opt.value === selectedValue);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !searchQuery) return options;
+    return options.filter(opt => opt.label.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [options, searchable, searchQuery]);
 
   return (
     <View style={styles.container}>
@@ -32,10 +39,19 @@ const CustomDropdown = ({
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisible(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => { setModalVisible(false); setSearchQuery(''); }}>
           <View style={styles.modalContent}>
+            {searchable && (
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor={colors.textMutedDark}
+              />
+            )}
             <FlatList
-              data={options}
+              data={filteredOptions}
               keyExtractor={(item) => item.value.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity 
@@ -43,6 +59,7 @@ const CustomDropdown = ({
                   onPress={() => {
                     onSelect(item.value);
                     setModalVisible(false);
+                    setSearchQuery('');
                   }}
                 >
                   <Typography style={[styles.optionText, item.value === selectedValue && styles.selectedOptionText]}>
@@ -63,12 +80,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
   },
   label: {
-    color: colors.textMutedDark,
+    color: colors.textMuted,
     marginBottom: spacing.xs,
   },
   dropdownButton: {
     borderWidth: 1,
-    borderColor: colors.borderDark,
+    borderColor: colors.borderLight,
     borderRadius: 8,
     backgroundColor: colors.card,
     height: 48,
@@ -76,10 +93,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.s,
   },
   dropdownText: {
-    color: colors.textMainDark,
+    color: colors.textMain,
   },
   placeholderText: {
-    color: colors.textMutedDark,
+    color: colors.textMuted,
   },
   modalOverlay: {
     flex: 1,
@@ -93,19 +110,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderDark,
+    borderColor: colors.borderLight,
     overflow: 'hidden',
+  },
+  searchInput: {
+    height: 48,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    paddingHorizontal: spacing.m,
+    color: colors.textMain,
   },
   optionItem: {
     padding: spacing.m,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderDark,
+    borderBottomColor: colors.borderLight,
   },
   selectedOption: {
     backgroundColor: colors.backgroundDark,
   },
   optionText: {
-    color: colors.textMainDark,
+    color: colors.textMain,
   },
   selectedOptionText: {
     color: colors.primary,

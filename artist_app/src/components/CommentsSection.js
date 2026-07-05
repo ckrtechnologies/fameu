@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useGetCommentsQuery, useAddCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from '../services/commentsApi';
 import { colors, typography, spacing } from '../theme/theme';
@@ -9,51 +10,57 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 
-const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUserId }) => {
+const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUserId, onPressProfile }) => {
   const isOwner = comment.user_id === currentUserId;
 
   return (
-    <View style={[styles.commentWrapper, { marginLeft: depth * 20 }]}>
+    <View style={[styles.commentWrapper, { marginTop: depth > 0 ? spacing.s : 0 }]}>
       <View style={styles.commentHeader}>
-        {comment.user?.avatar_url ? (
-          <Image source={{ uri: comment.user.avatar_url }} style={styles.avatar} />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-            <Icon name="person" size={16} color={colors.textMutedLight} />
-          </View>
-        )}
+        <TouchableOpacity onPress={() => onPressProfile(comment.user?.username)}>
+          {comment.user?.avatar_url ? (
+            <Image source={{ uri: comment.user.avatar_url }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Icon name="person" size={16} color={colors.textMutedLight} />
+            </View>
+          )}
+        </TouchableOpacity>
         <View style={styles.commentMeta}>
-          <Text style={styles.userName}>
+          <TouchableOpacity onPress={() => onPressProfile(comment.user?.username)}>
+            <Text style={styles.userName}>
             {comment.user?.display_name || 
              (Array.isArray(comment.user?.artist_profiles) ? comment.user.artist_profiles[0]?.full_name : comment.user?.artist_profiles?.full_name) || 
              (Array.isArray(comment.user?.hiring_profiles) ? comment.user.hiring_profiles[0]?.company_name : comment.user?.hiring_profiles?.company_name) || 
              'User'}
-          </Text>
+            </Text>
+          </TouchableOpacity>
           <Text style={styles.timestamp}>{dayjs(comment.created_at).fromNow()}</Text>
         </View>
       </View>
-      <Text style={styles.commentContent}>{comment.content}</Text>
-      
-      <View style={styles.actionsRow}>
-        {depth < 2 && (
-          <TouchableOpacity onPress={() => onReply(comment)} style={styles.actionBtn}>
-            <Text style={styles.actionText}>Reply</Text>
-          </TouchableOpacity>
-        )}
-        {isOwner && (
-          <>
-            <TouchableOpacity onPress={() => onEdit(comment)} style={styles.actionBtn}>
-              <Text style={styles.actionText}>Edit</Text>
+      <View style={{ marginLeft: 36 }}>
+        <Text style={styles.commentContent}>{comment.content}</Text>
+        
+        <View style={styles.actionsRow}>
+          {depth < 2 && (
+            <TouchableOpacity onPress={() => onReply(comment)} style={styles.actionBtn}>
+              <Text style={styles.actionText}>Reply</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onDelete(comment)} style={styles.actionBtn}>
-              <Text style={[styles.actionText, { color: colors.danger }]}>Delete</Text>
-            </TouchableOpacity>
-          </>
-        )}
+          )}
+          {isOwner && (
+            <>
+              <TouchableOpacity onPress={() => onEdit(comment)} style={styles.actionBtn}>
+                <Text style={styles.actionText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => onDelete(comment)} style={styles.actionBtn}>
+                <Text style={[styles.actionText, { color: colors.danger }]}>Delete</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </View>
 
       {comment.replies && comment.replies.length > 0 && (
-        <View style={styles.repliesContainer}>
+        <View style={[styles.repliesContainer, { borderLeftWidth: 1, borderLeftColor: colors.borderLight, marginLeft: 12, paddingLeft: 12, marginTop: 4 }]}>
           {comment.replies.map((reply) => (
             <CommentItem
               key={reply.id}
@@ -63,6 +70,7 @@ const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUse
               onEdit={onEdit}
               onDelete={onDelete}
               currentUserId={currentUserId}
+              onPressProfile={onPressProfile}
             />
           ))}
         </View>
@@ -72,8 +80,9 @@ const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUse
 };
 
 export default function CommentsSection({ targetType, targetId, disableComment = false }) {
+  const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
-  const { data: response, isLoading } = useGetCommentsQuery({ type: targetType, targetId }, { skip: !targetId });
+  const { data: response, isLoading } = useGetCommentsQuery({ type: targetType, targetId }, { skip: !targetId, refetchOnMountOrArgChange: true });
   const [addComment, { isLoading: isAdding }] = useAddCommentMutation();
   const [updateComment] = useUpdateCommentMutation();
   const [deleteComment] = useDeleteCommentMutation();
@@ -122,6 +131,12 @@ export default function CommentsSection({ targetType, targetId, disableComment =
         }
       }}
     ]);
+  };
+
+  const handlePressProfile = (username) => {
+    if (username) {
+      navigation.push('PublicProfile', { username });
+    }
   };
 
   if (isLoading) return <ActivityIndicator style={{ margin: 20 }} color={colors.primary} />;
@@ -183,6 +198,7 @@ export default function CommentsSection({ targetType, targetId, disableComment =
           onEdit={(c) => { setEditing(c); setReplyingTo(null); setInputText(c.content); }}
           onDelete={handleDelete}
           currentUserId={user?.id}
+          onPressProfile={handlePressProfile}
         />
       ))}
       {filteredComments.length === 0 && (

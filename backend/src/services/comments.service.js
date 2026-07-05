@@ -31,7 +31,7 @@ class CommentsService {
       .from(tableName)
       .select(`
         *,
-        user:users!user_id (id, display_name, avatar_url, role, artist_profiles(full_name), hiring_profiles(company_name))
+        user:users!user_id (id, username, display_name, avatar_url, role, artist_profiles(full_name), hiring_profiles(company_name))
       `)
       .eq(targetColumn, targetId)
       .order('created_at', { ascending: true });
@@ -64,7 +64,7 @@ class CommentsService {
     const { data, error } = await supabase
       .from(tableName)
       .insert(insertData)
-      .select(`*, user:users!user_id (id, display_name, avatar_url, role, artist_profiles(full_name), hiring_profiles(company_name))`)
+      .select(`*, user:users!user_id (id, username, display_name, avatar_url, role, artist_profiles(full_name), hiring_profiles(company_name))`)
       .single();
 
     if (error) throw error;
@@ -89,7 +89,7 @@ class CommentsService {
       .from(tableName)
       .update({ content, updated_at: new Date().toISOString() })
       .eq('id', commentId)
-      .select(`*, user:users!user_id (id, display_name, avatar_url, role, artist_profiles(full_name), hiring_profiles(company_name))`)
+      .select(`*, user:users!user_id (id, username, display_name, avatar_url, role, artist_profiles(full_name), hiring_profiles(company_name))`)
       .single();
 
     if (error) throw error;
@@ -168,7 +168,11 @@ class CommentsService {
 
       let parentAuthorId = null;
       if (parentId) {
-        const tableName = type === 'profile' ? 'profile_comments' : 'audition_comments';
+        let tableName;
+        if (type === 'profile') tableName = 'profile_comments';
+        else if (type === 'artist_profile') tableName = 'artist_profile_comments';
+        else tableName = 'audition_comments';
+        
         const { data } = await supabase.from(tableName).select('user_id').eq('id', parentId).single();
         if (data) {
           parentAuthorId = data.user_id;

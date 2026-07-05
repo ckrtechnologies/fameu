@@ -19,8 +19,8 @@ router.post('/category', profileController.updateCategoryDetails);
 // Expects form-data with fields: photos (multiple), video, resume, audio
 router.post('/upload', 
   uploadArtistMedia.fields([
-    { name: 'photos', maxCount: 5 },
-    { name: 'video', maxCount: 1 },
+    { name: 'photos', maxCount: 10 },
+    { name: 'video', maxCount: 10 },
     { name: 'resume', maxCount: 1 },
     { name: 'audio', maxCount: 1 }
   ]), 

@@ -40,7 +40,8 @@ class HiringCompanyController {
 
       if (!req.file) return res.status(400).json({ success: false, error: 'Logo image is required' });
 
-      const logoUrl = `${req.protocol}://${req.get('host')}/uploads/hiring/${req.file.filename}`;
+      const baseUrl = process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`;
+      const logoUrl = `${baseUrl}/uploads/hiring/${req.file.filename}`;
       const result = await hiringService.updateLogo(hiringId, logoUrl);
       
       res.status(200).json({ success: true, data: result, message: 'Logo uploaded successfully' });
@@ -58,7 +59,7 @@ class HiringCompanyController {
         hiringId = profile.id;
       }
 
-      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/hiring/`;
+      const baseUrl = `${process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring/`;
       const docsUrls = {};
 
       if (req.files) {

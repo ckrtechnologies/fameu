@@ -6,6 +6,7 @@ import authMiddleware from '../../../core/middlewares/auth.middleware.js';
 router.use(authMiddleware);
 
 // Browse and Search Artists
+router.get('/', artistsController.searchArtists);
 router.get('/search', artistsController.searchArtists);
 router.get('/:id', artistsController.getArtistDetails);
 

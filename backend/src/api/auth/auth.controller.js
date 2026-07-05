@@ -5,10 +5,11 @@ class AuthController {
   
   async sendOtp(req, res, next) {
     try {
-      const { identifier } = req.body;
+      let { identifier } = req.body;
       if (!identifier) {
         return res.status(400).json({ success: false, error: 'Mobile or email (identifier) is required' });
       }
+      identifier = identifier.toLowerCase().trim();
 
       const result = await authService.sendOtp(identifier);
       res.status(200).json({ success: true, data: result });
@@ -19,10 +20,11 @@ class AuthController {
 
   async verifyOtp(req, res, next) {
     try {
-      const { identifier, otp, role } = req.body;
+      let { identifier, otp, role } = req.body;
       if (!identifier || !otp) {
         return res.status(400).json({ success: false, error: 'Identifier and OTP are required' });
       }
+      identifier = identifier.toLowerCase().trim();
 
       const result = await authService.verifyOtp(identifier, otp, role);
       res.status(200).json({ success: true, data: result });

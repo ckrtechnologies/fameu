@@ -74,7 +74,7 @@ const createUploader = (folderName) => {
   return multer({
     storage: storage(folderName),
     limits: {
-      fileSize: 100 * 1024 * 1024, // 100 MB max for videos
+      fileSize: 50 * 1024 * 1024, // 50 MB max limit
     },
     fileFilter: fileFilter
   });

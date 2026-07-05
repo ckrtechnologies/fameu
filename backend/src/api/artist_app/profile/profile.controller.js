@@ -68,16 +68,26 @@ class ArtistProfileController {
       const { replaceAvatar } = req.body;
       const userId = req.user.id;
 
-      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/artist/`;
+      const baseUrl = `${process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
       const mediaUrls = { photos: [] };
 
       // Multer stores files in req.files if multiple fields used
       if (req.files) {
         if (req.files.photos) {
+          for (const file of req.files.photos) {
+            if (file.size > 5 * 1024 * 1024) {
+              return res.status(400).json({ success: false, error: 'Each photo must be under 5MB' });
+            }
+          }
           mediaUrls.photos = req.files.photos.map(file => baseUrl + file.filename);
         }
-        if (req.files.video && req.files.video[0]) {
-          mediaUrls.video = baseUrl + req.files.video[0].filename;
+        if (req.files.video) {
+          for (const file of req.files.video) {
+            if (file.size > 50 * 1024 * 1024) {
+              return res.status(400).json({ success: false, error: 'Each video must be under 50MB' });
+            }
+          }
+          mediaUrls.videos = req.files.video.map(file => baseUrl + file.filename);
         }
         if (req.files.resume && req.files.resume[0]) {
           mediaUrls.resume = baseUrl + req.files.resume[0].filename;
@@ -103,7 +113,7 @@ class ArtistProfileController {
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
       }
-      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/artist/`;
+      const baseUrl = `${process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
       const fileUrl = baseUrl + req.file.filename;
       res.status(200).json({ success: true, url: fileUrl });
     } catch (err) {

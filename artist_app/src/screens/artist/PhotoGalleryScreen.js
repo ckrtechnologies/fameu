@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions, ActivityIndicator, Alert, Modal, PermissionsAndroid, Platform , RefreshControl } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,7 +7,6 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { colors, typography } from '../../theme/theme';
 import { useGetProfileQuery, useUploadMediaMutation, useUpsertProfileMutation } from '../../services/profileApi';
 import { useNavigation } from '@react-navigation/native';
-
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
 const IMAGE_SIZE = (width - 32 - (COLUMN_COUNT - 1) * 8) / COLUMN_COUNT;
@@ -36,7 +36,7 @@ export default function PhotoGalleryScreen() {
           try {
             await upsertProfile({ photo_urls: updatedPhotos }).unwrap();
           } catch (error) {
-            Alert.alert('Error', 'Failed to delete photo.');
+            showError('', 'Failed to delete photo.');
           }
         }
       }
@@ -74,7 +74,7 @@ export default function PhotoGalleryScreen() {
                 if (granted === PermissionsAndroid.RESULTS.GRANTED) {
                   launchCamera({ mediaType: 'photo', quality: 0.8 }, handleImageUpload);
                 } else {
-                  Alert.alert("Error", "Camera permission denied");
+                  showError('', "Camera permission denied");
                 }
               } catch (err) {
                 console.warn(err);
@@ -96,7 +96,7 @@ export default function PhotoGalleryScreen() {
     const handleImageUpload = async (response) => {
       if (response.didCancel) return;
       if (response.errorMessage) {
-        Alert.alert('Error', response.errorMessage);
+        showError('', response.errorMessage);
         return;
       }
       if (response.assets && response.assets.length > 0) {
@@ -112,11 +112,11 @@ export default function PhotoGalleryScreen() {
 
         try {
           await uploadMedia(formData).unwrap();
-          Alert.alert('Success', 'Photos uploaded successfully!');
+          showSuccess('', 'Photos uploaded successfully!');
         } catch (error) {
           console.error('Upload photo error:', error);
           const errMsg = error?.data?.error || error?.message || 'Failed to upload photos';
-          Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+          showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
         }
       }
     };

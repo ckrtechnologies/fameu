@@ -151,13 +151,23 @@ class ArtistService {
       callbacksCount = apps.filter(a => a.status === 'accepted').length;
     }
 
+    const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('following_id', profile.user_id),
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', profile.user_id)
+    ]);
+    
+    if (profile.users) {
+      profile.users.followers_count = followersCount || 0;
+      profile.users.following_count = followingCount || 0;
+    }
+
     return {
       ...profile,
       category_details: categoryDetails,
       stats: {
         applications: applicationsCount,
         callbacks: callbacksCount,
-        views: 0 // Placeholder for future views tracking
+        views: profile.visit_count || 0
       }
     };
   }
@@ -205,13 +215,23 @@ class ArtistService {
       callbacksCount = apps.filter(a => a.status === 'accepted').length;
     }
 
+    const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('following_id', profile.user_id),
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', profile.user_id)
+    ]);
+    
+    if (profile.users) {
+      profile.users.followers_count = followersCount || 0;
+      profile.users.following_count = followingCount || 0;
+    }
+
     return {
       ...profile,
       category_details: categoryDetails,
       stats: {
         applications: applicationsCount,
         callbacks: callbacksCount,
-        views: 0
+        views: profile.visit_count || 0
       }
     };
   }
@@ -233,6 +253,8 @@ class ArtistService {
 
     let newPhotoUrls = existingProfile?.photo_urls || [];
     let newAvatarUrl = existingProfile?.avatar_url || null;
+    let existingVideosStr = existingProfile?.video_url || '';
+    let newVideoUrls = existingVideosStr ? existingVideosStr.split(',') : [];
 
     if (mediaUrls.photos && mediaUrls.photos.length > 0) {
       if (replaceAvatar) {
@@ -252,7 +274,17 @@ class ArtistService {
       } else {
         // Append all new photos to the gallery
         newPhotoUrls = [...newPhotoUrls, ...mediaUrls.photos];
+        if (newPhotoUrls.length > 10) {
+           throw new Error('Maximum of 10 photos allowed. Please delete some before uploading.');
+        }
       }
+    }
+    
+    if (mediaUrls.videos && mediaUrls.videos.length > 0) {
+       newVideoUrls = [...newVideoUrls, ...mediaUrls.videos];
+       if (newVideoUrls.length > 10) {
+           throw new Error('Maximum of 10 videos allowed. Please delete some before uploading.');
+       }
     }
 
     const { data, error } = await supabase
@@ -260,7 +292,7 @@ class ArtistService {
       .update({
         avatar_url: newAvatarUrl || undefined,
         photo_urls: newPhotoUrls,
-        video_url: mediaUrls.video || undefined,
+        video_url: newVideoUrls.length > 0 ? newVideoUrls.join(',') : undefined,
         resume_url: mediaUrls.resume || undefined,
         audio_url: mediaUrls.audio || undefined,
         updated_at: new Date().toISOString()

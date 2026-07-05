@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,7 +26,7 @@ export default function NotificationsScreen() {
     try {
       await markAllRead().unwrap();
     } catch (error) {
-      Alert.alert('Error', 'Failed to mark all as read');
+      showError('', 'Failed to mark all as read');
     }
   };
 

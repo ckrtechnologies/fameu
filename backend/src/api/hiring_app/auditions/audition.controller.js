@@ -134,7 +134,22 @@ class HiringAuditionController {
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No PDF file provided' });
       }
-      const fileUrl = `${process.env.API_URL || 'http://10.0.2.2:3000'}/uploads/hiring/${req.file.filename}`;
+      const baseUrl = process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`;
+      const fileUrl = `${baseUrl}/uploads/hiring/${req.file.filename}`;
+      res.status(200).json({ success: true, data: { url: fileUrl } });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // Upload Thumbnail for Audition
+  async uploadThumbnail(req, res, next) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No image file provided' });
+      }
+      const baseUrl = process.env.CDN_URL || process.env.API_URL || `${req.protocol}://${req.get('host')}`;
+      const fileUrl = `${baseUrl}/uploads/hiring/${req.file.filename}`;
       res.status(200).json({ success: true, data: { url: fileUrl } });
     } catch (err) {
       next(err);

@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Image, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +10,6 @@ import { spacing, colors } from '../../theme/theme';
 import { User } from 'lucide-react-native';
 import { useSendOtpMutation } from '../../services/authApi';
 import { Alert, ActivityIndicator } from 'react-native';
-
 const LoginScreen = ({ navigation }) => {
   const [identifier, setIdentifier] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
@@ -19,7 +19,7 @@ const LoginScreen = ({ navigation }) => {
 
   const handleSendOtp = async () => {
     if (!identifier) {
-      Alert.alert('Error', 'Please enter your email or mobile');
+      showError('', 'Please enter your email or mobile');
       return;
     }
     
@@ -32,7 +32,7 @@ const LoginScreen = ({ navigation }) => {
         navigation.navigate('Otp', { identifier });
       }
     } catch (error) {
-      Alert.alert('Error', error?.data?.error || error?.message || 'Failed to send OTP');
+      showError('', error?.data?.error || error?.message || 'Failed to send OTP');
     }
   };
 

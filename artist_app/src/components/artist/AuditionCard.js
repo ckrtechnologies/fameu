@@ -12,9 +12,9 @@ const AuditionCard = ({ audition, onPress, style }) => {
       style={[styles.container, style]}
     >
       <View style={styles.imageContainer}>
-        {audition.hiring_profiles?.logo_url ? (
+        {audition.thumbnail_url || audition.hiring_profiles?.logo_url ? (
           <Image
-            source={{ uri: audition.hiring_profiles.logo_url }}
+            source={{ uri: audition.thumbnail_url || audition.hiring_profiles.logo_url }}
             style={styles.image}
           />
         ) : (

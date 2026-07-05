@@ -34,6 +34,9 @@ class HiringService {
       if (profileData.company_name) {
         await supabase.from('users').update({ display_name: profileData.company_name }).eq('id', userId);
       }
+      if (profileData.username !== undefined) {
+        await supabase.from('users').update({ username: profileData.username }).eq('id', userId);
+      }
       return data;
     } else {
       const { data, error } = await supabase
@@ -45,6 +48,9 @@ class HiringService {
       
       if (profileData.company_name) {
         await supabase.from('users').update({ display_name: profileData.company_name }).eq('id', userId);
+      }
+      if (profileData.username !== undefined) {
+        await supabase.from('users').update({ username: profileData.username }).eq('id', userId);
       }
       return data;
     }
@@ -68,7 +74,7 @@ class HiringService {
         followers: 0,
         auditions_posted: 0,
         hired_artists: 0,
-        profile_visits: data.profile_visits || 0
+        profile_visits: data.visit_count || 0
       };
 
       // 1. Followers Count

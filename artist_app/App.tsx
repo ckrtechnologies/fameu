@@ -16,6 +16,7 @@ import { setupPushNotifications } from './src/services/PushNotificationService';
 import { colors, typography } from './src/theme/theme';
 
 import Toast from 'react-native-toast-message';
+import ErrorBoundary from './src/components/core/ErrorBoundary';
 
 export type RootStackParamList = {
   [key: string]: any;
@@ -33,6 +34,132 @@ const GlobalStatusBar = () => {
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 const toastConfig = {
+  
+  fameuSuccess: ({ text1, text2, props, onPress }: any) => (
+
+    <TouchableOpacity 
+      style={{
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        backgroundColor: colors.surfaceLight,
+        borderRadius: 12,
+        padding: 12,
+        marginHorizontal: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+        width: '90%',
+        borderLeftWidth: 4,
+        borderLeftColor: colors.success
+      }}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={{ width: 44, height: 44, borderRadius: 22, marginRight: 12, backgroundColor: colors.success, justifyContent: 'center', alignItems: 'center' }}>
+        <Icon name={'checkmark-circle'} size={24} color={'#FFF'} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ ...typography.h3, color: colors.textMainLight } as any}>{text1 != null ? String(text1) : ''}</Text>
+        <Text style={{ ...typography.body, color: colors.textMutedLight, marginTop: 2 } as any} numberOfLines={2}>{text2 != null ? String(text2) : ''}</Text>
+      </View>
+    </TouchableOpacity>
+  ),
+  fameuError: ({ text1, text2, props, onPress }: any) => (
+
+    <TouchableOpacity 
+      style={{
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        backgroundColor: colors.surfaceLight,
+        borderRadius: 12,
+        padding: 12,
+        marginHorizontal: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+        width: '90%',
+        borderLeftWidth: 4,
+        borderLeftColor: colors.danger
+      }}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={{ width: 44, height: 44, borderRadius: 22, marginRight: 12, backgroundColor: colors.danger, justifyContent: 'center', alignItems: 'center' }}>
+        <Icon name={'alert-circle'} size={24} color={'#FFF'} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ ...typography.h3, color: colors.textMainLight } as any}>{text1 != null ? String(text1) : ''}</Text>
+        <Text style={{ ...typography.body, color: colors.textMutedLight, marginTop: 2 } as any} numberOfLines={2}>{text2 != null ? String(text2) : ''}</Text>
+      </View>
+    </TouchableOpacity>
+  ),
+  fameuWarning: ({ text1, text2, props, onPress }: any) => (
+
+    <TouchableOpacity 
+      style={{
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        backgroundColor: colors.surfaceLight,
+        borderRadius: 12,
+        padding: 12,
+        marginHorizontal: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+        width: '90%',
+        borderLeftWidth: 4,
+        borderLeftColor: colors.warning
+      }}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={{ width: 44, height: 44, borderRadius: 22, marginRight: 12, backgroundColor: colors.warning, justifyContent: 'center', alignItems: 'center' }}>
+        <Icon name={'warning'} size={24} color={'#FFF'} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ ...typography.h3, color: colors.textMainLight } as any}>{text1 != null ? String(text1) : ''}</Text>
+        <Text style={{ ...typography.body, color: colors.textMutedLight, marginTop: 2 } as any} numberOfLines={2}>{text2 != null ? String(text2) : ''}</Text>
+      </View>
+    </TouchableOpacity>
+  ),
+  fameuInfo: ({ text1, text2, props, onPress }: any) => (
+
+    <TouchableOpacity 
+      style={{
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        backgroundColor: colors.surfaceLight,
+        borderRadius: 12,
+        padding: 12,
+        marginHorizontal: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+        width: '90%',
+        borderLeftWidth: 4,
+        borderLeftColor: colors.primary
+      }}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={{ width: 44, height: 44, borderRadius: 22, marginRight: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+        <Icon name={'information-circle'} size={24} color={'#FFF'} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ ...typography.h3, color: colors.textMainLight } as any}>{text1 != null ? String(text1) : ''}</Text>
+        <Text style={{ ...typography.body, color: colors.textMutedLight, marginTop: 2 } as any} numberOfLines={2}>{text2 != null ? String(text2) : ''}</Text>
+      </View>
+    </TouchableOpacity>
+  ),
+
   customNotification: ({ text1, text2, props, onPress }: any) => (
     <TouchableOpacity 
       style={{
@@ -201,6 +328,7 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
+    <ErrorBoundary>
     <Provider store={store}>
       <SafeAreaProvider>
         <GlobalStatusBar />
@@ -209,7 +337,8 @@ function App(): React.JSX.Element {
         </NavigationContainer>
         <Toast config={toastConfig} />
       </SafeAreaProvider>
-    </Provider>
+    </Provider>  
+    </ErrorBoundary>
   );
 }
 

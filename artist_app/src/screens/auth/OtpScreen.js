@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Image, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +10,6 @@ import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../store/slices/authSlice';
 import { useVerifyOtpMutation } from '../../services/authApi';
 import { Alert, ActivityIndicator } from 'react-native';
-
 const OtpScreen = ({ route, navigation }) => {
   const autoFillOtp = route?.params?.autoFillOtp || '';
   const identifier = route?.params?.identifier || '';
@@ -20,7 +20,7 @@ const OtpScreen = ({ route, navigation }) => {
 
   const handleVerify = async () => {
     if (!otpCode || otpCode.length < 4) {
-      Alert.alert('Error', 'Please enter the full 4-digit OTP');
+      showError('', 'Please enter the full 4-digit OTP');
       return;
     }
     
@@ -33,7 +33,7 @@ const OtpScreen = ({ route, navigation }) => {
         }));
       }
     } catch (error) {
-      Alert.alert('Error', error?.data?.error || error?.message || 'Invalid OTP');
+      showError('', error?.data?.error || error?.message || 'Invalid OTP');
     }
   };
 

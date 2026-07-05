@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform , RefreshControl, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +9,6 @@ import Video from 'react-native-video';
 import { colors, typography } from '../../theme/theme';
 import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -44,11 +44,11 @@ export default function EditProfileScreen() {
 
     try {
       await uploadMedia(formData).unwrap();
-      Alert.alert('Success', 'Profile photo updated!');
+      showSuccess('', 'Profile photo updated!');
     } catch (error) {
       console.error('Upload photo error:', error);
       const errMsg = error?.data?.error || error?.message || 'Failed to upload photo';
-      Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+      showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   };
 
@@ -129,16 +129,16 @@ export default function EditProfileScreen() {
   }, [profileResponse]);
 
   const handleVerifyUsername = async () => {
-    if (!formData.username) return Alert.alert('Error', 'Please enter a username to verify.');
+    if (!formData.username) return showError('', 'Please enter a username to verify.');
     try {
       const response = await checkUsername(formData.username).unwrap();
       if (response.data.available) {
-        Alert.alert('Success', 'This username is available!');
+        showSuccess('', 'This username is available!');
       } else {
-        Alert.alert('Error', 'This username is already taken. Please choose another one.');
+        showError('', 'This username is already taken. Please choose another one.');
       }
     } catch (err) {
-      Alert.alert('Error', err?.data?.error || 'Failed to check username.');
+      showError('', err?.data?.error || 'Failed to check username.');
     }
   };
 
@@ -228,13 +228,13 @@ export default function EditProfileScreen() {
             }
           };
         });
-        Alert.alert('Success', 'File uploaded successfully!');
+        showSuccess('', 'File uploaded successfully!');
       }
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         return;
       }
-      Alert.alert('Error', err?.data?.error || err.message || 'Upload failed');
+      showError('', err?.data?.error || err.message || 'Upload failed');
     }
   };
 
@@ -295,7 +295,7 @@ export default function EditProfileScreen() {
       // 2. Save all Category Data
       const artistId = profileResponse?.data?.id || savedProfile?.data?.id || savedProfile?.id;
       if (!artistId) {
-        Alert.alert('Error', 'Profile ID missing after save.');
+        showError('', 'Profile ID missing after save.');
         return;
       }
 
@@ -314,7 +314,7 @@ export default function EditProfileScreen() {
       // Run all requests concurrently
       await Promise.all([...categoryPromises, ...removePromises]);
 
-      Alert.alert('Success', 'Profile saved successfully!');
+      showSuccess('', 'Profile saved successfully!');
       navigation.reset({
         index: 0,
         routes: [{
@@ -328,7 +328,7 @@ export default function EditProfileScreen() {
     } catch (error) {
       console.error('Save profile error:', error);
       const errMsg = error?.data?.error || error?.message || 'Failed to save profile';
-      Alert.alert('Error', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+      showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   };
 
@@ -451,7 +451,7 @@ export default function EditProfileScreen() {
                               if (granted === PermissionsAndroid.RESULTS.GRANTED) {
                                 launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8 }, handleImageUpload);
                               } else {
-                                Alert.alert("Error", "Camera permission denied");
+                                showError('', "Camera permission denied");
                               }
                             } catch (err) {
                               console.warn(err);

@@ -22,6 +22,7 @@ import WalkInListingsScreen from '../screens/artist/WalkInListingsScreen';
 import DeleteAccountScreen from '../screens/artist/DeleteAccountScreen';
 import ChatScreen from '../screens/artist/ChatScreen';
 import SearchScreen from '../screens/artist/SearchScreen';
+import ArtistDiscoveryScreen from '../screens/artist/ArtistDiscoveryScreen';
 import PublicProfileScreen from '../screens/artist/PublicProfileScreen';
 import ConnectionListScreen from '../screens/artist/ConnectionListScreen';
 import SavedAuditionsScreen from '../screens/artist/SavedAuditionsScreen';
@@ -54,6 +55,7 @@ export default function MainNavigator() {
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="Search" component={SearchScreen} />
+      <Stack.Screen name="ArtistDiscovery" component={ArtistDiscoveryScreen} />
       <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />
       <Stack.Screen name="ConnectionList" component={ConnectionListScreen} />
       <Stack.Screen name="SavedAuditions" component={SavedAuditionsScreen} />

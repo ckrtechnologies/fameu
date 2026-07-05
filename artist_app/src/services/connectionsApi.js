@@ -43,6 +43,12 @@ export const connectionsApi = apiSlice.injectEndpoints({
         'Profile'
       ],
     }),
+    recordVisit: builder.mutation({
+      query: (userId) => ({
+        url: `/connections/profile/${userId}/visit`,
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
@@ -54,4 +60,5 @@ export const {
   useGetFollowingQuery,
   useFollowUserMutation,
   useUnfollowUserMutation,
+  useRecordVisitMutation,
 } = connectionsApi;

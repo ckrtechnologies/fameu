@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,7 +7,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import DocumentPicker from 'react-native-document-picker';
 import { colors, typography } from '../../theme/theme';
 import { useUpdateCategoryMutation, useGetProfileQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
-
 export default function ArtistFormScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -98,19 +98,19 @@ export default function ArtistFormScreen() {
             [key]: response.url
           }
         }));
-        Alert.alert('Success', 'File uploaded successfully!');
+        showSuccess('', 'File uploaded successfully!');
       }
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         return;
       }
-      Alert.alert('Error', err?.data?.error || err.message || 'Upload failed');
+      showError('', err?.data?.error || err.message || 'Upload failed');
     }
   };
 
   const handleSave = async () => {
     if (!artistId) {
-      Alert.alert('Error', 'Profile not found. Please complete base profile first.');
+      showError('', 'Profile not found. Please complete base profile first.');
       return;
     }
 
@@ -146,7 +146,7 @@ export default function ArtistFormScreen() {
 
       await Promise.all(promises);
       
-      Alert.alert('Success', 'Profile details updated!');
+      showSuccess('', 'Profile details updated!');
       navigation.reset({
         index: 0,
         routes: [{
@@ -160,7 +160,7 @@ export default function ArtistFormScreen() {
         }],
       });
     } catch (error) {
-      Alert.alert('Error', error?.data?.error || 'Failed to update some details');
+      showError('', error?.data?.error || 'Failed to update some details');
     }
   };
 

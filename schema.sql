@@ -129,7 +129,7 @@ CREATE TABLE hiring_profiles (
   description         TEXT,
   social_links        JSONB,
   is_verified         BOOLEAN DEFAULT FALSE,
-  verification_status TEXT DEFAULT 'pending',
+  verification_status TEXT DEFAULT 'unverified',
   credits             INT DEFAULT 0,
   created_at          TIMESTAMPTZ DEFAULT NOW(),
   updated_at          TIMESTAMPTZ DEFAULT NOW()
@@ -174,6 +174,7 @@ CREATE TABLE auditions (
   status          TEXT DEFAULT 'active' CHECK (status IN ('draft', 'active', 'closed', 'cancelled')),
   view_count      INT DEFAULT 0,
   is_live         BOOLEAN DEFAULT FALSE,
+  thumbnail_url   TEXT,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
