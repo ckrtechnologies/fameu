@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking, FlatList } from 'react-native';
 import Video from 'react-native-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +12,13 @@ import CommentsSection from '../../components/CommentsSection';
 
 const { width } = Dimensions.get('window');
 
+const getVideoThumbnail = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? `https://img.youtube.com/vi/${match[2]}/0.jpg` : null;
+};
+
 export default function ArtistProfileScreen() {
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
@@ -20,8 +27,9 @@ export default function ArtistProfileScreen() {
   
   const profile = profileResponse?.data;
   const [activeTab, setActiveTab] = useState('Overview');
+  const [modalImages, setModalImages] = useState([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -98,7 +106,7 @@ export default function ArtistProfileScreen() {
         
         {/* Instagram Profile Info Row */}
         <View style={styles.profileRow}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => setIsImageModalVisible(true)}>
+          <TouchableOpacity activeOpacity={0.9} onPress={() => { setModalImages([avatarUrl]); setSelectedImageIndex(0); setIsImageModalVisible(true); }}>
             <Image source={{ uri: avatarUrl }} style={styles.avatarInsta} />
           </TouchableOpacity>
           <View style={styles.statsContainerInsta}>
@@ -198,30 +206,40 @@ export default function ArtistProfileScreen() {
                 <View>
                   {/* Video Section */}
                   {profile.video_url ? (
-                    <View style={[styles.galleryGrid, { marginHorizontal: 0, marginBottom: 16 }]}>
-                      {profile.video_url.split(',').map((vidUrl, index) => (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0, marginBottom: 16 }}>
+                    {profile.video_url.split(',').map((vidUrl, index) => {
+                      const ytThumb = getVideoThumbnail(vidUrl);
+                      return (
                         <TouchableOpacity 
                           key={index} 
                           onPress={() => {
                             navigation.navigate('VideoPortfolio', { videos: profile.video_url.split(','), initialIndex: index });
                           }}
-                          style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark }]}
+                          style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s, overflow: 'hidden' }]}
                         >
-                          <Icon name="play" size={40} color={colors.primary} />
+                          {ytThumb ? (
+                            <Image source={{ uri: ytThumb }} style={{ width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' }} />
+                          ) : (
+                            <Video source={{ uri: vidUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                          )}
+                          <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                            <Icon name="play" size={40} color={colors.white} />
+                          </View>
                         </TouchableOpacity>
-                      ))}
-                    </View>
-                  ) : null}
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
 
                   {/* Photo Section */}
                   {profile.photo_urls && profile.photo_urls.length > 0 ? (
-                    <View style={[styles.galleryGrid, { marginHorizontal: 0 }]}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
                       {profile.photo_urls.map((imgUrl, index) => (
-                        <TouchableOpacity key={index} onPress={() => { setSelectedImage(imgUrl); setIsImageModalVisible(true); }}>
-                          <Image source={{ uri: imgUrl }} style={styles.galleryItem} />
+                        <TouchableOpacity key={index} onPress={() => { setModalImages(profile.photo_urls); setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
+                          <Image source={{ uri: imgUrl }} style={styles.galleryItem} resizeMode="contain" />
                         </TouchableOpacity>
                       ))}
-                    </View>
+                    </ScrollView>
                   ) : null}
                 </View>
               )}
@@ -365,12 +383,31 @@ export default function ArtistProfileScreen() {
       </ScrollView>
 
       {/* Full Screen Image Modal */}
-      <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => { setIsImageModalVisible(false); setSelectedImage(null); }}>
+      <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => { setIsImageModalVisible(false); setModalImages([]); }}>
         <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.closeModalBtn} onPress={() => { setIsImageModalVisible(false); setSelectedImage(null); }}>
+          <TouchableOpacity style={styles.closeModalBtn} onPress={() => { setIsImageModalVisible(false); setModalImages([]); }}>
             <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
-          <Image source={{ uri: selectedImage || avatarUrl }} style={styles.fullScreenImage} resizeMode="contain" />
+          {modalImages.length > 0 && (
+            <FlatList
+              data={modalImages}
+              keyExtractor={(item, index) => index.toString()}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={selectedImageIndex}
+              getItemLayout={(data, index) => ({
+                length: Dimensions.get('window').width,
+                offset: Dimensions.get('window').width * index,
+                index,
+              })}
+              renderItem={({ item }) => (
+                <View style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center' }}>
+                  <Image source={{ uri: item }} style={styles.fullScreenImage} resizeMode="contain" />
+                </View>
+              )}
+            />
+          )}
         </View>
       </Modal>
     </SafeAreaView>

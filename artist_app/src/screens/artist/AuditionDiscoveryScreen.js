@@ -163,42 +163,42 @@ export default function AuditionDiscoveryScreen() {
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.modalBody}>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
               <Text style={styles.filterSectionTitle}>Project Type</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
+              <View style={styles.filterOptionsRow}>
                 {PROJECT_TYPES.map(p => (
                   <TouchableOpacity key={p} style={[styles.filterOptionChip, tempFilters.project_type === p && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, project_type: p})}>
                     <Text style={[styles.filterOptionText, tempFilters.project_type === p && styles.filterOptionTextActive]}>{p}</Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
 
               <Text style={styles.filterSectionTitle}>Duration</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
+              <View style={styles.filterOptionsRow}>
                 {DURATION_TYPES.map(d => (
                   <TouchableOpacity key={d} style={[styles.filterOptionChip, tempFilters.duration_type === d && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, duration_type: d})}>
                     <Text style={[styles.filterOptionText, tempFilters.duration_type === d && styles.filterOptionTextActive]}>{d}</Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
 
               <Text style={styles.filterSectionTitle}>City</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
+              <View style={styles.filterOptionsRow}>
                 {CITIES.map(c => (
                   <TouchableOpacity key={c} style={[styles.filterOptionChip, tempFilters.city === c && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, city: c})}>
                     <Text style={[styles.filterOptionText, tempFilters.city === c && styles.filterOptionTextActive]}>{c}</Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
 
               <Text style={styles.filterSectionTitle}>Gender</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
+              <View style={styles.filterOptionsRow}>
                 {GENDERS.map(g => (
                   <TouchableOpacity key={g} style={[styles.filterOptionChip, tempFilters.gender_req === g && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, gender_req: g})}>
                     <Text style={[styles.filterOptionText, tempFilters.gender_req === g && styles.filterOptionTextActive]}>{g}</Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
 
               <Text style={styles.filterSectionTitle}>Age Range</Text>
               <View style={styles.ageRangeRow}>
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    height: '80%',
+    maxHeight: '80%',
     padding: spacing.xl,
   },
   modalHeader: {
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     color: colors.textMainLight,
   },
   modalBody: {
-    flex: 1,
+    flexShrink: 1,
   },
   filterSectionTitle: {
     ...typography.h3,
@@ -333,6 +333,7 @@ const styles = StyleSheet.create({
   },
   filterOptionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: spacing.s,
   },
   filterOptionChip: {
@@ -343,6 +344,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
     marginRight: spacing.s,
+    marginBottom: spacing.s,
   },
   filterOptionChipActive: {
     backgroundColor: colors.primary,
@@ -372,6 +374,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: spacing.m,
+    paddingBottom: spacing.xl,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
   },

@@ -40,8 +40,11 @@ export default function ChatScreen() {
   const typingTimeoutRef = useRef(null);
   const flatListRef = useRef(null);
 
-  const displayName = resolvedParticipant?.artist_profiles?.full_name || resolvedParticipant?.display_name || resolvedParticipant?.hiring_profiles?.company_name || 'Chat';
-  const avatarUrl = resolvedParticipant?.avatar_url || resolvedParticipant?.artist_profiles?.photo_urls?.[0] || resolvedParticipant?.hiring_profiles?.logo_url;
+  const artistProfile = Array.isArray(resolvedParticipant?.artist_profiles) ? resolvedParticipant.artist_profiles[0] : resolvedParticipant?.artist_profiles;
+  const hiringProfile = Array.isArray(resolvedParticipant?.hiring_profiles) ? resolvedParticipant.hiring_profiles[0] : resolvedParticipant?.hiring_profiles;
+
+  const displayName = artistProfile?.full_name || resolvedParticipant?.display_name || hiringProfile?.company_name || 'Chat';
+  const avatarUrl = resolvedParticipant?.avatar_url || artistProfile?.photo_urls?.[0] || hiringProfile?.logo_url;
 
   const handleHeaderPress = () => {
     console.log('Header pressed, resolvedParticipant:', resolvedParticipant);

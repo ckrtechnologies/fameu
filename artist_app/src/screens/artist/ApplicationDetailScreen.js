@@ -9,7 +9,15 @@ import CustomButton from '../../components/forms/CustomButton';
 export default function ApplicationDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { application } = route.params;
+  const { application } = route.params || {};
+
+  if (!application) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: '#fff' }}>Application details not available.</Text>
+      </View>
+    );
+  }
 
   const audition = application.auditions || application;
 

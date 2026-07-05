@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetMyApplicationsQuery } from '../../services/discoverApi';
 
-const TABS = ['Pending', 'Accepted', 'Rejected'];
+const TABS = ['All', 'Pending', 'Accepted', 'Rejected'];
 
 export default function MyApplicationsScreen() {
   const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('Pending');
+  const route = useRoute();
+  const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'All');
+
+  React.useEffect(() => {
+    if (route.params?.initialTab) {
+      setActiveTab(route.params.initialTab);
+    }
+  }, [route.params?.initialTab]);
 
   const { data: applications = [], isLoading, isError, refetch } = useGetMyApplicationsQuery();
 
@@ -38,7 +45,14 @@ export default function MyApplicationsScreen() {
   // Filter applications based on active tab
   const appsList = applications?.data || applications || [];
   const filteredApps = Array.isArray(appsList) 
-    ? appsList.filter(app => (app.status || 'Pending').toLowerCase() === activeTab.toLowerCase())
+    ? appsList.filter(app => {
+        const status = (app.status || 'pending').toLowerCase();
+        if (activeTab === 'All') return true;
+        if (activeTab === 'Pending') return status === 'pending';
+        if (activeTab === 'Rejected') return status === 'rejected';
+        if (activeTab === 'Accepted') return ['shortlisted', 'interview_scheduled', 'hired'].includes(status);
+        return false;
+      })
     : [];
 
   return (

@@ -350,3 +350,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_connection_change
   AFTER INSERT OR DELETE ON connections
   FOR EACH ROW EXECUTE PROCEDURE update_connection_counts();
+
+-- Profile Visits
+CREATE TABLE profile_visits (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  viewer_id       UUID REFERENCES users(id) ON DELETE CASCADE,
+  visited_at      TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(profile_user_id, viewer_id)
+);
+CREATE INDEX ON profile_visits(profile_user_id, visited_at DESC);

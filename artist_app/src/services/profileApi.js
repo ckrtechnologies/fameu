@@ -10,6 +10,10 @@ export const profileApi = apiSlice.injectEndpoints({
       query: () => '/artist_app/profile/',
       providesTags: ['Profile'],
     }),
+    getProfileVisitors: builder.query({
+      query: () => '/connections/profile/visitors',
+      providesTags: ['ProfileVisitors'],
+    }),
     upsertProfile: builder.mutation({
       query: (profileData) => ({
         url: '/artist_app/profile/upsert',
@@ -80,6 +84,7 @@ export const profileApi = apiSlice.injectEndpoints({
 
 export const {
   useGetProfileQuery,
+  useGetProfileVisitorsQuery,
   useGetProfessionsQuery,
   useUpsertProfileMutation,
   useUpdateCategoryMutation,

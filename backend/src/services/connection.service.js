@@ -216,6 +216,17 @@ class ConnectionService {
 
         if (updateErr) console.warn('Visit update error (hiring):', updateErr.message);
       }
+
+      // Add record to profile_visits table for the list view
+      if (viewerId) {
+        const { error: visitErr } = await supabase
+          .from('profile_visits')
+          .upsert(
+            { profile_user_id: profileUserId, viewer_id: viewerId, visit_date: new Date().toISOString() },
+            { onConflict: 'profile_user_id,viewer_id' }
+          );
+        if (visitErr) console.warn('profile_visits upsert error:', visitErr.message);
+      }
     } catch (err) {
       console.warn('recordProfileVisit error:', err.message);
     }
@@ -288,6 +299,51 @@ class ConnectionService {
       role: user.role,
       profile: profile
     };
+  }
+
+  /**
+   * Get list of profile visitors
+   */
+  async getProfileVisitors(userId) {
+    // Get visitors from profile_visits joined with users
+    const { data, error } = await supabase
+      .from('profile_visits')
+      .select(`
+        visit_date,
+        users!profile_visits_viewer_id_fkey (
+          id,
+          display_name,
+          avatar_url,
+          role,
+          artist_profiles ( full_name ),
+          hiring_profiles ( company_name )
+        )
+      `)
+      .eq('profile_user_id', userId)
+      .order('visit_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching profile visitors:', error);
+      throw new Error('Failed to fetch profile visitors');
+    }
+
+    // Format the response
+    return data.map(v => {
+      const user = v.users;
+      let name = user.display_name;
+      if (!name) {
+        if (user.role === 'artist' && user.artist_profiles?.[0]) name = user.artist_profiles[0].full_name;
+        else if (user.role === 'hiring' && user.hiring_profiles?.[0]) name = user.hiring_profiles[0].company_name;
+        else name = 'User';
+      }
+      return {
+        id: user.id,
+        name: name,
+        avatar_url: user.avatar_url,
+        role: user.role,
+        visited_at: v.visit_date
+      };
+    });
   }
 }
 

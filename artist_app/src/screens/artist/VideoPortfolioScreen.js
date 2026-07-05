@@ -1,25 +1,62 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Dimensions, Platform, Image, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Play, X, Volume2, VolumeX } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Video from 'react-native-video';
 import { colors, typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import { useGetProfileQuery, useUpsertProfileMutation } from '../../services/profileApi';
 
 const { width, height } = Dimensions.get('window');
+
+const getVideoThumbnail = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? `https://img.youtube.com/vi/${match[2]}/0.jpg` : null;
+};
 
 export default function VideoPortfolioScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const videos = route.params?.videos || [];
+  
+  // If we came from the dashboard with no params, or explicitly passed isOwner, we allow editing.
+  const isOwner = route.params?.isOwner || Object.keys(route.params || {}).length === 0;
+  
+  const { data: profileResponse, isLoading: profileLoading } = useGetProfileQuery(undefined, { skip: !isOwner });
+  const [upsertProfile, { isLoading: isUpdating }] = useUpsertProfileMutation();
+  
+  const profile = profileResponse?.data;
+  
+  let videos = [];
+  if (isOwner && profile?.video_url) {
+    videos = profile.video_url.split(',').filter(Boolean);
+  } else if (!isOwner && route.params?.videos) {
+    videos = route.params.videos.filter(Boolean);
+  }
+
   const initialIndex = route.params?.initialIndex ?? null;
 
   const [activeVideoIndex, setActiveVideoIndex] = useState(initialIndex);
   const [isMuted, setIsMuted] = useState(false);
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+
+  const handleAddVideo = async () => {
+    if (!newVideoUrl.trim()) return;
+    try {
+      const updatedVideos = [...videos, newVideoUrl.trim()].join(',');
+      await upsertProfile({ video_url: updatedVideos }).unwrap();
+      setNewVideoUrl('');
+      Alert.alert("Success", "Video added to your portfolio.");
+    } catch (err) {
+      Alert.alert("Error", "Failed to add video.");
+    }
+  };
 
   const renderVideoItem = ({ item, index }) => {
     const isActive = activeVideoIndex === index;
+    const ytThumb = getVideoThumbnail(item);
 
     return (
       <View style={styles.videoContainer}>
@@ -49,9 +86,14 @@ export default function VideoPortfolioScreen() {
           </View>
         ) : (
           <TouchableOpacity 
-            style={styles.thumbnailPlaceholder}
+            style={[styles.thumbnailPlaceholder, { overflow: 'hidden' }]}
             onPress={() => setActiveVideoIndex(index)}
           >
+            {ytThumb ? (
+              <Image source={{ uri: ytThumb }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
+            ) : (
+              <Video source={{ uri: item }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+            )}
             <View style={styles.playButtonOverlay}>
               <Play fill={colors.white} color={colors.white} size={32} />
             </View>
@@ -80,6 +122,25 @@ export default function VideoPortfolioScreen() {
           <View style={styles.emptyContainer}>
             <Typography variant="body" style={{color: colors.textSecondaryLight}}>No videos uploaded yet.</Typography>
           </View>
+        }
+        ListFooterComponent={
+          isOwner ? (
+            <View style={styles.addVideoContainer}>
+              <Typography variant="h4" style={{ marginBottom: spacing.s, color: colors.textMainLight }}>Add New Video</Typography>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Paste YouTube or MP4 link..."
+                  placeholderTextColor={colors.textMutedLight}
+                  value={newVideoUrl}
+                  onChangeText={setNewVideoUrl}
+                />
+                <TouchableOpacity style={styles.addButton} onPress={handleAddVideo} disabled={isUpdating}>
+                  {isUpdating ? <ActivityIndicator size="small" color={colors.white} /> : <Typography variant="button" style={{ color: colors.white }}>Add</Typography>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null
         }
       />
     </SafeAreaView>
@@ -120,9 +181,8 @@ const styles = StyleSheet.create({
     borderColor: colors.borderLight,
   },
   thumbnailPlaceholder: {
-    width: '100%',
     height: 200,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.surfaceDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -133,23 +193,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'absolute',
+    zIndex: 2,
   },
   videoTitle: {
-    color: colors.white,
-    marginTop: spacing.s,
     position: 'absolute',
     bottom: spacing.m,
     left: spacing.m,
+    color: colors.white,
     fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    zIndex: 2,
   },
   activeVideoWrapper: {
-    width: '100%',
-    height: 300,
+    height: 250,
     backgroundColor: '#000',
   },
   fullVideo: {
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
   closeActiveBtn: {
     position: 'absolute',
@@ -158,22 +221,47 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 20,
+    zIndex: 10,
   },
   androidControls: {
     position: 'absolute',
-    bottom: spacing.m,
-    right: spacing.m,
-    flexDirection: 'row',
+    bottom: spacing.s,
+    right: spacing.s,
+    zIndex: 10,
   },
   controlBtn: {
     padding: spacing.xs,
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 20,
-    marginLeft: spacing.s,
   },
   emptyContainer: {
     padding: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  addVideoContainer: {
+    marginTop: spacing.l,
+    paddingTop: spacing.l,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.borderLight,
+  },
+  input: {
+    flex: 1,
+    height: 44,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 8,
+    paddingHorizontal: spacing.m,
+    color: colors.textMainLight,
+    marginRight: spacing.s,
+  },
+  addButton: {
+    height: 44,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: spacing.l,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

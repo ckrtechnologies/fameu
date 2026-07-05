@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, MessageCircle, Bell, BellOff } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -60,16 +60,26 @@ export default function NotificationsScreen() {
 
   const renderNotification = ({ item }) => {
     const isUnread = !item.is_read;
+    const isMessage = item.type === 'message' || item.type === 'chat_message';
+    let dataObj = {};
+    try {
+      dataObj = typeof item.data === 'string' ? JSON.parse(item.data) : (item.data || {});
+    } catch(e) {}
+
     return (
       <TouchableOpacity 
         style={[styles.notificationCard, isUnread && styles.unreadCard]}
         onPress={() => handleNotificationPress(item)}
       >
         <View style={styles.iconContainer}>
-          {item.type === 'message' || item.type === 'chat_message' ? (
-            <MessageCircle size={20} color={colors.primary} />
+          {isMessage && dataObj.avatarUrl ? (
+            <Image source={{ uri: dataObj.avatarUrl }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+          ) : isMessage ? (
+             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceDark, justifyContent: 'center', alignItems: 'center' }}>
+               <MessageCircle size={20} color={colors.primary} />
+             </View>
           ) : (
-            <Bell size={20} color={colors.primary} />
+            <Image source={require('../../assets/images/logo.jpeg')} style={{ width: 40, height: 40, borderRadius: 20 }} />
           )}
         </View>
         <View style={styles.contentContainer}>

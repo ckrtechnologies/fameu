@@ -121,7 +121,7 @@ export default function ArtistDashboardScreen() {
         </View>
       </View>
       <View style={styles.headerIcons}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Search')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('ArtistDiscovery')}>
           <Search size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
@@ -154,23 +154,24 @@ export default function ArtistDashboardScreen() {
   // 3. Overview Stats
   const renderOverviewStats = () => {
     const totalApps = myApplications.length;
-    const shortlisted = myApplications.filter(a => a.status === 'shortlisted').length;
+    const shortlistedStatuses = ['shortlisted', 'interview_scheduled', 'hired'];
+    const shortlisted = myApplications.filter(a => shortlistedStatuses.includes(a.status?.toLowerCase())).length;
     const visits = profile?.visit_count || 0;
 
     return (
       <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
+        <TouchableOpacity style={styles.statCard} onPress={() => navigation.navigate('ProfileVisitors')}>
           <Typography variant="h3" style={styles.statNumber}>{visits}</Typography>
           <Typography variant="caption" style={styles.statLabel}>Profile Views</Typography>
-        </View>
-        <View style={styles.statCard}>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.statCard} onPress={() => navigation.navigate('Applications', { initialTab: 'Pending' })}>
           <Typography variant="h3" style={styles.statNumber}>{totalApps}</Typography>
           <Typography variant="caption" style={styles.statLabel}>Applications</Typography>
-        </View>
-        <View style={styles.statCard}>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.statCard} onPress={() => navigation.navigate('Applications', { initialTab: 'Accepted' })}>
           <Typography variant="h3" style={[styles.statNumber, { color: colors.success }]}>{shortlisted}</Typography>
           <Typography variant="caption" style={styles.statLabel}>Shortlisted</Typography>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -178,13 +179,13 @@ export default function ArtistDashboardScreen() {
   // 4. Quick Actions
   const renderQuickActions = () => (
     <Animated.View entering={FadeInRight.delay(200).duration(400)} style={styles.quickActionsContainer}>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('AuditionDiscovery')}>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Auditions')}>
         <View style={[styles.actionBtnIcon, { backgroundColor: colors.primary }]}>
           <Compass size={28} color="#fff" />
         </View>
         <Typography variant="body" style={styles.actionBtnText}>Discover</Typography>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Messages')}>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Inbox')}>
         <View style={[styles.actionBtnIcon, { backgroundColor: '#f59e0b' }]}>
           <MessageCircle size={28} color="#fff" />
         </View>
@@ -218,7 +219,7 @@ export default function ArtistDashboardScreen() {
           </TouchableOpacity>
         </View>
         {recent.map((app) => (
-          <TouchableOpacity key={app.id} style={styles.applicationCard} onPress={() => navigation.navigate('ApplicationDetail', { id: app.id })}>
+          <TouchableOpacity key={app.id} style={styles.applicationCard} onPress={() => navigation.navigate('ApplicationDetail', { application: app })}>
             <View style={styles.appIconBg}>
               <Briefcase size={22} color={colors.primary} />
             </View>
@@ -348,39 +349,85 @@ export default function ArtistDashboardScreen() {
 
   // 10. Upcoming Schedule
   const renderUpcomingSchedule = () => {
-    // Mocking upcoming for now based on shortlisted apps
-    const upcoming = myApplications.filter(a => a.status === 'shortlisted');
+    // Upcoming based on shortlisted apps
+    const upcoming = myApplications.filter(a => a.status === 'shortlisted' || a.status === 'hired');
     if (upcoming.length === 0) return null;
 
     return (
       <View style={styles.sectionContainer}>
         <Typography variant="h3" style={styles.sectionTitle}>Upcoming Schedule</Typography>
-        {upcoming.map((app, idx) => (
-          <View key={idx} style={styles.scheduleCard}>
+        {upcoming.map((app, idx) => {
+          let dateStr = app.auditions?.date || app.auditions?.created_at;
+          let month = '';
+          let day = '';
+          if (dateStr) {
+            const d = new Date(dateStr);
+            month = d.toLocaleString('default', { month: 'short' }).toUpperCase();
+            day = d.getDate().toString().padStart(2, '0');
+          }
+          
+          let location = 'TBA';
+          try {
+            if (app.auditions?.instructions) {
+              const inst = JSON.parse(app.auditions.instructions);
+              if (inst.city) location = inst.city;
+            }
+          } catch(e) {}
+
+          return (
+          <View key={app.id || idx} style={styles.scheduleCard}>
              <View style={styles.dateBlock}>
-                <Typography variant="caption" style={styles.dateMonth}>OCT</Typography>
-                <Typography variant="h3" style={styles.dateDay}>15</Typography>
+                <Typography variant="caption" style={styles.dateMonth}>{month}</Typography>
+                <Typography variant="h3" style={styles.dateDay}>{day}</Typography>
              </View>
              <View style={styles.scheduleInfo}>
                 <Typography variant="body" style={styles.scheduleTitle}>{app.auditions?.title}</Typography>
-                <Typography variant="caption" style={styles.scheduleSub}>Studio 4, Mumbai</Typography>
+                <Typography variant="caption" style={styles.scheduleSub}>{location}</Typography>
              </View>
              <ChevronRight size={20} color={colors.textSecondaryLight} />
           </View>
-        ))}
+          );
+        })}
       </View>
     );
   };
 
   // 11. Activity Chart
   const renderActivityChart = () => {
-    // Generate dummy sparkline data based on profile stats to look good
-    const dataPoints = [12, 19, 15, 25, 22, 30, 45];
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    // Generate sparkline data based on application history
+    let dataPoints = [0, 0, 0, 0, 0, 0, 0];
+    let labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    if (myApplications && myApplications.length > 0) {
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return { 
+          dateStr: d.toISOString().split('T')[0], 
+          dayName: d.toLocaleDateString('en-US', { weekday: 'short' }), 
+          count: 0 
+        };
+      });
+
+      myApplications.forEach(a => {
+        if (a.created_at) {
+          const dateStr = a.created_at.split('T')[0];
+          const dayData = last7Days.find(d => d.dateStr === dateStr);
+          if (dayData) dayData.count++;
+        }
+      });
+
+      let runningTotal = myApplications.filter(a => a.created_at && a.created_at.split('T')[0] < last7Days[0].dateStr).length;
+      dataPoints = last7Days.map(d => { runningTotal += d.count; return runningTotal; });
+      labels = last7Days.map(d => d.dayName);
+    }
+    
+    // Ensure we don't crash if all points are 0
+    if (Math.max(...dataPoints) === 0) dataPoints = [0,0,0,0,0,0,0];
 
     return (
       <View style={styles.sectionContainer}>
-        <Typography variant="h3" style={styles.sectionTitle}>Profile Activity</Typography>
+        <Typography variant="h3" style={styles.sectionTitle}>Application Growth</Typography>
         <LineChart
           data={{ labels, datasets: [{ data: dataPoints }] }}
           width={width - spacing.xl * 2}
@@ -405,49 +452,7 @@ export default function ArtistDashboardScreen() {
     );
   };
 
-  // 12. Top Recruiters
-  const renderTopRecruiters = () => {
-    // Fallback static list until API is integrated
-    const mockRecruiters = [
-      { id: 1, name: 'Fameu Productions', role: 'Production House' },
-      { id: 2, name: 'Red Chillies', role: 'Agency' },
-      { id: 3, name: 'Casting Bay', role: 'Casting Director' },
-    ];
-    return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <Typography variant="h3" style={styles.sectionTitle}>Top Recruiters</Typography>
-          <Typography variant="body" style={styles.seeAllText}>Explore</Typography>
-        </View>
-        <FlatList
-          data={mockRecruiters}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.recruiterCard}>
-               <View style={styles.recruiterAvatarBg}><Briefcase size={24} color="#fff" /></View>
-               <Typography variant="body" style={styles.recruiterName} numberOfLines={1}>{item.name}</Typography>
-               <Typography variant="caption" style={styles.recruiterRole} numberOfLines={1}>{item.role}</Typography>
-               <TouchableOpacity style={styles.followBtn}><Typography variant="caption" style={styles.followBtnText}>Follow</Typography></TouchableOpacity>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-    );
-  };
 
-  // 13. Featured Artists
-  const renderDiscoverArtists = () => (
-    <TouchableOpacity style={[styles.profileBanner, { backgroundColor: 'rgba(255, 102, 0, 0.05)', marginTop: spacing.l }]} activeOpacity={0.8} onPress={() => navigation.navigate('ArtistDiscovery')}>
-      <View style={styles.profileBannerContent}>
-        <Typography variant="h3" style={styles.profileBannerTitle}>Discover Artists</Typography>
-        <Typography variant="body" style={styles.profileBannerText}>Connect and collaborate with other talented artists on Fameu.</Typography>
-        <Typography variant="body" style={[styles.completeNowText, { color: '#FF6600', marginTop: 12 }]}>Explore Talent &gt;</Typography>
-      </View>
-    </TouchableOpacity>
-  );
 
   // 14. Pro Tips
   const renderProTips = () => (
@@ -463,27 +468,7 @@ export default function ArtistDashboardScreen() {
     </View>
   );
 
-  // 15. Recent Profile Visitors
-  const renderRecentVisitors = () => {
-    // Dummy UI for now
-    const visits = profile?.visit_count || 0;
-    if (visits === 0) return null;
-    return (
-      <View style={[styles.sectionContainer, { marginBottom: spacing.xxl }]}>
-        <Typography variant="h3" style={styles.sectionTitle}>Recent Visitors</Typography>
-        <View style={styles.visitorsRow}>
-          {[1,2,3,4].map(i => (
-             <View key={i} style={[styles.visitorAvatar, { zIndex: 10 - i, marginLeft: i === 1 ? 0 : -15 }]} />
-          ))}
-          <View style={styles.visitorCountBadge}>
-             <Typography variant="caption" style={{ color: '#fff', fontSize: 10 }}>+{visits > 4 ? visits - 4 : 5}</Typography>
-          </View>
-          <Typography variant="caption" style={{ marginLeft: 12, color: colors.textSecondaryLight }}>Viewed your profile</Typography>
-        </View>
-      </View>
-    );
-  };
-
+  // 15. Recent Profile Visitors Removed
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <ScrollView 
@@ -502,10 +487,8 @@ export default function ArtistDashboardScreen() {
         {renderSavedAuditions()}
         {renderUpcomingSchedule()}
         {renderActivityChart()}
-        {renderTopRecruiters()}
-        {renderDiscoverArtists()}
+
         {renderProTips()}
-        {renderRecentVisitors()}
         
         <View style={styles.bottomSpacer} />
       </ScrollView>

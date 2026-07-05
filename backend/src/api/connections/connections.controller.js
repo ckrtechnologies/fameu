@@ -77,6 +77,15 @@ class ConnectionsController {
       next(error);
     }
   }
+  async getProfileVisitors(req, res, next) {
+    try {
+      const userId = req.user.id; // User must be authenticated to see their own visitors
+      const visitors = await connectionService.getProfileVisitors(userId);
+      res.status(200).json({ success: true, data: visitors });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new ConnectionsController();

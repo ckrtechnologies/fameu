@@ -28,7 +28,8 @@ class AuditionService {
       compensation: budget || restData.compensation,
       instructions: extraMeta,
       thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
-      status: 'active'
+      status: 'active',
+      is_live: true
     };
 
     const { data, error } = await supabase
@@ -58,7 +59,8 @@ class AuditionService {
       ...restData,
       instructions: extraMeta,
       thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_live: true
     };
     if (budget) payload.compensation = budget;
 
@@ -128,16 +130,21 @@ class AuditionService {
     let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username))').eq('status', 'active');
 
     // Existing Filters
-    if (filters.category) query = query.eq('category', filters.category);
+    if (filters.search) {
+      query = query.or(`title.ilike.%${filters.search}%,role_description.ilike.%${filters.search}%`);
+    }
+    if (filters.category) {
+      // category can be comma separated, so we use ilike
+      query = query.ilike('category', `%${filters.category}%`);
+    }
     if (filters.audition_type) query = query.eq('audition_type', filters.audition_type);
     if (filters.hiring_id) query = query.eq('hiring_id', filters.hiring_id);
     if (filters.is_live === 'true' || filters.is_live === true) query = query.eq('is_live', true);
     
     // Note: project_type, city, duration_type, budget are stored in JSON inside instructions
+    // Note: project_type, city, duration_type, budget, gender_req are stored in JSON inside instructions
     // we will filter them in JS below.
-    if (filters.gender_req) query = query.eq('gender', filters.gender_req);
-    if (filters.age_min) query = query.lte('age_min', filters.age_min);
-    if (filters.age_max) query = query.gte('age_max', filters.age_max);
+    // age_min and age_max are sometimes inside instructions too, so we do it all in JS.
 
     // Simple Bounding Box approach for Google Maps
     if (filters.minLat && filters.maxLat && filters.minLng && filters.maxLng) {
@@ -176,6 +183,31 @@ class AuditionService {
     if (filters.city) results = results.filter(i => i.city && i.city.toLowerCase() === filters.city.toLowerCase());
     if (filters.duration_type) results = results.filter(i => i.duration_type === filters.duration_type);
     if (filters.budget) results = results.filter(i => i.budget === filters.budget || i.compensation === filters.budget);
+    
+    // Gender Filter
+    if (filters.gender_req) {
+      results = results.filter(i => 
+        (i.gender_req && i.gender_req.toLowerCase() === filters.gender_req.toLowerCase()) || 
+        (i.gender && i.gender.toLowerCase() === filters.gender_req.toLowerCase()) || 
+        i.gender_req === 'Any' || !i.gender_req
+      );
+    }
+
+    // Age Filter (overlap logic: actor's min-max should overlap with audition's min-max)
+    if (filters.age_min) {
+      const actorMin = parseInt(filters.age_min, 10) || 0;
+      results = results.filter(i => {
+        const audMax = parseInt(i.age_max, 10) || 100;
+        return audMax >= actorMin;
+      });
+    }
+    if (filters.age_max) {
+      const actorMax = parseInt(filters.age_max, 10) || 100;
+      results = results.filter(i => {
+        const audMin = parseInt(i.age_min, 10) || 0;
+        return audMin <= actorMax;
+      });
+    }
     
     return results.slice(0, 50);
   }

@@ -471,8 +471,8 @@ export default function EditProfileScreen() {
                   );
                 }}
               >
-                {profileResponse?.data?.avatar_url ? (
-                  <Image source={{ uri: profileResponse.data.avatar_url }} style={styles.avatarImage} />
+                {(profileResponse?.data?.users?.avatar_url || profileResponse?.data?.avatar_url) ? (
+                  <Image source={{ uri: (profileResponse?.data?.users?.avatar_url || profileResponse?.data?.avatar_url) }} style={styles.avatarImage} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Icon name="person" size={60} color={colors.borderLight} />

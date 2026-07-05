@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,7 +55,7 @@ export default function PublicProfileScreen() {
   
   const [activeTab, setActiveTab] = useState('Overview');
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const handleFollowToggle = async () => {
     if (!profileData) return;
@@ -230,30 +230,30 @@ export default function PublicProfileScreen() {
                     <View>
                       {/* Video Section */}
                       {profileData.profile.video_url ? (
-                        <View style={[styles.galleryGrid, { marginHorizontal: 0, marginBottom: 16 }]}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0, marginBottom: 16 }}>
                           {profileData.profile.video_url.split(',').map((vidUrl, index) => (
                             <TouchableOpacity 
                               key={index} 
                               onPress={() => {
                                 navigation.navigate('VideoPortfolio', { videos: profileData.profile.video_url.split(','), initialIndex: index });
                               }}
-                              style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark }]}
+                              style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s }]}
                             >
                               <Play size={40} color={colors.primary} />
                             </TouchableOpacity>
                           ))}
-                        </View>
+                        </ScrollView>
                       ) : null}
 
                       {/* Photo Section */}
                       {profileData.profile.photo_urls && profileData.profile.photo_urls.length > 0 ? (
-                        <View style={[styles.galleryGrid, { marginHorizontal: 0 }]}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
                           {profileData.profile.photo_urls.map((imgUrl, index) => (
-                            <TouchableOpacity key={index} onPress={() => { setSelectedImage(imgUrl); setIsImageModalVisible(true); }}>
+                            <TouchableOpacity key={index} onPress={() => { setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
                               <Image source={{ uri: imgUrl }} style={styles.galleryItem} />
                             </TouchableOpacity>
                           ))}
-                        </View>
+                        </ScrollView>
                       ) : null}
                     </View>
                   )}
@@ -495,7 +495,26 @@ export default function PublicProfileScreen() {
           <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
             <X size={30} color="#fff" />
           </TouchableOpacity>
-          {selectedImage && <Image source={{ uri: selectedImage }} style={styles.fullScreenImage} resizeMode="contain" />}
+          {profileData?.profile?.photo_urls && profileData.profile.photo_urls.length > 0 && (
+            <FlatList
+              data={profileData.profile.photo_urls}
+              keyExtractor={(item, index) => index.toString()}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={selectedImageIndex}
+              getItemLayout={(data, index) => ({
+                length: Dimensions.get('window').width,
+                offset: Dimensions.get('window').width * index,
+                index,
+              })}
+              renderItem={({ item }) => (
+                <View style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center' }}>
+                  <Image source={{ uri: item }} style={styles.fullScreenImage} resizeMode="contain" />
+                </View>
+              )}
+            />
+          )}
         </View>
       </Modal>
     </SafeAreaView>

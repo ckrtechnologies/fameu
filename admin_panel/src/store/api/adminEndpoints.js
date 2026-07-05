@@ -189,6 +189,7 @@ export const {
   useGetAuditionsQuery,
   useFlagAuditionMutation,
   useSuspendAuditionMutation,
+  useReactivateAuditionMutation,
   useDeleteAuditionMutation,
   useGetApplicationsQuery,
   useGetFraudReportsQuery,
