@@ -40,7 +40,7 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
@@ -50,7 +50,8 @@ app.use((req, res, next) => {
   next();
 });
 // Static files for CDN
-app.use('/uploads', express.static('uploads'));
+const uploadsDir = process.env.UPLOADS_DIR || 'uploads';
+app.use('/uploads', express.static(uploadsDir));
 
 // Routes
 app.use('/api/artist_app', artistAppRoutes);

@@ -16,7 +16,8 @@ const ensureDir = (dir) => {
 
 const storage = (folderName) => multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../../../uploads', folderName);
+    const baseUploadDir = process.env.UPLOADS_DIR || path.join(__dirname, '../../../uploads');
+    const uploadPath = path.join(baseUploadDir, folderName);
     ensureDir(uploadPath);
     cb(null, uploadPath);
   },
