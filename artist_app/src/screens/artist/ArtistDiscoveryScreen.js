@@ -114,7 +114,14 @@ export default function ArtistDiscoveryScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
-        <Typography variant="h2" style={styles.headerTitle}>Discover Talent</Typography>
+        <TouchableOpacity 
+          style={styles.searchContainer} 
+          onPress={() => navigation.navigate('Search')}
+          activeOpacity={0.8}
+        >
+          <Icon name="search-outline" size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
+          <Typography variant="body" style={styles.searchPlaceholder}>Search username/handle...</Typography>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.filterButton}>
           <Filter size={20} color={colors.primary} />
         </TouchableOpacity>
@@ -246,8 +253,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.m, paddingVertical: spacing.s,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderLight, backgroundColor: '#fff'
   },
-  backButton: { padding: spacing.xs, marginRight: spacing.s },
   headerTitle: { flex: 1, color: colors.textMainLight },
+  backButton: { padding: spacing.xs, marginRight: spacing.s },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderLight,
+    paddingHorizontal: spacing.m,
+    height: 44,
+    marginRight: spacing.s,
+  },
+  searchIcon: {
+    marginRight: spacing.s,
+  },
+  searchPlaceholder: {
+    color: colors.textSecondaryLight,
+  },
   filterButton: { padding: spacing.xs },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   listContainer: {

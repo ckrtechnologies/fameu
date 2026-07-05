@@ -104,7 +104,17 @@ export default function AuditionDetailsModal({ audition, onClose }) {
             </div>
             <div>
               <strong style={{ display: 'block', marginBottom: '4px' }}>Instructions:</strong>
-              <span style={{ color: 'var(--text-primary)' }}>{audition.instructions || 'None'}</span>
+              <span style={{ color: 'var(--text-primary)' }}>
+                {(() => {
+                  if (!audition.instructions) return 'None';
+                  try {
+                    const parsed = JSON.parse(audition.instructions);
+                    return <pre style={{ margin: 0, padding: '8px', background: '#000', borderRadius: '4px', overflowX: 'auto', fontSize: '12px' }}>{JSON.stringify(parsed, null, 2)}</pre>;
+                  } catch (e) {
+                    return audition.instructions;
+                  }
+                })()}
+              </span>
             </div>
           </div>
         </div>

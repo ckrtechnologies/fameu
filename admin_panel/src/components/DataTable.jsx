@@ -242,13 +242,13 @@ export default function DataTable({
 
                   {(onView || onEdit || onDelete || actions?.length > 0) && (
                     <td style={{ padding: '16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {actions?.length > 0 ? (
-                        actions.map((action, i) => (
+                      {(typeof actions === 'function' ? actions(row) : actions)?.length > 0 ? (
+                        (typeof actions === 'function' ? actions(row) : actions).map((action, i) => (
                           <button 
                             key={i}
                             type="button"
                             className={`btn btn-${action.variant || 'secondary'}`} 
-                            style={{ padding: '6px 10px', marginRight: i === actions.length - 1 ? 0 : '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} 
+                            style={{ padding: '6px 10px', marginRight: i === (typeof actions === 'function' ? actions(row) : actions).length - 1 ? 0 : '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} 
                             onClick={() => action.onClick(row)} 
                             title={action.label}
                           >

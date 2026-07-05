@@ -93,6 +93,13 @@ export const adminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Audition'],
     }),
+    reactivateAudition: builder.mutation({
+      query: (id) => ({
+        url: `/admin_panel/auditions/${id}/reactivate`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Audition'],
+    }),
     deleteAudition: builder.mutation({
       query: (id) => ({
         url: `/admin_panel/auditions/${id}`,

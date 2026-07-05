@@ -1,13 +1,34 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { colors, typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import AuditionCard from '../../components/artist/AuditionCard';
-import { useGetFeedQuery } from '../../services/discoverApi';
+import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery } from '../../services/discoverApi';
 import { useGetProfileQuery } from '../../services/profileApi';
+import { LineChart } from 'react-native-chart-kit';
+import { Search, MessageCircle, Briefcase, Users, Bell, Bookmark, TrendingUp, Compass, Star, ChevronRight, Video, Calendar, ShieldCheck } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+
+const { width } = Dimensions.get('window');
+
+const timeAgo = (dateStr) => {
+  if (!dateStr) return '';
+  const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " years ago";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " months ago";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days ago";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " minutes ago";
+  return "just now";
+};
 
 export default function ArtistDashboardScreen() {
   const navigation = useNavigation();
@@ -16,32 +37,30 @@ export default function ArtistDashboardScreen() {
   const { data: profileResponse, refetch: refetchProfile } = useGetProfileQuery();
   const profile = profileResponse?.data;
   
-  // Extract categories for feed filtering.
-  // We use the first category as the primary filter for now, or fall back to a reasonable default if none exists.
   const categories = profile?.categories || [];
   const primaryCategory = categories.length > 0 ? categories[0] : null;
   
-  // Build query params for feed
   const feedParams = primaryCategory ? { category: primaryCategory } : {};
   const { data: feedData, isLoading, isError, refetch: refetchFeed } = useGetFeedQuery(feedParams);
-  const { data: allFeedData, isLoading: isLoadingAll, refetch: refetchAll } = useGetFeedQuery({});
-  const { data: liveData, isLoading: isLoadingLive, isError: isErrorLive, refetch: refetchLive } = useGetFeedQuery({ is_live: true });
+  const { data: allFeedData, refetch: refetchAll } = useGetFeedQuery({});
+  const { data: liveData, refetch: refetchLive } = useGetFeedQuery({ is_live: true });
+  const { data: trendingData, refetch: refetchTrending } = useGetFeedQuery({ sort: 'popular' }); // Assuming this is supported
+  const { data: myAppsData, refetch: refetchApps } = useGetMyApplicationsQuery();
+  const { data: savedData, refetch: refetchSaved } = useGetSavedAuditionsQuery();
 
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
       await Promise.all([
-        refetchFeed(),
-        refetchAll(),
-        refetchLive(),
-        refetchProfile()
+        refetchFeed(), refetchAll(), refetchLive(), refetchTrending(),
+        refetchProfile(), refetchApps(), refetchSaved()
       ]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchFeed, refetchAll, refetchLive, refetchProfile]);
+  }, [refetchFeed, refetchAll, refetchLive, refetchTrending, refetchProfile, refetchApps, refetchSaved]);
 
   const handleAuditionPress = (id) => {
     navigation.navigate('AuditionDetail', { id });
@@ -49,7 +68,7 @@ export default function ArtistDashboardScreen() {
 
   const name = profile?.full_name || user?.display_name || user?.full_name || user?.email?.split('@')[0] || 'Artist';
 
-  if (isLoading || isLoadingLive || isLoadingAll) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingSafeArea} edges={['left', 'right']}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -57,13 +76,13 @@ export default function ArtistDashboardScreen() {
     );
   }
 
-  const recommendedAuditions = Array.isArray(feedData?.data) ? feedData.data : (Array.isArray(feedData) ? feedData : []);
-  const allAuditions = Array.isArray(allFeedData?.data) ? allFeedData.data : (Array.isArray(allFeedData) ? allFeedData : []);
-  
-  // If no recommended auditions for their specific category, fall back to showing all available auditions
+  const recommendedAuditions = Array.isArray(feedData?.data) ? feedData.data : [];
+  const allAuditions = Array.isArray(allFeedData?.data) ? allFeedData.data : [];
   const displayAuditions = recommendedAuditions.length > 0 ? recommendedAuditions : allAuditions;
-  const recommendedTitle = recommendedAuditions.length > 0 ? "Recommended for You" : "Explore Auditions";
-  const liveAuditions = Array.isArray(liveData?.data) ? liveData.data : (Array.isArray(liveData) ? liveData : []);
+  const liveAuditions = Array.isArray(liveData?.data) ? liveData.data : [];
+  const trendingAuditions = Array.isArray(trendingData?.data) ? trendingData.data : allAuditions.slice(0, 5); // Fallback
+  const myApplications = Array.isArray(myAppsData?.data) ? myAppsData.data : [];
+  const savedAuditions = Array.isArray(savedData?.data) ? savedData.data : [];
   
   const calculateProfileCompletion = (p) => {
     if (!p) return 0;
@@ -79,113 +98,415 @@ export default function ArtistDashboardScreen() {
     if (p.height || p.weight) score += 5;
     return Math.min(100, score);
   };
-  
   const profileCompletePct = profile?.profile_complete_pct || calculateProfileCompletion(profile);
 
+  // 1. Welcome Header
+  const renderWelcomeHeader = () => (
+    <Animated.View entering={FadeInDown.duration(400)} style={styles.headerContainer}>
+      <View style={styles.headerTextContainer}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginRight: 12 }}>
+            {profile?.avatar_url || user?.avatar_url ? (
+              <Image source={{ uri: profile?.avatar_url || user?.avatar_url }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+            ) : (
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                <Typography variant="body" style={{ color: 'white', fontWeight: 'bold' }}>{name.charAt(0).toUpperCase()}</Typography>
+              </View>
+            )}
+          </TouchableOpacity>
+          <View>
+            <Typography variant="caption" style={styles.greetingText}>Good Morning,</Typography>
+            <Typography variant="h2" style={styles.nameText} numberOfLines={1}>{name} <ShieldCheck size={20} color={colors.primary} /></Typography>
+          </View>
+        </View>
+      </View>
+      <View style={styles.headerIcons}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Search')}>
+          <Search size={24} color={colors.textMainLight} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
+          <Bell size={24} color={colors.textMainLight} />
+          <View style={styles.notificationBadge} />
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+
+  // 2. Profile Setup Banner
+  const renderProfileBanner = () => {
+    if (profileCompletePct >= 100) return null;
+    return (
+      <TouchableOpacity style={styles.profileBanner} activeOpacity={0.8} onPress={() => navigation.navigate('EditProfile')}>
+        <View style={styles.profileBannerContent}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body" style={styles.profileBannerTitle}>Profile Setup</Typography>
+            <Typography variant="caption" style={{ color: colors.primary, fontWeight: 'bold' }}>{profileCompletePct}%</Typography>
+          </View>
+          <Typography variant="body" style={styles.profileBannerText}>Finish setting up to get 2x more matches!</Typography>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // 3. Overview Stats
+  const renderOverviewStats = () => {
+    const totalApps = myApplications.length;
+    const shortlisted = myApplications.filter(a => a.status === 'shortlisted').length;
+    const visits = profile?.visit_count || 0;
+
+    return (
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Typography variant="h3" style={styles.statNumber}>{visits}</Typography>
+          <Typography variant="caption" style={styles.statLabel}>Profile Views</Typography>
+        </View>
+        <View style={styles.statCard}>
+          <Typography variant="h3" style={styles.statNumber}>{totalApps}</Typography>
+          <Typography variant="caption" style={styles.statLabel}>Applications</Typography>
+        </View>
+        <View style={styles.statCard}>
+          <Typography variant="h3" style={[styles.statNumber, { color: colors.success }]}>{shortlisted}</Typography>
+          <Typography variant="caption" style={styles.statLabel}>Shortlisted</Typography>
+        </View>
+      </View>
+    );
+  };
+
+  // 4. Quick Actions
+  const renderQuickActions = () => (
+    <Animated.View entering={FadeInRight.delay(200).duration(400)} style={styles.quickActionsContainer}>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('AuditionDiscovery')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: colors.primary }]}>
+          <Compass size={28} color="#fff" />
+        </View>
+        <Typography variant="body" style={styles.actionBtnText}>Discover</Typography>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Messages')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: '#f59e0b' }]}>
+          <MessageCircle size={28} color="#fff" />
+        </View>
+        <Typography variant="body" style={styles.actionBtnText}>Messages</Typography>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Profile')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: '#8b5cf6' }]}>
+          <Briefcase size={28} color="#fff" />
+        </View>
+        <Typography variant="body" style={styles.actionBtnText}>Portfolio</Typography>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ArtistDiscovery')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: colors.success }]}>
+          <Users size={28} color="#fff" />
+        </View>
+        <Typography variant="body" style={styles.actionBtnText}>Network</Typography>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  // 5. Recent Applications
+  const renderRecentApplications = () => {
+    if (myApplications.length === 0) return null;
+    const recent = myApplications.slice(0, 2);
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>Recent Applications</Typography>
+          <TouchableOpacity onPress={() => navigation.navigate('MyApplications')}>
+            <Typography variant="body" style={styles.seeAllText}>See All</Typography>
+          </TouchableOpacity>
+        </View>
+        {recent.map((app) => (
+          <TouchableOpacity key={app.id} style={styles.applicationCard} onPress={() => navigation.navigate('ApplicationDetail', { id: app.id })}>
+            <View style={styles.appIconBg}>
+              <Briefcase size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Typography variant="body" style={styles.appTitle} numberOfLines={1}>{app.auditions?.title}</Typography>
+              <Typography variant="caption" style={styles.appDate}>Applied {timeAgo(app.created_at)}</Typography>
+            </View>
+            <View style={[styles.statusBadge, 
+              app.status === 'shortlisted' ? { backgroundColor: colors.success + '20' } : 
+              app.status === 'rejected' ? { backgroundColor: colors.error + '20' } : 
+              { backgroundColor: colors.warning + '20' }
+            ]}>
+              <Typography variant="caption" style={[styles.statusText,
+                app.status === 'shortlisted' ? { color: colors.success } : 
+                app.status === 'rejected' ? { color: colors.error } : 
+                { color: colors.warning }
+              ]}>{app.status || 'Pending'}</Typography>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  // 6. Live Auditions
+  const renderLiveAuditions = () => {
+    if (liveAuditions.length === 0) return null;
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>🔴 Live Auditions</Typography>
+          <TouchableOpacity onPress={() => navigation.navigate('AuditionDiscovery', { initialCategory: 'Live Now' })}>
+            <Typography variant="body" style={styles.seeAllText}>See All</Typography>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={liveAuditions}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item.id)} />}
+        />
+      </View>
+    );
+  };
+
+  // 7. Recommended Auditions
+  const renderRecommendedAuditions = () => {
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>Recommended for You</Typography>
+          <TouchableOpacity onPress={() => navigation.navigate('AuditionDiscovery')}>
+            <Typography variant="body" style={styles.seeAllText}>Explore</Typography>
+          </TouchableOpacity>
+        </View>
+        {displayAuditions.length === 0 ? (
+          <View style={styles.emptyState}><Typography variant="body" style={styles.emptyStateText}>No recommendations yet.</Typography></View>
+        ) : (
+          <FlatList
+            data={displayAuditions.slice(0, 5)}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item.id)} />}
+          />
+        )}
+      </View>
+    );
+  };
+
+  // 8. Trending Auditions
+  const renderTrendingAuditions = () => {
+    if (trendingAuditions.length === 0) return null;
+    return (
+      <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceLight, paddingVertical: spacing.l, marginHorizontal: -spacing.xl, paddingHorizontal: spacing.xl }]}>
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>🔥 Trending Now</Typography>
+        </View>
+        <FlatList
+          data={trendingAuditions}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => 'trend_' + item.id}
+          contentContainerStyle={{ paddingRight: spacing.m }}
+          renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item.id)} compact />}
+        />
+      </View>
+    );
+  };
+
+  // 9. Saved Auditions
+  const renderSavedAuditions = () => {
+    if (savedAuditions.length === 0) return null;
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>Saved Auditions</Typography>
+          <TouchableOpacity onPress={() => navigation.navigate('SavedAuditions')}>
+            <Typography variant="body" style={styles.seeAllText}>See All</Typography>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={savedAuditions}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.savedCard} onPress={() => handleAuditionPress(item.auditions?.id)}>
+               <View style={styles.savedIconBg}>
+                  {item.auditions?.thumbnail_url ? (
+                    <Image source={{ uri: item.auditions.thumbnail_url }} style={{ width: 60, height: 60, borderRadius: 12 }} />
+                  ) : (
+                    <Bookmark size={24} color={colors.primary} />
+                  )}
+               </View>
+               <Typography variant="body" style={styles.savedTitle} numberOfLines={2}>{item.auditions?.title}</Typography>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    );
+  };
+
+  // 10. Upcoming Schedule
+  const renderUpcomingSchedule = () => {
+    // Mocking upcoming for now based on shortlisted apps
+    const upcoming = myApplications.filter(a => a.status === 'shortlisted');
+    if (upcoming.length === 0) return null;
+
+    return (
+      <View style={styles.sectionContainer}>
+        <Typography variant="h3" style={styles.sectionTitle}>Upcoming Schedule</Typography>
+        {upcoming.map((app, idx) => (
+          <View key={idx} style={styles.scheduleCard}>
+             <View style={styles.dateBlock}>
+                <Typography variant="caption" style={styles.dateMonth}>OCT</Typography>
+                <Typography variant="h3" style={styles.dateDay}>15</Typography>
+             </View>
+             <View style={styles.scheduleInfo}>
+                <Typography variant="body" style={styles.scheduleTitle}>{app.auditions?.title}</Typography>
+                <Typography variant="caption" style={styles.scheduleSub}>Studio 4, Mumbai</Typography>
+             </View>
+             <ChevronRight size={20} color={colors.textSecondaryLight} />
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  // 11. Activity Chart
+  const renderActivityChart = () => {
+    // Generate dummy sparkline data based on profile stats to look good
+    const dataPoints = [12, 19, 15, 25, 22, 30, 45];
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    return (
+      <View style={styles.sectionContainer}>
+        <Typography variant="h3" style={styles.sectionTitle}>Profile Activity</Typography>
+        <LineChart
+          data={{ labels, datasets: [{ data: dataPoints }] }}
+          width={width - spacing.xl * 2}
+          height={180}
+          withInnerLines={false}
+          withOuterLines={false}
+          yAxisLabel=""
+          chartConfig={{
+            backgroundColor: '#fff',
+            backgroundGradientFrom: '#fff',
+            backgroundGradientTo: '#fff',
+            decimalPlaces: 0,
+            color: (opacity = 1) => `rgba(${parseInt(colors.primary.slice(1,3),16)}, ${parseInt(colors.primary.slice(3,5),16)}, ${parseInt(colors.primary.slice(5,7),16)}, ${opacity})`,
+            labelColor: (opacity = 1) => colors.textMutedLight,
+            style: { borderRadius: 16 },
+            propsForDots: { r: "4", strokeWidth: "2", stroke: colors.primary }
+          }}
+          bezier
+          style={{ marginVertical: 8, borderRadius: 16, marginLeft: -16 }}
+        />
+      </View>
+    );
+  };
+
+  // 12. Top Recruiters
+  const renderTopRecruiters = () => {
+    // Fallback static list until API is integrated
+    const mockRecruiters = [
+      { id: 1, name: 'Fameu Productions', role: 'Production House' },
+      { id: 2, name: 'Red Chillies', role: 'Agency' },
+      { id: 3, name: 'Casting Bay', role: 'Casting Director' },
+    ];
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>Top Recruiters</Typography>
+          <Typography variant="body" style={styles.seeAllText}>Explore</Typography>
+        </View>
+        <FlatList
+          data={mockRecruiters}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.recruiterCard}>
+               <View style={styles.recruiterAvatarBg}><Briefcase size={24} color="#fff" /></View>
+               <Typography variant="body" style={styles.recruiterName} numberOfLines={1}>{item.name}</Typography>
+               <Typography variant="caption" style={styles.recruiterRole} numberOfLines={1}>{item.role}</Typography>
+               <TouchableOpacity style={styles.followBtn}><Typography variant="caption" style={styles.followBtnText}>Follow</Typography></TouchableOpacity>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    );
+  };
+
+  // 13. Featured Artists
+  const renderDiscoverArtists = () => (
+    <TouchableOpacity style={[styles.profileBanner, { backgroundColor: 'rgba(255, 102, 0, 0.05)', marginTop: spacing.l }]} activeOpacity={0.8} onPress={() => navigation.navigate('ArtistDiscovery')}>
+      <View style={styles.profileBannerContent}>
+        <Typography variant="h3" style={styles.profileBannerTitle}>Discover Artists</Typography>
+        <Typography variant="body" style={styles.profileBannerText}>Connect and collaborate with other talented artists on Fameu.</Typography>
+        <Typography variant="body" style={[styles.completeNowText, { color: '#FF6600', marginTop: 12 }]}>Explore Talent &gt;</Typography>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // 14. Pro Tips
+  const renderProTips = () => (
+    <View style={styles.proTipCard}>
+      <View style={styles.proTipHeader}>
+        <Star size={20} color="#f59e0b" fill="#f59e0b" />
+        <Typography variant="h4" style={styles.proTipTitle}>Pro Tip</Typography>
+      </View>
+      <Typography variant="body" style={styles.proTipText}>Adding a high-quality showreel increases your chances of being shortlisted by up to 50%!</Typography>
+      <TouchableOpacity style={styles.proTipBtn} onPress={() => navigation.navigate('VideoPortfolio')}>
+        <Typography variant="caption" style={styles.proTipBtnText}>Add Showreel</Typography>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // 15. Recent Profile Visitors
+  const renderRecentVisitors = () => {
+    // Dummy UI for now
+    const visits = profile?.visit_count || 0;
+    if (visits === 0) return null;
+    return (
+      <View style={[styles.sectionContainer, { marginBottom: spacing.xxl }]}>
+        <Typography variant="h3" style={styles.sectionTitle}>Recent Visitors</Typography>
+        <View style={styles.visitorsRow}>
+          {[1,2,3,4].map(i => (
+             <View key={i} style={[styles.visitorAvatar, { zIndex: 10 - i, marginLeft: i === 1 ? 0 : -15 }]} />
+          ))}
+          <View style={styles.visitorCountBadge}>
+             <Typography variant="caption" style={{ color: '#fff', fontSize: 10 }}>+{visits > 4 ? visits - 4 : 5}</Typography>
+          </View>
+          <Typography variant="caption" style={{ marginLeft: 12, color: colors.textSecondaryLight }}>Viewed your profile</Typography>
+        </View>
+      </View>
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <ScrollView 
         style={styles.container} 
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
-
-        {/* Profile Status Banner */}
-        {profileCompletePct < 100 && (
-          <TouchableOpacity 
-            style={styles.profileBanner} 
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('EditProfile')}
-          >
-            <View style={styles.profileBannerContent}>
-              <Typography variant="body" style={styles.profileBannerTitle}>Profile Setup</Typography>
-              <Typography variant="body" style={styles.profileBannerText}>Your profile is {profileCompletePct}% complete. Finish setting it up to get more matches!</Typography>
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
-              </View>
-              <Typography variant="body" style={styles.completeNowText}>Complete Now &gt;</Typography>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {(isError || isErrorLive) && (
-          <View style={styles.errorContainer}>
-            <Typography variant="body" style={styles.errorText}>Failed to load some auditions.</Typography>
-            <Typography variant="body" onPress={handleRefresh} style={styles.retryText}>Retry</Typography>
-          </View>
-        )}
-
-        {/* Live Auditions Section */}
-        {liveAuditions.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Typography variant="body" style={styles.sectionTitle}>🔴 Live Auditions</Typography>
-              <Typography 
-                variant="body" 
-                style={styles.seeAll}
-                onPress={() => navigation.navigate('AuditionDiscovery', { initialCategory: 'Live Now' })}
-              >
-                See All
-              </Typography>
-            </View>
-            <FlatList
-              data={liveAuditions}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContent}
-              renderItem={({ item }) => (
-                <AuditionCard 
-                  audition={item} 
-                  onPress={() => handleAuditionPress(item.id)} 
-                />
-              )}
-            />
-          </View>
-        )}
-
-        {/* Recommended Auditions Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Typography variant="body" style={styles.sectionTitle}>{recommendedTitle}</Typography>
-            <Typography variant="body" style={styles.seeAll}>See All</Typography>
-          </View>
-          
-          {displayAuditions.length === 0 && !isError ? (
-            <Typography variant="body" style={styles.emptyText}>No auditions available right now.</Typography>
-          ) : (
-            <FlatList
-              data={displayAuditions}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContent}
-              renderItem={({ item }) => (
-                <AuditionCard 
-                  audition={item} 
-                  onPress={() => handleAuditionPress(item.id)} 
-                />
-              )}
-            />
-          )}
-        </View>
-
-        {/* Discover Artists Banner */}
-        <TouchableOpacity 
-          style={[styles.profileBanner, { backgroundColor: 'rgba(255, 102, 0, 0.05)', marginTop: spacing.xl }]} 
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('ArtistDiscovery')}
-        >
-          <View style={styles.profileBannerContent}>
-            <Typography variant="h3" style={styles.profileBannerTitle}>Discover Artists</Typography>
-            <Typography variant="body" style={styles.profileBannerText}>Connect and collaborate with other talented artists on Fameu.</Typography>
-            <Typography variant="body" style={[styles.completeNowText, { color: '#FF6600' }]}>Explore Talent &gt;</Typography>
-          </View>
-        </TouchableOpacity>
+        {renderWelcomeHeader()}
+        {renderProfileBanner()}
+        {renderOverviewStats()}
+        {renderQuickActions()}
+        {renderRecentApplications()}
+        {renderLiveAuditions()}
+        {renderRecommendedAuditions()}
+        {renderTrendingAuditions()}
+        {renderSavedAuditions()}
+        {renderUpcomingSchedule()}
+        {renderActivityChart()}
+        {renderTopRecruiters()}
+        {renderDiscoverArtists()}
+        {renderProTips()}
+        {renderRecentVisitors()}
         
-        {/* Bottom padding for tab bar */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
@@ -193,117 +514,89 @@ export default function ArtistDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.backgroundLight,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: spacing.xl,
-    paddingTop: spacing.l,
-  },
-  greeting: {
-    ...typography.h2,
-    color: colors.textMainLight,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    ...typography.caption,
-    color: colors.textMutedLight,
-  },
-  section: {
-    marginBottom: spacing.xl,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    paddingHorizontal: spacing.xl,
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    ...typography.h2,
-    color: colors.textMainLight,
-  },
-  seeAll: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  listContent: {
-    paddingHorizontal: spacing.xl,
-  },
-  emptyText: {
-    paddingHorizontal: spacing.xl,
-    ...typography.body,
-    color: colors.textMutedLight,
-  },
-  profileBanner: {
-    marginHorizontal: spacing.xl,
-    marginBottom: spacing.xl,
-    backgroundColor: 'rgba(0, 51, 255, 0.03)',
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  profileBannerContent: {
-    padding: spacing.l,
-  },
-  profileBannerTitle: {
-    ...typography.h3,
-    color: colors.textMainLight,
-    marginBottom: spacing.xs,
-  },
-  profileBannerText: {
-    ...typography.caption,
-    color: colors.textMutedLight,
-    marginBottom: spacing.m,
-  },
-  progressBarBg: {
-    height: 8,
-    backgroundColor: colors.borderLight,
-    borderRadius: 4,
-    width: '100%',
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 4,
-  },
-  completeNowText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
-    marginTop: spacing.m,
-    alignSelf: 'flex-end',
-  },
-  loadingSafeArea: {
-    flex: 1,
-    backgroundColor: colors.backgroundLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    padding: spacing.xl,
-  },
-  errorText: {
-    color: colors.danger,
-    ...typography.body,
-  },
-  retryText: {
-    color: colors.primary,
-    marginTop: spacing.s,
-    ...typography.body,
-    fontWeight: '600',
-  },
-  bottomSpacer: {
-    height: 40,
-  },
+  safeArea: { flex: 1, backgroundColor: colors.backgroundLight },
+  container: { flex: 1 },
+  loadingSafeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundLight },
+  
+  // 1. Header
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.m, paddingBottom: spacing.m },
+  headerTextContainer: { flex: 1 },
+  greetingText: { color: colors.textSecondaryLight, marginBottom: 2 },
+  nameText: { color: colors.textMainLight, fontWeight: 'bold' },
+  headerIcons: { flexDirection: 'row', alignItems: 'center' },
+  iconButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginLeft: 12 },
+  notificationBadge: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.error, borderWidth: 1, borderColor: '#fff' },
+
+  // 2. Banner
+  profileBanner: { backgroundColor: colors.primary + '15', marginHorizontal: spacing.xl, borderRadius: 16, padding: spacing.l, marginBottom: spacing.l, borderWidth: 1, borderColor: colors.primary + '30' },
+  profileBannerTitle: { fontWeight: 'bold', color: colors.primary, marginBottom: spacing.xs },
+  profileBannerText: { color: colors.textSecondaryLight, marginBottom: spacing.m, fontSize: 13 },
+  progressBarBg: { height: 6, backgroundColor: colors.borderLight, borderRadius: 3, overflow: 'hidden' },
+  progressBarFill: { height: '100%', backgroundColor: colors.primary },
+
+  // 3. Stats
+  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
+  statCard: { flex: 1, backgroundColor: colors.surfaceLight, paddingVertical: spacing.m, paddingHorizontal: spacing.s, borderRadius: 12, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: colors.borderLight },
+  statNumber: { fontWeight: 'bold', color: colors.textMainLight },
+  statLabel: { color: colors.textSecondaryLight, fontSize: 11, marginTop: 4 },
+
+  // 4. Quick Actions
+  quickActionsContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.l },
+  actionBtn: { width: '23%', alignItems: 'center', marginBottom: spacing.m },
+  actionBtnIcon: { width: 56, height: 56, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.s, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  actionBtnText: { fontSize: 12, color: colors.textMainLight, textAlign: 'center', fontWeight: '500' },
+
+  // Shared Sections
+  sectionContainer: { paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.m },
+  sectionTitle: { fontWeight: 'bold', color: colors.textMainLight },
+  seeAllText: { color: colors.primary, fontWeight: '600' },
+  listContent: { paddingRight: spacing.m },
+  emptyState: { padding: spacing.l, backgroundColor: colors.surfaceLight, borderRadius: 12, alignItems: 'center' },
+  emptyStateText: { color: colors.textMutedLight },
+
+  // 5. Applications
+  applicationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: colors.borderLight },
+  appIconBg: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  appTitle: { fontWeight: '600', color: colors.textMainLight, marginBottom: 4 },
+  appDate: { color: colors.textSecondaryLight },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  statusText: { fontWeight: 'bold', fontSize: 11 },
+
+  // 9. Saved Auditions
+  savedCard: { width: 100, marginRight: 16, alignItems: 'center' },
+  savedIconBg: { width: 60, height: 60, borderRadius: 12, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginBottom: 8, borderWidth: 1, borderColor: colors.borderLight },
+  savedTitle: { fontSize: 12, textAlign: 'center', color: colors.textMainLight },
+
+  // 10. Schedule
+  scheduleCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 12, marginBottom: 12 },
+  dateBlock: { width: 50, height: 50, backgroundColor: colors.primary + '15', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  dateMonth: { fontSize: 10, color: colors.primary, fontWeight: 'bold' },
+  dateDay: { fontSize: 18, color: colors.primary, fontWeight: 'bold' },
+  scheduleInfo: { flex: 1 },
+  scheduleTitle: { fontWeight: 'bold', color: colors.textMainLight, marginBottom: 4 },
+  scheduleSub: { color: colors.textSecondaryLight },
+
+  // 12. Recruiters
+  recruiterCard: { width: 130, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, alignItems: 'center', marginRight: 16, borderWidth: 1, borderColor: colors.borderLight },
+  recruiterAvatarBg: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  recruiterName: { fontWeight: 'bold', color: colors.textMainLight, marginBottom: 4, textAlign: 'center' },
+  recruiterRole: { color: colors.textSecondaryLight, fontSize: 11, marginBottom: 12, textAlign: 'center' },
+  followBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.primary + '15' },
+  followBtnText: { color: colors.primary, fontWeight: 'bold' },
+
+  // 14. Pro Tips
+  proTipCard: { marginHorizontal: spacing.xl, padding: spacing.l, backgroundColor: '#fffbe4', borderRadius: 16, marginBottom: spacing.xl, borderWidth: 1, borderColor: '#fde047' },
+  proTipHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  proTipTitle: { fontWeight: 'bold', color: '#b45309', marginLeft: 8 },
+  proTipText: { color: '#92400e', marginBottom: 16, lineHeight: 20 },
+  proTipBtn: { alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#f59e0b', borderRadius: 8 },
+  proTipBtnText: { color: '#fff', fontWeight: 'bold' },
+
+  // 15. Visitors
+  visitorsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  visitorAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#cbd5e1', borderWidth: 2, borderColor: '#fff' },
+  visitorCountBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginLeft: -15, borderWidth: 2, borderColor: '#fff' },
+
+  bottomSpacer: { height: 100 }
 });

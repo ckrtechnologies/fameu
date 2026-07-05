@@ -353,7 +353,7 @@ export default function EditProfileScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
           {tabs.map(tab => (
             <TouchableOpacity
               key={tab}
@@ -395,7 +395,7 @@ export default function EditProfileScreen() {
         </TouchableOpacity>
       </Modal>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
 
         {activeTab === 'Basic Info' ? (
           <>

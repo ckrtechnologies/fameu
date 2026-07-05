@@ -433,17 +433,6 @@ export default function PublicProfileScreen() {
                   <Typography variant="h3" style={{ fontWeight: '700', color: colors.textMainLight }}>0</Typography>
                   <Typography variant="caption" style={{ color: colors.textSecondaryLight }}>Hired</Typography>
                 </View>
-                <View style={{ alignItems: 'center' }}>
-                  <Typography variant="h3" style={{ fontWeight: '700', color: colors.textMainLight }}>0</Typography>
-                  <Typography variant="caption" style={{ color: colors.textSecondaryLight }}>Visits</Typography>
-                </View>
-              </View>
-              <View style={{ marginBottom: spacing.l }}>
-                <Typography variant="h4" style={{ fontWeight: 'bold', color: colors.textMainLight, marginBottom: 2 }}>{hiringProfile.company_name || 'Company Name'}</Typography>
-                <Typography variant="body2" style={{ color: colors.primary, marginBottom: 4 }}>@{profileData.username}</Typography>
-                {hiringProfile.description && (
-                  <Typography variant="body2" style={{ color: colors.textMainLight, lineHeight: 20 }}>{hiringProfile.description}</Typography>
-                )}
               </View>
 
               <View style={{ height: 1, backgroundColor: colors.borderLight, marginBottom: spacing.m }} />
@@ -552,6 +541,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.l,
+    paddingHorizontal: spacing.xl,
   },
   avatar: {
     width: 80,
@@ -586,6 +576,7 @@ const styles = StyleSheet.create({
   },
   bioSection: {
     marginBottom: spacing.l,
+    paddingHorizontal: spacing.xl,
   },
   nameText: {
     ...typography.h3,

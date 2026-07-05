@@ -275,6 +275,16 @@ router.put('/auditions/:id/suspend', async (req, res) => {
   }
 });
 
+router.put('/auditions/:id/reactivate', async (req, res) => {
+  try {
+    const { error } = await supabase.from('auditions').update({ status: 'active', is_live: true }).eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.delete('/auditions/:id', async (req, res) => {
   try {
     const { error } = await supabase.from('auditions').delete().eq('id', req.params.id);

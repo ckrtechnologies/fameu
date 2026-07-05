@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
-import { useGetAuditionsQuery, useFlagAuditionMutation, useSuspendAuditionMutation, useDeleteAuditionMutation } from '../store/api/adminEndpoints';
+import { useGetAuditionsQuery, useFlagAuditionMutation, useSuspendAuditionMutation, useReactivateAuditionMutation, useDeleteAuditionMutation } from '../store/api/adminEndpoints';
 import DataTable from '../components/DataTable';
 import AuditionDetailsModal from '../components/AuditionDetailsModal';
-import { Eye, Flag, Ban, Trash2 } from 'lucide-react';
+import { Eye, Flag, Ban, Trash2, CheckCircle } from 'lucide-react';
 
 export default function Auditions() {
   const { data: response, isLoading: loading } = useGetAuditionsQuery();
   const [flagAudition] = useFlagAuditionMutation();
   const [suspendAudition] = useSuspendAuditionMutation();
+  const [reactivateAudition] = useReactivateAuditionMutation();
   const [deleteAudition] = useDeleteAuditionMutation();
   
   const [selectedAudition, setSelectedAudition] = useState(null);
@@ -32,6 +33,15 @@ export default function Auditions() {
     }
   };
 
+  const handleReactivate = async (row) => {
+    if (!window.confirm('Are you sure you want to reactivate this audition?')) return;
+    try {
+      await reactivateAudition(row.id).unwrap();
+    } catch (error) {
+      console.error('Failed to reactivate audition:', error);
+    }
+  };
+
   const handleDelete = async (row) => {
     if (!window.confirm('Are you sure you want to permanently delete this audition?')) return;
     try {
@@ -41,10 +51,12 @@ export default function Auditions() {
     }
   };
 
-  const actions = [
-    { label: 'View', icon: Eye, variant: 'secondary', onClick: (row) => setSelectedAudition(row) },
+  const actions = (row) => [
+    { label: 'View', icon: Eye, variant: 'secondary', onClick: (r) => setSelectedAudition(r) },
     { label: 'Flag', icon: Flag, variant: 'warning', onClick: handleFlag },
-    { label: 'Suspend', icon: Ban, variant: 'warning', onClick: handleSuspend },
+    ...(row.status === 'suspended' || row.status === 'cancelled'
+      ? [{ label: 'Reactivate', icon: CheckCircle, variant: 'success', onClick: handleReactivate }]
+      : [{ label: 'Suspend', icon: Ban, variant: 'warning', onClick: handleSuspend }]),
     { label: 'Delete', icon: Trash2, variant: 'danger', onClick: handleDelete },
   ];
 

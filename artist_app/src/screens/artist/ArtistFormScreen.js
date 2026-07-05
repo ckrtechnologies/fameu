@@ -187,7 +187,7 @@ export default function ArtistFormScreen() {
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll} refreshControl={<RefreshControl refreshing={isFetching || isLoadingProfessions || false} onRefresh={refetch} tintColor={colors.primary} />}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
           {categories.map((cat) => {
             const isActive = activeTab === cat;
             return (
@@ -203,7 +203,7 @@ export default function ArtistFormScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={isFetching || isLoadingProfessions || false} onRefresh={refetch} tintColor={colors.primary} />}>
         <Text style={styles.subtitle}>Fill in your {activeTab.toLowerCase()} specific details to stand out.</Text>
 
         {isLoadingProfessions ? (
