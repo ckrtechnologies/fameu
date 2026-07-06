@@ -218,12 +218,12 @@ class AuthService {
     // 2. Try deleting the user from Supabase Auth (cascades to public.users)
     const { error } = await supabase.auth.admin.deleteUser(userId);
     
-    // Fallback: manually delete from public.users if auth deletion fails or throws 500 locally
-    const { error: publicError } = await supabase.from('users').delete().eq('id', userId);
-
-    if (error && publicError) {
-      // Both failed
-      throw new Error(`Failed to delete account. Auth Error: ${error.message}. DB Error: ${publicError.message}`);
+    if (error) {
+      console.error('Failed to delete user from auth.users:', error);
+      // Fallback: manually delete from public.users if auth deletion fails
+      const { error: publicError } = await supabase.from('users').delete().eq('id', userId);
+      
+      throw new Error(`Failed to delete account from auth schema. Error: ${error.message}. DB Fallback: ${publicError ? 'Failed' : 'Success'}`);
     }
 
     // 3. Delete physical files from disk

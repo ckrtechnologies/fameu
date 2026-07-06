@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, typography } from '../../theme/theme';
 
 export default function DeleteAccountScreen() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top","left","right"]}>
       <Text style={styles.text}>DeleteAccountScreen</Text>
-    </View>
+    </SafeAreaView>
   );
 }
 

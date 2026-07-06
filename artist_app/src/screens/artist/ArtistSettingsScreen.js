@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
@@ -16,7 +17,7 @@ export default function ArtistSettingsScreen() {
   const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
 
   const handleLogout = () => {
-    Alert.alert(
+    GlobalAlert.show(
       'Log Out',
       'Are you sure you want to log out?',
       [
@@ -34,7 +35,7 @@ export default function ArtistSettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    GlobalAlert.show(
       'Delete Account',
       'Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.',
       [

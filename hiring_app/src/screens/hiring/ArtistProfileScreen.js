@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl } from 'react-native';
@@ -65,7 +66,7 @@ export default function ArtistProfileScreen() {
       navigation.navigate('VerificationRequired');
       return;
     }
-    Alert.alert("Contact Artist", `Would you like to invite ${artist.full_name} to an audition or send a message?`, [
+    GlobalAlert.show("Contact Artist", `Would you like to invite ${artist.full_name} to an audition or send a message?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Message", onPress: async () => {
           try {

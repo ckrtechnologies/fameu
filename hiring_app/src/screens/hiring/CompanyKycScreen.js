@@ -1,6 +1,7 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image , RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -66,9 +67,10 @@ export default function CompanyKycScreen({ navigation }) {
 
     try {
       await uploadDocs(formData).unwrap();
-      showSuccess('', 'KYC documents submitted successfully. Our team will review them shortly.', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      showSuccess('', 'KYC documents submitted successfully. Our team will review them shortly.');
+      setTimeout(() => {
+        navigation.navigate('Tabs', { screen: 'Dashboard' });
+      }, 1000);
     } catch (error) {
       showError('', error?.data?.error || 'Failed to submit KYC documents.');
     }
@@ -99,7 +101,7 @@ export default function CompanyKycScreen({ navigation }) {
   };
 
   return (
-    <View style={globalStyles.container}>
+    <SafeAreaView style={globalStyles.container}>
       {(profile?.kyc_status === 'approved' || profile?.kyc_status === 'pending' || profile?.is_verified) && !isReKyc ? (
         <View style={[styles.center, { flex: 1, padding: spacing.xl }]}>
           <Icon 
@@ -153,7 +155,7 @@ export default function CompanyKycScreen({ navigation }) {
           </View>
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Dimensions, FlatList, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -76,7 +77,7 @@ export default function CompanyProfileScreen() {
 
       <View style={styles.bioContainer}>
         <Typography variant="h4" style={styles.companyName}>{profile?.company_name || 'Company Name'}</Typography>
-        <Typography variant="body2" style={{ color: colors.primary, marginBottom: 4 }}>@{user?.username}</Typography>
+        <Typography variant="body2" style={{ color: colors.primary, marginBottom: 4 }}>@{profile?.users?.username || user?.username}</Typography>
         <Typography variant="body2" style={styles.companyType}>{profile?.company_type || 'Company Type'}</Typography>
         {profile?.description && (
           <Typography variant="body2" style={styles.description}>{profile.description}</Typography>
@@ -161,7 +162,7 @@ export default function CompanyProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <FlatList
         data={categoriesData}
         keyExtractor={(item) => item.category}
@@ -180,7 +181,7 @@ export default function CompanyProfileScreen() {
           </View>
         ) : <ActivityIndicator style={{ marginTop: spacing.xl }} />}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

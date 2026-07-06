@@ -33,7 +33,7 @@ export default function InboxScreen() {
       const otherParticipant = item.other_participant;
       const artistProfile = Array.isArray(otherParticipant?.artist_profiles) ? otherParticipant.artist_profiles[0] : otherParticipant?.artist_profiles;
       const hiringProfile = Array.isArray(otherParticipant?.hiring_profiles) ? otherParticipant.hiring_profiles[0] : otherParticipant?.hiring_profiles;
-      const name = artistProfile?.full_name || otherParticipant?.display_name || hiringProfile?.company_name || 'Unknown User';
+      const name = artistProfile?.full_name || otherParticipant?.display_name || hiringProfile?.company_name || otherParticipant?.username || otherParticipant?.email?.split('@')[0] || 'Unknown User';
       return name.toLowerCase().includes(query);
     });
   }, [conversations, searchQuery]);
@@ -45,7 +45,7 @@ export default function InboxScreen() {
     
     const unreadCount = item.unread_count || 0;
     
-    const displayName = artistProfile?.full_name || otherParticipant?.display_name || hiringProfile?.company_name || 'Unknown User';
+    const displayName = artistProfile?.full_name || otherParticipant?.display_name || hiringProfile?.company_name || otherParticipant?.username || otherParticipant?.email?.split('@')[0] || 'Unknown User';
     const avatarUrl = otherParticipant?.avatar_url || artistProfile?.photo_urls?.[0] || hiringProfile?.logo_url;
 
     return (

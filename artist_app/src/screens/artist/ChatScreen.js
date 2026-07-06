@@ -43,7 +43,7 @@ export default function ChatScreen() {
   const artistProfile = Array.isArray(resolvedParticipant?.artist_profiles) ? resolvedParticipant.artist_profiles[0] : resolvedParticipant?.artist_profiles;
   const hiringProfile = Array.isArray(resolvedParticipant?.hiring_profiles) ? resolvedParticipant.hiring_profiles[0] : resolvedParticipant?.hiring_profiles;
 
-  const displayName = artistProfile?.full_name || resolvedParticipant?.display_name || hiringProfile?.company_name || 'Chat';
+  const displayName = artistProfile?.full_name || resolvedParticipant?.display_name || hiringProfile?.company_name || resolvedParticipant?.username || resolvedParticipant?.email?.split('@')[0] || 'Chat';
   const avatarUrl = resolvedParticipant?.avatar_url || artistProfile?.photo_urls?.[0] || hiringProfile?.logo_url;
 
   const handleHeaderPress = () => {
@@ -77,46 +77,64 @@ export default function ChatScreen() {
 
   // Setup Socket Listeners
   useEffect(() => {
-    const socket = SocketService.getSocket();
-    if (!socket) return;
-    
-    socketRef.current = socket;
+    let activeSocket = null;
 
-    socket.emit('join_conversation', conversationId);
-    socket.emit('mark_read', { conversationId });
-    dispatch(markConversationAsRead({ conversationId }));
+    const attachListeners = (socket) => {
+      if (!socket) return;
+      
+      // Detach from previous socket first
+      if (activeSocket && activeSocket !== socket) {
+        activeSocket.emit('leave_conversation', conversationId);
+        activeSocket.off('receive_message', handleReceiveMessage);
+        activeSocket.off('user_typing', handleUserTyping);
+      }
+      
+      activeSocket = socket;
+      socketRef.current = socket;
+      
+      socket.emit('join_conversation', conversationId);
+      socket.emit('mark_read', { conversationId });
+      dispatch(markConversationAsRead({ conversationId }));
+
+      socket.off('receive_message', handleReceiveMessage);
+      socket.off('user_typing', handleUserTyping);
+      socket.on('receive_message', handleReceiveMessage);
+      socket.on('user_typing', handleUserTyping);
+    };
 
     const handleReceiveMessage = (newMessage) => {
-      // Prepend to messages (newest first)
       setMessages((prev) => {
-        if (prev.some(msg => msg.id === newMessage.id)) {
-          return prev;
-        }
+        if (prev.some(msg => msg.id === newMessage.id)) return prev;
         return [newMessage, ...prev];
       });
-      
-      // Also invalidate inbox cache so the last message updates
       dispatch(chatApi.util.invalidateTags(['Chat']));
     };
-    
-    socket.on('receive_message', handleReceiveMessage);
 
     const handleUserTyping = ({ userId, isTyping: typingStatus }) => {
-      if (userId !== myId) {
-        setOtherUserTyping(typingStatus);
-      }
+      if (userId !== myId) setOtherUserTyping(typingStatus);
     };
-    
-    socket.on('user_typing', handleUserTyping);
 
-    socket.on('connect_error', (err) => {
-      console.error('Socket connection error:', err);
+    // Attach immediately if socket already connected
+    const currentSocket = SocketService.getSocket();
+    if (currentSocket && currentSocket.connected) {
+      attachListeners(currentSocket);
+    } else if (currentSocket) {
+      // Socket exists but not yet connected — wait for connect event
+      currentSocket.once('connect', () => attachListeners(currentSocket));
+    }
+
+    // Also subscribe to future (re)connections via SocketService event bus
+    const unsubConnect = SocketService.on('connected', (newSocket) => {
+      attachListeners(newSocket);
     });
 
     return () => {
-      socket.emit('leave_conversation', conversationId);
-      socket.off('receive_message', handleReceiveMessage);
-      socket.off('user_typing', handleUserTyping);
+      unsubConnect();
+      if (activeSocket) {
+        activeSocket.emit('leave_conversation', conversationId);
+        activeSocket.off('receive_message', handleReceiveMessage);
+        activeSocket.off('user_typing', handleUserTyping);
+      }
     };
   }, [conversationId, dispatch]);
 
@@ -127,17 +145,21 @@ export default function ChatScreen() {
     
     // Clear input immediately for better UX
     setInputText('');
-    handleStopTyping(); // Stop typing indicator
+    handleStopTyping();
     
-    // Optimistic UI update could go here, but we'll wait for the broadcast for simplicity and accuracy
+    // Always use the live socket (handles reconnection scenario)
+    const socket = socketRef.current || SocketService.getSocket();
+    if (!socket || !socket.connected) {
+      console.error('Socket not connected, cannot send message');
+      return;
+    }
     
-    socketRef.current?.emit('send_message', {
+    socket.emit('send_message', {
       conversationId,
       content: msgContent
     }, (response) => {
-      if (!response.success) {
+      if (response && !response.success) {
         console.error('Failed to send message:', response.error);
-        // Could show a toast here
       }
     });
   };
@@ -179,7 +201,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -216,8 +238,8 @@ export default function ChatScreen() {
       {/* Chat Area */}
       <KeyboardAvoidingView 
         style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 25}
       >
         {isLoading ? (
           <View style={styles.center}>

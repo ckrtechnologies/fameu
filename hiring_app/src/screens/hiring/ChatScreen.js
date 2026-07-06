@@ -37,8 +37,11 @@ export default function ChatScreen() {
   const resolvedParticipant = otherParticipant || 
     inboxData?.data?.find(c => String(c.id) === String(conversationId))?.other_participant;
   
-  const displayName = resolvedParticipant?.artist_profiles?.full_name || resolvedParticipant?.display_name || resolvedParticipant?.hiring_profiles?.company_name || 'Chat';
-  const avatarUrl = resolvedParticipant?.avatar_url || resolvedParticipant?.artist_profiles?.photo_urls?.[0] || resolvedParticipant?.hiring_profiles?.logo_url;
+  const artistProfile = Array.isArray(resolvedParticipant?.artist_profiles) ? resolvedParticipant.artist_profiles[0] : resolvedParticipant?.artist_profiles;
+  const hiringProfile = Array.isArray(resolvedParticipant?.hiring_profiles) ? resolvedParticipant.hiring_profiles[0] : resolvedParticipant?.hiring_profiles;
+
+  const displayName = artistProfile?.full_name || resolvedParticipant?.display_name || hiringProfile?.company_name || resolvedParticipant?.username || resolvedParticipant?.email?.split('@')[0] || 'Chat';
+  const avatarUrl = resolvedParticipant?.avatar_url || artistProfile?.photo_urls?.[0] || hiringProfile?.logo_url;
 
   const handleHeaderPress = () => {
     console.log('Header pressed, resolvedParticipant:', resolvedParticipant);
@@ -79,32 +82,43 @@ export default function ChatScreen() {
 
   // Initialize Socket Connection
   useEffect(() => {
-    const socket = SocketService.getSocket();
-    if (!socket) return;
-    
-    socketRef.current = socket;
+    let activeSocket = null;
 
-    socket.emit('join_conversation', conversationId);
-    socket.emit('mark_read', { conversationId });
-    dispatch(markConversationAsRead({ conversationId }));
+    const attachListeners = (socket) => {
+      if (!socket) return;
+      
+      // Detach from previous socket first
+      if (activeSocket && activeSocket !== socket) {
+        activeSocket.emit('leave_conversation', conversationId);
+        activeSocket.off('receive_message', handleReceiveMessage);
+        activeSocket.off('user_typing', handleUserTyping);
+      }
+      
+      activeSocket = socket;
+      socketRef.current = socket;
+      
+      socket.emit('join_conversation', conversationId);
+      socket.emit('mark_read', { conversationId });
+      dispatch(markConversationAsRead({ conversationId }));
+
+      socket.off('receive_message', handleReceiveMessage);
+      socket.off('user_typing', handleUserTyping);
+      socket.on('receive_message', handleReceiveMessage);
+      socket.on('user_typing', handleUserTyping);
+    };
 
     const handleReceiveMessage = (newMessage) => {
       setMessages((prevMessages) => {
-        if (prevMessages.some(msg => msg.id === newMessage.id)) {
-          return prevMessages;
-        }
+        if (prevMessages.some(msg => msg.id === newMessage.id)) return prevMessages;
         return [newMessage, ...prevMessages];
       });
       
-      // Optimistically update RTK Query cache so Inbox updates automatically
       dispatch(
         chatApi.util.updateQueryData('getInbox', undefined, (draft) => {
           const convo = draft.data.find((c) => c.id === conversationId);
           if (convo) {
             convo.last_message = newMessage.content;
             convo.last_message_at = newMessage.created_at;
-            
-            // Increment unread count if we are not the sender
             if (newMessage.sender_id !== user?.id) {
               if (convo.participant1_id === user?.id) {
                 convo.participant1_unread = (convo.participant1_unread || 0) + 1;
@@ -116,19 +130,31 @@ export default function ChatScreen() {
         })
       );
     };
-    
-    socket.on('receive_message', handleReceiveMessage);
 
     const handleUserTyping = ({ isTyping }) => {
       setOtherUserTyping(isTyping);
     };
-    
-    socket.on('user_typing', handleUserTyping);
+
+    // Attach immediately if socket already connected
+    const currentSocket = SocketService.getSocket();
+    if (currentSocket && currentSocket.connected) {
+      attachListeners(currentSocket);
+    } else if (currentSocket) {
+      currentSocket.once('connect', () => attachListeners(currentSocket));
+    }
+
+    // Subscribe to future (re)connections via SocketService event bus
+    const unsubConnect = SocketService.on('connected', (newSocket) => {
+      attachListeners(newSocket);
+    });
 
     return () => {
-      socket.emit('leave_conversation', conversationId);
-      socket.off('receive_message', handleReceiveMessage);
-      socket.off('user_typing', handleUserTyping);
+      unsubConnect();
+      if (activeSocket) {
+        activeSocket.emit('leave_conversation', conversationId);
+        activeSocket.off('receive_message', handleReceiveMessage);
+        activeSocket.off('user_typing', handleUserTyping);
+      }
     };
   }, [conversationId, dispatch, user?.id]);
 
@@ -140,11 +166,19 @@ export default function ChatScreen() {
       content: inputText.trim()
     };
 
-    socketRef.current?.emit('send_message', messageData, (response) => {
-      if (response.success) {
-        setInputText('');
-        handleStopTyping();
-      } else {
+    // Always use the live socket (handles reconnection scenario)
+    const socket = socketRef.current || SocketService.getSocket();
+    if (!socket || !socket.connected) {
+      console.error('Socket not connected, cannot send message');
+      return;
+    }
+
+    // Clear input immediately for better UX
+    setInputText('');
+    handleStopTyping();
+
+    socket.emit('send_message', messageData, (response) => {
+      if (response && !response.success) {
         console.error('Failed to send message:', response.error);
       }
     });
@@ -221,7 +255,7 @@ export default function ChatScreen() {
       {/* Chat Area */}
       <KeyboardAvoidingView 
         style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {isLoading ? (

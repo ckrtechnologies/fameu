@@ -2,6 +2,7 @@ import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image , RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -35,6 +36,7 @@ export default function EditCompanyProfileScreen() {
   });
   
   const [logoUri, setLogoUri] = useState(null);
+  const [selectedLogo, setSelectedLogo] = useState(null);
   const scrollViewRef = React.useRef(null);
   const scrollToComments = route.params?.scrollToComments;
 
@@ -49,7 +51,7 @@ export default function EditCompanyProfileScreen() {
   useEffect(() => {
     if (profile) {
       setForm({
-        username: user?.username || '',
+        username: profile.users?.username || user?.username || '',
         company_name: profile.company_name || '',
         company_type: profile.company_type || '',
         description: profile.description || '',
@@ -81,39 +83,35 @@ export default function EditCompanyProfileScreen() {
       return;
     }
     try {
-      await upsertProfile(form).unwrap();
+      const res = await upsertProfile(form).unwrap();
+      const profileId = res?.data?.id || res?.id || profile?.id;
+
+      if (selectedLogo && profileId) {
+        const formData = new FormData();
+        formData.append('hiringId', profileId);
+        formData.append('logo', {
+          uri: selectedLogo.uri,
+          type: selectedLogo.type || 'image/jpeg',
+          name: selectedLogo.fileName || 'logo.jpg',
+        });
+        await uploadLogo(formData).unwrap();
+      }
+
       showSuccess('', 'Company profile updated successfully.');
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1000);
     } catch (error) {
       showError('', error?.data?.error || 'Failed to update profile');
     }
   };
 
   const handleSelectLogo = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, async (res) => {
+    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, (res) => {
       if (res.didCancel || !res.assets || res.assets.length === 0) return;
-      
       const asset = res.assets[0];
       setLogoUri(asset.uri);
-      
-      if (!profile?.id) {
-        showError('', 'Please save your profile first before uploading a logo.');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('hiringId', profile.id);
-      formData.append('logo', {
-        uri: asset.uri,
-        type: asset.type || 'image/jpeg',
-        name: asset.fileName || 'logo.jpg',
-      });
-
-      try {
-        await uploadLogo(formData).unwrap();
-        showSuccess('', 'Logo uploaded successfully.');
-      } catch (error) {
-        showError('', 'Failed to upload logo.');
-      }
+      setSelectedLogo(asset);
     });
   };
 
@@ -128,6 +126,7 @@ export default function EditCompanyProfileScreen() {
   const currentLogo = logoUri || profile?.logo_url;
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
     <KeyboardAwareScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
       
       <View style={styles.logoSection}>
@@ -229,6 +228,7 @@ export default function EditCompanyProfileScreen() {
       )}
 
     </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 }
 

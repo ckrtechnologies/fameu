@@ -1,6 +1,7 @@
 import { apiSlice } from './apiSlice';
 
 export const discoverApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getFeed: builder.query({
       query: (params) => ({

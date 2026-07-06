@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Dimensions, ScrollView , RefreshControl } from 'react-native';
@@ -61,7 +62,7 @@ export default function ArtistCategoryScreen() {
     
     if (isRemoving) {
       if (originalCategories.includes(category)) {
-        Alert.alert(
+        GlobalAlert.show(
           'Remove Talent Role?',
           `Unchecking this will delete all your ${category} profile data when you save your profile. Are you sure?`,
           [
@@ -83,7 +84,7 @@ export default function ArtistCategoryScreen() {
 
   const handleSubmit = async () => {
     if (selectedCategories.length === 0) {
-      Alert.alert('Selection Required', 'Please select at least one talent category to proceed.');
+      GlobalAlert.show('Selection Required', 'Please select at least one talent category to proceed.');
       return;
     }
     

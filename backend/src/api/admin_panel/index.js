@@ -404,7 +404,7 @@ router.put('/cms', async (req, res) => {
 router.post('/notifications/send', async (req, res) => {
   try {
     const { title, body, target, targetUserId, deepLink } = req.body;
-    let query = supabase.from('users').select('id, fcm_token').not('fcm_token', 'is', null);
+    let query = supabase.from('users').select('id, fcm_token');
     
     if (target === 'artists') {
       query = query.eq('role', 'artist');
@@ -417,7 +417,7 @@ router.post('/notifications/send', async (req, res) => {
     const { data: users, error } = await query;
     if (error) throw error;
 
-    const tokens = users.map(u => u.fcm_token).filter(t => t);
+    const tokens = users.filter(u => u.fcm_token).map(u => u.fcm_token);
     
     // Import notification service dynamically to avoid circular dependencies if any
     const notificationService = (await import('../../services/notification.service.js')).default;
@@ -430,21 +430,21 @@ router.post('/notifications/send', async (req, res) => {
       });
     }
 
-    // Save broadcast history to notifications table using admin's user_id
-    await supabase.from('notifications').insert([{
-      user_id: req.user.id,
+    // Save individual notifications for all target users
+    const notificationsToInsert = users.map(user => ({
+      user_id: user.id,
       title,
       body,
       type: 'admin_broadcast',
-      data: {
-        target,
-        targetUserId,
-        deepLink,
-        successCount: result.successCount,
-        failureCount: result.failureCount,
-        totalAttempted: tokens.length
-      }
-    }]);
+      data: { deepLink: deepLink || '' }
+    }));
+
+    // Batch insert in chunks of 500 to avoid limits
+    const chunkSize = 500;
+    for (let i = 0; i < notificationsToInsert.length; i += chunkSize) {
+      const chunk = notificationsToInsert.slice(i, i + chunkSize);
+      await supabase.from('notifications').insert(chunk);
+    }
 
     res.json({ success: true, data: { ...result, totalAttempted: tokens.length } });
   } catch (error) {

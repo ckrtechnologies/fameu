@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator , RefreshControl } from 'react-native';
@@ -135,7 +136,7 @@ export default function ArtistFormScreen() {
     });
 
     if (hasInvalidUrls) {
-      Alert.alert('Invalid Link', 'Please only use Instagram or YouTube links.');
+      GlobalAlert.show('Invalid Link', 'Please only use Instagram or YouTube links.');
       return;
     }
 
@@ -155,7 +156,7 @@ export default function ArtistFormScreen() {
           params: {
             screen: 'Tabs',
             params: {
-              screen: 'Profile'
+              screen: 'Dashboard'
             }
           }
         }],
@@ -274,7 +275,7 @@ export default function ArtistFormScreen() {
           </View>
         ))}
 
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity 

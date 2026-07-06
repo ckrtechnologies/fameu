@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Dimensions, Platform, Image, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,14 +55,14 @@ export default function VideoPortfolioScreen() {
       const updatedVideos = [...videos, newVideoUrl.trim()].join(',');
       await upsertProfile({ video_url: updatedVideos }).unwrap();
       setNewVideoUrl('');
-      Alert.alert("Success", "Video added to your portfolio.");
+      GlobalAlert.show("Success", "Video added to your portfolio.");
     } catch (err) {
-      Alert.alert("Error", "Failed to add video.");
+      GlobalAlert.show("Error", "Failed to add video.");
     }
   };
 
   const handleDeleteVideo = (indexToDelete) => {
-    Alert.alert(
+    GlobalAlert.show(
       "Delete Video",
       "Are you sure you want to remove this video from your portfolio?",
       [
@@ -73,10 +74,10 @@ export default function VideoPortfolioScreen() {
             try {
               const updatedVideos = videos.filter((_, idx) => idx !== indexToDelete).join(',');
               await upsertProfile({ video_url: updatedVideos }).unwrap();
-              Alert.alert("Success", "Video removed.");
+              GlobalAlert.show("Success", "Video removed.");
               if (activeVideoIndex === indexToDelete) setActiveVideoIndex(null);
             } catch (err) {
-              Alert.alert("Error", "Failed to delete video.");
+              GlobalAlert.show("Error", "Failed to delete video.");
             }
           }
         }

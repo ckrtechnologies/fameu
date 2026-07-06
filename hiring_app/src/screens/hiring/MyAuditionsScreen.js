@@ -129,7 +129,7 @@ export default function MyAuditionsScreen() {
   }
 
   return (
-    <SafeAreaView style={globalStyles.container} edges={['top', 'bottom', 'left', 'right']}>
+    <SafeAreaView style={globalStyles.container} edges={['bottom', 'left', 'right']}>
       
       {/* Filter Section */}
       <View style={styles.filterSection}>

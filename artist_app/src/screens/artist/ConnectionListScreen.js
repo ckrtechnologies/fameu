@@ -21,7 +21,7 @@ export default function ConnectionListScreen() {
   const isFollowers = type === 'followers';
   const queryResult = isFollowers ? followersQuery : followingQuery;
 
-  const { data: usersList, isLoading, isError, error, refetch } = queryResult;
+  const { data: usersList, isLoading, isFetching, isError, error, refetch } = queryResult;
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 

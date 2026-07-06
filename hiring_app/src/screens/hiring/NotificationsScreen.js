@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, MessageCircle, Bell, BellOff } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { formatDistanceToNow } from 'date-fns';
 
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
@@ -16,9 +16,18 @@ import {
 
 export default function NotificationsScreen() {
   const navigation = useNavigation();
-  const { data: response, isLoading, isFetching, refetch } = useGetNotificationsQuery();
+  const { data: response, isLoading, isFetching, refetch } = useGetNotificationsQuery(undefined, {
+    pollingInterval: 10000,
+    skip: false,
+  });
   const [markRead] = useMarkNotificationReadMutation();
   const [markAllRead] = useMarkAllNotificationsReadMutation();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   const notifications = response?.data || [];
 

@@ -23,9 +23,10 @@ export default function ApplyAuditionScreen() {
   const handleApply = async () => {
     try {
       await applyToAudition({ id: auditionId, cover_note: coverNote }).unwrap();
-      showSuccess('', 'Application submitted successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate('MainTabs', { screen: 'Tabs', params: { screen: 'Applications' } }) }
-      ]);
+      showSuccess('', 'Application submitted successfully!');
+      setTimeout(() => {
+        navigation.navigate('MainTabs', { screen: 'Tabs', params: { screen: 'Applications' } });
+      }, 1000);
     } catch (err) {
       console.error('Apply to audition error:', err);
       const errMsg = err?.data?.error || err?.message || 'Failed to submit application.';

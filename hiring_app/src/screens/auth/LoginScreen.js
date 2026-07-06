@@ -4,6 +4,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 
 import { View, StyleSheet, Platform, Image, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BASE_URL } from '../../services/apiSlice';
 import Typography from '../../components/core/Typography';
 import CustomAlert from '../../components/core/CustomAlert';
 import CustomInput from '../../components/forms/CustomInput';
@@ -16,16 +17,17 @@ const LoginScreen = ({ navigation }) => {
   const [identifier, setIdentifier] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
-  
+
   const [sendOtp, { isLoading }] = useSendOtpMutation();
 
   const handleSendOtp = async () => {
     if (!identifier) {
-      showError('', 'Please enter your email or mobile');
+      showError('Error', 'Please enter a valid Phone Number or Email ID');
       return;
     }
-    
+
     try {
+      console.log('Sending OTP to:', identifier, 'URL:', BASE_URL);
       const response = await sendOtp({ identifier }).unwrap();
       if (response.data && response.data.devOtp) {
         setGeneratedOtp(response.data.devOtp);
@@ -34,7 +36,9 @@ const LoginScreen = ({ navigation }) => {
         navigation.navigate('Otp', { identifier });
       }
     } catch (error) {
-      showError('', error?.data?.error || error?.message || 'Failed to send OTP');
+      console.error('sendOtp error:', error);
+      const errMsg = error?.data?.error || error?.error || error?.message || JSON.stringify(error) || 'Failed to send OTP';
+      showError('Error', errMsg);
     }
   };
 
@@ -46,8 +50,8 @@ const LoginScreen = ({ navigation }) => {
         <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
           <View style={styles.logoWrapper}>
             <View style={styles.logoContainer}>
-              <Image 
-                source={require('../../assets/images/logo.jpeg')} 
+              <Image
+                source={require('../../assets/images/logo.jpeg')}
                 style={styles.logoImage}
               />
             </View>
@@ -56,12 +60,12 @@ const LoginScreen = ({ navigation }) => {
       </View>
 
       {/* Bottom Half - Light */}
-      <KeyboardAwareScrollView 
+      <KeyboardAwareScrollView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.bottomHalf}
       >
         <Typography variant="h1" style={styles.title}>Welcome Back</Typography>
-        
+
         <CustomInput
           // label="Email or Mobile Number"
           placeholder="Enter email or mobile number"
@@ -76,16 +80,16 @@ const LoginScreen = ({ navigation }) => {
           {isLoading ? (
             <ActivityIndicator size="large" color={colors.primary} />
           ) : (
-            <CustomButton 
-              title="Send OTP" 
-              onPress={handleSendOtp} 
+            <CustomButton
+              title="Send OTP"
+              onPress={handleSendOtp}
               variant="primary"
             />
           )}
         </View>
       </KeyboardAwareScrollView>
 
-      <CustomAlert 
+      <CustomAlert
         visible={alertVisible}
         title="SMS Received"
         message={`FameU: Your OTP is ${generatedOtp}. Do not share it.`}
@@ -110,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   topHalf: {
-    backgroundColor: '#0F172A', 
+    backgroundColor: '#0F172A',
     height: '35%',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,

@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../components/core/GlobalAlert';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
@@ -30,7 +31,7 @@ function CustomDrawerContent(props) {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    GlobalAlert.show(
       'Delete Account',
       'Are you absolutely sure you want to delete your account? This action cannot be undone.',
       [
@@ -44,7 +45,7 @@ function CustomDrawerContent(props) {
               dispatch(apiSlice.util.resetApiState());
               dispatch(logout());
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete account. Please try again later.');
+              GlobalAlert.show('Error', 'Failed to delete account. Please try again later.');
             }
           }
         },

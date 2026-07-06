@@ -1,6 +1,7 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform , RefreshControl, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform , RefreshControl, Modal, ScrollView } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -30,7 +31,7 @@ export default function EditProfileScreen() {
 
     if (res.didCancel) return;
     if (res.errorMessage) {
-      Alert.alert('Camera Error', res.errorMessage);
+      GlobalAlert.show('Camera Error', res.errorMessage);
       return;
     }
     if (!res.assets?.length) return;
@@ -242,19 +243,19 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     try {
       if (!formData.full_name || !formData.full_name.trim()) {
-        Alert.alert('Validation Error', 'Full Name is required.');
+        GlobalAlert.show('Validation Error', 'Full Name is required.');
         return;
       }
       if (!formData.username || !formData.username.trim()) {
-        Alert.alert('Validation Error', 'Username (Handle) is required.');
+        GlobalAlert.show('Validation Error', 'Username (Handle) is required.');
         return;
       }
       if (!formData.age || !String(formData.age).trim()) {
-        Alert.alert('Validation Error', 'Age is required.');
+        GlobalAlert.show('Validation Error', 'Age is required.');
         return;
       }
       if (!formData.gender || !formData.gender.trim()) {
-        Alert.alert('Validation Error', 'Gender is required.');
+        GlobalAlert.show('Validation Error', 'Gender is required.');
         return;
       }
 
@@ -279,7 +280,7 @@ export default function EditProfileScreen() {
       });
 
       if (hasInvalidUrls) {
-        Alert.alert('Invalid Link', 'Please only use Instagram or YouTube links.');
+        GlobalAlert.show('Invalid Link', 'Please only use Instagram or YouTube links.');
         return;
       }
 
@@ -438,7 +439,7 @@ export default function EditProfileScreen() {
               <TouchableOpacity
                 style={styles.avatarContainer}
                 onPress={() => {
-                  Alert.alert(
+                  GlobalAlert.show(
                     'Update Profile Photo',
                     'Choose an option to upload your photo',
                     [
@@ -717,7 +718,7 @@ export default function EditProfileScreen() {
           </>
         )}
 
-      </ScrollView>
+      </KeyboardAwareScrollView>
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}

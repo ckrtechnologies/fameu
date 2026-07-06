@@ -134,7 +134,8 @@ class HiringAuditionController {
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No PDF file provided' });
       }
-      const baseUrl = process.env.CDN_URL ? `${process.env.CDN_URL}/hiring` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring`;
+      const cdnUrl = process.env.CDN_URL ? (process.env.CDN_URL.startsWith('http') ? process.env.CDN_URL : `https://${process.env.CDN_URL}`) : null;
+      const baseUrl = cdnUrl ? `${cdnUrl}/hiring` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring`;
       const fileUrl = `${baseUrl}/${req.file.filename}`;
       res.status(200).json({ success: true, data: { url: fileUrl } });
     } catch (err) {
@@ -148,7 +149,8 @@ class HiringAuditionController {
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No image file provided' });
       }
-      const baseUrl = process.env.CDN_URL ? `${process.env.CDN_URL}/hiring` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring`;
+      const cdnUrl = process.env.CDN_URL ? (process.env.CDN_URL.startsWith('http') ? process.env.CDN_URL : `https://${process.env.CDN_URL}`) : null;
+      const baseUrl = cdnUrl ? `${cdnUrl}/hiring` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring`;
       const fileUrl = `${baseUrl}/${req.file.filename}`;
       res.status(200).json({ success: true, data: { url: fileUrl } });
     } catch (err) {

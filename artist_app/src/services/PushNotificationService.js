@@ -1,15 +1,17 @@
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, getToken, requestPermission, onTokenRefresh, AuthorizationStatus } from '@react-native-firebase/messaging';
 import { Platform, PermissionsAndroid } from 'react-native';
 import * as Keychain from 'react-native-keychain';
 import { BASE_URL } from './apiSlice';
 
 export const setupPushNotifications = async () => {
   try {
+    const messaging = getMessaging();
+
     if (Platform.OS === 'ios') {
-      const authStatus = await messaging().requestPermission();
+      const authStatus = await requestPermission(messaging);
       const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+        authStatus === AuthorizationStatus.AUTHORIZED ||
+        authStatus === AuthorizationStatus.PROVISIONAL;
 
       if (!enabled) {
         console.log('FCM Permission not granted');
@@ -23,18 +25,18 @@ export const setupPushNotifications = async () => {
       }
     }
 
-    const token = await messaging().getToken();
+    const token = await getToken(messaging);
     console.log('FCM Token generated:', token);
 
     await sendTokenToBackend(token);
 
-    messaging().onTokenRefresh(newToken => {
+    onTokenRefresh(messaging, newToken => {
       sendTokenToBackend(newToken);
     });
 
     return token;
   } catch (error) {
-    console.error('Push notification setup error:', error);
+    console.log('Push notification setup error:', error.message || error);
     return null;
   }
 };
@@ -52,7 +54,7 @@ export const sendTokenToBackend = async (fcmToken) => {
       },
       body: JSON.stringify({ fcm_token: fcmToken }),
     });
-    
+
     if (!response.ok) {
       console.log('Failed to update FCM token', await response.text());
     }

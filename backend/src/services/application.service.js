@@ -1,4 +1,5 @@
 import supabase from '../config/supabase.js';
+import notificationService from './notification.service.js';
 
 class ApplicationService {
   /**
@@ -8,7 +9,7 @@ class ApplicationService {
     // 1. Verify audition exists and is active
     const { data: audition } = await supabase
       .from('auditions')
-      .select('status')
+      .select('status, hiring_id, title')
       .eq('id', auditionId)
       .single();
 
@@ -45,6 +46,28 @@ class ApplicationService {
     if (error) {
       if (error.code === '23505') throw new Error('You have already applied to this audition');
       throw new Error(`Application failed: ${error.message}`);
+    }
+
+    try {
+      // Get company user id
+      const { data: hiringProfile } = await supabase
+        .from('hiring_profiles')
+        .select('user_id')
+        .eq('id', audition.hiring_id)
+        .single();
+        
+      if (hiringProfile && hiringProfile.user_id) {
+        if (typeof notificationService.sendPushNotification === 'function') {
+          await notificationService.sendPushNotification(
+            hiringProfile.user_id,
+            'New Audition Application',
+            `Someone has applied to your audition: ${audition.title || 'Untitled'}`,
+            { type: 'application', targetId: data.id }
+          );
+        }
+      }
+    } catch (e) {
+      console.error('Failed to send push notification for new application', e);
     }
 
     return data;
@@ -211,8 +234,26 @@ class ApplicationService {
 
     if (error) throw new Error(`Failed to update status: ${error.message}`);
     
-    // NOTE: This is where we would trigger Firebase Push Notifications to the Artist!
-    
+    try {
+      const { data: artistProfile } = await supabase
+        .from('artist_profiles')
+        .select('user_id')
+        .eq('id', data.artist_id)
+        .single();
+        
+      if (artistProfile && artistProfile.user_id) {
+        if (typeof notificationService.sendPushNotification === 'function') {
+          await notificationService.sendPushNotification(
+            artistProfile.user_id,
+            'Application Update',
+            `Your application status has been updated to: ${status}`,
+            { type: 'application_update', targetId: data.id }
+          );
+        }
+      }
+    } catch (e) {
+      console.error('Failed to send push notification for application update', e);
+    }
     return data;
   }
 }

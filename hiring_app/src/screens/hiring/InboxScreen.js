@@ -31,15 +31,22 @@ export default function InboxScreen() {
     const query = searchQuery.toLowerCase();
     return conversations.filter(item => {
       const otherParticipant = item.other_participant;
-      const name = otherParticipant?.artist_profiles?.full_name || otherParticipant?.display_name || 'Unknown User';
+      const artistProfile = otherParticipant?.artist_profiles;
+      const hiringProfile = otherParticipant?.hiring_profiles;
+      const name = artistProfile?.full_name || otherParticipant?.display_name || hiringProfile?.company_name || otherParticipant?.username || otherParticipant?.email?.split('@')[0] || 'Unknown User';
       return name.toLowerCase().includes(query);
     });
   }, [conversations, searchQuery]);
 
   const renderConversationItem = ({ item }) => {
     const otherParticipant = item.other_participant;
+    const artistProfile = Array.isArray(otherParticipant?.artist_profiles) ? otherParticipant.artist_profiles[0] : otherParticipant?.artist_profiles;
+    const hiringProfile = Array.isArray(otherParticipant?.hiring_profiles) ? otherParticipant.hiring_profiles[0] : otherParticipant?.hiring_profiles;
     
     const unreadCount = item.unread_count || 0;
+
+    const displayName = artistProfile?.full_name || otherParticipant?.display_name || hiringProfile?.company_name || otherParticipant?.username || otherParticipant?.email?.split('@')[0] || 'Unknown User';
+    const avatarUrl = otherParticipant?.avatar_url || artistProfile?.photo_urls?.[0] || hiringProfile?.logo_url;
 
     return (
       <TouchableOpacity 
@@ -51,16 +58,14 @@ export default function InboxScreen() {
         })}
       >
         <View style={styles.avatarContainer}>
-          {otherParticipant?.avatar_url || otherParticipant?.artist_profiles?.photo_urls?.[0] || otherParticipant?.hiring_profiles?.logo_url ? (
+          {avatarUrl ? (
             <Image 
-              source={{ uri: otherParticipant?.avatar_url || otherParticipant?.artist_profiles?.photo_urls?.[0] || otherParticipant?.hiring_profiles?.logo_url }} 
+              source={{ uri: avatarUrl }} 
               style={{ width: '100%', height: '100%', borderRadius: 25 }} 
             />
           ) : (
             <Typography style={styles.avatarText}>
-              {otherParticipant?.artist_profiles?.full_name 
-                ? otherParticipant.artist_profiles.full_name.charAt(0).toUpperCase() 
-                : (otherParticipant?.display_name ? otherParticipant.display_name.charAt(0).toUpperCase() : '?')}
+                {displayName.charAt(0).toUpperCase()}
             </Typography>
           )}
         </View>
@@ -68,7 +73,7 @@ export default function InboxScreen() {
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
             <Typography variant="body" style={styles.name} numberOfLines={1}>
-              {otherParticipant?.artist_profiles?.full_name || otherParticipant?.display_name || 'Unknown User'}
+              {displayName}
             </Typography>
             {item.updated_at && (
               <Typography variant="caption" style={styles.timeText}>
@@ -101,7 +106,7 @@ export default function InboxScreen() {
   }
 
   return (
-    <SafeAreaView style={globalStyles.container} edges={['top', 'bottom', 'left', 'right']}>
+    <SafeAreaView style={globalStyles.container} edges={['bottom', 'left', 'right']}>
       <View style={styles.searchContainer}>
         <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
         <TextInput

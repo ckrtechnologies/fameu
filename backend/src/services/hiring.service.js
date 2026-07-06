@@ -39,9 +39,10 @@ class HiringService {
       }
       return data;
     } else {
+      const insertPayload = { ...payload, verification_status: 'unverified' };
       const { data, error } = await supabase
         .from('hiring_profiles')
-        .insert([payload])
+        .insert([insertPayload])
         .select()
         .single();
       if (error) throw new Error(`Failed to create company profile: ${error.message}`);
@@ -62,7 +63,7 @@ class HiringService {
   async getProfile(userId) {
     const { data, error } = await supabase
       .from('hiring_profiles')
-      .select('*, verification_documents(*)')
+      .select('*, verification_documents(*), users(username)')
       .eq('user_id', userId)
       .single();
 

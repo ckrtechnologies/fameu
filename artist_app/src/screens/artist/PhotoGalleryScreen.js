@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions, ActivityIndicator, Alert, Modal, PermissionsAndroid, Platform , RefreshControl } from 'react-native';
@@ -26,7 +27,7 @@ export default function PhotoGalleryScreen() {
   const flatListRef = useRef(null);
 
   const handleDeletePhoto = (index) => {
-    Alert.alert('Delete Photo', 'Are you sure you want to delete this photo?', [
+    GlobalAlert.show('Delete Photo', 'Are you sure you want to delete this photo?', [
       { text: 'Cancel', style: 'cancel' },
       { 
         text: 'Delete', 
@@ -60,7 +61,7 @@ export default function PhotoGalleryScreen() {
   };
 
   const handlePickImage = () => {
-    Alert.alert(
+    GlobalAlert.show(
       'Upload Photos',
       'Choose an option to upload your photos',
       [

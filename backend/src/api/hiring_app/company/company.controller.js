@@ -40,7 +40,8 @@ class HiringCompanyController {
 
       if (!req.file) return res.status(400).json({ success: false, error: 'Logo image is required' });
 
-      const baseUrl = process.env.CDN_URL ? `${process.env.CDN_URL}/hiring` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring`;
+      const cdnUrl = process.env.CDN_URL ? (process.env.CDN_URL.startsWith('http') ? process.env.CDN_URL : `https://${process.env.CDN_URL}`) : null;
+      const baseUrl = cdnUrl ? `${cdnUrl}/hiring` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring`;
       const logoUrl = `${baseUrl}/${req.file.filename}`;
       const result = await hiringService.updateLogo(hiringId, logoUrl);
       
@@ -59,7 +60,8 @@ class HiringCompanyController {
         hiringId = profile.id;
       }
 
-      const baseUrl = process.env.CDN_URL ? `${process.env.CDN_URL}/hiring/` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring/`;
+      const cdnUrl = process.env.CDN_URL ? (process.env.CDN_URL.startsWith('http') ? process.env.CDN_URL : `https://${process.env.CDN_URL}`) : null;
+      const baseUrl = cdnUrl ? `${cdnUrl}/hiring/` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/hiring/`;
       const docsUrls = {};
 
       if (req.files) {

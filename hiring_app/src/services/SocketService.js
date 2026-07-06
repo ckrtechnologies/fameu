@@ -8,22 +8,62 @@ import { chatApi } from './chatApi';
 class SocketService {
   constructor() {
     this.socket = null;
+    this._listeners = {}; // internal event bus for service-level events
   }
+
+  // ─── Internal event bus ──────────────────────────────────────────────────────
+  _emit(event, ...args) {
+    if (this._listeners[event]) {
+      this._listeners[event].forEach(fn => fn(...args));
+    }
+  }
+
+  on(event, fn) {
+    if (!this._listeners[event]) this._listeners[event] = [];
+    this._listeners[event].push(fn);
+    return () => this.off(event, fn); // returns an unsubscribe function
+  }
+
+  off(event, fn) {
+    if (this._listeners[event]) {
+      this._listeners[event] = this._listeners[event].filter(f => f !== fn);
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
 
   connect(token) {
     if (this.socket) {
       this.socket.disconnect();
+      this.socket = null;
     }
 
-    // Replace /api if baseUrl has it (e.g. http://10.0.2.2:3001/api -> http://10.0.2.2:3001)
-    const socketUrl = BASE_URL.replace('/api', '');
+    // Build socket URL: strip /api suffix, keep protocol as https/http (socket.io handles ws upgrade)
+    const socketUrl = BASE_URL.replace(/\/api$/, '');
+
+    console.log('[SocketService] Connecting to:', socketUrl);
 
     this.socket = io(socketUrl, {
       auth: { token },
+      transports: ['websocket'],
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
     });
 
     this.socket.on('connect', () => {
-      console.log('Global Socket connected:', this.socket.id);
+      console.log('[SocketService] Connected:', this.socket.id);
+      this._emit('connected', this.socket);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('[SocketService] connect_error:', error.message);
+      this._emit('connect_error', error);
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('[SocketService] Disconnected:', reason);
+      this._emit('disconnected', reason);
     });
 
     // Listen to global receive_message event
@@ -43,8 +83,7 @@ class SocketService {
       // 3. Invalidate chat cache so Inbox updates and recalcs unread properly
       store.dispatch(chatApi.util.invalidateTags(['Chat']));
 
-      // 4. Show Toast notification if we received a message from someone else
-      // and we are not currently on that ChatScreen
+      // 4. Show Toast notification if not currently viewing that chat
       if (message.sender_id !== currentUserId) {
         const { navigationRef } = require('../../App');
         const currentRoute = navigationRef.isReady() ? navigationRef.getCurrentRoute() : null;
@@ -52,9 +91,6 @@ class SocketService {
         const isCurrentlyViewingChat = 
           currentRoute?.name === 'ChatScreen' && 
           currentRoute?.params?.conversationId === message.conversation_id;
-
-        console.log('SocketService: currentRoute', currentRoute?.name, currentRoute?.params);
-        console.log('SocketService: message.conversation_id', message.conversation_id);
 
         if (!isCurrentlyViewingChat) {
           const Toast = require('react-native-toast-message').default;
@@ -74,10 +110,6 @@ class SocketService {
         }
       }
     });
-
-    this.socket.on('disconnect', () => {
-      console.log('Global Socket disconnected');
-    });
   }
 
   disconnect() {
@@ -89,6 +121,10 @@ class SocketService {
 
   getSocket() {
     return this.socket;
+  }
+
+  isConnected() {
+    return this.socket?.connected === true;
   }
 }
 

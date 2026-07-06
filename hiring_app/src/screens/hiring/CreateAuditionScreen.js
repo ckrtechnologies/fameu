@@ -215,14 +215,16 @@ export default function CreateAuditionScreen({ route }) {
 
       if (isEditMode) {
         await updateAudition({ id: editAudition.id, ...payload }).unwrap();
-        showSuccess('', 'Audition updated successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        showSuccess('', 'Audition updated successfully!');
+        setTimeout(() => {
+          navigation.navigate('Drawer', { screen: 'Tabs', params: { screen: 'MyAuditions' } });
+        }, 1000);
       } else {
         await createAudition(payload).unwrap();
-        showSuccess('', 'Audition posted successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        showSuccess('', 'Audition created successfully!');
+        setTimeout(() => {
+          navigation.navigate('Drawer', { screen: 'Tabs', params: { screen: 'MyAuditions' } });
+        }, 1000);
       }
     } catch (error) {
       showError('', error?.data?.error || (isEditMode ? 'Failed to update audition.' : 'Failed to post audition.'));

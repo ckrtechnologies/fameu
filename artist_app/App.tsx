@@ -10,13 +10,15 @@ import { NavigationContainer, createNavigationContainerRef } from '@react-naviga
 import { View, Text, Image, TouchableOpacity, Vibration } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { store } from './src/store/store';
+import { apiSlice } from './src/services/apiSlice';
 import AppNavigator from './src/navigation/AppNavigator';
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification } from '@react-native-firebase/messaging';
 import { setupPushNotifications } from './src/services/PushNotificationService';
 import { colors, typography } from './src/theme/theme';
 
 import Toast from 'react-native-toast-message';
 import ErrorBoundary from './src/components/core/ErrorBoundary';
+import GlobalAlertProvider, { GlobalAlertRef } from './src/components/core/GlobalAlert';
 
 export type RootStackParamList = {
   [key: string]: any;
@@ -205,7 +207,7 @@ function App(): React.JSX.Element {
   useEffect(() => {
     setupPushNotifications();
 
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    const unsubscribe = onMessage(getMessaging(), async remoteMessage => {
       console.log('A new FCM message arrived in foreground!', JSON.stringify(remoteMessage));
       
       // Check if we are currently on the ChatScreen for this conversation
@@ -220,6 +222,9 @@ function App(): React.JSX.Element {
       if (remoteMessage.notification) {
         // Vibrate for notification
         Vibration.vibrate(500);
+
+        // Invalidate Notifications cache so the screen/bell updates automatically
+        store.dispatch(apiSlice.util.invalidateTags(['Notifications']));
 
         Toast.show({
           type: 'customNotification',
@@ -266,7 +271,7 @@ function App(): React.JSX.Element {
     });
 
     // Handle notification tap when app is in background
-    messaging().onNotificationOpenedApp(remoteMessage => {
+    onNotificationOpenedApp(getMessaging(), remoteMessage => {
       console.log('Notification caused app to open from background state:', remoteMessage);
       const type = remoteMessage.data?.type;
       const conversationId = remoteMessage.data?.conversationId;
@@ -295,8 +300,7 @@ function App(): React.JSX.Element {
     });
 
     // Handle notification tap when app is killed/quit
-    messaging()
-      .getInitialNotification()
+    getInitialNotification(getMessaging())
       .then(remoteMessage => {
         if (remoteMessage) {
           console.log('Notification caused app to open from quit state:', remoteMessage);
@@ -336,6 +340,7 @@ function App(): React.JSX.Element {
           <AppNavigator />
         </NavigationContainer>
         <Toast config={toastConfig} />
+        <GlobalAlertProvider ref={GlobalAlertRef} />
       </SafeAreaProvider>
     </Provider>  
     </ErrorBoundary>

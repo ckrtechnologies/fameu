@@ -4,7 +4,7 @@ import { TouchableOpacity, StyleSheet, View, Text, Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Bell, Search } from 'lucide-react-native';
-import { useGetCompanyProfileQuery } from '../services/hiringApi';
+import { useGetCompanyProfileQuery, useGetNotificationsQuery } from '../services/hiringApi';
 import { useGetInboxQuery } from '../services/chatApi';
 
 import HiringDashboardScreen from '../screens/hiring/HiringDashboardScreen';
@@ -22,11 +22,17 @@ export default function TabNavigator() {
   const insets = useSafeAreaInsets();
   const totalUnreadCount = useSelector((state) => state.chat.totalUnreadCount);
   const { user } = useSelector((state) => state.auth);
-  
+
   // Global Prefetching
   const { data: profileResponse } = useGetCompanyProfileQuery(undefined, { skip: !user });
   useGetInboxQuery(undefined, { skip: !user });
-  
+  const { data: notificationsResponse } = useGetNotificationsQuery(undefined, { 
+    skip: !user,
+    pollingInterval: 10000,
+  });
+
+  const hasUnreadNotifications = notificationsResponse?.data?.some(n => !n.is_read) || false;
+
   const profile = profileResponse?.data;
   const logoUrl = profile?.logo_url || user?.avatar_url || null;
   const companyName = profile?.company_name || user?.display_name || 'Company';
@@ -72,18 +78,20 @@ export default function TabNavigator() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity 
-                onPress={() => navigation.navigate('Search')} 
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Search')}
                 style={{ padding: 10, backgroundColor: colors.surfaceLight, borderRadius: 20, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8, marginRight: 12 }}
               >
                 <Search size={28} color={colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={() => navigation.navigate('Notifications')} 
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Notifications')}
                 style={{ padding: 10, backgroundColor: colors.surfaceLight, borderRadius: 20, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8 }}
               >
                 <Bell size={28} color={colors.primary} />
-                <View style={{ position: 'absolute', top: 12, right: 12, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.error, borderWidth: 2, borderColor: colors.surfaceLight }} />
+                {hasUnreadNotifications && (
+                  <View style={{ position: 'absolute', top: 12, right: 12, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.error, borderWidth: 2, borderColor: colors.surfaceLight }} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -127,34 +135,33 @@ export default function TabNavigator() {
       })}
       initialRouteName="Dashboard"
     >
-      <Tab.Screen 
-        name="Dashboard" 
-        component={HiringDashboardScreen} 
-        options={{ tabBarLabel: 'Home', headerShown: true }}
+      <Tab.Screen
+        name="Dashboard"
+        component={HiringDashboardScreen}
+        options={{ tabBarLabel: 'Home' }}
       />
-      <Tab.Screen 
-        name="MyAuditions" 
-        component={MyAuditionsScreen} 
-        options={{ tabBarLabel: 'My Auditions', headerShown: false }}
+      <Tab.Screen
+        name="MyAuditions"
+        component={MyAuditionsScreen}
+        options={{ tabBarLabel: 'My Auditions' }}
       />
-      <Tab.Screen 
-        name="Inbox" 
-        component={InboxScreen} 
+      <Tab.Screen
+        name="Inbox"
+        component={InboxScreen}
         options={{
           tabBarLabel: 'Inbox',
-          headerShown: false,
           tabBarBadge: totalUnreadCount > 0 ? totalUnreadCount : undefined,
           tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.white }
         }}
       />
-      <Tab.Screen 
-        name="Applicants" 
-        component={AllApplicantsScreen} 
-        options={{ tabBarLabel: 'Applicants', headerShown: false }}
+      <Tab.Screen
+        name="Applicants"
+        component={AllApplicantsScreen}
+        options={{ tabBarLabel: 'Applicants' }}
       />
-      <Tab.Screen 
-        name="Profile" 
-        component={CompanyProfileScreen} 
+      <Tab.Screen
+        name="Profile"
+        component={CompanyProfileScreen}
         options={{ tabBarLabel: 'Profile', headerShown: false }}
       />
     </Tab.Navigator>

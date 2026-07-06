@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Image, FlatList, StatusBar } from 'react-native';
 import { ShieldCheck, Clock, AlertCircle, Video, Star, Users, PlusCircle, Bell, Search, MessageCircle, MapPin, ChevronRight, Briefcase, TrendingUp, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { PieChart, LineChart } from 'react-native-chart-kit';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
-import { useGetDashboardDataQuery } from '../../services/hiringApi';
+import { useGetDashboardDataQuery, useGetNotificationsQuery } from '../../services/hiringApi';
 import AnimatedBorderCard from '../../components/AnimatedBorderCard';
 import { getAuditionLiveStatus } from '../../utils/dateUtils';
 
@@ -29,9 +30,23 @@ const timeAgo = (dateStr) => {
 };
 
 export default function HiringDashboardScreen({ navigation }) {
-  const { data: dashboardResponse, isLoading, isFetching, refetch } = useGetDashboardDataQuery();
+  const { data: dashboardResponse, isLoading, isFetching, refetch: refetchDashboard } = useGetDashboardDataQuery();
+  const { refetch: refetchNotifications } = useGetNotificationsQuery();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchDashboard();
+      refetchNotifications();
+    }, [refetchDashboard, refetchNotifications])
+  );
+
   const data = dashboardResponse?.data;
   const insets = useSafeAreaInsets();
+
+  const handleRefresh = useCallback(() => {
+    refetchDashboard();
+    refetchNotifications();
+  }, [refetchDashboard, refetchNotifications]);
 
   if (isLoading && !data) {
     return (
@@ -479,10 +494,10 @@ export default function HiringDashboardScreen({ navigation }) {
 
 
   return (
-    <View style={[globalStyles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[globalStyles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: spacing.m }]}
-        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={handleRefresh} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
 
@@ -502,7 +517,7 @@ export default function HiringDashboardScreen({ navigation }) {
 
         <View style={{ height: 60 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

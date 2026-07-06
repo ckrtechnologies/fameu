@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, Image , RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
@@ -89,7 +90,7 @@ export default function TalentSearchScreen({ navigation }) {
   );
 
   return (
-    <View style={globalStyles.container}>
+    <SafeAreaView style={globalStyles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <View style={styles.searchBar}>
           <Icon name="search-outline" size={20} color={colors.textMutedLight} />
@@ -139,7 +140,7 @@ export default function TalentSearchScreen({ navigation }) {
         onApply={handleApplyFilters}
         initialFilters={filters}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

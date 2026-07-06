@@ -1,3 +1,4 @@
+import { GlobalAlert } from './core/GlobalAlert';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -116,18 +117,18 @@ export default function CommentsSection({ targetType, targetId, disableComment =
       }
       setInputText('');
     } catch (error) {
-      Alert.alert('Error', 'Failed to post comment.');
+      GlobalAlert.show('Error', 'Failed to post comment.');
     }
   };
 
   const handleDelete = (comment) => {
-    Alert.alert('Delete Comment', 'Are you sure?', [
+    GlobalAlert.show('Delete Comment', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
         try {
           await deleteComment({ type: targetType, commentId: comment.id, targetId }).unwrap();
         } catch (e) {
-          Alert.alert('Error', 'Failed to delete comment.');
+          GlobalAlert.show('Error', 'Failed to delete comment.');
         }
       }}
     ]);

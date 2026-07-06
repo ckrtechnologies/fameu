@@ -66,7 +66,7 @@ app.use('/api/professions', professionRoutes);
 app.use('/api/comments', commentsRoutes);
 // Health Check
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'FilmApp Backend is running' });
+  res.status(200).json({ status: 'ok', message: 'Fameu Backend is running' });
 });
 
 // Global Error Handler

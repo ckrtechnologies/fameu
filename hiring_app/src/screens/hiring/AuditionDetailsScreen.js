@@ -1,3 +1,4 @@
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert , RefreshControl, Linking, Image } from 'react-native';
@@ -38,7 +39,7 @@ export default function AuditionDetailsScreen() {
   }
 
   const handleDelete = () => {
-    Alert.alert('Delete Audition', 'Are you sure you want to delete this audition? This action cannot be undone.', [
+    GlobalAlert.show('Delete Audition', 'Are you sure you want to delete this audition? This action cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
