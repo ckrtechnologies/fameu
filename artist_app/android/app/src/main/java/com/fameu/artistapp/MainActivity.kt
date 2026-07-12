@@ -1,4 +1,4 @@
-package com.artistapp
+package com.fameu.artistapp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

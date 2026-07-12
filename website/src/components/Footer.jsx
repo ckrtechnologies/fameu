@@ -64,7 +64,7 @@ export default function Footer({ onNavigate }) {
           <p>&copy; 2026 Fameuget (ArgosMob Tech & AI Pvt Ltd). All rights reserved.</p>
           <div className="footer-legal">
             <a href="#/safety" onClick={(e) => handleLinkClick(e, 'safety')}>Terms & Conditions</a>
-            <a href="#/safety" onClick={(e) => handleLinkClick(e, 'safety')}>Privacy Policy</a>
+            <a href="#/privacy" onClick={(e) => handleLinkClick(e, 'privacy')}>Privacy Policy</a>
             <a href="#/safety" onClick={(e) => handleLinkClick(e, 'safety')}>Anti-Scam guidelines</a>
           </div>
         </div>

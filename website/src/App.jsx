@@ -10,6 +10,7 @@ import Casting from './pages/Casting';
 import Auditions from './pages/Auditions';
 import Safety from './pages/Safety';
 import Contact from './pages/Contact';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -20,7 +21,7 @@ export default function App() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#/', '') || 'home';
-      const validPages = ['home', 'artists', 'casting', 'auditions', 'safety', 'contact'];
+      const validPages = ['home', 'artists', 'casting', 'auditions', 'safety', 'contact', 'privacy'];
       if (validPages.includes(hash)) {
         setCurrentPage(hash);
       } else {
@@ -58,6 +59,8 @@ export default function App() {
         return <Safety />;
       case 'contact':
         return <Contact />;
+      case 'privacy':
+        return <PrivacyPolicy />;
       default:
         return <Home onNavigate={navigateTo} onOpenModal={openModal} />;
     }

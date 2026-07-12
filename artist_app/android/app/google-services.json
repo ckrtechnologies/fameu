@@ -9,7 +9,45 @@
       "client_info": {
         "mobilesdk_app_id": "1:1050520074741:android:faf881bb02ea2ac4a448bc",
         "android_client_info": {
-          "package_name": "com.artistapp"
+          "package_name": "com.fameu.artistapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCR0Y10TiTAqWoxaTTxpwwv65CzSEWRYE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1050520074741:android:7243c8add69fc1b5a448bc",
+        "android_client_info": {
+          "package_name": "com.fameu.artistapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCR0Y10TiTAqWoxaTTxpwwv65CzSEWRYE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1050520074741:android:22004f8844283a63a448bc",
+        "android_client_info": {
+          "package_name": "com.hiringapp"
         }
       },
       "oauth_client": [],

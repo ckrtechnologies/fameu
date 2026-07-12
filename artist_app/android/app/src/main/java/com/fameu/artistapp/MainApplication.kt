@@ -1,4 +1,4 @@
-package com.artistapp
+package com.fameu.artistapp
 
 import android.app.Application
 import com.facebook.react.PackageList
