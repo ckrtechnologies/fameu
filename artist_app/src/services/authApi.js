@@ -29,6 +29,19 @@ export const authApi = apiSlice.injectEndpoints({
         method: 'DELETE',
       }),
     }),
+    acceptDisclaimer: builder.mutation({
+      query: () => ({
+        url: '/auth/accept-disclaimer',
+        method: 'PATCH',
+      }),
+    }),
+    reportUser: builder.mutation({
+      query: (payload) => ({
+        url: '/auth/report-user',
+        method: 'POST',
+        body: payload,
+      }),
+    }),
   }),
 });
 
@@ -37,4 +50,6 @@ export const {
   useVerifyOtpMutation,
   useSetRoleMutation,
   useDeleteAccountMutation,
+  useAcceptDisclaimerMutation,
+  useReportUserMutation,
 } = authApi;

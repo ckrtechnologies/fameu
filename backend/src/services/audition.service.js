@@ -126,8 +126,29 @@ class AuditionService {
    * Discover Feed (Artist App)
    * Supports filtering by category, gender, and geographic bounding box (for map)
    */
-  async discoverAuditions(filters = {}) {
+  async discoverAuditions(filters = {}, userId = null) {
     let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username))').eq('status', 'active');
+
+    // Home Screen specific filters
+    if (filters.filter === 'live') {
+      const today = new Date().toISOString().split('T')[0];
+      // assuming audition_date or date holds the date
+      query = query.gte('created_at', today); // Fallback: live usually means created today or audition date is today. Let's use is_live = true for today, or order by most recent. For "Live (today)", let's check created_at >= today.
+    }
+
+    if (filters.filter === 'trending') {
+      query = query.order('view_count', { ascending: false });
+    }
+
+    if (filters.filter === 'relevant' && userId) {
+      // Fetch artist profile to match category
+      const { data: profile } = await supabase.from('artist_profiles').select('categories').eq('user_id', userId).single();
+      if (profile && profile.categories && profile.categories.length > 0) {
+        // Just matching the first category for simplicity, or we can fetch all and filter in JS.
+        // Supabase string array overlaps might be complex if category is string, but category is TEXT.
+        filters.category = profile.categories[0];
+      }
+    }
 
     // Existing Filters
     if (filters.search) {
@@ -156,11 +177,8 @@ class AuditionService {
     }
 
     // Sorting
-    if (filters.sort_by === 'Popular') {
-      // For popular, we would sort by applicant_count or views if tracked.
-      // Since we don't track applicant_count in auditions table directly without aggregation, 
-      // fallback to basic created_at or if you have a view_count column:
-      query = query.order('created_at', { ascending: false }); 
+    if (filters.sort_by === 'Popular' || filters.filter === 'trending') {
+      query = query.order('view_count', { ascending: false });
     } else if (filters.sort_by === 'Recent') {
       query = query.order('created_at', { ascending: false });
     } else {

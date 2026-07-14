@@ -15,6 +15,9 @@ router.post('/upsert', profileController.upsertProfile);
 // Dynamic Category Update (Actor, Singer, etc)
 router.post('/category', profileController.updateCategoryDetails);
 
+// Request Verification
+router.post('/verify', profileController.requestVerification);
+
 // Media Uploads via Multer
 // Expects form-data with fields: photos (multiple), video, resume, audio
 router.post('/upload', 

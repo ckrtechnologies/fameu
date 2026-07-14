@@ -4,13 +4,23 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Configure Nodemailer transporter (Gmail)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
 class AuthService {
   /**
-   * Request OTP via MSG91
+   * Request OTP via MSG91 or Email
    */
   async sendOtp(identifier) {
     // Generate a random 4 digit OTP for dev (Replace with actual generation)
@@ -29,29 +39,31 @@ class AuthService {
 
     if (error) throw new Error(`Failed to store OTP: ${error.message}`);
 
-    // Call MSG91 API (Mocked if MSG91_AUTH_KEY is not present)
-    let isMocked = false;
-    if (process.env.MSG91_AUTH_KEY && !identifier.includes('@')) {
-      try {
-        await axios.get(`https://api.msg91.com/api/v5/otp`, {
-          params: {
-            authkey: process.env.MSG91_AUTH_KEY,
-            template_id: process.env.MSG91_TEMPLATE_ID,
-            mobile: identifier,
-            otp: otp
-          }
-        });
-        console.log(`MSG91 OTP sent to ${identifier}`);
-      } catch (err) {
-        console.error('MSG91 Error:', err.response?.data || err.message);
-        throw new Error('Failed to send SMS via MSG91');
-      }
-    } else {
-      console.log(`🔧 [DEV MODE] OTP for ${identifier} is ${otp}`);
-      isMocked = true;
+    // Call Nodemailer
+    if (!identifier.includes('@')) {
+      throw new Error('Only email login is supported');
     }
 
-    return { message: 'OTP sent successfully', devOtp: isMocked ? otp : undefined };
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      try {
+        await transporter.sendMail({
+          from: `"Fameu App" <${process.env.SMTP_USER}>`,
+          to: identifier,
+          subject: 'Your Fameu Login OTP',
+          text: `Your OTP for Fameu is ${otp}. It will expire in 10 minutes.`,
+          html: `<b>Your OTP for Fameu is ${otp}.</b> It will expire in 10 minutes.`
+        });
+        console.log(`Email OTP sent to ${identifier}`);
+      } catch (err) {
+        console.error('Email Error:', err.message);
+        throw new Error('Failed to send OTP via Email. Check SMTP configuration.');
+      }
+    } else {
+      console.warn('⚠️ SMTP credentials missing in .env! Cannot send email OTP.');
+      throw new Error('Email service is not configured. Please contact support.');
+    }
+
+    return { message: 'OTP sent successfully to your email' };
   }
 
   /**

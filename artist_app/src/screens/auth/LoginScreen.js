@@ -28,11 +28,7 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await sendOtp({ identifier }).unwrap();
       console.log('OTP RESPONSE RECVD:', response);
-      if (response.data && response.data.devOtp) {
-        navigation.navigate('Otp', { identifier, autoFillOtp: response.data.devOtp });
-      } else {
-        navigation.navigate('Otp', { identifier });
-      }
+      navigation.navigate('Otp', { identifier });
     } catch (error) {
       showError('', error?.data?.error || error?.message || 'Failed to send OTP');
     }
@@ -63,11 +59,11 @@ const LoginScreen = ({ navigation }) => {
         <Typography variant="h1" style={styles.title}>Welcome Back</Typography>
         
         <CustomInput
-          // label="Email or Mobile Number"
-          placeholder="Enter email or mobile number"
+          // label="Email Address"
+          placeholder="Enter your email address"
           value={identifier}
           onChangeText={setIdentifier}
-          keyboardType="default"
+          keyboardType="email-address"
           autoCapitalize="none"
           leftIcon={<User size={20} color={colors.textMuted} />}
         />

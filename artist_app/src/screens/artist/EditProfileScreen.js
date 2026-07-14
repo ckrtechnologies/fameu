@@ -1,7 +1,7 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform, RefreshControl, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform, RefreshControl, Modal, ScrollView, Switch, Dimensions } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -11,6 +11,21 @@ import Video from 'react-native-video';
 import { colors, typography } from '../../theme/theme';
 import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import TagInput from '../../components/core/TagInput';
+import BottomSheetSelect from '../../components/core/BottomSheetSelect';
+import ValidatedURLInput from '../../components/core/ValidatedURLInput';
+import MediaOrLinkInput from '../../components/core/MediaOrLinkInput';
+import DateRangePicker from '../../components/core/DateRangePicker';
+import { parseArray } from '../../utils/dataUtils';
+
+const HEIGHT_OPTIONS = Array.from({ length: 37 }, (_, i) => {
+  const totalInches = 48 + i; // Start from 4' 0"
+  const feet = Math.floor(totalInches / 12);
+  const inches = totalInches % 12;
+  const cm = Math.round(totalInches * 2.54);
+  return `${feet}' ${inches}" (${cm} cm)`;
+});
+
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -63,16 +78,54 @@ export default function EditProfileScreen() {
     city: '',
     bio: '',
     experience: '',
-    languages: '',
+    languages: [],
     username: '',
+    is_cintaa_member: false,
+    cintaa_reg_number: '',
+    preferred_cities: [],
+    availability_type: '',
+    work_preference: [],
+    available_dates: '',
+    look_alike: [],
+    hashtags: [],
+    intro_video_url: '',
+    left_profile_url: '',
+    right_profile_url: '',
+    recent_assignments: [],
   });
+
+  const [uploadingField, setUploadingField] = useState(null);
+
+  const handleMediaFieldSelect = async (fieldKey, asset) => {
+    setUploadingField(fieldKey);
+    const mFormData = new FormData();
+    mFormData.append('file', {
+      uri: asset.uri,
+      type: asset.type || 'video/mp4',
+      name: asset.fileName || `media_${Date.now()}`
+    });
+
+    try {
+      const res = await uploadGenericFile(mFormData).unwrap();
+      if (res.data?.url) {
+        setFormData(p => ({ ...p, [fieldKey]: res.data.url }));
+        showSuccess('', 'File uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('Upload media error:', error);
+      showError('', 'Failed to upload media file');
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
 
   const [categoryFormData, setCategoryFormData] = useState({});
   const [genderModalVisible, setGenderModalVisible] = useState(false);
 
   const categoriesFromApi = profileResponse?.data?.categories || [];
   const [categories, setCategories] = useState([]);
-  const tabs = ['Basic Info', ...categories];
+  const tabs = ['Basic Info', 'Advanced Info', ...categories];
 
   const isInitialized = React.useRef(false);
 
@@ -113,8 +166,21 @@ export default function EditProfileScreen() {
         city: p.city || '',
         bio: p.bio || '',
         experience: p.experience || '',
-        languages: p.languages ? p.languages.join(', ') : '',
+        experience: p.experience || '',
+        languages: p.languages || [],
         username: p.users?.username || '',
+        is_cintaa_member: p.is_cintaa_member || false,
+        cintaa_reg_number: p.cintaa_reg_number || '',
+        preferred_cities: parseArray(p.preferred_cities),
+        availability_type: p.availability_type || '',
+        work_preference: parseArray(p.work_preference),
+        available_dates: p.available_dates || '',
+        look_alike: parseArray(p.look_alike),
+        hashtags: parseArray(p.hashtags),
+        intro_video_url: p.intro_video_url || '',
+        left_profile_url: p.left_profile_url || '',
+        right_profile_url: p.right_profile_url || '',
+        recent_assignments: p.recent_assignments || [],
       });
 
       if (p.category_details) {
@@ -240,6 +306,25 @@ export default function EditProfileScreen() {
     }
   };
 
+  const addAssignment = () => {
+    setFormData(p => ({ ...p, recent_assignments: [...(p.recent_assignments || []), { title: '', role: '', year: '' }] }));
+  };
+
+  const updateAssignment = (index, key, value) => {
+    setFormData(p => {
+      const newAssignments = [...p.recent_assignments];
+      newAssignments[index][key] = value;
+      return { ...p, recent_assignments: newAssignments };
+    });
+  };
+
+  const removeAssignment = (index) => {
+    setFormData(p => ({
+      ...p,
+      recent_assignments: p.recent_assignments.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSave = async () => {
     try {
       if (!formData.full_name || !formData.full_name.trim()) {
@@ -289,7 +374,13 @@ export default function EditProfileScreen() {
         ...formData,
         categories, // Save the currently active categories
         age: formData.age ? parseInt(formData.age, 10) : null,
-        languages: formData.languages ? formData.languages.split(',').map(s => s.trim()).filter(s => s) : [],
+        is_cintaa_member: !!formData.is_cintaa_member,
+        cintaa_reg_number: formData.is_cintaa_member ? formData.cintaa_reg_number : null,
+        languages: parseArray(formData.languages),
+        preferred_cities: parseArray(formData.preferred_cities),
+        look_alike: parseArray(formData.look_alike),
+        hashtags: parseArray(formData.hashtags),
+        work_preference: parseArray(formData.work_preference),
       };
 
       const savedProfile = await upsertProfile(payload).unwrap();
@@ -494,6 +585,37 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
+              <Text style={styles.label}>Are you a CINTAA Member?</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Switch
+                  value={formData.is_cintaa_member}
+                  onValueChange={(val) => setFormData(p => ({ ...p, is_cintaa_member: val }))}
+                  trackColor={{ false: colors.borderLight, true: colors.primary + '80' }}
+                  thumbColor={formData.is_cintaa_member ? colors.primary : '#f4f3f4'}
+                />
+                <Text style={{ ...typography.body, marginLeft: 10, color: colors.textMainLight }}>
+                  {formData.is_cintaa_member ? 'Yes' : 'No'}
+                </Text>
+              </View>
+            </View>
+            
+            {formData.is_cintaa_member && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>CINTAA Registration Number</Text>
+                <View style={styles.inputContainer}>
+                  <Icon name="card-outline" size={20} color={colors.textSecondaryLight} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={formData.cintaa_reg_number}
+                    onChangeText={(text) => setFormData(p => ({ ...p, cintaa_reg_number: text }))}
+                    placeholder="Enter Reg Number"
+                    placeholderTextColor={colors.textSecondaryLight}
+                  />
+                </View>
+              </View>
+            )}
+
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>Full Name *</Text>
               <TextInput
                 style={styles.input}
@@ -557,35 +679,25 @@ export default function EditProfileScreen() {
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                 <Text style={styles.label}>Height</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. 5'9''"
-                  placeholderTextColor={colors.textMutedLight}
+                <BottomSheetSelect
+                  placeholder="Select Height"
+                  options={HEIGHT_OPTIONS}
                   value={formData.height}
-                  onChangeText={(t) => setFormData(p => ({ ...p, height: t }))}
+                  onSelect={(t) => setFormData(p => ({ ...p, height: t }))}
+                  style={[styles.input, { paddingVertical: 14 }]}
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.label}>Weight</Text>
+                <Text style={styles.label}>Weight (kg)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. 70kg"
+                  placeholder="e.g. 75"
+                  keyboardType="numeric"
                   placeholderTextColor={colors.textMutedLight}
                   value={formData.weight}
                   onChangeText={(t) => setFormData(p => ({ ...p, weight: t }))}
                 />
               </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>City</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Mumbai"
-                placeholderTextColor={colors.textMutedLight}
-                value={formData.city}
-                onChangeText={(t) => setFormData(p => ({ ...p, city: t }))}
-              />
             </View>
 
             <View style={styles.inputGroup}>
@@ -601,14 +713,124 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Languages (comma separated)</Text>
-              <TextInput
-                style={styles.input}
+              <Text style={styles.label}>Languages</Text>
+              <TagInput
+                tags={formData.languages}
+                onTagsChange={(t) => setFormData(p => ({ ...p, languages: t }))}
                 placeholder="e.g. English, Hindi"
-                placeholderTextColor={colors.textMutedLight}
-                value={formData.languages}
-                onChangeText={(t) => setFormData(p => ({ ...p, languages: t }))}
               />
+            </View>
+
+          </>
+        ) : activeTab === 'Advanced Info' ? (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Preferred Cities</Text>
+              <TagInput
+                tags={formData.preferred_cities}
+                onTagsChange={(t) => setFormData(p => ({ ...p, preferred_cities: t }))}
+                placeholder="e.g. Mumbai, Delhi"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Availability Type</Text>
+              <BottomSheetSelect
+                value={formData.availability_type}
+                options={['Full Time', 'Part Time', 'Freelance']}
+                onSelect={(t) => setFormData(p => ({ ...p, availability_type: t }))}
+                placeholder="Select Availability"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Available Dates</Text>
+              <DateRangePicker
+                value={formData.available_dates}
+                onSelect={(t) => setFormData(p => ({ ...p, available_dates: t }))}
+                placeholder="Select Dates"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Work Preference</Text>
+              <BottomSheetSelect
+                placeholder="Select Preference"
+                options={['Commercials', 'Movies', 'Web Series', 'Theater', 'Any']}
+                value={formData.work_preference}
+                onSelect={(val) => setFormData(p => ({ ...p, work_preference: val }))}
+                style={styles.selectInput}
+                multiSelect={true}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Look Alike</Text>
+              <TagInput
+                tags={formData.look_alike}
+                onTagsChange={(t) => setFormData(p => ({ ...p, look_alike: t }))}
+                placeholder="e.g. Shahrukh Khan"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Hashtags</Text>
+              <TagInput
+                tags={formData.hashtags}
+                onTagsChange={(t) => setFormData(p => ({ ...p, hashtags: t }))}
+                placeholder="e.g. actor, model"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Intro Video URL</Text>
+              <MediaOrLinkInput
+                placeholder="YouTube, Insta or Upload"
+                value={formData.intro_video_url}
+                onChangeText={(t) => setFormData(p => ({ ...p, intro_video_url: t }))}
+                platform="any"
+                onFileSelect={(file) => handleMediaFieldSelect('intro_video_url', file)}
+                isUploading={uploadingField === 'intro_video_url'}
+              />
+            </View>
+
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Recent Assignments</Text>
+              {(formData.recent_assignments || []).map((assignment, index) => (
+                <View key={index} style={{ marginBottom: 15, padding: 15, backgroundColor: colors.backgroundLight, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}>
+                  <TextInput
+                    style={[styles.input, { marginBottom: 10 }]}
+                    placeholder="Project Title (e.g. Fameu Ad)"
+                    placeholderTextColor={colors.textMutedLight}
+                    value={assignment.title}
+                    onChangeText={(text) => updateAssignment(index, 'title', text)}
+                  />
+                  <TextInput
+                    style={[styles.input, { marginBottom: 10 }]}
+                    placeholder="Role (e.g. Lead Actor)"
+                    placeholderTextColor={colors.textMutedLight}
+                    value={assignment.role}
+                    onChangeText={(text) => updateAssignment(index, 'role', text)}
+                  />
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <TextInput
+                      style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 10 }]}
+                      placeholder="Year (e.g. 2023)"
+                      placeholderTextColor={colors.textMutedLight}
+                      value={assignment.year}
+                      onChangeText={(text) => updateAssignment(index, 'year', text)}
+                      keyboardType="numeric"
+                    />
+                    <TouchableOpacity onPress={() => removeAssignment(index)} style={{ padding: 10, backgroundColor: '#FFEAEA', borderRadius: 8 }}>
+                      <Icon name="trash-outline" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              <TouchableOpacity onPress={addAssignment} style={{ padding: 15, alignItems: 'center', backgroundColor: colors.primary + '15', borderRadius: 8 }}>
+                <Text style={{ color: colors.primary, fontWeight: 'bold' }}>+ Add Assignment</Text>
+              </TouchableOpacity>
             </View>
           </>
         ) : (

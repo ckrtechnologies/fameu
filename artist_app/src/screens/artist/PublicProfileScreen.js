@@ -1,14 +1,18 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, TextInput } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, User, Play, ChevronRight, Youtube, Instagram, Link, X } from 'lucide-react-native';
+import { ArrowLeft, User, Play, ChevronRight, Youtube, Link, X, AlertTriangle } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { WebView } from 'react-native-webview';
+import { parseArray } from '../../utils/dataUtils';
 import { useSelector } from 'react-redux';
 import { colors, typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import VerifiedBadge from '../../components/core/VerifiedBadge';
 import CustomButton from '../../components/forms/CustomButton';
 import { 
   useGetPublicProfileQuery, 
@@ -17,9 +21,12 @@ import {
   useRecordVisitMutation
 } from '../../services/connectionsApi';
 import { useStartConversationMutation } from '../../services/chatApi';
+import { useReportUserMutation } from '../../services/authApi';
 import { useGetFeedQuery } from '../../services/discoverApi';
 import { Video as IconVideo, Camera as IconCamera } from 'lucide-react-native';
 import CommentsSection from '../../components/CommentsSection';
+import { getVideoInfo } from '../../utils/media';
+
 export default function PublicProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -56,6 +63,25 @@ export default function PublicProfileScreen() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportUser, { isLoading: isReporting }] = useReportUserMutation();
+
+  const handleReport = async () => {
+    if (!reportReason.trim()) {
+      showError('', 'Please provide a reason');
+      return;
+    }
+    try {
+      await reportUser({ reported_user_id: profileData.id, reason: reportReason.trim() }).unwrap();
+      setIsReportModalVisible(false);
+      setReportReason('');
+      showSuccess('', 'User reported successfully');
+    } catch (error) {
+      showError('', error?.data?.error || 'Failed to report user');
+    }
+  };
 
   const handleFollowToggle = async () => {
     if (!profileData) return;
@@ -116,7 +142,13 @@ export default function PublicProfileScreen() {
           <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <Typography variant="body" style={styles.headerTitle}>@{profileData.username}</Typography>
-        <View style={{ width: 40 }} />
+        {!isSelf ? (
+          <TouchableOpacity onPress={() => setIsReportModalVisible(true)} style={{ width: 40, alignItems: 'center' }}>
+            <AlertTriangle size={24} color={colors.error} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
       </View>
 
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
@@ -153,7 +185,10 @@ export default function PublicProfileScreen() {
         </View>
 
         <View style={styles.bioSection}>
-          <Typography variant="body" style={styles.nameText}>{profileData.name}</Typography>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Typography variant="body" style={[styles.nameText, { marginBottom: 0 }]}>{profileData.name}</Typography>
+            {profileData.profile?.is_verified && <VerifiedBadge size={22} style={{ marginLeft: 6 }} />}
+          </View>
           <Typography variant="body" style={styles.roleText}>{profileData.role === 'artist' ? 'Artist' : 'Recruiter'}</Typography>
           {profileData.profile?.bio && (
             <Typography variant="body" style={styles.bioText}>{profileData.profile.bio}</Typography>
@@ -203,21 +238,188 @@ export default function PublicProfileScreen() {
             
             {activeTab === 'Overview' ? (
               <View style={styles.portfolioSection}>
+                {/* Intro Video Section */}
+                {profileData.profile.intro_video_url && (
+                  <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+                    <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Intro Video</Typography>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        const info = getVideoInfo(profileData.profile.intro_video_url);
+                        if (info?.type !== 'direct') {
+                          import('react-native').then(({ Linking }) => {
+                            Linking.openURL(profileData.profile.intro_video_url).catch(() => {});
+                          });
+                        } else {
+                          navigation.navigate('VideoPortfolio', { videos: [profileData.profile.intro_video_url], initialIndex: 0 });
+                        }
+                      }}
+                      style={[styles.galleryItem, { width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden' }]}
+                    >
+                      {(() => {
+                        const info = getVideoInfo(profileData.profile.intro_video_url);
+                        if (info?.thumbnail === 'INSTAGRAM') {
+                          return (
+                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                              <Icon name="logo-instagram" color={colors.primary} size={48} />
+                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram Reel</Text>
+                            </View>
+                          );
+                        }
+                        if (info?.thumbnail === 'LINK') {
+                          return (
+                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
+                            </View>
+                          );
+                        }
+                        if (info?.thumbnail) {
+                          return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' }} />;
+                        }
+                        return <Video source={{ uri: profileData.profile.intro_video_url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
+                      })()}
+                      <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                        <Play size={50} color={colors.white} />
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Video Portfolio Grid */}
+                {typeof profileData.profile.video_url === 'string' && profileData.profile.video_url.trim().length > 0 && (
+                  <View style={{ marginBottom: 24 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: 12 }}>
+                      <Typography variant="body" style={{ ...typography.h3, color: colors.primary }}>Video Portfolio</Typography>
+                      <TouchableOpacity onPress={() => navigation.navigate('VideoPortfolio', { videos: profileData.profile.video_url.split(',').filter(Boolean) })}>
+                        <Typography variant="body" style={{ color: colors.primary, fontWeight: 'bold' }}>See All</Typography>
+                      </TouchableOpacity>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                      {profileData.profile.video_url.split(',').filter(Boolean).map((vUrl, idx) => {
+                        const info = getVideoInfo(vUrl);
+                        return (
+                          <TouchableOpacity 
+                            key={`vid-${idx}`}
+                            style={{ width: 140, height: 200, borderRadius: 12, backgroundColor: colors.surfaceDark, marginRight: 12, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}
+                            onPress={() => {
+                              if (info?.type !== 'direct') {
+                                import('react-native').then(({ Linking }) => {
+                                  Linking.openURL(vUrl).catch(() => {});
+                                });
+                              } else {
+                                navigation.navigate('VideoPortfolio', { videos: profileData.profile.video_url.split(',').filter(Boolean), initialIndex: idx });
+                              }
+                            }}
+                          >
+                            {info?.thumbnail === 'INSTAGRAM' ? (
+                              <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon name="logo-instagram" color={colors.primary} size={32} />
+                                <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
+                              </View>
+                            ) : info?.thumbnail === 'LINK' ? (
+                              <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
+                              </View>
+                            ) : info?.thumbnail ? (
+                              <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
+                            ) : (
+                              <Video source={{ uri: vUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                            )}
+                            <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                              <Play size={32} color={colors.white} />
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+
                 <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
                   <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Basic Info</Typography>
-                  {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills'].map((k) => {
+                  {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
                     const v = profileData.profile[k];
                     if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                    const label = k.charAt(0).toUpperCase() + k.slice(1);
+                    const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     const value = Array.isArray(v) ? v.join(', ') : String(v);
                     return (
                       <View key={k} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, width: 80 }}>{label}</Typography>
+                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, width: 110 }}>{label}</Typography>
                         <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>{value}</Typography>
                       </View>
                     );
                   })}
+                  {/* CINTAA Info */}
+                  {profileData.profile.is_cintaa_member && (
+                    <View style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
+                      <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, width: 110 }}>CINTAA Member</Typography>
+                      <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>Yes ({profileData.profile.cintaa_reg_number})</Typography>
+                    </View>
+                  )}
                 </View>
+
+                {/* Tags / Preferences Section */}
+                {(profileData.profile.work_preference?.length > 0 || profileData.profile.preferred_cities?.length > 0 || profileData.profile.look_alike?.length > 0 || profileData.profile.hashtags?.length > 0) && (
+                  <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+                    <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Preferences & Tags</Typography>
+                    
+                    {profileData.profile.work_preference?.length > 0 && (
+                      <View style={{ marginBottom: 16 }}>
+                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Work Preference</Typography>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                          {parseArray(profileData.profile.work_preference).map((t, i) => (
+                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>{t}</Typography></View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+                    
+                    {profileData.profile.preferred_cities?.length > 0 && (
+                      <View style={{ marginBottom: 16 }}>
+                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Preferred Locations</Typography>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                          {parseArray(profileData.profile.preferred_cities).map((t, i) => (
+                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>{t}</Typography></View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+
+                    {profileData.profile.look_alike?.length > 0 && (
+                      <View style={{ marginBottom: 16 }}>
+                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Look Alikes</Typography>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                          {parseArray(profileData.profile.look_alike).map((t, i) => (
+                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>{t}</Typography></View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+
+                    {profileData.profile.hashtags?.length > 0 && (
+                      <View style={{ marginBottom: 16 }}>
+                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Hashtags</Typography>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                          {parseArray(profileData.profile.hashtags).map((t, i) => (
+                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>#{t}</Typography></View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Recent Assignments Section */}
+                {profileData.profile.recent_assignments?.length > 0 && (
+                  <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+                    <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Typography>
+                    {parseArray(profileData.profile.recent_assignments).map((assignment, idx) => (
+                      <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
+                        <Typography variant="body" style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Typography>
+                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>{assignment.role ? `Role: ${assignment.role}` : ''} {assignment.year ? `• ${assignment.year}` : ''}</Typography>
+                      </View>
+                    ))}
+                  </View>
+                )}
                 
                 <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
                   <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Typography>
@@ -229,13 +431,20 @@ export default function PublicProfileScreen() {
                   ) : (
                     <View>
                       {/* Video Section */}
-                      {profileData.profile.video_url ? (
+                      {typeof profileData.profile.video_url === 'string' && profileData.profile.video_url.trim().length > 0 ? (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0, marginBottom: 16 }}>
-                          {profileData.profile.video_url.split(',').map((vidUrl, index) => (
+                          {profileData.profile.video_url.split(',').filter(Boolean).map((vidUrl, index) => (
                             <TouchableOpacity 
                               key={index} 
                               onPress={() => {
-                                navigation.navigate('VideoPortfolio', { videos: profileData.profile.video_url.split(','), initialIndex: index });
+                                const info = getVideoInfo(profileData.profile.video_url.split(',').filter(Boolean)[index]);
+                                if (info?.type !== 'direct') {
+                                  import('react-native').then(({ Linking }) => {
+                                    Linking.openURL(profileData.profile.video_url.split(',').filter(Boolean)[index]).catch(() => {});
+                                  });
+                                } else {
+                                  navigation.navigate('VideoPortfolio', { videos: profileData.profile.video_url.split(',').filter(Boolean), initialIndex: index });
+                                }
                               }}
                               style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s }]}
                             >
@@ -248,7 +457,7 @@ export default function PublicProfileScreen() {
                       {/* Photo Section */}
                       {profileData.profile.photo_urls && profileData.profile.photo_urls.length > 0 ? (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
-                          {profileData.profile.photo_urls.map((imgUrl, index) => (
+                          {parseArray(profileData.profile.photo_urls).map((imgUrl, index) => (
                             <TouchableOpacity key={index} onPress={() => { setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
                               <Image source={{ uri: imgUrl }} style={styles.galleryItem} />
                             </TouchableOpacity>
@@ -262,6 +471,7 @@ export default function PublicProfileScreen() {
             ) : (
               <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
                 {(() => {
+                  const categories = parseArray(profileData?.profile?.categories);
                   const details = profileData.profile.category_details?.[activeTab.toLowerCase()];
                   if (!details) {
                     return (
@@ -364,7 +574,7 @@ export default function PublicProfileScreen() {
                                   onPress={() => Linking.openURL(urlStr)}
                                   style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fdf4ff', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#fbcfe8' }}
                                 >
-                                  <Instagram size={24} color="#db2777" style={{ marginRight: 12 }} />
+                                  <Icon name="logo-instagram" size={24} color="#db2777" style={{ marginRight: 12 }} />
                                   <Typography variant="body" style={{ ...typography.body, color: '#db2777', fontWeight: 'bold' }}>View on Instagram</Typography>
                                 </TouchableOpacity>
                               </View>
@@ -517,6 +727,41 @@ export default function PublicProfileScreen() {
           )}
         </View>
       </Modal>
+
+      {/* Report Modal */}
+      <Modal visible={isReportModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsReportModalVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '80%', backgroundColor: colors.surfaceLight, borderRadius: 12, padding: spacing.l }}>
+            <Typography variant="body" style={{ ...typography.h3, color: colors.textMainLight, marginBottom: spacing.m }}>Report User</Typography>
+            <Typography variant="body" style={{ color: colors.textMutedLight, marginBottom: spacing.s }}>Why are you reporting this profile?</Typography>
+            <TextInput
+              style={{
+                backgroundColor: colors.surfaceDark,
+                color: colors.textMainLight,
+                borderRadius: 8,
+                padding: spacing.m,
+                minHeight: 100,
+                textAlignVertical: 'top',
+                marginBottom: spacing.l
+              }}
+              placeholder="e.g. Inappropriate content, spam, fake profile..."
+              placeholderTextColor={colors.textMutedLight}
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.m }}>
+              <TouchableOpacity onPress={() => setIsReportModalVisible(false)} style={{ paddingVertical: spacing.s, paddingHorizontal: spacing.m }}>
+                <Typography variant="body" style={{ color: colors.textMutedLight, fontWeight: 'bold' }}>Cancel</Typography>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleReport} disabled={isReporting} style={{ paddingVertical: spacing.s, paddingHorizontal: spacing.m, backgroundColor: colors.error, borderRadius: 8 }}>
+                {isReporting ? <ActivityIndicator color={colors.white} /> : <Typography variant="body" style={{ color: colors.white, fontWeight: 'bold' }}>Report</Typography>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }

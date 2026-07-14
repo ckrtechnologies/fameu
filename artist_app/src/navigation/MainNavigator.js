@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DrawerNavigator from './DrawerNavigator';
 
 import AuditionDetailScreen from '../screens/artist/AuditionDetailScreen';
+import TutorialScreen from '../screens/artist/TutorialScreen';
 import ApplyAuditionScreen from '../screens/artist/ApplyAuditionScreen';
 import ApplicationDetailScreen from '../screens/artist/ApplicationDetailScreen';
 import NotificationsScreen from '../screens/artist/NotificationsScreen';
@@ -11,7 +12,7 @@ import ArtistSettingsScreen from '../screens/artist/ArtistSettingsScreen';
 import EditProfileScreen from '../screens/artist/EditProfileScreen';
 import PhotoGalleryScreen from '../screens/artist/PhotoGalleryScreen';
 import VideoPortfolioScreen from '../screens/artist/VideoPortfolioScreen';
-import ResumeScreen from '../screens/artist/ResumeScreen';
+
 import VerificationScreen from '../screens/artist/VerificationScreen';
 import ArtistCategoryScreen from '../screens/artist/ArtistCategoryScreen';
 import ArtistFormScreen from '../screens/artist/ArtistFormScreen';
@@ -27,6 +28,7 @@ import PublicProfileScreen from '../screens/artist/PublicProfileScreen';
 import ConnectionListScreen from '../screens/artist/ConnectionListScreen';
 import SavedAuditionsScreen from '../screens/artist/SavedAuditionsScreen';
 import ProfileVisitorsScreen from '../screens/artist/ProfileVisitorsScreen';
+import LegalScreen from '../screens/artist/LegalScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,7 +47,7 @@ export default function MainNavigator() {
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="PhotoGallery" component={PhotoGalleryScreen} />
       <Stack.Screen name="VideoPortfolio" component={VideoPortfolioScreen} />
-      <Stack.Screen name="Resume" component={ResumeScreen} />
+
       <Stack.Screen name="Verification" component={VerificationScreen} />
       <Stack.Screen name="ArtistCategory" component={ArtistCategoryScreen} />
       <Stack.Screen name="ArtistForm" component={ArtistFormScreen} />
@@ -61,6 +63,8 @@ export default function MainNavigator() {
       <Stack.Screen name="ConnectionList" component={ConnectionListScreen} />
       <Stack.Screen name="SavedAuditions" component={SavedAuditionsScreen} />
       <Stack.Screen name="ProfileVisitors" component={ProfileVisitorsScreen} />
+      <Stack.Screen name="Legal" component={LegalScreen} />
+      <Stack.Screen name="Tutorial" component={TutorialScreen} />
     </Stack.Navigator>
   );
 }

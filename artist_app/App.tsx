@@ -15,6 +15,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification } from '@react-native-firebase/messaging';
 import { setupPushNotifications } from './src/services/PushNotificationService';
 import { colors, typography } from './src/theme/theme';
+import { ThemeProvider } from './src/theme/ThemeProvider';
 
 import Toast from 'react-native-toast-message';
 import ErrorBoundary from './src/components/core/ErrorBoundary';
@@ -335,12 +336,14 @@ function App(): React.JSX.Element {
     <ErrorBoundary>
     <Provider store={store}>
       <SafeAreaProvider>
-        <GlobalStatusBar />
-        <NavigationContainer ref={navigationRef}>
-          <AppNavigator />
-        </NavigationContainer>
-        <Toast config={toastConfig} />
-        <GlobalAlertProvider ref={GlobalAlertRef} />
+        <ThemeProvider>
+          <GlobalStatusBar />
+          <NavigationContainer ref={navigationRef}>
+            <AppNavigator />
+          </NavigationContainer>
+          <Toast config={toastConfig} />
+          <GlobalAlertProvider ref={GlobalAlertRef} />
+        </ThemeProvider>
       </SafeAreaProvider>
     </Provider>  
     </ErrorBoundary>

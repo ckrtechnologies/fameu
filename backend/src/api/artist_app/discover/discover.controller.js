@@ -9,7 +9,7 @@ class ArtistDiscoverController {
   async getFeed(req, res, next) {
     try {
       const filters = req.query; // ?category=actor&minLat=...&maxLat=...
-      const result = await auditionService.discoverAuditions(filters);
+      const result = await auditionService.discoverAuditions(filters, req.user?.id);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);

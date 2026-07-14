@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Image, Dimensions, Modal, Text } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { colors, typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery } from '../../services/discoverApi';
 import { useGetProfileQuery } from '../../services/profileApi';
+import { useAcceptDisclaimerMutation } from '../../services/authApi';
+import { logout } from '../../store/slices/authSlice';
 import { LineChart } from 'react-native-chart-kit';
 import { Search, MessageCircle, Briefcase, Users, Bell, Bookmark, TrendingUp, Compass, Star, ChevronRight, Video, Calendar, ShieldCheck } from 'lucide-react-native';
 
@@ -31,9 +33,12 @@ const timeAgo = (dateStr) => {
 
 export default function ArtistDashboardScreen() {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
+  const token = useSelector(state => state.auth.token);
   const insets = useSafeAreaInsets();
   
+  const [acceptDisclaimer, { isLoading: isAccepting }] = useAcceptDisclaimerMutation();
   const { data: profileResponse, refetch: refetchProfile } = useGetProfileQuery();
   const profile = profileResponse?.data;
   
@@ -471,6 +476,47 @@ export default function ArtistDashboardScreen() {
   // 15. Recent Profile Visitors Removed
   return (
     <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <Modal
+        visible={user && !user.disclaimer_accepted}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.disclaimerOverlay}>
+          <View style={styles.disclaimerContainer}>
+            <Text style={styles.disclaimerTitle}>Disclaimer</Text>
+            <Text style={styles.disclaimerText}>
+              We request all users to check the credentials of the hiring / artists and verify the same independently before deciding to work with them.
+            </Text>
+            <Text style={styles.disclaimerText}>
+              You should never transfer any money to anyone claiming to be representing FAMEU and demanding money for Artist card, Audition fee, Travel ETC.
+            </Text>
+            
+            <View style={styles.disclaimerActions}>
+              <TouchableOpacity 
+                style={[styles.disclaimerBtn, styles.disclaimerBtnDeny]} 
+                onPress={() => dispatch(logout())}
+              >
+                <Text style={styles.disclaimerBtnText}>Deny</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.disclaimerBtn, styles.disclaimerBtnAgree]} 
+                onPress={async () => {
+                  try {
+                    await acceptDisclaimer().unwrap();
+                    dispatch({ type: 'auth/setCredentials', payload: { user: { ...user, disclaimer_accepted: true }, token } });
+                  } catch (e) {
+                    console.error("Failed to accept disclaimer", e);
+                  }
+                }}
+                disabled={isAccepting}
+              >
+                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnText}>I Agree</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView 
         style={styles.container} 
         showsVerticalScrollIndicator={false}
@@ -578,8 +624,18 @@ const styles = StyleSheet.create({
 
   // 15. Visitors
   visitorsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  visitorAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#cbd5e1', borderWidth: 2, borderColor: '#fff' },
   visitorCountBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginLeft: -15, borderWidth: 2, borderColor: '#fff' },
 
-  bottomSpacer: { height: 100 }
+  bottomSpacer: { height: 100 },
+
+  // Disclaimer Modal
+  disclaimerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  disclaimerContainer: { backgroundColor: colors.surfaceLight, borderRadius: 16, padding: 24, width: '100%', maxWidth: 400 },
+  disclaimerTitle: { ...typography.h2, color: colors.textMainLight, marginBottom: 16, textAlign: 'center' },
+  disclaimerText: { ...typography.body, color: colors.textMutedLight, marginBottom: 16, lineHeight: 22 },
+  disclaimerActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
+  disclaimerBtn: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
+  disclaimerBtnDeny: { backgroundColor: colors.surfaceDark, marginRight: 10 },
+  disclaimerBtnAgree: { backgroundColor: colors.primary, marginLeft: 10 },
+  disclaimerBtnText: { color: '#fff', fontWeight: 'bold' }
 });

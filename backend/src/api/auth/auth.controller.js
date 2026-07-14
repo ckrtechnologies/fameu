@@ -76,6 +76,45 @@ class AuthController {
     }
   }
 
+  async acceptDisclaimer(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { data, error } = await supabase
+        .from('users')
+        .update({ disclaimer_accepted: true })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      res.status(200).json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async reportUser(req, res, next) {
+    try {
+      const reporterId = req.user.id;
+      const { reported_user_id, reason } = req.body;
+      
+      if (!reported_user_id || !reason) {
+        return res.status(400).json({ success: false, error: 'reported_user_id and reason are required' });
+      }
+
+      const { data, error } = await supabase
+        .from('fraud_reports')
+        .insert([{ reported_by: reporterId, reported_user_id, reason }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      res.status(201).json({ success: true, data, message: 'Report submitted successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async deleteAccount(req, res, next) {
     try {
       const userId = req.user.id;

@@ -60,6 +60,25 @@ class ArtistProfileController {
     }
   }
 
+  async requestVerification(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { documentUrl, socialLinks } = req.body;
+
+      if (!socialLinks) {
+        return res.status(400).json({ success: false, error: 'Social links are required for verification.' });
+      }
+
+      const result = await artistService.submitVerificationRequest(userId, { documentUrl, socialLinks });
+      res.status(200).json(result);
+    } catch (err) {
+      if (err.message.includes('already have a pending')) {
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      next(err);
+    }
+  }
+
   /**
    * Handle media uploads directly to local Express server via Multer
    */

@@ -3,26 +3,15 @@ import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Dimensions, Platform, Image, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Play, X, Volume2, VolumeX, Trash2 } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Video from 'react-native-video';
-import { WebView } from 'react-native-webview';
 import { colors, typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetProfileQuery, useUpsertProfileMutation } from '../../services/profileApi';
+import { getVideoInfo } from '../../utils/media';
 
 const { width, height } = Dimensions.get('window');
-
-const getYoutubeVideoId = (url) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-};
-
-const getVideoThumbnail = (url) => {
-  const id = getYoutubeVideoId(url);
-  return id ? `https://img.youtube.com/vi/${id}/0.jpg` : null;
-};
 
 export default function VideoPortfolioScreen() {
   const navigation = useNavigation();
@@ -87,20 +76,12 @@ export default function VideoPortfolioScreen() {
 
   const renderVideoItem = ({ item, index }) => {
     const isActive = activeVideoIndex === index;
-    const ytThumb = getVideoThumbnail(item);
+    const videoInfo = getVideoInfo(item);
 
     return (
       <View style={styles.videoContainer}>
         {isActive ? (
           <View style={styles.activeVideoWrapper}>
-            {ytThumb ? (
-              <WebView
-                source={{ uri: `https://www.youtube.com/embed/${getYoutubeVideoId(item)}?autoplay=1&rel=0` }}
-                style={styles.fullVideo}
-                allowsInlineMediaPlayback={true}
-                mediaPlaybackRequiresUserAction={false}
-              />
-            ) : (
               <>
                 <Video
                   source={{ uri: item }}
@@ -118,7 +99,6 @@ export default function VideoPortfolioScreen() {
                    </View>
                 )}
               </>
-            )}
             <TouchableOpacity 
               style={styles.closeActiveBtn}
               onPress={() => setActiveVideoIndex(null)}
@@ -129,11 +109,28 @@ export default function VideoPortfolioScreen() {
         ) : (
           <>
             <TouchableOpacity 
-              style={[styles.thumbnailPlaceholder, { overflow: 'hidden' }]}
-              onPress={() => setActiveVideoIndex(index)}
+              style={[styles.thumbnailPlaceholder, { overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }]}
+              onPress={() => {
+                if (videoInfo?.type === 'direct') {
+                  setActiveVideoIndex(index);
+                } else {
+                  import('react-native').then(({ Linking }) => {
+                    Linking.openURL(item).catch(() => GlobalAlert.show('Error', 'Could not open link.'));
+                  });
+                }
+              }}
             >
-              {ytThumb ? (
-                <Image source={{ uri: ytThumb }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
+              {videoInfo?.thumbnail === 'INSTAGRAM' ? (
+                <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                  <Icon name="logo-instagram" color={colors.primary} size={48} />
+                  <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
+                </View>
+              ) : videoInfo?.thumbnail === 'LINK' ? (
+                <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
+                </View>
+              ) : videoInfo?.thumbnail ? (
+                <Image source={{ uri: videoInfo.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
               ) : (
                 <Video source={{ uri: item }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
               )}

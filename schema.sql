@@ -10,6 +10,7 @@ CREATE TABLE users (
   following_count INT DEFAULT 0,
   is_active       BOOLEAN DEFAULT TRUE,
   is_blacklisted  BOOLEAN DEFAULT FALSE,
+  disclaimer_accepted BOOLEAN DEFAULT FALSE,
   fcm_token       TEXT,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
@@ -65,6 +66,20 @@ CREATE TABLE artist_profiles (
   resume_url            TEXT,
   audio_url             TEXT,
   social_links          JSONB,
+  is_cintaa_member      BOOLEAN DEFAULT FALSE,
+  cintaa_reg_number     TEXT,
+  availability_type     TEXT,
+  available_dates       JSONB,
+  work_preference       TEXT[],
+  preferred_cities      TEXT[],
+  look_alike            TEXT[],
+  hashtags              TEXT[],
+  intro_video_url       TEXT,
+  left_profile_url      TEXT,
+  right_profile_url     TEXT,
+  recent_assignments    JSONB,
+  alternate_phone       TEXT,
+  alternate_email       TEXT,
   is_verified           BOOLEAN DEFAULT FALSE,
   verification_status   TEXT DEFAULT 'unverified',
   profile_complete_pct  INT DEFAULT 0,
@@ -209,6 +224,7 @@ CREATE TABLE fraud_reports (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reported_by  UUID REFERENCES users(id) ON DELETE SET NULL,
   audition_id  UUID REFERENCES auditions(id) ON DELETE CASCADE,
+  reported_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   reason       TEXT NOT NULL,
   status       TEXT DEFAULT 'open',
   action_taken TEXT,
@@ -360,3 +376,13 @@ CREATE TABLE profile_visits (
   UNIQUE(profile_user_id, viewer_id)
 );
 CREATE INDEX ON profile_visits(profile_user_id, visited_at DESC);
+
+CREATE TABLE verification_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  document_url TEXT,
+  social_links TEXT,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);

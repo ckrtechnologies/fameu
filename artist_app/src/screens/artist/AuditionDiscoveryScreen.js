@@ -9,8 +9,9 @@ import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetFeedQuery } from '../../services/discoverApi';
 
 const CATEGORY_MAP = {
-  'All': 'All',
-  'Live Now': 'Live Now',
+  'Relevant': 'Relevant',
+  'Live (Today)': 'Live (Today)',
+  'Trending': 'Trending',
   'Acting': 'Actor',
   'Modeling': 'Model',
   'Singing': 'Singer',
@@ -24,7 +25,7 @@ export default function AuditionDiscoveryScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'All');
+  const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'Relevant');
 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -44,9 +45,11 @@ export default function AuditionDiscoveryScreen() {
   const GENDERS = ['All', 'Male', 'Female', 'Other', 'Any'];
 
   const queryParams = { search };
-  if (activeCategory === 'Live Now') {
+  if (activeCategory === 'Live (Today)') {
     queryParams.is_live = true;
-  } else if (activeCategory !== 'All') {
+  } else if (activeCategory === 'Trending') {
+    queryParams.filter = 'trending';
+  } else if (activeCategory !== 'Relevant') {
     queryParams.category = CATEGORY_MAP[activeCategory];
   }
   if (filters.project_type !== 'All') queryParams.project_type = filters.project_type;
