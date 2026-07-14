@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Image, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { colors, typography, spacing } from '../../theme/theme';
@@ -10,7 +10,6 @@ import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery }
 import { useGetProfileQuery } from '../../services/profileApi';
 import { LineChart } from 'react-native-chart-kit';
 import { Search, MessageCircle, Briefcase, Users, Bell, Bookmark, TrendingUp, Compass, Star, ChevronRight, Video, Calendar, ShieldCheck } from 'lucide-react-native';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +32,7 @@ const timeAgo = (dateStr) => {
 export default function ArtistDashboardScreen() {
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
+  const insets = useSafeAreaInsets();
   
   const { data: profileResponse, refetch: refetchProfile } = useGetProfileQuery();
   const profile = profileResponse?.data;
@@ -70,9 +70,9 @@ export default function ArtistDashboardScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingSafeArea} edges={['left', 'right']}>
+      <View style={[styles.loadingSafeArea, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -102,7 +102,7 @@ export default function ArtistDashboardScreen() {
 
   // 1. Welcome Header
   const renderWelcomeHeader = () => (
-    <Animated.View entering={FadeInDown.duration(400)} style={styles.headerContainer}>
+    <View style={styles.headerContainer}>
       <View style={styles.headerTextContainer}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginRight: 12 }}>
@@ -129,7 +129,7 @@ export default function ArtistDashboardScreen() {
           <View style={styles.notificationBadge} />
         </TouchableOpacity>
       </View>
-    </Animated.View>
+    </View>
   );
 
   // 2. Profile Setup Banner
@@ -178,7 +178,7 @@ export default function ArtistDashboardScreen() {
 
   // 4. Quick Actions
   const renderQuickActions = () => (
-    <Animated.View entering={FadeInRight.delay(200).duration(400)} style={styles.quickActionsContainer}>
+    <View style={styles.quickActionsContainer}>
       <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Auditions')}>
         <View style={[styles.actionBtnIcon, { backgroundColor: colors.primary }]}>
           <Compass size={28} color="#fff" />
@@ -203,7 +203,7 @@ export default function ArtistDashboardScreen() {
         </View>
         <Typography variant="body" style={styles.actionBtnText}>Network</Typography>
       </TouchableOpacity>
-    </Animated.View>
+    </View>
   );
 
   // 5. Recent Applications
@@ -470,7 +470,7 @@ export default function ArtistDashboardScreen() {
 
   // 15. Recent Profile Visitors Removed
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView 
         style={styles.container} 
         showsVerticalScrollIndicator={false}
@@ -492,7 +492,7 @@ export default function ArtistDashboardScreen() {
         
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

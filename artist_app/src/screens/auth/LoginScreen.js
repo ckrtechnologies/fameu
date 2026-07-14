@@ -27,9 +27,9 @@ const LoginScreen = ({ navigation }) => {
     
     try {
       const response = await sendOtp({ identifier }).unwrap();
+      console.log('OTP RESPONSE RECVD:', response);
       if (response.data && response.data.devOtp) {
-        setGeneratedOtp(response.data.devOtp);
-        setAlertVisible(true);
+        navigation.navigate('Otp', { identifier, autoFillOtp: response.data.devOtp });
       } else {
         navigation.navigate('Otp', { identifier });
       }

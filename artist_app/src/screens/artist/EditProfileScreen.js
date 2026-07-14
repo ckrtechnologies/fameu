@@ -1,12 +1,12 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform , RefreshControl, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, PermissionsAndroid, Platform, RefreshControl, Modal, ScrollView } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker from '@react-native-documents/picker';
 import Video from 'react-native-video';
 import { colors, typography } from '../../theme/theme';
 import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
@@ -14,7 +14,7 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { data: profileResponse, isLoading: isFetching , refetch} = useGetProfileQuery()
+  const { data: profileResponse, isLoading: isFetching, refetch } = useGetProfileQuery()
   const [upsertProfile, { isLoading: isSaving }] = useUpsertProfileMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [uploadMedia, { isLoading: isUploadingMedia }] = useUploadMediaMutation();
@@ -201,7 +201,7 @@ export default function EditProfileScreen() {
       const res = await DocumentPicker.pickSingle({
         type: [DocumentPicker.types.allFiles],
       });
-      
+
       const formData = new FormData();
       formData.append('file', {
         uri: res.uri,
@@ -210,7 +210,7 @@ export default function EditProfileScreen() {
       });
 
       const response = await uploadGenericFile(formData).unwrap();
-      
+
       if (response.success && response.url) {
         setCategoryFormData(prev => {
           const existing = prev[category]?.[key];
@@ -374,7 +374,7 @@ export default function EditProfileScreen() {
         animationType="slide"
         onRequestClose={() => setGenderModalVisible(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
           activeOpacity={1}
           onPress={() => setGenderModalVisible(false)}
@@ -382,8 +382,8 @@ export default function EditProfileScreen() {
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: colors.textMainLight }}>Select Gender</Text>
             {['Male', 'Female', 'Other'].map(opt => (
-              <TouchableOpacity 
-                key={opt} 
+              <TouchableOpacity
+                key={opt}
                 style={{ paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}
                 onPress={() => {
                   setFormData(p => ({ ...p, gender: opt }));
@@ -515,7 +515,7 @@ export default function EditProfileScreen() {
                   onChangeText={(t) => setFormData(p => ({ ...p, username: t.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
                   autoCapitalize="none"
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={{ marginLeft: 8, backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, justifyContent: 'center' }}
                   onPress={handleVerifyUsername}
                   disabled={isCheckingUsername}
@@ -543,8 +543,8 @@ export default function EditProfileScreen() {
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                 <Text style={styles.label}>Gender *</Text>
-                <TouchableOpacity 
-                  style={[styles.input, { justifyContent: 'center' }]} 
+                <TouchableOpacity
+                  style={[styles.input, { justifyContent: 'center' }]}
                   onPress={() => setGenderModalVisible(true)}
                 >
                   <Text style={{ color: formData.gender ? colors.textMainLight : colors.textMutedLight }}>
@@ -625,7 +625,7 @@ export default function EditProfileScreen() {
               return fields.map((field) => (
                 <View key={field.field_name} style={styles.inputGroup}>
                   <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''}</Text>
-                  
+
                   {(field.field_type === 'text' || field.field_type === 'number' || field.field_type === 'url') && (
                     <TextInput
                       style={styles.input}
@@ -644,7 +644,7 @@ export default function EditProfileScreen() {
                       {field.options.map(option => {
                         const isSelected = (categoryFormData[activeTab]?.[field.field_name] || []).includes(option);
                         return (
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             key={option}
                             style={[styles.optionPill, isSelected && styles.optionPillSelected]}
                             onPress={() => handleSelectToggle(activeTab, field.field_name, option, field.field_type === 'multiselect')}
@@ -661,20 +661,20 @@ export default function EditProfileScreen() {
                       {(() => {
                         const existingVal = categoryFormData[activeTab]?.[field.field_name];
                         const files = Array.isArray(existingVal) ? existingVal : (existingVal ? [existingVal] : []);
-                        
+
                         return (
                           <>
                             {files.map((fileUrl, index) => {
                               const isVideo = typeof fileUrl === 'string' && fileUrl.match(/\.(mp4|mov)$/i);
                               const isAudio = typeof fileUrl === 'string' && fileUrl.match(/\.(mp3|wav|aac|ogg|webm)$/i);
                               const isImage = typeof fileUrl === 'string' && fileUrl.match(/\.(jpg|jpeg|png|webp)$/i);
-                              
+
                               return (
                                 <View key={index} style={{ marginBottom: 12, backgroundColor: colors.surfaceLight, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}>
                                   {(isVideo || isAudio) ? (
-                                    <Video 
-                                      source={{ uri: fileUrl }} 
-                                      style={{ width: '100%', height: isVideo ? 200 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }} 
+                                    <Video
+                                      source={{ uri: fileUrl }}
+                                      style={{ width: '100%', height: isVideo ? 200 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }}
                                       controls={true}
                                       resizeMode={isVideo ? "cover" : "contain"}
                                       paused={true}
@@ -689,7 +689,7 @@ export default function EditProfileScreen() {
                                       </Text>
                                     </View>
                                   )}
-                                  
+
                                   <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
                                     <TouchableOpacity onPress={() => handleDeleteFile(activeTab, field.field_name, fileUrl)} style={{ padding: 4, flexDirection: 'row', alignItems: 'center' }}>
                                       <Icon name="trash-outline" size={16} color="#ef4444" />
@@ -699,8 +699,8 @@ export default function EditProfileScreen() {
                                 </View>
                               );
                             })}
-                            
-                            <TouchableOpacity 
+
+                            <TouchableOpacity
                               style={[styles.fileButton, { marginTop: files.length > 0 ? 4 : 0 }]}
                               onPress={() => handleFileUpload(activeTab, field.field_name)}
                             >

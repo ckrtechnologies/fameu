@@ -1,12 +1,12 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator , RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker from '@react-native-documents/picker';
 import { colors, typography } from '../../theme/theme';
 import { useUpdateCategoryMutation, useGetProfileQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
 export default function ArtistFormScreen() {
@@ -16,7 +16,7 @@ export default function ArtistFormScreen() {
 
   const { data: profileResponse, isFetching, refetch } = useGetProfileQuery();
   const { data: professionsResponse, isLoading: isLoadingProfessions } = useGetProfessionsQuery();
-  
+
   const artistId = profileResponse?.data?.id;
   const professionsList = professionsResponse?.data || [];
 
@@ -46,7 +46,7 @@ export default function ArtistFormScreen() {
       const catData = prev[category] || {};
       const currentVal = catData[key] || [];
       let newVal;
-      
+
       if (isMulti) {
         if (currentVal.includes(option)) {
           newVal = currentVal.filter(o => o !== option);
@@ -82,7 +82,7 @@ export default function ArtistFormScreen() {
       const res = await DocumentPicker.pickSingle({
         type: [DocumentPicker.types.allFiles],
       });
-      
+
       const formDataUpload = new FormData();
       formDataUpload.append('file', {
         uri: res.uri,
@@ -91,7 +91,7 @@ export default function ArtistFormScreen() {
       });
 
       const response = await uploadGenericFile(formDataUpload).unwrap();
-      
+
       if (response.success && response.url) {
         setFormData(prev => ({
           ...prev,
@@ -147,7 +147,7 @@ export default function ArtistFormScreen() {
       });
 
       await Promise.all(promises);
-      
+
       showSuccess('', 'Profile details updated!');
       navigation.reset({
         index: 0,
@@ -193,8 +193,8 @@ export default function ArtistFormScreen() {
           {categories.map((cat) => {
             const isActive = activeTab === cat;
             return (
-              <TouchableOpacity 
-                key={cat} 
+              <TouchableOpacity
+                key={cat}
                 style={[styles.tabButton, isActive && styles.tabButtonActive]}
                 onPress={() => setActiveTab(cat)}
               >
@@ -215,7 +215,7 @@ export default function ArtistFormScreen() {
         ) : fields.map((field) => (
           <View key={field.field_name} style={styles.inputGroup}>
             <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''} ({field.field_type})</Text>
-            
+
             {(field.field_type === 'text' || field.field_type === 'number' || field.field_type === 'url') && (
               <TextInput
                 style={styles.input}
@@ -234,7 +234,7 @@ export default function ArtistFormScreen() {
                 {field.options.map(option => {
                   const isSelected = (formData[activeTab]?.[field.field_name] || []).includes(option);
                   return (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={option}
                       style={[styles.optionPill, isSelected && styles.optionPillSelected]}
                       onPress={() => handleSelectToggle(activeTab, field.field_name, option, field.field_type === 'multiselect')}
@@ -262,7 +262,7 @@ export default function ArtistFormScreen() {
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.fileButton}
                     onPress={() => handleFileUpload(activeTab, field.field_name)}
                   >
@@ -278,8 +278,8 @@ export default function ArtistFormScreen() {
       </KeyboardAwareScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]} 
+        <TouchableOpacity
+          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={isLoading}
         >
