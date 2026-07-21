@@ -3,10 +3,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import CustomButton from '../../components/forms/CustomButton';
 
 export default function ApplicationDetailScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const { application } = route.params || {};
@@ -115,7 +118,7 @@ export default function ApplicationDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

@@ -5,7 +5,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Dim
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 import { useUpsertProfileMutation, useGetProfileQuery, useGetProfessionsQuery } from '../../services/profileApi';
 const DEFAULT_CATEGORIES = [
   { id: 'Actor', title: 'Actor', icon: 'film-outline', color: '#FF6B6B' },
@@ -27,6 +28,8 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
 
 export default function ArtistCategoryScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   const { data: profileResponse , isFetching, refetch} = useGetProfileQuery()
@@ -179,7 +182,7 @@ export default function ArtistCategoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -206,7 +209,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.body,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginBottom: 24,
   },
   grid: {

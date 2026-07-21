@@ -1,9 +1,12 @@
 import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 
 export default function ValidatedURLInput({ value, onChangeText, placeholder, style, platform = 'any' }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const getValidationState = () => {
     if (!value) return 'empty';
     let isValid = false;
@@ -58,7 +61,7 @@ export default function ValidatedURLInput({ value, onChangeText, placeholder, st
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',

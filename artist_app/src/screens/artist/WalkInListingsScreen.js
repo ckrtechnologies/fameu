@@ -3,9 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 
 export default function WalkInListingsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
 
   const handleGoBack = () => {
@@ -31,7 +34,7 @@ export default function WalkInListingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',

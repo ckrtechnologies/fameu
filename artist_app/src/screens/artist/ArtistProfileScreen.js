@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking, FlatList } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking, FlatList, Animated } from 'react-native';
 import Video from 'react-native-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -9,7 +9,8 @@ import { parseArray } from '../../utils/dataUtils';
 
 import { useSelector, useDispatch } from 'react-redux';
 
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import { useGetProfileQuery } from '../../services/profileApi';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
@@ -20,6 +21,8 @@ import VerifiedBadge from '../../components/core/VerifiedBadge';
 const { width } = Dimensions.get('window');
 
 export default function ArtistProfileScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
@@ -33,6 +36,26 @@ export default function ArtistProfileScreen() {
   const [modalImages, setModalImages] = useState([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    // Start pulse animation loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
+      ])
+    ).start();
+
+    // Start slide & fade entrance
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, tension: 20, friction: 7, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -149,8 +172,17 @@ export default function ArtistProfileScreen() {
         
         {/* Instagram Profile Info Row */}
         <View style={styles.profileRow}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => { setModalImages([avatarUrl]); setSelectedImageIndex(0); setIsImageModalVisible(true); }}>
-            <Image source={{ uri: avatarUrl }} style={styles.avatarInsta} />
+          <TouchableOpacity activeOpacity={0.9} onPress={() => { setModalImages([avatarUrl]); setSelectedImageIndex(0); setIsImageModalVisible(true); }} style={{ position: 'relative' }}>
+            <Animated.View style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: colors.primary,
+                borderRadius: 45,
+                transform: [{ scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] }) }],
+                opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.6] })
+              }
+            ]} />
+            <Image source={{ uri: avatarUrl }} style={[styles.avatarInsta, { borderWidth: 2, borderColor: colors.backgroundLight }]} />
           </TouchableOpacity>
           <View style={styles.statsContainerInsta}>
             <TouchableOpacity 
@@ -187,7 +219,7 @@ export default function ArtistProfileScreen() {
             <Text style={[styles.fullNameInsta, { marginBottom: 0 }]}>{fullName}</Text>
             {profile?.is_verified && <VerifiedBadge size={22} style={{ marginLeft: 6 }} />}
           </View>
-          <Text style={{ ...typography.body, color: colors.textSecondaryLight, marginBottom: 4 }}>@{username}</Text>
+          <Text style={{ ...typography.body, color: colors.textMutedLight, marginBottom: 4 }}>@{username}</Text>
           {categories.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4, marginTop: 2 }}>
               {categories.map((cat, i) => (
@@ -199,6 +231,40 @@ export default function ArtistProfileScreen() {
           )}
           <Text style={styles.bioInsta}>{bio}</Text>
           
+          {/* Social Links Row */}
+          {profile?.social_links && (
+            <View style={{ flexDirection: 'row', marginTop: 12, marginBottom: 8, gap: 16 }}>
+              {(() => {
+                const links = typeof profile.social_links === 'string' 
+                  ? JSON.parse(profile.social_links || '{}') 
+                  : profile.social_links;
+                return (
+                  <>
+                    {links.instagram ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.instagram)}>
+                        <Icon name="logo-instagram" size={28} color="#E1306C" />
+                      </TouchableOpacity>
+                    ) : null}
+                    {links.youtube ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.youtube)}>
+                        <Icon name="logo-youtube" size={28} color="#FF0000" />
+                      </TouchableOpacity>
+                    ) : null}
+                    {links.facebook ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.facebook)}>
+                        <Icon name="logo-facebook" size={28} color="#1877F2" />
+                      </TouchableOpacity>
+                    ) : null}
+                    {links.snapchat ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.snapchat)}>
+                        <Icon name="logo-snapchat" size={28} color="#FFFC00" />
+                      </TouchableOpacity>
+                    ) : null}
+                  </>
+                );
+              })()}
+            </View>
+          )}
           <TouchableOpacity 
             style={styles.editProfileBtnInsta}
             onPress={() => navigation.navigate('EditProfile')}
@@ -321,78 +387,132 @@ export default function ArtistProfileScreen() {
               </View>
             )}
 
-            <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
-              <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Basic Info</Text>
-              {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
-                const v = profile[k];
-                if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                const value = Array.isArray(v) ? v.join(', ') : String(v);
-                return (
-                  <View key={k} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                    <Text style={{ ...typography.caption, color: colors.textMutedLight, width: 110 }}>{label}</Text>
-                    <Text style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>{value}</Text>
-                  </View>
-                );
-              })}
-              {/* CINTAA Info */}
-              {profile.is_cintaa_member && (
-                <View style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                  <Text style={{ ...typography.caption, color: colors.textMutedLight, width: 110 }}>CINTAA Member</Text>
-                  <Text style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>Yes ({profile.cintaa_reg_number})</Text>
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                  <Icon name="information-circle-outline" size={24} color={colors.primary} />
                 </View>
-              )}
-            </View>
+                <Text style={{ ...typography.h3, color: colors.primary }}>Basic Info</Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
+                  const v = profile[k];
+                  if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
+                  
+                  const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const value = Array.isArray(v) ? v.join(', ') : String(v);
+                  
+                  const icons = {
+                    age: 'calendar-outline',
+                    gender: 'male-female-outline',
+                    height: 'resize-outline',
+                    weight: 'barbell-outline',
+                    city: 'location-outline',
+                    languages: 'language-outline',
+                    skills: 'star-outline',
+                    availability_type: 'time-outline',
+                    available_dates: 'calendar-number-outline'
+                  };
+
+                  return (
+                    <View key={k} style={{ width: '48%', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }}>
+                      <Icon name={icons[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
+                      <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 4 }}>{label}</Text>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '600' }} numberOfLines={2}>{value}</Text>
+                    </View>
+                  );
+                })}
+
+                {/* CINTAA Info */}
+                {profile.is_cintaa_member && (
+                  <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginBottom: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                      <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+                      <View>
+                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Text>
+                        <Text style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({profile.cintaa_reg_number})</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </Animated.View>
 
             {/* Tags / Preferences Section */}
             {(profile.work_preference?.length > 0 || profile.preferred_cities?.length > 0 || profile.look_alike?.length > 0 || profile.hashtags?.length > 0) && (
-              <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-                <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Preferences & Tags</Text>
+              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                  <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                    <Icon name="options-outline" size={24} color={colors.primary} />
+                  </View>
+                  <Text style={{ ...typography.h3, color: colors.primary }}>Preferences & Tags</Text>
+                </View>
                 
                 {profile.work_preference?.length > 0 && (
-                  <View style={{ marginBottom: 16 }}>
-                    <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Work Preference</Text>
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="briefcase" size={16} color="#f97316" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Work Preference</Text>
+                    </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                       {parseArray(profile.work_preference).map((t, i) => (
-                        <View key={i} style={styles.chip}><Text style={styles.chipText}>{t}</Text></View>
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(249, 115, 22, 0.15)' }]}><Text style={[styles.chipText, { color: '#f97316' }]}>{t}</Text></View>
                       ))}
                     </View>
                   </View>
                 )}
                 
                 {profile.preferred_cities?.length > 0 && (
-                  <View style={{ marginBottom: 16 }}>
-                    <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Preferred Locations</Text>
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="location" size={16} color="#14b8a6" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Preferred Locations</Text>
+                    </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                       {parseArray(profile.preferred_cities).map((t, i) => (
-                        <View key={i} style={styles.chip}><Text style={styles.chipText}>{t}</Text></View>
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}><Text style={[styles.chipText, { color: '#14b8a6' }]}>{t}</Text></View>
                       ))}
                     </View>
                   </View>
                 )}
 
                 {profile.look_alike?.length > 0 && (
-                  <View style={{ marginBottom: 16 }}>
-                    <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Look Alikes</Text>
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="people" size={16} color="#a855f7" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Look Alikes</Text>
+                    </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                       {parseArray(profile.look_alike).map((t, i) => (
-                        <View key={i} style={styles.chip}><Text style={styles.chipText}>{t}</Text></View>
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}><Text style={[styles.chipText, { color: '#a855f7' }]}>{t}</Text></View>
                       ))}
                     </View>
                   </View>
                 )}
 
                 {profile.hashtags?.length > 0 && (
-                  <View style={{ marginBottom: 16 }}>
-                    <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Hashtags</Text>
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="pricetag" size={16} color="#ec4899" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Hashtags</Text>
+                    </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                       {parseArray(profile.hashtags).map((t, i) => (
-                        <View key={i} style={styles.chip}><Text style={styles.chipText}>#{t}</Text></View>
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}><Text style={[styles.chipText, { color: '#ec4899' }]}>#{t}</Text></View>
                       ))}
                     </View>
                   </View>
                 )}
-              </View>
+              </Animated.View>
             )}
 
             {/* Recent Assignments Section */}
@@ -643,7 +763,7 @@ export default function ArtistProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.backgroundLight },
   container: { flex: 1 },
   header: {
@@ -848,5 +968,19 @@ const styles = StyleSheet.create({
   disclaimerBtnText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  chip: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)', // Light blue for chips
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  chipText: {
+    ...typography.body,
+    fontSize: 13,
+    color: colors.primary, // Primary color text
+    fontWeight: '600',
   }
 });

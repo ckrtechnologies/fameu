@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, TextInput } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, TextInput, Animated } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,8 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 import { parseArray } from '../../utils/dataUtils';
 import { useSelector } from 'react-redux';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import VerifiedBadge from '../../components/core/VerifiedBadge';
 import CustomButton from '../../components/forms/CustomButton';
@@ -28,6 +29,8 @@ import CommentsSection from '../../components/CommentsSection';
 import { getVideoInfo } from '../../utils/media';
 
 export default function PublicProfileScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const { username, scrollToComments } = route.params;
@@ -39,6 +42,26 @@ export default function PublicProfileScreen() {
   const { data: auditions, isLoading: isAuditionsLoading } = useGetFeedQuery({ hiring_id: hiringId }, { skip: !hiringId });
   
   const scrollViewRef = React.useRef(null);
+
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    // Start pulse animation loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
+      ])
+    ).start();
+
+    // Start slide & fade entrance
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, tension: 20, friction: 7, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   React.useEffect(() => {
     if (scrollToComments && !isLoading && profileData) {
@@ -154,13 +177,24 @@ export default function PublicProfileScreen() {
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
         {/* Cover Photo / Header Area */}
         <View style={styles.profileHeader}>
-          {profileData.avatar_url ? (
-            <Image source={{ uri: profileData.avatar_url }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <User size={40} color={colors.primary} />
-            </View>
-          )}
+          <View style={{ position: 'relative' }}>
+            <Animated.View style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: colors.primary,
+                borderRadius: 40,
+                transform: [{ scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] }) }],
+                opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.6] })
+              }
+            ]} />
+            {profileData.avatar_url ? (
+              <Image source={{ uri: profileData.avatar_url }} style={[styles.avatar, { borderWidth: 2, borderColor: colors.backgroundLight }]} />
+            ) : (
+              <View style={[styles.avatarPlaceholder, { borderWidth: 2, borderColor: colors.backgroundLight }]}>
+                <User size={40} color={colors.primary} />
+              </View>
+            )}
+          </View>
           
           <View style={styles.statsContainer}>
             <TouchableOpacity 
@@ -195,6 +229,41 @@ export default function PublicProfileScreen() {
           )}
           {profileData.profile?.description && (
             <Typography variant="body" style={styles.bioText}>{profileData.profile.description}</Typography>
+          )}
+
+          {/* Social Links Row */}
+          {profileData.profile?.social_links && (
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, gap: 16 }}>
+              {(() => {
+                const links = typeof profileData.profile.social_links === 'string' 
+                  ? JSON.parse(profileData.profile.social_links || '{}') 
+                  : profileData.profile.social_links;
+                return (
+                  <>
+                    {links.instagram ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.instagram)}>
+                        <Icon name="logo-instagram" size={28} color="#E1306C" />
+                      </TouchableOpacity>
+                    ) : null}
+                    {links.youtube ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.youtube)}>
+                        <Icon name="logo-youtube" size={28} color="#FF0000" />
+                      </TouchableOpacity>
+                    ) : null}
+                    {links.facebook ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.facebook)}>
+                        <Icon name="logo-facebook" size={28} color="#1877F2" />
+                      </TouchableOpacity>
+                    ) : null}
+                    {links.snapchat ? (
+                      <TouchableOpacity onPress={() => Linking.openURL(links.snapchat)}>
+                        <Icon name="logo-snapchat" size={28} color="#FFFC00" />
+                      </TouchableOpacity>
+                    ) : null}
+                  </>
+                );
+              })()}
+            </View>
           )}
         </View>
 
@@ -334,78 +403,132 @@ export default function PublicProfileScreen() {
                   </View>
                 )}
 
-                <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
-                  <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Basic Info</Typography>
-                  {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
-                    const v = profileData.profile[k];
-                    if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                    const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    const value = Array.isArray(v) ? v.join(', ') : String(v);
-                    return (
-                      <View key={k} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, width: 110 }}>{label}</Typography>
-                        <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>{value}</Typography>
-                      </View>
-                    );
-                  })}
-                  {/* CINTAA Info */}
-                  {profileData.profile.is_cintaa_member && (
-                    <View style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                      <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, width: 110 }}>CINTAA Member</Typography>
-                      <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>Yes ({profileData.profile.cintaa_reg_number})</Typography>
+                <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                    <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                      <Icon name="information-circle-outline" size={24} color={colors.primary} />
                     </View>
-                  )}
-                </View>
+                    <Typography variant="body" style={{ ...typography.h3, color: colors.primary }}>Basic Info</Typography>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                    {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
+                      const v = profileData.profile[k];
+                      if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
+                      
+                      const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                      const value = Array.isArray(v) ? v.join(', ') : String(v);
+                      
+                      const icons = {
+                        age: 'calendar-outline',
+                        gender: 'male-female-outline',
+                        height: 'resize-outline',
+                        weight: 'barbell-outline',
+                        city: 'location-outline',
+                        languages: 'language-outline',
+                        skills: 'star-outline',
+                        availability_type: 'time-outline',
+                        available_dates: 'calendar-number-outline'
+                      };
+
+                      return (
+                        <View key={k} style={{ width: '48%', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }}>
+                          <Icon name={icons[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
+                          <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 4 }}>{label}</Typography>
+                          <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, fontWeight: '600' }} numberOfLines={2}>{value}</Typography>
+                        </View>
+                      );
+                    })}
+
+                    {/* CINTAA Info */}
+                    {profileData.profile.is_cintaa_member && (
+                      <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginBottom: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                          <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+                          <View>
+                            <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Typography>
+                            <Typography variant="body" style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({profileData.profile.cintaa_reg_number})</Typography>
+                          </View>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                </Animated.View>
 
                 {/* Tags / Preferences Section */}
                 {(profileData.profile.work_preference?.length > 0 || profileData.profile.preferred_cities?.length > 0 || profileData.profile.look_alike?.length > 0 || profileData.profile.hashtags?.length > 0) && (
-                  <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-                    <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Preferences & Tags</Typography>
+                  <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                      <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                        <Icon name="options-outline" size={24} color={colors.primary} />
+                      </View>
+                      <Typography variant="body" style={{ ...typography.h3, color: colors.primary }}>Preferences & Tags</Typography>
+                    </View>
                     
                     {profileData.profile.work_preference?.length > 0 && (
-                      <View style={{ marginBottom: 16 }}>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Work Preference</Typography>
+                      <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                          <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                            <Icon name="briefcase" size={16} color="#f97316" />
+                          </View>
+                          <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Work Preference</Typography>
+                        </View>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                           {parseArray(profileData.profile.work_preference).map((t, i) => (
-                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>{t}</Typography></View>
+                            <View key={i} style={[styles.chip, { backgroundColor: 'rgba(249, 115, 22, 0.15)' }]}><Typography variant="body" style={[styles.chipText, { color: '#f97316' }]}>{t}</Typography></View>
                           ))}
                         </View>
                       </View>
                     )}
                     
                     {profileData.profile.preferred_cities?.length > 0 && (
-                      <View style={{ marginBottom: 16 }}>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Preferred Locations</Typography>
+                      <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                          <View style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                            <Icon name="location" size={16} color="#14b8a6" />
+                          </View>
+                          <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Preferred Locations</Typography>
+                        </View>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                           {parseArray(profileData.profile.preferred_cities).map((t, i) => (
-                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>{t}</Typography></View>
+                            <View key={i} style={[styles.chip, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}><Typography variant="body" style={[styles.chipText, { color: '#14b8a6' }]}>{t}</Typography></View>
                           ))}
                         </View>
                       </View>
                     )}
 
                     {profileData.profile.look_alike?.length > 0 && (
-                      <View style={{ marginBottom: 16 }}>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Look Alikes</Typography>
+                      <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                          <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                            <Icon name="people" size={16} color="#a855f7" />
+                          </View>
+                          <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Look Alikes</Typography>
+                        </View>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                           {parseArray(profileData.profile.look_alike).map((t, i) => (
-                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>{t}</Typography></View>
+                            <View key={i} style={[styles.chip, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}><Typography variant="body" style={[styles.chipText, { color: '#a855f7' }]}>{t}</Typography></View>
                           ))}
                         </View>
                       </View>
                     )}
 
                     {profileData.profile.hashtags?.length > 0 && (
-                      <View style={{ marginBottom: 16 }}>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>Hashtags</Typography>
+                      <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                          <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                            <Icon name="pricetag" size={16} color="#ec4899" />
+                          </View>
+                          <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Hashtags</Typography>
+                        </View>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                           {parseArray(profileData.profile.hashtags).map((t, i) => (
-                            <View key={i} style={styles.chip}><Typography variant="body" style={styles.chipText}>#{t}</Typography></View>
+                            <View key={i} style={[styles.chip, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}><Typography variant="body" style={[styles.chipText, { color: '#ec4899' }]}>#{t}</Typography></View>
                           ))}
                         </View>
                       </View>
                     )}
-                  </View>
+                  </Animated.View>
                 )}
 
                 {/* Recent Assignments Section */}
@@ -637,11 +760,11 @@ export default function PublicProfileScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: spacing.l }}>
                 <View style={{ alignItems: 'center' }}>
                   <Typography variant="h3" style={{ fontWeight: '700', color: colors.textMainLight }}>{auditions?.data?.length || 0}</Typography>
-                  <Typography variant="caption" style={{ color: colors.textSecondaryLight }}>Posts</Typography>
+                  <Typography variant="caption" style={{ color: colors.textMutedLight }}>Posts</Typography>
                 </View>
                 <View style={{ alignItems: 'center' }}>
                   <Typography variant="h3" style={{ fontWeight: '700', color: colors.textMainLight }}>0</Typography>
-                  <Typography variant="caption" style={{ color: colors.textSecondaryLight }}>Hired</Typography>
+                  <Typography variant="caption" style={{ color: colors.textMutedLight }}>Hired</Typography>
                 </View>
               </View>
 
@@ -766,7 +889,7 @@ export default function PublicProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -836,7 +959,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     ...typography.caption,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
   },
   bioSection: {
     marginBottom: spacing.l,
@@ -932,4 +1055,18 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '80%',
   },
+  chip: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)', // Light blue for chips
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  chipText: {
+    ...typography.body,
+    fontSize: 13,
+    color: colors.primary, // Primary color text
+    fontWeight: '600',
+  }
 });

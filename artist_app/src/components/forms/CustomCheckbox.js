@@ -1,9 +1,12 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing } from '../../theme/theme';
 import Typography from '../core/Typography';
 
 const CustomCheckbox = ({ label, checked, onChange, style }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <TouchableOpacity style={[styles.container, style]} onPress={() => onChange(!checked)} activeOpacity={0.8}>
       <View style={[styles.box, checked && styles.checkedBox]}>
@@ -14,7 +17,7 @@ const CustomCheckbox = ({ label, checked, onChange, style }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 
 export default function TagInput({ tags = [], onTagsChange, placeholder, style }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [inputValue, setInputValue] = useState('');
   
   const safeTags = Array.isArray(tags) ? tags : [];
@@ -57,7 +60,7 @@ export default function TagInput({ tags = [], onTagsChange, placeholder, style }
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',

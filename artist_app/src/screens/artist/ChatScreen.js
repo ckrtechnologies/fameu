@@ -5,7 +5,8 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { io } from 'socket.io-client';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetMessagesQuery, useGetInboxQuery, chatApi } from '../../services/chatApi';
 import SocketService from '../../services/SocketService';
@@ -15,6 +16,8 @@ import { markConversationAsRead } from '../../store/slices/chatSlice';
 // Removed hardcoded SOCKET_URL
 
 export default function ChatScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -281,7 +284,7 @@ export default function ChatScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

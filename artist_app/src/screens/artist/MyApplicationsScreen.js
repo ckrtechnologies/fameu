@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetMyApplicationsQuery } from '../../services/discoverApi';
 
 const TABS = ['All', 'Pending', 'Accepted', 'Rejected'];
 
 export default function MyApplicationsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'All');
@@ -112,7 +115,7 @@ export default function MyApplicationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

@@ -7,11 +7,14 @@ import { setConversations } from '../../store/slices/chatSlice';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { format } from 'date-fns';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetInboxQuery } from '../../services/chatApi';
 
 export default function InboxScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { data: response, isLoading, isFetching, refetch } = useGetInboxQuery();
@@ -143,7 +146,7 @@ export default function InboxScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',

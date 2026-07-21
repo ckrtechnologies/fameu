@@ -5,7 +5,8 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions, 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 import { useGetProfileQuery, useUploadMediaMutation, useUpsertProfileMutation } from '../../services/profileApi';
 import { useNavigation } from '@react-navigation/native';
 const { width } = Dimensions.get('window');
@@ -13,6 +14,8 @@ const COLUMN_COUNT = 3;
 const IMAGE_SIZE = (width - 32 - (COLUMN_COUNT - 1) * 8) / COLUMN_COUNT;
 
 export default function PhotoGalleryScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { data: profileResponse, isLoading: isLoadingProfile , isFetching, refetch} = useGetProfileQuery()
@@ -75,10 +78,11 @@ export default function PhotoGalleryScreen() {
                 if (granted === PermissionsAndroid.RESULTS.GRANTED) {
                   launchCamera({ mediaType: 'photo', quality: 0.8 }, handleImageUpload);
                 } else {
-                  showError('', "Camera permission denied");
+                  showError('Permission Denied', "Camera permission is required to take photos");
                 }
               } catch (err) {
-                console.warn(err);
+                console.error(err);
+                showError('Error', err?.message || 'Failed to request camera permission');
               }
             } else {
               launchCamera({ mediaType: 'photo', quality: 0.8 }, handleImageUpload);
@@ -129,13 +133,14 @@ export default function PhotoGalleryScreen() {
   };
 
   const renderItem = ({ item, index }) => (
-    <TouchableOpacity style={styles.imageContainer} onPress={() => openModal(index)}>
+    <TouchableOpacity style={[styles.imageContainer, isUploading && { opacity: 0.5 }]} onPress={() => !isUploading && openModal(index)} disabled={isUploading}>
       <Image source={{ uri: item }} style={styles.image} />
       <TouchableOpacity 
         style={styles.deleteButton} 
         onPress={() => handleDeletePhoto(index)}
+        disabled={isUploading}
       >
-        <Icon name="trash-outline" size={16} color="#fff" />
+        <Icon name="trash-outline" size={16} color={isUploading ? "#aaa" : "#fff"} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -143,8 +148,8 @@ export default function PhotoGalleryScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} disabled={isUploading}>
+          <Icon name="arrow-back" size={24} color={isUploading ? "#ccc" : colors.textMainLight} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Photo Gallery</Text>
         <View style={{ width: 40 }} />
@@ -238,7 +243,7 @@ export default function PhotoGalleryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -276,7 +281,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...typography.h3,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginTop: 16,
     marginBottom: 8,
   },

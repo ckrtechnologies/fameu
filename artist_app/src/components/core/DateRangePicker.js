@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, addMonths, subMonths, isBefore, isAfter, isSameDay } from 'date-fns';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -17,6 +18,8 @@ const PREDEFINED_OPTIONS = [
 ];
 
 export default function DateRangePicker({ value, onSelect, placeholder, style }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [modalVisible, setModalVisible] = useState(false);
   const [viewMode, setViewMode] = useState('options'); // 'options' or 'calendar'
   
@@ -192,7 +195,7 @@ export default function DateRangePicker({ value, onSelect, placeholder, style })
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',

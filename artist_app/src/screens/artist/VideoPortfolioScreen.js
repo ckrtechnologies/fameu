@@ -6,7 +6,8 @@ import { ArrowLeft, Play, X, Volume2, VolumeX, Trash2 } from 'lucide-react-nativ
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Video from 'react-native-video';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetProfileQuery, useUpsertProfileMutation } from '../../services/profileApi';
 import { getVideoInfo } from '../../utils/media';
@@ -14,6 +15,8 @@ import { getVideoInfo } from '../../utils/media';
 const { width, height } = Dimensions.get('window');
 
 export default function VideoPortfolioScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   
@@ -174,7 +177,7 @@ export default function VideoPortfolioScreen() {
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Typography variant="body" style={{color: colors.textSecondaryLight}}>No videos uploaded yet.</Typography>
+            <Typography variant="body" style={{color: colors.textMutedLight}}>No videos uploaded yet.</Typography>
           </View>
         }
         ListFooterComponent={
@@ -202,7 +205,7 @@ export default function VideoPortfolioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

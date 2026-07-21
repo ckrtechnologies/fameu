@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import { useGetAuditionDetailsQuery, useToggleBookmarkMutation } from '../../services/discoverApi';
 import CustomButton from '../../components/forms/CustomButton';
 import CommentsSection from '../../components/CommentsSection';
 
 export default function AuditionDetailScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const { id, scrollToComments } = route.params;
@@ -228,7 +231,7 @@ export default function AuditionDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

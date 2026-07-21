@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, ShieldCheck, Clock, FileText } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { useGetProfileQuery, useRequestVerificationMutation } from '../../services/profileApi';
 
 export default function VerificationScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const { data: profileResponse, isLoading: profileLoading } = useGetProfileQuery();
   const [requestVerification, { isLoading: isSubmitting }] = useRequestVerificationMutation();
@@ -47,7 +50,7 @@ export default function VerificationScreen() {
         <View style={styles.centerContainer}>
           <ShieldCheck size={80} color={colors.primary} style={{ marginBottom: spacing.l }} />
           <Typography variant="h2" style={{ color: colors.textMainLight, marginBottom: spacing.m, textAlign: 'center' }}>You are Verified!</Typography>
-          <Typography variant="body" style={{ color: colors.textSecondaryLight, textAlign: 'center', paddingHorizontal: spacing.xl }}>
+          <Typography variant="body" style={{ color: colors.textMutedLight, textAlign: 'center', paddingHorizontal: spacing.xl }}>
             Your profile has the verified badge. You stand out to hiring managers and get priority in search results.
           </Typography>
         </View>
@@ -59,7 +62,7 @@ export default function VerificationScreen() {
         <View style={styles.centerContainer}>
           <Clock size={80} color={colors.warning || '#F59E0B'} style={{ marginBottom: spacing.l }} />
           <Typography variant="h2" style={{ color: colors.textMainLight, marginBottom: spacing.m, textAlign: 'center' }}>Application Under Review</Typography>
-          <Typography variant="body" style={{ color: colors.textSecondaryLight, textAlign: 'center', paddingHorizontal: spacing.xl }}>
+          <Typography variant="body" style={{ color: colors.textMutedLight, textAlign: 'center', paddingHorizontal: spacing.xl }}>
             We have received your verification request. Our team is currently reviewing your profile and documents. We will notify you once a decision is made.
           </Typography>
         </View>
@@ -72,7 +75,7 @@ export default function VerificationScreen() {
           <View style={styles.infoSection}>
             <FileText size={48} color={colors.primary} style={{ marginBottom: spacing.m }} />
             <Typography variant="h2" style={{ color: colors.textMainLight, marginBottom: spacing.s }}>Get Verified</Typography>
-            <Typography variant="body" style={{ color: colors.textSecondaryLight, marginBottom: spacing.xl }}>
+            <Typography variant="body" style={{ color: colors.textMutedLight, marginBottom: spacing.xl }}>
               Apply for the blue tick! A verified badge shows casting directors that your profile is authentic.
             </Typography>
           </View>
@@ -134,7 +137,7 @@ export default function VerificationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -174,7 +177,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.label,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginBottom: spacing.xs,
   },
   input: {

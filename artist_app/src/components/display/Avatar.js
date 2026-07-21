@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
-import { colors } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+
 
 const Avatar = ({ source, size = 50, status }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const statusColor = status === 'online' ? colors.success : 
                       status === 'busy' ? colors.danger : 
                       status === 'away' ? colors.warning : 'transparent';
@@ -30,7 +33,7 @@ const Avatar = ({ source, size = 50, status }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     backgroundColor: colors.borderDark,
     position: 'relative',

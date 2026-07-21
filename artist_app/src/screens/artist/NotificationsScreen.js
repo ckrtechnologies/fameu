@@ -6,7 +6,8 @@ import { ArrowLeft, MessageCircle, Bell, BellOff } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { formatDistanceToNow } from 'date-fns';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { 
   useGetNotificationsQuery, 
@@ -15,6 +16,8 @@ import {
 } from '../../services/notificationsApi';
 
 export default function NotificationsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const { data: response, isLoading, isFetching, refetch } = useGetNotificationsQuery();
   const [markRead] = useMarkNotificationReadMutation();
@@ -131,7 +134,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',

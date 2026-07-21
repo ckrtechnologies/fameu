@@ -5,11 +5,14 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
 import Typography from '../../components/core/Typography';
-import { colors, spacing, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing, typography } from '../../theme/theme';
 
 const { width } = Dimensions.get('window');
 
 export default function TutorialScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
 
   // For demonstration, a sample tutorial video URL
@@ -43,7 +46,7 @@ export default function TutorialScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

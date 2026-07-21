@@ -3,11 +3,14 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetSavedAuditionsQuery } from '../../services/discoverApi';
 
 export default function SavedAuditionsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
 
   const { data: savedResponse, isLoading, isError, refetch, isFetching } = useGetSavedAuditionsQuery();
@@ -70,7 +73,7 @@ export default function SavedAuditionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

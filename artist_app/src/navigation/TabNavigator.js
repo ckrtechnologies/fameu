@@ -12,13 +12,15 @@ import MyApplicationsScreen from '../screens/artist/MyApplicationsScreen';
 import ArtistProfileScreen from '../screens/artist/ArtistProfileScreen';
 import InboxScreen from '../screens/artist/InboxScreen';
 
-import { colors, typography, spacing } from '../theme/theme';
+import { useTheme } from '../theme/ThemeProvider';
+import { typography, spacing } from '../theme/theme';
 
 const Tab = createBottomTabNavigator();
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabNavigator() {
+  const { colors } = useTheme();
   const totalUnreadCount = useSelector((state) => state.chat.totalUnreadCount);
   const user = useSelector(state => state.auth.user);
   
@@ -89,7 +91,7 @@ export default function TabNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMutedLight,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.backgroundLight,
           borderTopColor: colors.borderLight,
           borderTopWidth: 1,
           height: 60 + insets.bottom,

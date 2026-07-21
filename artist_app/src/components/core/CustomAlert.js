@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing } from '../../theme/theme';
 import Typography from './Typography';
 import CustomButton from '../forms/CustomButton';
 
@@ -11,6 +12,8 @@ const CustomAlert = ({
   onClose,
   buttons = [], 
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Modal
       transparent
@@ -51,7 +54,7 @@ const CustomAlert = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',

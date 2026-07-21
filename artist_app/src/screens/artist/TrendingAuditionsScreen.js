@@ -1,9 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 
 export default function TrendingAuditionsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <SafeAreaView style={styles.container} edges={["top","left","right"]}>
       <Text style={styles.text}>TrendingAuditionsScreen</Text>
@@ -11,7 +14,7 @@ export default function TrendingAuditionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

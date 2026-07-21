@@ -102,11 +102,11 @@ export default function ArtistSettingsScreen() {
           <Text style={[styles.sectionTitle, { color: colors.textMutedLight }]}>Account</Text>
           <View style={[styles.settingItem, { paddingVertical: 12, borderBottomColor: colors.surfaceDark }]}>
             <View style={styles.settingLeft}>
-              <Icon name="call-outline" size={24} color={colors.primary} />
+              <Icon name="mail-outline" size={24} color={colors.primary} />
               <View>
-                <Text style={[styles.settingText, { color: colors.textMainLight }]}>Phone Number</Text>
+                <Text style={[styles.settingText, { color: colors.textMainLight }]}>Email Address</Text>
                 <Text style={{ ...typography.caption, color: colors.textMutedLight, marginLeft: 12 }}>
-                  {user?.mobile || user?.phone || user?.email || 'Not provided'}
+                  {user?.email || user?.mobile || user?.phone || 'Not provided'}
                 </Text>
               </View>
             </View>
@@ -120,7 +120,6 @@ export default function ArtistSettingsScreen() {
           <Text style={[styles.sectionTitle, { color: colors.textMutedLight }]}>Support & About</Text>
           {renderSettingItem('play-circle-outline', 'How this app works', () => navigation.navigate('Tutorial'))}
           {renderSettingItem('star-outline', 'Rate our App', handleRateApp)}
-          {renderSettingItem('help-circle-outline', 'Help Center', () => {})}
           {renderSettingItem('document-text-outline', 'Terms of Service', () => navigation.navigate('Legal', { type: 'terms' }))}
           {renderSettingItem('information-circle-outline', 'Privacy Policy', () => navigation.navigate('Legal', { type: 'privacy' }))}
         </View>

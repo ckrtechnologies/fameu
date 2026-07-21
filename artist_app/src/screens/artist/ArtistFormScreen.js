@@ -7,9 +7,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DocumentPicker from '@react-native-documents/picker';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 import { useUpdateCategoryMutation, useGetProfileQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
 export default function ArtistFormScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const { categories } = route.params || {};
@@ -294,7 +297,7 @@ export default function ArtistFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -354,7 +357,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.body,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginBottom: 24,
   },
   inputGroup: {

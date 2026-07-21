@@ -3,7 +3,8 @@ import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpa
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery } from '../../services/discoverApi';
@@ -32,6 +33,8 @@ const timeAgo = (dateStr) => {
 };
 
 export default function ArtistDashboardScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
@@ -43,13 +46,14 @@ export default function ArtistDashboardScreen() {
   const profile = profileResponse?.data;
   
   const categories = profile?.categories || [];
-  const primaryCategory = categories.length > 0 ? categories[0] : null;
+  const categoryString = categories.length > 0 ? categories.join(',') : null;
   
-  const feedParams = primaryCategory ? { category: primaryCategory } : {};
-  const { data: feedData, isLoading, isError, refetch: refetchFeed } = useGetFeedQuery(feedParams);
-  const { data: allFeedData, refetch: refetchAll } = useGetFeedQuery({});
-  const { data: liveData, refetch: refetchLive } = useGetFeedQuery({ is_live: true });
-  const { data: trendingData, refetch: refetchTrending } = useGetFeedQuery({ sort: 'popular' }); // Assuming this is supported
+  const feedParams = categoryString ? { category: categoryString } : {};
+  const { data: feedData, isLoading, isError, refetch: refetchFeed, error } = useGetFeedQuery(feedParams, { refetchOnMountOrArgChange: true });
+  
+  const { data: allFeedData, refetch: refetchAll } = useGetFeedQuery({}, { refetchOnMountOrArgChange: true });
+  const { data: liveData, refetch: refetchLive } = useGetFeedQuery({ filter: 'live', ...feedParams }, { refetchOnMountOrArgChange: true });
+  const { data: trendingData, refetch: refetchTrending } = useGetFeedQuery({ filter: 'trending', ...feedParams }, { refetchOnMountOrArgChange: true });
   const { data: myAppsData, refetch: refetchApps } = useGetMyApplicationsQuery();
   const { data: savedData, refetch: refetchSaved } = useGetSavedAuditionsQuery();
 
@@ -83,9 +87,12 @@ export default function ArtistDashboardScreen() {
 
   const recommendedAuditions = Array.isArray(feedData?.data) ? feedData.data : [];
   const allAuditions = Array.isArray(allFeedData?.data) ? allFeedData.data : [];
-  const displayAuditions = recommendedAuditions.length > 0 ? recommendedAuditions : allAuditions;
+  
+  // If the user has a specific category, don't fall back to all auditions if their category has none.
+  const displayAuditions = (categoryString && recommendedAuditions.length === 0) ? [] : (recommendedAuditions.length > 0 ? recommendedAuditions : allAuditions);
   const liveAuditions = Array.isArray(liveData?.data) ? liveData.data : [];
-  const trendingAuditions = Array.isArray(trendingData?.data) ? trendingData.data : allAuditions.slice(0, 5); // Fallback
+  
+  const trendingAuditions = Array.isArray(trendingData?.data) ? trendingData.data : [];
   const myApplications = Array.isArray(myAppsData?.data) ? myAppsData.data : [];
   const savedAuditions = Array.isArray(savedData?.data) ? savedData.data : [];
   
@@ -95,7 +102,7 @@ export default function ArtistDashboardScreen() {
     if (p.full_name) score += 15;
     if (p.age) score += 5;
     if (p.gender) score += 5;
-    if (p.city) score += 10;
+    if (p.city || (p.preferred_cities && p.preferred_cities.length > 0)) score += 10;
     if (p.bio) score += 15;
     if (p.categories && p.categories.length > 0) score += 20;
     if (p.avatar_url || (p.photo_urls && p.photo_urls.length > 0)) score += 20;
@@ -256,7 +263,7 @@ export default function ArtistDashboardScreen() {
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
           <Typography variant="h3" style={styles.sectionTitle}>🔴 Live Auditions</Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('AuditionDiscovery', { initialCategory: 'Live Now' })}>
+          <TouchableOpacity onPress={() => navigation.navigate('Auditions', { initialCategory: 'Live (Today)' })}>
             <Typography variant="body" style={styles.seeAllText}>See All</Typography>
           </TouchableOpacity>
         </View>
@@ -278,7 +285,7 @@ export default function ArtistDashboardScreen() {
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
           <Typography variant="h3" style={styles.sectionTitle}>Recommended for You</Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('AuditionDiscovery')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Auditions', { initialCategory: 'Relevant' })}>
             <Typography variant="body" style={styles.seeAllText}>Explore</Typography>
           </TouchableOpacity>
         </View>
@@ -302,16 +309,19 @@ export default function ArtistDashboardScreen() {
   const renderTrendingAuditions = () => {
     if (trendingAuditions.length === 0) return null;
     return (
-      <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceLight, paddingVertical: spacing.l, marginHorizontal: -spacing.xl, paddingHorizontal: spacing.xl }]}>
-        <View style={styles.sectionHeader}>
+      <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceLight, paddingVertical: spacing.l, marginHorizontal: -spacing.xl }]}>
+        <View style={[styles.sectionHeader, { paddingHorizontal: spacing.xl }]}>
           <Typography variant="h3" style={styles.sectionTitle}>🔥 Trending Now</Typography>
+          <TouchableOpacity onPress={() => navigation.navigate('Auditions', { initialCategory: 'Trending' })}>
+            <Typography variant="body" style={styles.seeAllText}>See All</Typography>
+          </TouchableOpacity>
         </View>
         <FlatList
           data={trendingAuditions}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={item => 'trend_' + item.id}
-          contentContainerStyle={{ paddingRight: spacing.m }}
+          contentContainerStyle={{ paddingLeft: spacing.xl, paddingRight: spacing.m }}
           renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item.id)} compact />}
         />
       </View>
@@ -389,7 +399,7 @@ export default function ArtistDashboardScreen() {
                 <Typography variant="body" style={styles.scheduleTitle}>{app.auditions?.title}</Typography>
                 <Typography variant="caption" style={styles.scheduleSub}>{location}</Typography>
              </View>
-             <ChevronRight size={20} color={colors.textSecondaryLight} />
+             <ChevronRight size={20} color={colors.textMutedLight} />
           </View>
           );
         })}
@@ -542,7 +552,7 @@ export default function ArtistDashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.backgroundLight },
   container: { flex: 1 },
   loadingSafeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundLight },
@@ -550,7 +560,7 @@ const styles = StyleSheet.create({
   // 1. Header
   headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.m, paddingBottom: spacing.m },
   headerTextContainer: { flex: 1 },
-  greetingText: { color: colors.textSecondaryLight, marginBottom: 2 },
+  greetingText: { color: colors.textMutedLight, marginBottom: 2 },
   nameText: { color: colors.textMainLight, fontWeight: 'bold' },
   headerIcons: { flexDirection: 'row', alignItems: 'center' },
   iconButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginLeft: 12 },
@@ -559,7 +569,7 @@ const styles = StyleSheet.create({
   // 2. Banner
   profileBanner: { backgroundColor: colors.primary + '15', marginHorizontal: spacing.xl, borderRadius: 16, padding: spacing.l, marginBottom: spacing.l, borderWidth: 1, borderColor: colors.primary + '30' },
   profileBannerTitle: { fontWeight: 'bold', color: colors.primary, marginBottom: spacing.xs },
-  profileBannerText: { color: colors.textSecondaryLight, marginBottom: spacing.m, fontSize: 13 },
+  profileBannerText: { color: colors.textMutedLight, marginBottom: spacing.m, fontSize: 13 },
   progressBarBg: { height: 6, backgroundColor: colors.borderLight, borderRadius: 3, overflow: 'hidden' },
   progressBarFill: { height: '100%', backgroundColor: colors.primary },
 
@@ -567,7 +577,7 @@ const styles = StyleSheet.create({
   statsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
   statCard: { flex: 1, backgroundColor: colors.surfaceLight, paddingVertical: spacing.m, paddingHorizontal: spacing.s, borderRadius: 12, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: colors.borderLight },
   statNumber: { fontWeight: 'bold', color: colors.textMainLight },
-  statLabel: { color: colors.textSecondaryLight, fontSize: 11, marginTop: 4 },
+  statLabel: { color: colors.textMutedLight, fontSize: 11, marginTop: 4 },
 
   // 4. Quick Actions
   quickActionsContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.l },
@@ -588,7 +598,7 @@ const styles = StyleSheet.create({
   applicationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: colors.borderLight },
   appIconBg: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   appTitle: { fontWeight: '600', color: colors.textMainLight, marginBottom: 4 },
-  appDate: { color: colors.textSecondaryLight },
+  appDate: { color: colors.textMutedLight },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   statusText: { fontWeight: 'bold', fontSize: 11 },
 
@@ -604,13 +614,13 @@ const styles = StyleSheet.create({
   dateDay: { fontSize: 18, color: colors.primary, fontWeight: 'bold' },
   scheduleInfo: { flex: 1 },
   scheduleTitle: { fontWeight: 'bold', color: colors.textMainLight, marginBottom: 4 },
-  scheduleSub: { color: colors.textSecondaryLight },
+  scheduleSub: { color: colors.textMutedLight },
 
   // 12. Recruiters
   recruiterCard: { width: 130, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, alignItems: 'center', marginRight: 16, borderWidth: 1, borderColor: colors.borderLight },
   recruiterAvatarBg: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   recruiterName: { fontWeight: 'bold', color: colors.textMainLight, marginBottom: 4, textAlign: 'center' },
-  recruiterRole: { color: colors.textSecondaryLight, fontSize: 11, marginBottom: 12, textAlign: 'center' },
+  recruiterRole: { color: colors.textMutedLight, fontSize: 11, marginBottom: 12, textAlign: 'center' },
   followBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.primary + '15' },
   followBtnText: { color: colors.primary, fontWeight: 'bold' },
 

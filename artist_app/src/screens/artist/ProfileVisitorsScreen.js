@@ -3,11 +3,14 @@ import { View, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from "react-native";
-import { colors, spacing, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing, typography } from '../../theme/theme';
 import { useGetProfileVisitorsQuery } from '../../services/profileApi';
 import { timeAgo } from '../../utils/dateUtils';
 
 const ProfileVisitorsScreen = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { data: response, isLoading, isError, refetch } = useGetProfileVisitorsQuery();
   const visitors = response?.data || [];
 
@@ -80,7 +83,7 @@ const ProfileVisitorsScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   visitorRole: {
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
   },
   visitTime: {
     color: colors.textMutedLight,
@@ -172,7 +175,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
   },
 });
 

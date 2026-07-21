@@ -10,7 +10,7 @@ class ArtistDiscoverController {
     try {
       const filters = req.query; // ?category=actor&minLat=...&maxLat=...
       const result = await auditionService.discoverAuditions(filters, req.user?.id);
-      res.status(200).json({ success: true, data: result });
+      res.status(200).json({ success: true, debug_filters: filters, data: result });
     } catch (err) {
       next(err);
     }

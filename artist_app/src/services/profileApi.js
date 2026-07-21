@@ -5,6 +5,7 @@ export const profileApi = apiSlice.injectEndpoints({
     getProfessions: builder.query({
       query: () => '/professions',
       providesTags: ['Profile'],
+      keepUnusedDataFor: 0, // Ensure professions are always fetched fresh
     }),
     getProfile: builder.query({
       query: () => '/artist_app/profile/',

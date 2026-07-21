@@ -1,20 +1,22 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { typography, colors } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 
 const Typography = ({ 
   variant = 'body', 
-  color = colors.textMain, 
+  color, 
   align = 'left', 
   style, 
   children, 
   ...props 
 }) => {
+  const { colors } = useTheme();
   return (
     <Text 
       style={[
         typography[variant], 
-        { color, textAlign: align, fontFamily: typography.fontFamily }, 
+        { color: color || colors.textMainLight, textAlign: align, fontFamily: typography.fontFamily }, 
         style
       ]} 
       {...props}

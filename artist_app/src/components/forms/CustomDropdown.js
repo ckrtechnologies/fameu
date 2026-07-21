@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, TouchableOpacity, Modal, FlatList, StyleSheet, TextInput } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing } from '../../theme/theme';
 import Typography from '../core/Typography';
 
 const CustomDropdown = ({ 
@@ -11,6 +12,8 @@ const CustomDropdown = ({
   placeholder = "Select an option",
   searchable = false
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -75,7 +78,7 @@ const CustomDropdown = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginBottom: spacing.m,
   },

@@ -1,0 +1,63 @@
+{
+  "$description": "FAMEU design tokens — generated from DESIGN.md v1.1 §1. Import into Figma via the Tokens Studio plugin (recommended) or adapt to native Figma variables. Two modes: Light and Dark. Dark is the FAMEU default (cinematic). Do NOT hand-pick colors in Figma — every fill must reference one of these variables so the file stays in sync with DESIGN.md and the RN theme.",
+  "$themes": ["Light", "Dark"],
+  "color": {
+    "primary":        { "Light": "#C8952B", "Dark": "#E3B04B", "$type": "color", "$desc": "Main actions, active states (spotlight gold)" },
+    "primaryPressed": { "Light": "#A97C1F", "Dark": "#C8952B", "$type": "color", "$desc": "Pressed state of primary" },
+    "secondary":      { "Light": "#2B3A67", "Dark": "#5B6FA8", "$type": "color", "$desc": "Secondary actions (deep indigo)" },
+    "background":     { "Light": "#FBF9F5", "Dark": "#0E0F12", "$type": "color", "$desc": "Screen background" },
+    "surface":        { "Light": "#FFFFFF", "Dark": "#17191F", "$type": "color", "$desc": "Cards, sheets, inputs" },
+    "surfaceAlt":     { "Light": "#F2EEE6", "Dark": "#1F222A", "$type": "color", "$desc": "Nested surfaces, table rows, skeletons" },
+    "textPrimary":    { "Light": "#1A1C1F", "Dark": "#F4F2EE", "$type": "color", "$desc": "Headings, body — never pure black" },
+    "textSecondary":  { "Light": "#5B5F66", "Dark": "#A6ABB3", "$type": "color", "$desc": "Captions, meta" },
+    "textDisabled":   { "Light": "#A6A9AE", "Dark": "#5A5E66", "$type": "color", "$desc": "Disabled labels" },
+    "textOnPrimary":  { "Light": "#1A1200", "Dark": "#1A1200", "$type": "color", "$desc": "Text on gold buttons — dark on purpose for contrast" },
+    "border":         { "Light": "#E4DFD5", "Dark": "#2C2F38", "$type": "color", "$desc": "Dividers, input borders, card borders" },
+    "success":        { "Light": "#2E7D46", "Dark": "#4CAF6E", "$type": "color", "$desc": "Confirmations, verified badge" },
+    "successBg":      { "Light": "#E4F3E8", "Dark": "#17281C", "$type": "color", "$desc": "Verified badge tint" },
+    "warning":        { "Light": "#B8860B", "Dark": "#E3B04B", "$type": "color", "$desc": "Cautions, offline, pending verification" },
+    "warningBg":      { "Light": "#FBF1D6", "Dark": "#2A2413", "$type": "color", "$desc": "Pending/offline tint" },
+    "error":          { "Light": "#C43D3D", "Dark": "#E76A6A", "$type": "color", "$desc": "Errors, destructive, fraud flags" },
+    "errorBg":        { "Light": "#FBE4E4", "Dark": "#2A1717", "$type": "color", "$desc": "Fraud/error tint" },
+    "info":           { "Light": "#2B5F9E", "Dark": "#5B8FD6", "$type": "color", "$desc": "Informational" },
+    "infoBg":         { "Light": "#E2EBF7", "Dark": "#16202E", "$type": "color", "$desc": "Info tint" },
+    "overlay":        { "Light": "rgba(0,0,0,0.5)", "Dark": "rgba(0,0,0,0.7)", "$type": "color", "$desc": "Behind modals/sheets" }
+  },
+  "typography": {
+    "$font": "Inter (Google Fonts). Numeric-heavy screens use Inter tabular figures.",
+    "display":  { "fontSize": 32, "lineHeight": 40, "fontWeight": 700, "$desc": "Onboarding, big numbers" },
+    "h1":       { "fontSize": 24, "lineHeight": 32, "fontWeight": 600, "$desc": "Screen titles (large-title tab roots)" },
+    "h2":       { "fontSize": 20, "lineHeight": 28, "fontWeight": 600, "$desc": "Section titles" },
+    "h3":       { "fontSize": 17, "lineHeight": 24, "fontWeight": 600, "$desc": "Card titles, header titles" },
+    "body":     { "fontSize": 15, "lineHeight": 22, "fontWeight": 400, "$desc": "Default text" },
+    "bodyBold": { "fontSize": 15, "lineHeight": 22, "fontWeight": 600, "$desc": "Emphasis, labels" },
+    "caption":  { "fontSize": 13, "lineHeight": 18, "fontWeight": 400, "$desc": "Meta, helper text, input labels" },
+    "overline": { "fontSize": 11, "lineHeight": 14, "fontWeight": 600, "letterSpacing": 0.5, "textCase": "uppercase", "$desc": "Section labels, category tags, badges" }
+  },
+  "spacing": {
+    "$scale": "4 8 12 16 20 24 32 48 64 — no arbitrary values (no 10/14/18)",
+    "xs":  4, "sm": 8, "md": 12, "lg": 16, "xl": 20, "2xl": 24, "3xl": 32, "4xl": 48, "5xl": 64,
+    "$rules": "Screen horizontal padding fixed at 16 (lg). Card gap 12 (md). Form field gap 16 (lg). Section gap 24 or 32."
+  },
+  "radius": {
+    "sm": 8, "md": 12, "lg": 20, "full": 999,
+    "$rules": "sm=inputs/chips, md=cards/buttons, lg=sheets/modals, full=pills/avatars/tags. One radius per component type."
+  },
+  "elevation": {
+    "level0": { "$desc": "flat, default" },
+    "level1": { "shadowColor": "#000000", "shadowOpacity": 0.06, "shadowRadius": 8,  "shadowOffsetY": 2, "androidElevation": 2, "$desc": "cards" },
+    "level2": { "shadowColor": "#000000", "shadowOpacity": 0.12, "shadowRadius": 16, "shadowOffsetY": 4, "androidElevation": 8, "$desc": "sheets, popovers" },
+    "$darkRule": "In dark mode prefer border + surfaceAlt over shadows; never stack shadows."
+  },
+  "motion": {
+    "durationFast": 150, "durationBase": 250, "durationSlow": 400,
+    "easingStandard": "cubic-bezier(0.2, 0, 0, 1)",
+    "easingExit": "cubic-bezier(0.4, 0, 1, 1)",
+    "$rules": "Nothing over 500ms. Respect reduced-motion. slow = celebratory only (payment success, verified)."
+  },
+  "iconography": {
+    "set": "Lucide", "strokeWeight": 2,
+    "sizes": { "inline": 16, "list": 20, "default": 24, "feature": 28 },
+    "$rules": "One set only. Filled variant only for active tab. Verified = badge-check in success. Fraud = shield-alert in error."
+  }
+}

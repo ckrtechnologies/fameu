@@ -3,17 +3,64 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
-import { LEGAL_TEXT } from '../../constants/LegalText';
+import { TERMS_OF_SERVICE, PRIVACY_POLICY } from '../../constants/LegalText';
 
 export default function LegalScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   const { type } = route.params || { type: 'terms' };
   
   const isTerms = type === 'terms';
   const title = isTerms ? 'Terms of Service' : 'Privacy Policy';
+  const legalText = isTerms ? TERMS_OF_SERVICE : PRIVACY_POLICY;
+
+  const renderFormattedText = (text) => {
+    return text.split('\n').map((line, index) => {
+      if (!line.trim()) {
+        return <View key={index} style={{ height: spacing.m }} />;
+      }
+      
+      // Main Headings (e.g., 1. Eligibility)
+      if (/^\d+\.\s/.test(line)) {
+        return (
+          <Text key={index} style={styles.headingText}>
+            {line}
+          </Text>
+        );
+      }
+      
+      // Subheadings (e.g., A. Personal Data:)
+      if (/^[A-Z]\.\s/.test(line)) {
+        return (
+          <Text key={index} style={styles.subheadingText}>
+            {line}
+          </Text>
+        );
+      }
+      
+      // Bullet points
+      if (line.startsWith('- ')) {
+        return (
+          <View key={index} style={styles.bulletContainer}>
+            <Text style={styles.bulletPoint}>•</Text>
+            <Text style={styles.bulletText}>{line.replace(/^- /, '')}</Text>
+          </View>
+        );
+      }
+      
+      // Default text
+      return (
+        <Text key={index} style={styles.paragraphText}>
+          {line}
+        </Text>
+      );
+    });
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -32,9 +79,7 @@ export default function LegalScreen() {
         </Typography>
         
         <View style={styles.placeholderContainer}>
-          <Text style={styles.placeholderText}>
-            {LEGAL_TEXT}
-          </Text>
+          {renderFormattedText(legalText)}
         </View>
 
         <View style={styles.bottomSpacer} />
@@ -43,7 +88,7 @@ export default function LegalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -82,10 +127,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
-  placeholderText: {
+  headingText: {
+    ...typography.h3,
+    color: colors.textMainLight,
+    marginTop: spacing.l,
+    marginBottom: spacing.s,
+    fontWeight: 'bold',
+  },
+  subheadingText: {
+    ...typography.h4,
+    color: colors.textMainLight,
+    marginTop: spacing.m,
+    marginBottom: spacing.xs,
+    fontWeight: '600',
+  },
+  paragraphText: {
     ...typography.body,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     lineHeight: 24,
+    marginBottom: spacing.xs,
+  },
+  bulletContainer: {
+    flexDirection: 'row',
+    marginBottom: spacing.xs,
+    paddingLeft: spacing.m,
+    paddingRight: spacing.m,
+  },
+  bulletPoint: {
+    ...typography.body,
+    color: colors.textMutedLight,
+    marginRight: spacing.s,
+    lineHeight: 24,
+  },
+  bulletText: {
+    ...typography.body,
+    color: colors.textMutedLight,
+    lineHeight: 24,
+    flex: 1,
   },
   bottomSpacer: {
     height: 100,

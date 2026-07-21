@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, ActivityIndicator, StyleSheet, View } from 'react-native';
-import { colors, spacing, shadows } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing, shadows } from '../../theme/theme';
 import Typography from '../core/Typography';
 
 const CustomButton = ({ 
@@ -13,6 +14,8 @@ const CustomButton = ({
   textStyle,
   icon,
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const getBackgroundColor = () => {
     if (disabled) return colors.borderDark;
     switch(variant) {
@@ -72,7 +75,7 @@ const CustomButton = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   button: {
     paddingVertical: 14,
     paddingHorizontal: spacing.l,

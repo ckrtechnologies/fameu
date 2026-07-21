@@ -5,12 +5,15 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import { useGetProfileQuery } from '../../services/profileApi';
 import { useApplyToAuditionMutation } from '../../services/discoverApi';
 import CustomButton from '../../components/forms/CustomButton';
 import CustomInput from '../../components/forms/CustomInput';
 export default function ApplyAuditionScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const { auditionId } = route.params;
@@ -108,7 +111,7 @@ export default function ApplyAuditionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

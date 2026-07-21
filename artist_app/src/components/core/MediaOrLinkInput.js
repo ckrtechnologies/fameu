@@ -1,12 +1,15 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ValidatedURLInput from './ValidatedURLInput';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import { colors } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+
 import { PermissionsAndroid, Platform } from 'react-native';
 
 export default function MediaOrLinkInput({ value, onChangeText, placeholder, platform = 'any', onFileSelect, isUploading }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
 
   const handlePickMedia = async (fromCamera = false) => {
     const options = {
@@ -19,6 +22,7 @@ export default function MediaOrLinkInput({ value, onChangeText, placeholder, pla
         const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           console.error("Camera permission denied");
+          Alert.alert('Permission Denied', 'Camera permission is required to take photos or videos.');
           return;
         }
       }
@@ -27,13 +31,20 @@ export default function MediaOrLinkInput({ value, onChangeText, placeholder, pla
         ? await launchCamera(options) 
         : await launchImageLibrary(options);
         
-      if (res.didCancel || res.errorMessage || !res.assets?.length) {
-        if (res.errorMessage) console.error('ImagePicker Error: ', res.errorMessage);
+      if (res.didCancel) return;
+      
+      if (res.errorMessage) {
+        console.error('ImagePicker Error: ', res.errorMessage);
+        Alert.alert('Error', res.errorMessage);
         return;
       }
+      
+      if (!res.assets?.length) return;
+      
       onFileSelect(res.assets[0]);
     } catch (error) {
       console.error('Pick Media Error:', error);
+      Alert.alert('Error', 'Failed to pick media. Please try again.');
     }
   };
 
@@ -95,7 +106,7 @@ export default function MediaOrLinkInput({ value, onChangeText, placeholder, pla
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   outerContainer: {
     width: '100%',
   },

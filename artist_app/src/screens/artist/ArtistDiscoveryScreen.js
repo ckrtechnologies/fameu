@@ -7,7 +7,8 @@ import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ArrowLeft, User, Filter, X } from 'lucide-react-native';
 
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import CustomDropdown from '../../components/forms/CustomDropdown';
 import { useSearchArtistsQuery } from '../../services/discoveryApi';
@@ -18,6 +19,8 @@ import { useGetProfessionsQuery } from '../../services/profileApi';
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
 export default function ArtistDiscoveryScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -119,7 +122,7 @@ export default function ArtistDiscoveryScreen() {
           onPress={() => navigation.navigate('Search')}
           activeOpacity={0.8}
         >
-          <Icon name="search-outline" size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
+          <Icon name="search-outline" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
           <Typography variant="body" style={styles.searchPlaceholder}>Search username/handle...</Typography>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.filterButton}>
@@ -144,7 +147,7 @@ export default function ArtistDiscoveryScreen() {
             <View style={styles.centerContainer}>
               <User size={64} color={colors.borderLight} />
               <Typography variant="h4" style={styles.emptyText}>No talents found</Typography>
-              <Typography variant="body" style={{ color: colors.textSecondaryLight, marginTop: 8 }}>
+              <Typography variant="body" style={{ color: colors.textMutedLight, marginTop: 8 }}>
                 Try adjusting your filters
               </Typography>
             </View>
@@ -247,7 +250,7 @@ export default function ArtistDiscoveryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundLight },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.m, paddingVertical: spacing.s,
@@ -271,7 +274,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.s,
   },
   searchPlaceholder: {
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
   },
   filterButton: { padding: spacing.xs },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
@@ -327,7 +330,7 @@ const styles = StyleSheet.create({
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.borderLight },
   filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  filterChipText: { color: colors.textSecondaryLight },
+  filterChipText: { color: colors.textMutedLight },
   filterChipTextActive: { color: '#fff', fontWeight: 'bold' },
   ageInput: { flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: '#fff', paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body },
   locationInput: { height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: '#fff', paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body, marginBottom: spacing.m },

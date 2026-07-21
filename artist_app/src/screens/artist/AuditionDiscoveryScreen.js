@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import CustomInput from '../../components/forms/CustomInput';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetFeedQuery } from '../../services/discoverApi';
@@ -22,10 +23,18 @@ const CATEGORY_MAP = {
 const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
 
 export default function AuditionDiscoveryScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'Relevant');
+
+  useEffect(() => {
+    if (route.params?.initialCategory) {
+      setActiveCategory(route.params.initialCategory);
+    }
+  }, [route.params?.initialCategory]);
 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -232,7 +241,7 @@ export default function AuditionDiscoveryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

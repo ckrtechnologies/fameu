@@ -1,9 +1,12 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing } from '../../theme/theme';
 import Typography from '../core/Typography';
 
 const Badge = ({ label, variant = 'primary', style }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const getBackgroundColor = () => {
     switch(variant) {
       case 'primary': return colors.primary;
@@ -29,7 +32,7 @@ const Badge = ({ label, variant = 'primary', style }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     paddingHorizontal: spacing.s,
     paddingVertical: 2,

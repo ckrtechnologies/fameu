@@ -3,11 +3,14 @@ import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, Activit
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Search, XCircle, User, Search as SearchOutline } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useLazySearchUsersQuery } from '../../services/connectionsApi';
 
 export default function SearchScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [triggerSearch, { data: searchResults, isFetching, error }] = useLazySearchUsersQuery();
@@ -45,11 +48,11 @@ export default function SearchScreen() {
           <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <View style={styles.searchContainer}>
-          <Search size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
+          <Search size={20} color={colors.textMutedLight} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search users..."
-            placeholderTextColor={colors.textSecondaryLight}
+            placeholderTextColor={colors.textMutedLight}
             value={searchQuery}
             onChangeText={handleSearch}
             autoCapitalize="none"
@@ -57,7 +60,7 @@ export default function SearchScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearButton}>
-              <XCircle size={20} color={colors.textSecondaryLight} />
+              <XCircle size={20} color={colors.textMutedLight} />
             </TouchableOpacity>
           )}
         </View>
@@ -96,7 +99,7 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -170,7 +173,7 @@ const styles = StyleSheet.create({
   },
   handleText: {
     ...typography.body,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginTop: 2,
   },
   centerContainer: {
@@ -183,10 +186,10 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   emptyText: {
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
   },
   promptText: {
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginTop: spacing.m,
     textAlign: 'center',
   },

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, FlatList } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 
 export default function BottomSheetSelect({ value, options, onSelect, placeholder, style, multiSelect = false }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleSelect = (option) => {
@@ -85,7 +88,7 @@ export default function BottomSheetSelect({ value, options, onSelect, placeholde
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',

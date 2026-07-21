@@ -8,7 +8,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DocumentPicker from '@react-native-documents/picker';
 import Video from 'react-native-video';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import TagInput from '../../components/core/TagInput';
@@ -27,6 +28,8 @@ const HEIGHT_OPTIONS = Array.from({ length: 37 }, (_, i) => {
 });
 
 export default function EditProfileScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   const { data: profileResponse, isLoading: isFetching, refetch } = useGetProfileQuery()
@@ -92,6 +95,12 @@ export default function EditProfileScreen() {
     left_profile_url: '',
     right_profile_url: '',
     recent_assignments: [],
+    social_links: {
+      facebook: '',
+      instagram: '',
+      youtube: '',
+      snapchat: ''
+    }
   });
 
   const [uploadingField, setUploadingField] = useState(null);
@@ -130,14 +139,15 @@ export default function EditProfileScreen() {
   const isInitialized = React.useRef(false);
 
   useEffect(() => {
-    if (route.params?.updatedCategories) {
-      setCategories(route.params.updatedCategories);
+    const passedCategories = route.params?.categories || route.params?.updatedCategories;
+    if (passedCategories) {
+      setCategories(passedCategories);
 
       setCategoryFormData(prev => {
         const next = { ...prev };
         let changed = false;
         Object.keys(next).forEach(cat => {
-          if (!route.params.updatedCategories.includes(cat)) {
+          if (!passedCategories.includes(cat)) {
             delete next[cat];
             changed = true;
           }
@@ -145,12 +155,13 @@ export default function EditProfileScreen() {
         return changed ? next : prev;
       });
     }
-  }, [route.params?.updatedCategories]);
+  }, [route.params?.categories, route.params?.updatedCategories]);
 
   useEffect(() => {
     if (profileResponse?.data && !isInitialized.current) {
-      if (route.params?.updatedCategories) {
-        setCategories(route.params.updatedCategories);
+      const passedCategories = route.params?.categories || route.params?.updatedCategories;
+      if (passedCategories) {
+        setCategories(passedCategories);
       } else {
         setCategories(profileResponse.data.categories || []);
       }
@@ -181,6 +192,12 @@ export default function EditProfileScreen() {
         left_profile_url: p.left_profile_url || '',
         right_profile_url: p.right_profile_url || '',
         recent_assignments: p.recent_assignments || [],
+        social_links: (typeof p.social_links === 'string' ? JSON.parse(p.social_links || '{}') : p.social_links) || {
+          facebook: '',
+          instagram: '',
+          youtube: '',
+          snapchat: ''
+        },
       });
 
       if (p.category_details) {
@@ -438,8 +455,8 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} disabled={isLoading || isUploadingMedia || isUploadingFile}>
+          <Icon name="arrow-back" size={24} color={isLoading || isUploadingMedia || isUploadingFile ? "#ccc" : colors.textMainLight} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{route.params?.isOnboarding ? 'Complete Profile' : 'Edit Profile'}</Text>
         <View style={{ width: 40 }} />
@@ -544,10 +561,11 @@ export default function EditProfileScreen() {
                               if (granted === PermissionsAndroid.RESULTS.GRANTED) {
                                 launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8 }, handleImageUpload);
                               } else {
-                                showError('', "Camera permission denied");
+                                showError('Permission Denied', "Camera permission is required to update your profile photo.");
                               }
                             } catch (err) {
-                              console.warn(err);
+                              console.error(err);
+                              showError('Error', err?.message || 'Failed to request camera permission');
                             }
                           } else {
                             launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8 }, handleImageUpload);
@@ -579,7 +597,7 @@ export default function EditProfileScreen() {
                   )}
                 </View>
               </TouchableOpacity>
-              <Text style={{ ...typography.caption, color: colors.textSecondaryLight, marginTop: 12 }}>
+              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 12 }}>
                 Tap to change profile photo
               </Text>
             </View>
@@ -603,13 +621,13 @@ export default function EditProfileScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>CINTAA Registration Number</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="card-outline" size={20} color={colors.textSecondaryLight} style={styles.inputIcon} />
+                  <Icon name="card-outline" size={20} color={colors.textMutedLight} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     value={formData.cintaa_reg_number}
                     onChangeText={(text) => setFormData(p => ({ ...p, cintaa_reg_number: text }))}
                     placeholder="Enter Reg Number"
-                    placeholderTextColor={colors.textSecondaryLight}
+                    placeholderTextColor={colors.textMutedLight}
                   />
                 </View>
               </View>
@@ -756,7 +774,7 @@ export default function EditProfileScreen() {
               <Text style={styles.label}>Work Preference</Text>
               <BottomSheetSelect
                 placeholder="Select Preference"
-                options={['Commercials', 'Movies', 'Web Series', 'Theater', 'Any']}
+                options={['Available in India', 'Outside India', 'Specific Cities']}
                 value={formData.work_preference}
                 onSelect={(val) => setFormData(p => ({ ...p, work_preference: val }))}
                 style={styles.selectInput}
@@ -791,6 +809,59 @@ export default function EditProfileScreen() {
                 platform="any"
                 onFileSelect={(file) => handleMediaFieldSelect('intro_video_url', file)}
                 isUploading={uploadingField === 'intro_video_url'}
+              />
+            </View>
+
+            {/* Social Media Links Section */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Social Media Links</Text>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Instagram Profile URL</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.social_links?.instagram || ''}
+                onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, instagram: text } }))}
+                placeholder="https://instagram.com/yourhandle"
+                placeholderTextColor={colors.textMutedLight}
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>YouTube Channel URL</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.social_links?.youtube || ''}
+                onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, youtube: text } }))}
+                placeholder="https://youtube.com/@yourchannel"
+                placeholderTextColor={colors.textMutedLight}
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Facebook Profile URL</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.social_links?.facebook || ''}
+                onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, facebook: text } }))}
+                placeholder="https://facebook.com/yourprofile"
+                placeholderTextColor={colors.textMutedLight}
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Snapchat Profile URL</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.social_links?.snapchat || ''}
+                onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, snapchat: text } }))}
+                placeholder="https://snapchat.com/add/yourhandle"
+                placeholderTextColor={colors.textMutedLight}
+                autoCapitalize="none"
               />
             </View>
 
@@ -958,7 +1029,7 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
@@ -1014,7 +1085,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.body,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginBottom: 24,
   },
   row: {

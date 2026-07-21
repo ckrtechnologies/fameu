@@ -34,7 +34,11 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>Fameu needs your location to show auditions near you.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Fameu needs access to your camera so you can take and upload a profile picture or audition video.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fameu needs access to your photo library to upload profile pictures and portfolio media.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

@@ -155,8 +155,21 @@ class AuditionService {
       query = query.or(`title.ilike.%${filters.search}%,role_description.ilike.%${filters.search}%`);
     }
     if (filters.category) {
-      // category can be comma separated, so we use ilike
-      query = query.ilike('category', `%${filters.category}%`);
+      // category can be comma separated.
+      // Furthermore, a single category might be like "Actor / theatre actor".
+      // To match older auditions, we split by both comma and slash to get keywords.
+      let catArray = [];
+      filters.category.split(',').forEach(c => {
+        c.split('/').forEach(subC => {
+          const trimmed = subC.trim();
+          if (trimmed) catArray.push(trimmed);
+        });
+      });
+      
+      if (catArray.length > 0) {
+        const orQuery = catArray.map(c => `category.ilike.%${c}%`).join(',');
+        query = query.or(orQuery);
+      }
     }
     if (filters.audition_type) query = query.eq('audition_type', filters.audition_type);
     if (filters.hiring_id) query = query.eq('hiring_id', filters.hiring_id);

@@ -4,12 +4,14 @@ import { View, ActivityIndicator } from 'react-native';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import { initializeAuth } from '../store/slices/authSlice';
-import { colors } from '../theme/theme';
+import { useTheme } from '../theme/ThemeProvider';
+
 import SocketService from '../services/SocketService';
 import * as Keychain from 'react-native-keychain';
 import { setupPushNotifications } from '../services/PushNotificationService';
 
 export default function AppNavigator() {
+  const { colors } = useTheme();
   const dispatch = useDispatch();
   const { isAuthenticated, loading } = useSelector((state) => state.auth);
 

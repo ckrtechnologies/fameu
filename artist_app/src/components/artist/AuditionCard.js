@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { colors, typography, spacing, shadows } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography, spacing, shadows } from '../../theme/theme';
 
 const AuditionCard = ({ audition, onPress, style }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   if (!audition) return null;
 
   return (
@@ -69,7 +72,7 @@ const AuditionCard = ({ audition, onPress, style }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,

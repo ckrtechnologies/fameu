@@ -6,7 +6,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import TabNavigator from './TabNavigator';
-import { colors, typography, spacing } from '../theme/theme';
+import { useTheme } from '../theme/ThemeProvider';
+import { typography, spacing } from '../theme/theme';
 import { logout } from '../store/slices/authSlice';
 import { apiSlice } from '../services/apiSlice';
 import { useDeleteAccountMutation } from '../services/authApi';
@@ -15,6 +16,8 @@ import { useGetProfileQuery } from '../services/profileApi';
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
   const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
@@ -131,6 +134,7 @@ function CustomDrawerContent(props) {
 }
 
 export default function DrawerNavigator() {
+  const { colors } = useTheme();
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
@@ -147,7 +151,7 @@ export default function DrawerNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   drawerContainer: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

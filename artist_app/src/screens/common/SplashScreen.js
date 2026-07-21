@@ -1,13 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, ImageBackground, Animated, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+import { typography } from '../../theme/theme';
 
 // Calculate massive circle size to cover the entire screen
 const { width, height } = Dimensions.get('window');
 const CIRCLE_SIZE = Math.max(width, height) * 1.5;
 
 export default function SplashScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
 
   // Animation Values
@@ -95,7 +98,7 @@ export default function SplashScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
