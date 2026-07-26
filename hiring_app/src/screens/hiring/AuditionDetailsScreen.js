@@ -1,6 +1,6 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Linking, ImageBackground } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ export default function AuditionDetailsScreen() {
   const { data: response, isLoading, error, isFetching, refetch } = useGetAuditionDetailsQuery(auditionId);
   const [deleteAudition] = useDeleteAuditionMutation();
   const scrollViewRef = useRef(null);
+  const [heroImageError, setHeroImageError] = useState(false);
 
   useEffect(() => {
     if (scrollToComments && !isLoading && response?.data) {
@@ -83,7 +84,9 @@ export default function AuditionDetailsScreen() {
   }
 
   const isWalkin = audition.audition_type === 'walkin';
-  const heroImage = audition.thumbnail_url || parsedInstructions.thumbnail_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop';
+  const initialHeroImage = audition.thumbnail_url || parsedInstructions.thumbnail_url;
+  const fallbackImg = 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop';
+  const heroImage = heroImageError || !initialHeroImage || initialHeroImage === 'null' || initialHeroImage.trim() === '' ? fallbackImg : initialHeroImage;
 
   return (
     <View style={globalStyles.container}>
@@ -97,6 +100,7 @@ export default function AuditionDetailsScreen() {
         <ImageBackground 
           source={{ uri: heroImage }} 
           style={styles.heroImage}
+          onError={() => setHeroImageError(true)}
         >
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' }} />
         </ImageBackground>

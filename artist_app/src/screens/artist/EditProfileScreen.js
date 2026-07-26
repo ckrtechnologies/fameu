@@ -20,6 +20,9 @@ import DateRangePicker from '../../components/core/DateRangePicker';
 import { parseArray } from '../../utils/dataUtils';
 import CustomButton from '../../components/forms/CustomButton';
 import { INDIAN_CITIES } from '../../constants/cities';
+import { useSelector } from 'react-redux';
+import { uploadFileWithProgress } from '../../utils/uploadUtils';
+import ProgressBar from '../../components/core/ProgressBar';
 
 const AVAILABLE_LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati', 'Odia', 'Bhojpuri', 'Urdu', 'Assamese'];
 
@@ -39,9 +42,12 @@ export default function EditProfileScreen() {
   const { data: profileResponse, isLoading: isFetching, refetch } = useGetProfileQuery()
   const [upsertProfile, { isLoading: isSaving }] = useUpsertProfileMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
-  const [uploadMedia, { isLoading: isUploadingMedia }] = useUploadMediaMutation();
-  const [uploadGenericFile, { isLoading: isUploadingFile }] = useUploadGenericFileMutation();
   const [checkUsername, { isFetching: isCheckingUsername }] = useLazyCheckUsernameQuery();
+  
+  const token = useSelector(state => state.auth.token);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { data: professionsResponse, isLoading: isLoadingProfessions } = useGetProfessionsQuery();
   const professionsList = professionsResponse?.data || [];
 
@@ -66,13 +72,20 @@ export default function EditProfileScreen() {
       name: res.assets[0].fileName || `avatar_${Date.now()}.jpg`,
     });
 
+    setIsUploadingMedia(true);
+    setUploadProgress(0);
     try {
-      await uploadMedia(formData).unwrap();
+      await uploadFileWithProgress('/artist_app/profile/upload', formData, (progress) => {
+        setUploadProgress(progress);
+      }, token);
       showSuccess('', 'Profile photo updated!');
+      refetch();
     } catch (error) {
       console.error('Upload photo error:', error);
-      const errMsg = error?.data?.error || error?.message || 'Failed to upload photo';
+      const errMsg = error?.message || 'Failed to upload photo';
       showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+    } finally {
+      setIsUploadingMedia(false);
     }
   };
 
@@ -118,10 +131,15 @@ export default function EditProfileScreen() {
       name: asset.fileName || `media_${Date.now()}`
     });
 
+    setUploadProgress(0);
     try {
-      const res = await uploadGenericFile(mFormData).unwrap();
-      if (res.data?.url) {
-        setFormData(p => ({ ...p, [fieldKey]: res.data.url }));
+      const res = await uploadFileWithProgress('/artist_app/profile/upload-file', mFormData, (progress) => {
+        setUploadProgress(progress);
+      }, token);
+      
+      const fileUrl = res.data?.url || res.url;
+      if (fileUrl) {
+        setFormData(p => ({ ...p, [fieldKey]: fileUrl }));
         showSuccess('', 'File uploaded successfully!');
       }
     } catch (error) {
@@ -295,34 +313,45 @@ export default function EditProfileScreen() {
         name: res.name || `file_${Date.now()}`,
       });
 
-      const response = await uploadGenericFile(formData).unwrap();
+      setIsUploadingFile(true);
+      setUploadProgress(0);
+      try {
+        const response = await uploadFileWithProgress('/artist_app/profile/upload-file', formData, (progress) => {
+          setUploadProgress(progress);
+        }, token);
 
-      if (response.success && response.url) {
-        setCategoryFormData(prev => {
-          const existing = prev[category]?.[key];
-          let newVal;
-          if (Array.isArray(existing)) {
-            newVal = [...existing, response.url];
-          } else if (typeof existing === 'string' && existing !== '') {
-            newVal = [existing, response.url];
-          } else {
-            newVal = [response.url];
-          }
-          return {
-            ...prev,
-            [category]: {
-              ...(prev[category] || {}),
-              [key]: newVal
+        const fileUrl = response.data?.url || response.url;
+        if (fileUrl) {
+          setCategoryFormData(prev => {
+            const existing = prev[category]?.[key];
+            let newVal;
+            if (Array.isArray(existing)) {
+              newVal = [...existing, fileUrl];
+            } else if (typeof existing === 'string' && existing !== '') {
+              newVal = [existing, fileUrl];
+            } else {
+              newVal = [fileUrl];
             }
-          };
-        });
-        showSuccess('', 'File uploaded successfully!');
+            return {
+              ...prev,
+              [category]: {
+                ...(prev[category] || {}),
+                [key]: newVal
+              }
+            };
+          });
+          showSuccess('', 'File uploaded successfully!');
+        }
+      } catch (uploadErr) {
+        showError('', uploadErr?.message || 'Upload failed');
+      } finally {
+        setIsUploadingFile(false);
       }
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         return;
       }
-      showError('', err?.data?.error || err.message || 'Upload failed');
+      showError('', err?.message || 'Failed to pick file');
     }
   };
 
@@ -458,8 +487,8 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} disabled={isLoading || isUploadingMedia || isUploadingFile}>
-          <Icon name="arrow-back" size={24} color={isLoading || isUploadingMedia || isUploadingFile ? "#ccc" : colors.textMainLight} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} disabled={isLoading || isUploadingMedia || isUploadingFile || uploadingField !== null}>
+          <Icon name="arrow-back" size={24} color={(isLoading || isUploadingMedia || isUploadingFile || uploadingField !== null) ? "#ccc" : colors.textMainLight} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{route.params?.isOnboarding ? 'Complete Profile' : 'Edit Profile'}</Text>
         <View style={{ width: 40 }} />
@@ -607,6 +636,11 @@ export default function EditProfileScreen() {
                   )}
                 </View>
               </TouchableOpacity>
+              {isUploadingMedia && (
+                <View style={{ width: '50%', marginTop: 8 }}>
+                  <ProgressBar progress={uploadProgress} />
+                </View>
+              )}
               <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 12 }}>
                 Tap to change profile photo
               </Text>
@@ -843,6 +877,9 @@ export default function EditProfileScreen() {
                 onFileSelect={(file) => handleMediaFieldSelect('intro_video_url', file)}
                 isUploading={uploadingField === 'intro_video_url'}
               />
+              {uploadingField === 'intro_video_url' && (
+                <View style={{ marginTop: 8 }}><ProgressBar progress={uploadProgress} /></View>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -855,6 +892,9 @@ export default function EditProfileScreen() {
                 onFileSelect={(file) => handleMediaFieldSelect('left_profile_url', file)}
                 isUploading={uploadingField === 'left_profile_url'}
               />
+              {uploadingField === 'left_profile_url' && (
+                <View style={{ marginTop: 8 }}><ProgressBar progress={uploadProgress} /></View>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -867,6 +907,9 @@ export default function EditProfileScreen() {
                 onFileSelect={(file) => handleMediaFieldSelect('right_profile_url', file)}
                 isUploading={uploadingField === 'right_profile_url'}
               />
+              {uploadingField === 'right_profile_url' && (
+                <View style={{ marginTop: 8 }}><ProgressBar progress={uploadProgress} /></View>
+              )}
             </View>
 
             {/* Social Media Links Section */}
@@ -1061,10 +1104,22 @@ export default function EditProfileScreen() {
                             <TouchableOpacity
                               style={[styles.fileButton, { marginTop: files.length > 0 ? 4 : 0 }]}
                               onPress={() => handleFileUpload(activeTab, field.field_name)}
+                              disabled={isUploadingFile}
                             >
-                              <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
-                              <Text style={styles.fileButtonText}>{files.length > 0 ? "Add Another File" : "Upload File"}</Text>
+                              {isUploadingFile ? (
+                                <ActivityIndicator size="small" color={colors.primary} />
+                              ) : (
+                                <>
+                                  <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
+                                  <Text style={styles.fileButtonText}>{files.length > 0 ? "Add Another File" : "Upload File"}</Text>
+                                </>
+                              )}
                             </TouchableOpacity>
+                            {isUploadingFile && (
+                              <View style={{ marginTop: 8 }}>
+                                <ProgressBar progress={uploadProgress} />
+                              </View>
+                            )}
                           </>
                         );
                       })()}
@@ -1079,9 +1134,9 @@ export default function EditProfileScreen() {
       </KeyboardAwareScrollView>
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+          style={[styles.saveButton, (isLoading || isUploadingMedia || isUploadingFile || uploadingField !== null) && styles.saveButtonDisabled]}
           onPress={handleSave}
-          disabled={isLoading}
+          disabled={isLoading || isUploadingMedia || isUploadingFile || uploadingField !== null}
         >
           {isLoading ? (
             <ActivityIndicator color={colors.backgroundLight} />

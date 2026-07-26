@@ -74,14 +74,19 @@ export default function TabNavigator() {
                   </View>
                 )}
               </TouchableOpacity>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={{ ...typography.body, color: colors.textSecondaryLight, marginBottom: 2 }}>Welcome back,</Text>
-                <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: '800' }}>{companyName}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: '800', flexShrink: 1 }}>{companyName}</Text>
+                  {profile?.is_verified && (
+                    <Icon name="checkmark-circle" size={18} color="#3b82f6" style={{ marginLeft: 6 }} />
+                  )}
+                </View>
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('Search')}
+                onPress={() => navigation.navigate('TalentDiscovery')}
                 style={{ padding: 10, backgroundColor: colors.surfaceLight, borderRadius: 20, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8, marginRight: 12 }}
               >
                 <Search size={28} color={colors.primary} />

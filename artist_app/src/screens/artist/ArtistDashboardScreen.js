@@ -4,12 +4,14 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTheme } from '../../theme/ThemeProvider';
-import { typography, spacing } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import AuditionCard from '../../components/artist/AuditionCard';
 import AuditionPeekModal from '../../components/artist/AuditionPeekModal';
 import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery } from '../../services/discoverApi';
 import { useGetProfileQuery } from '../../services/profileApi';
+import { useGetNotificationsQuery } from '../../services/notificationsApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
@@ -68,6 +70,10 @@ export default function ArtistDashboardScreen() {
   useRefetchOnFocus(refetchApps);
   useRefetchOnFocus(refetchSaved);
 
+  const { data: notificationsData, refetch: refetchNotifs } = useGetNotificationsQuery();
+  useRefetchOnFocus(refetchNotifs);
+  const hasUnreadNotifications = notificationsData?.data?.some(n => !n.is_read);
+
   const [refreshing, setRefreshing] = useState(false);
   
   // Peek Modal State
@@ -80,12 +86,12 @@ export default function ArtistDashboardScreen() {
     try {
       await Promise.all([
         refetchFeed(), refetchAll(), refetchLive(), refetchTrending(),
-        refetchProfile(), refetchApps(), refetchSaved()
+        refetchProfile(), refetchApps(), refetchSaved(), refetchNotifs()
       ]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchFeed, refetchAll, refetchLive, refetchTrending, refetchProfile, refetchApps, refetchSaved]);
+  }, [refetchFeed, refetchAll, refetchLive, refetchTrending, refetchProfile, refetchApps, refetchSaved, refetchNotifs]);
 
   const handleViewAuditionDetails = useCallback((auditionOrId) => {
     const id = typeof auditionOrId === 'object' && auditionOrId !== null ? auditionOrId.id : auditionOrId;
@@ -145,7 +151,7 @@ export default function ArtistDashboardScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginRight: 12 }}>
             {profile?.avatar_url || user?.avatar_url ? (
-              <Image source={{ uri: profile?.avatar_url || user?.avatar_url }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+              <ImageWithFallback source={{ uri: profile?.avatar_url }} fallbackSource={{ uri: user?.avatar_url }} style={{ width: 40, height: 40, borderRadius: 20 }} />
             ) : (
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
                 <Typography variant="body" style={{ color: 'white', fontWeight: 'bold' }}>{name.charAt(0).toUpperCase()}</Typography>
@@ -164,7 +170,7 @@ export default function ArtistDashboardScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
           <Bell size={24} color={colors.textMainLight} />
-          <View style={styles.notificationBadge} />
+          {hasUnreadNotifications && <View style={styles.notificationBadge} />}
         </TouchableOpacity>
       </View>
     </View>
@@ -378,7 +384,7 @@ export default function ArtistDashboardScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.savedCard} onPress={() => handleAuditionPress(item, savedAuditions)}>
                <View style={styles.savedIconBg}>
-                  <Image source={{ uri: item.thumbnail_url || item.hiring_profiles?.logo_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop' }} style={{ width: 60, height: 60, borderRadius: 12 }} />
+                  <ImageWithFallback source={{ uri: item.thumbnail_url }} fallbackSource={{ uri: item.hiring_profiles?.logo_url }} style={{ width: 60, height: 60, borderRadius: 12 }} />
                </View>
                <Typography variant="body" style={styles.savedTitle} numberOfLines={2}>{item.title}</Typography>
             </TouchableOpacity>

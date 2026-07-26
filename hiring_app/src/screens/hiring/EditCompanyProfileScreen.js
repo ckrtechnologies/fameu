@@ -10,6 +10,8 @@ import { Eye, Users, Briefcase, UserCheck } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import Typography from '../../components/core/Typography';
 import AnimatedBorderCard from '../../components/AnimatedBorderCard';
+import ProgressBar from '../../components/core/ProgressBar';
+import { uploadFileWithProgress } from '../../utils/uploadUtils';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -27,8 +29,11 @@ export default function EditCompanyProfileScreen() {
   const user = useSelector(state => state.auth.user);
   const { data: response, isLoading , isFetching, refetch} = useGetCompanyProfileQuery(user?.id)
   const [upsertProfile, { isLoading: isUpdating }] = useUpsertCompanyProfileMutation();
-  const [uploadLogo, { isLoading: isUploading }] = useUploadLogoMutation();
   const [checkUsername, { isFetching: isCheckingUsername }] = useLazyCheckUsernameQuery();
+  const token = useSelector(state => state.auth.token);
+  
+  const [isUploading, setIsUploading] = useState(false);
+  const [logoProgress, setLogoProgress] = useState(0);
 
   const profile = response?.data;
 
@@ -130,7 +135,19 @@ export default function EditCompanyProfileScreen() {
           type: selectedLogo.type || 'image/jpeg',
           name: selectedLogo.fileName || 'logo.jpg',
         });
-        await uploadLogo(formData).unwrap();
+        
+        setIsUploading(true);
+        setLogoProgress(0);
+        try {
+          await uploadFileWithProgress('/hiring_app/company/logo', formData, (progress) => {
+            setLogoProgress(progress);
+          }, token);
+        } catch (uploadErr) {
+          showError('', 'Failed to upload logo, but profile was saved.');
+          console.error(uploadErr);
+        } finally {
+          setIsUploading(false);
+        }
       }
 
       showSuccess('', 'Company profile updated successfully.');
@@ -173,7 +190,7 @@ export default function EditCompanyProfileScreen() {
     >
       
       <View style={styles.logoSection}>
-        <TouchableOpacity style={styles.logoContainer} onPress={handleSelectLogo}>
+        <TouchableOpacity style={styles.logoContainer} onPress={handleSelectLogo} disabled={isUploading}>
           {currentLogo ? (
             <Image source={{ uri: currentLogo }} style={styles.logoImage} />
           ) : (
@@ -189,6 +206,11 @@ export default function EditCompanyProfileScreen() {
           )}
         </TouchableOpacity>
         <Text style={styles.helperText}>Recommended size: 500x500px</Text>
+        {isUploading && (
+          <View style={{ width: '60%', marginTop: 8 }}>
+            <ProgressBar progress={logoProgress} />
+          </View>
+        )}
       </View>
 
 
@@ -284,9 +306,9 @@ export default function EditCompanyProfileScreen() {
       <TouchableOpacity 
         style={[globalStyles.primaryButton, { marginTop: spacing.xl }]} 
         onPress={handleSave}
-        disabled={isUpdating}
+        disabled={isUpdating || isUploading}
       >
-        {isUpdating ? (
+        {(isUpdating || isUploading) ? (
           <ActivityIndicator color="white" />
         ) : (
           <Text style={globalStyles.primaryButtonText}>Save Profile</Text>

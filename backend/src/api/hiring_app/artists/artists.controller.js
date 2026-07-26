@@ -23,11 +23,11 @@ const artistsController = {
         .eq('users.is_blacklisted', false);
 
       if (category) {
-        const cats = category.split(',').map(c => c.trim().toLowerCase());
+        const cats = category.split(',').map(c => c.trim());
         query = query.overlaps('categories', cats);
       }
       if (req.query.language) {
-        const langs = req.query.language.split(',').map(l => l.trim().toLowerCase());
+        const langs = req.query.language.split(',').map(l => l.trim());
         query = query.overlaps('languages', langs);
       }
       if (gender) query = query.eq('gender', gender);

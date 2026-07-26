@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, ImageBackground } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -28,6 +28,7 @@ export default function AuditionDetailScreen() {
   }
   const [toggleBookmark, { isLoading: isBookmarking }] = useToggleBookmarkMutation();
   const scrollViewRef = React.useRef(null);
+  const [heroImageError, setHeroImageError] = useState(false);
 
   React.useEffect(() => {
     if (scrollToComments && !isLoading && audition) {
@@ -67,7 +68,9 @@ export default function AuditionDetailScreen() {
   };
 
   const isWalkin = audition.audition_type === 'walkin';
-  const heroImage = audition.thumbnail_url || parsedInstructions.thumbnail_url || audition.hiring_profiles?.logo_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop';
+  const initialHeroImage = audition.thumbnail_url || parsedInstructions.thumbnail_url || audition.hiring_profiles?.logo_url;
+  const fallbackImg = 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop';
+  const heroImage = heroImageError || !initialHeroImage || initialHeroImage === 'null' || initialHeroImage.trim() === '' ? fallbackImg : initialHeroImage;
 
   return (
     <View style={styles.safeArea}>
@@ -81,6 +84,7 @@ export default function AuditionDetailScreen() {
         <ImageBackground 
           source={{ uri: heroImage }} 
           style={styles.heroImage}
+          onError={() => setHeroImageError(true)}
         >
           {/* Subtle gradient overlay could go here if needed */}
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' }} />

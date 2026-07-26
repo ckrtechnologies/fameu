@@ -8,10 +8,13 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { pickSingle, types, isCancel } from '@react-native-documents/picker';
+import { pick, types, errorCodes, isErrorWithCode } from '@react-native-documents/picker';
 import { INDIAN_CITIES } from '../../constants/cities';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
+import { useSelector } from 'react-redux';
+import { uploadFileWithProgress } from '../../utils/uploadUtils';
+import ProgressBar from '../../components/core/ProgressBar';
 import { useCreateAuditionMutation, useUpdateAuditionMutation, useUploadPdfMutation, useUploadThumbnailMutation } from '../../services/auditionApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -25,8 +28,14 @@ export default function CreateAuditionScreen({ route }) {
 
   const [createAudition, { isLoading: isCreating }] = useCreateAuditionMutation();
   const [updateAudition, { isLoading: isUpdating }] = useUpdateAuditionMutation();
-  const [uploadPdf, { isLoading: isUploadingPdf }] = useUploadPdfMutation();
-  const [uploadThumbnail, { isLoading: isUploadingThumbnail }] = useUploadThumbnailMutation();
+  
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [thumbnailProgress, setThumbnailProgress] = useState(0);
+  
+  const token = useSelector(state => state.auth.token);
+  
   const { data: professionsResponse } = useGetProfessionsQuery();
   const isLoading = isCreating || isUpdating || isUploadingPdf || isUploadingThumbnail;
 
@@ -113,25 +122,38 @@ export default function CreateAuditionScreen({ route }) {
 
   const handlePdfUpload = async () => {
     try {
-      const res = await pickSingle({
+      const res = await pick({
         type: [types.pdf],
       });
+      const file = res[0];
       
       const formData = new FormData();
       formData.append('pdf', {
-        uri: res.uri,
-        type: res.type,
-        name: res.name || 'description.pdf',
+        uri: file.uri,
+        type: file.type,
+        name: file.name || 'description.pdf',
       });
       
-      const uploadRes = await uploadPdf(formData).unwrap();
-      if (uploadRes?.data?.url) {
-        handleChange('description_pdf_url', uploadRes.data.url);
-        showSuccess('', 'PDF uploaded successfully!');
+      setIsUploadingPdf(true);
+      setPdfProgress(0);
+      try {
+        const uploadRes = await uploadFileWithProgress('/hiring_app/auditions/upload-pdf', formData, (progress) => {
+          setPdfProgress(progress);
+        }, token);
+        
+        if (uploadRes?.data?.url) {
+          handleChange('description_pdf_url', uploadRes.data.url);
+          showSuccess('', 'PDF uploaded successfully!');
+        }
+      } catch (uploadErr) {
+        showError('', 'Failed to upload PDF');
+        console.error(uploadErr);
+      } finally {
+        setIsUploadingPdf(false);
       }
     } catch (err) {
-      if (!isCancel(err)) {
-        showError('', 'Failed to upload PDF');
+      if (!(isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED)) {
+        showError('', 'Failed to pick PDF');
         console.error(err);
       }
     }
@@ -139,25 +161,39 @@ export default function CreateAuditionScreen({ route }) {
 
   const handleThumbnailUpload = async () => {
     try {
-      const res = await pickSingle({
+      const res = await pick({
         type: [types.images],
       });
+      const file = res[0];
       
       const formData = new FormData();
       formData.append('thumbnail', {
-        uri: res.uri,
-        type: res.type,
-        name: res.name || 'thumbnail.jpg',
+        uri: file.uri,
+        type: file.type,
+        name: file.name || 'thumbnail.jpg',
       });
       
-      const uploadRes = await uploadThumbnail(formData).unwrap();
-      if (uploadRes?.data?.url) {
-        handleChange('thumbnail_url', uploadRes.data.url);
-        showSuccess('', 'Thumbnail uploaded successfully!');
+      setIsUploadingThumbnail(true);
+      setThumbnailProgress(0);
+      
+      try {
+        const uploadRes = await uploadFileWithProgress('/hiring_app/auditions/upload-thumbnail', formData, (progress) => {
+          setThumbnailProgress(progress);
+        }, token);
+        
+        if (uploadRes?.data?.url) {
+          handleChange('thumbnail_url', uploadRes.data.url);
+          showSuccess('', 'Thumbnail uploaded successfully!');
+        }
+      } catch (uploadErr) {
+        showError('', 'Failed to upload Thumbnail');
+        console.error(uploadErr);
+      } finally {
+        setIsUploadingThumbnail(false);
       }
     } catch (err) {
-      if (!isCancel(err)) {
-        showError('', 'Failed to upload Thumbnail');
+      if (!(isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED)) {
+        showError('', 'Failed to pick Thumbnail');
         console.error(err);
       }
     }
@@ -368,22 +404,32 @@ export default function CreateAuditionScreen({ route }) {
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Detailed Description PDF (Optional)</Text>
-          <TouchableOpacity style={[styles.input, { justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }]} onPress={handlePdfUpload}>
-            <Icon name="document-attach-outline" size={20} color={colors.textMainLight} style={{ marginRight: spacing.s }} />
-            <Text style={{ color: form.description_pdf_url ? colors.primary : colors.textMutedLight }}>
-              {form.description_pdf_url ? "PDF Uploaded" : "Upload PDF"}
+          <TouchableOpacity style={[styles.input, { justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }]} onPress={handlePdfUpload} disabled={isUploadingPdf}>
+            {isUploadingPdf ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <Icon name="document-attach-outline" size={20} color={colors.textMainLight} style={{ marginRight: spacing.s }} />
+            )}
+            <Text style={{ color: form.description_pdf_url ? colors.primary : colors.textMutedLight, marginLeft: isUploadingPdf ? 8 : 0 }}>
+              {isUploadingPdf ? "Uploading..." : form.description_pdf_url ? "PDF Uploaded" : "Upload PDF"}
             </Text>
           </TouchableOpacity>
+          {isUploadingPdf && <ProgressBar progress={pdfProgress} />}
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Post Thumbnail (Optional)</Text>
-          <TouchableOpacity style={[styles.input, { justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }]} onPress={handleThumbnailUpload}>
-            <Icon name="image-outline" size={20} color={colors.textMainLight} style={{ marginRight: spacing.s }} />
-            <Text style={{ color: form.thumbnail_url ? colors.primary : colors.textMutedLight }}>
-              {form.thumbnail_url ? "Thumbnail Uploaded" : "Upload Thumbnail"}
+          <TouchableOpacity style={[styles.input, { justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }]} onPress={handleThumbnailUpload} disabled={isUploadingThumbnail}>
+            {isUploadingThumbnail ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <Icon name="image-outline" size={20} color={colors.textMainLight} style={{ marginRight: spacing.s }} />
+            )}
+            <Text style={{ color: form.thumbnail_url ? colors.primary : colors.textMutedLight, marginLeft: isUploadingThumbnail ? 8 : 0 }}>
+              {isUploadingThumbnail ? "Uploading..." : form.thumbnail_url ? "Thumbnail Uploaded" : "Upload Thumbnail"}
             </Text>
           </TouchableOpacity>
+          {isUploadingThumbnail && <ProgressBar progress={thumbnailProgress} />}
         </View>
 
         <View style={styles.formGroup}>
@@ -506,7 +552,7 @@ export default function CreateAuditionScreen({ route }) {
         <TouchableOpacity 
           style={globalStyles.primaryButton} 
           onPress={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || isUploadingPDF || isUploadingThumbnail}
         >
           {isLoading ? (
             <ActivityIndicator color="white" />
@@ -750,6 +796,7 @@ const getStyles = (colors) => StyleSheet.create({
     borderColor: colors.borderLight,
     borderRadius: 8,
     padding: spacing.m,
+    color: colors.textMainLight,
     marginBottom: spacing.m,
     color: colors.textMainLight,
     ...typography.body,

@@ -2,20 +2,25 @@ import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { pick, types, errorCodes, isErrorWithCode } from '@react-native-documents/picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useUploadKycDocsMutation, useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useSelector } from 'react-redux';
+import { uploadFileWithProgress } from '../../utils/uploadUtils';
+import ProgressBar from '../../components/core/ProgressBar';
 export default function CompanyKycScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { data: profileResponse , isFetching, refetch} = useGetCompanyProfileQuery()
   const profile = profileResponse?.data;
   
-  const [uploadDocs, { isLoading }] = useUploadKycDocsMutation();
   const [isReKyc, setIsReKyc] = useState(false);
+  const token = useSelector(state => state.auth.token);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [docs, setDocs] = useState({
     aadhaar: null,
@@ -25,19 +30,28 @@ export default function CompanyKycScreen({ navigation }) {
     selfie: null,
   });
 
-  const handleSelectDocument = (key) => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, (res) => {
-      if (res.didCancel || !res.assets || res.assets.length === 0) return;
-      const asset = res.assets[0];
+  const handleSelectDocument = async (key) => {
+    try {
+      const res = await pick({
+        type: [types.images, types.pdf],
+      });
+      const file = res[0];
+      
       setDocs((prev) => ({
         ...prev,
         [key]: {
-          uri: asset.uri,
-          type: asset.type || 'image/jpeg',
-          name: asset.fileName || `${key}.jpg`,
+          uri: file.uri,
+          type: file.type || 'application/octet-stream',
+          name: file.name || `${key}`,
         }
       }));
-    });
+    } catch (err) {
+      if (isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED) {
+        // User cancelled the picker
+      } else {
+        showError('Error', 'Failed to pick document');
+      }
+    }
   };
 
   const removeDocument = (key) => {
@@ -55,8 +69,8 @@ export default function CompanyKycScreen({ navigation }) {
 
     const hasIdentityDoc = docs.aadhaar || docs.passport || docs.voter_id || docs.driving_license;
     
-    if (!hasIdentityDoc || !docs.pan || !docs.company_reg || !docs.selfie) {
-      showError('', 'You must provide at least one Identity Document (Aadhaar, Passport, Voter ID, or DL) along with PAN, Company Registration, and Selfie.');
+    if (!hasIdentityDoc || !docs.pan || !docs.selfie) {
+      showError('', 'You must provide at least one Identity Document (Aadhaar, Passport, Voter ID, or DL) along with PAN and Selfie.');
       return;
     }
 
@@ -69,14 +83,22 @@ export default function CompanyKycScreen({ navigation }) {
       }
     });
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
-      await uploadDocs(formData).unwrap();
+      await uploadFileWithProgress('/hiring_app/company/kyc', formData, (progress) => {
+        setUploadProgress(progress);
+      }, token);
+      
       showSuccess('', 'KYC documents submitted successfully. Our team will review them shortly.');
       setTimeout(() => {
         navigation.navigate('Tabs', { screen: 'Dashboard' });
       }, 1000);
     } catch (error) {
-      showError('', error?.data?.error || 'Failed to submit KYC documents.');
+      showError('', error?.message || 'Failed to submit KYC documents.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -108,18 +130,18 @@ export default function CompanyKycScreen({ navigation }) {
 
   return (
     <SafeAreaView style={globalStyles.container}>
-      {(profile?.kyc_status === 'approved' || profile?.kyc_status === 'pending' || profile?.is_verified) && !isReKyc ? (
+      {(profile?.verification_status === 'approved' || profile?.verification_status === 'pending' || profile?.is_verified) && !isReKyc ? (
         <View style={[styles.center, { flex: 1, padding: spacing.xl }]}>
           <Icon 
-            name={(profile?.kyc_status === 'approved' || profile?.is_verified) ? 'checkmark-circle' : 'time'} 
+            name={(profile?.verification_status === 'approved' || profile?.is_verified) ? 'checkmark-circle' : 'time'} 
             size={80} 
-            color={(profile?.kyc_status === 'approved' || profile?.is_verified) ? colors.success : colors.warning} 
+            color={(profile?.verification_status === 'approved' || profile?.is_verified) ? colors.success : colors.warning} 
           />
           <Text style={[styles.title, { marginTop: spacing.l, textAlign: 'center' }]}>
-            KYC {(profile?.kyc_status === 'approved' || profile?.is_verified) ? 'Approved' : 'Pending'}
+            KYC {(profile?.verification_status === 'approved' || profile?.is_verified) ? 'Approved' : 'Pending'}
           </Text>
           <Text style={[styles.subtitle, { textAlign: 'center', marginBottom: spacing.xl }]}>
-            {(profile?.kyc_status === 'approved' || profile?.is_verified) 
+            {(profile?.verification_status === 'approved' || profile?.is_verified) 
               ? 'Your company KYC has been approved. You are ready to hire.' 
               : 'Your KYC documents are currently under review. Please wait for approval.'}
           </Text>
@@ -143,19 +165,20 @@ export default function CompanyKycScreen({ navigation }) {
         <DocumentPicker label="Voter ID" docKey="voter_id" required={false} />
         <DocumentPicker label="Driving License" docKey="driving_license" required={false} />
         <DocumentPicker label="Company PAN Card" docKey="pan" />
-        <DocumentPicker label="Company Registration Certificate" docKey="company_reg" />
+        <DocumentPicker label="Company Registration Certificate" docKey="company_reg" required={false} />
         <DocumentPicker label="GST Certificate" docKey="gst" required={false} />
         <DocumentPicker label="Selfie of Authorized Person" docKey="selfie" />
 
       </ScrollView>
 
           <View style={styles.footer}>
+            {isUploading && <ProgressBar progress={uploadProgress} />}
             <TouchableOpacity 
-              style={globalStyles.primaryButton} 
+              style={[globalStyles.primaryButton, isUploading && { marginTop: spacing.m }]} 
               onPress={handleSubmit}
-              disabled={isLoading}
+              disabled={isUploading}
             >
-              {isLoading ? (
+              {isUploading ? (
                 <ActivityIndicator color="white" />
               ) : (
                 <Text style={globalStyles.primaryButtonText}>Submit Documents</Text>

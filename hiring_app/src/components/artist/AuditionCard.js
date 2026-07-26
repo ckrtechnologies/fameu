@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { typography, spacing, shadows } from '../../theme/theme';
 import { useTheme } from '../../theme/ThemeProvider';
+import ImageWithFallback from '../core/ImageWithFallback';
 
 const AuditionCard = ({ audition, onPress, style }) => {
   const { colors } = useTheme();
@@ -15,8 +16,9 @@ const AuditionCard = ({ audition, onPress, style }) => {
       style={[styles.container, style]}
     >
       <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: (audition.thumbnail_url && audition.thumbnail_url !== 'null' && audition.thumbnail_url.trim() !== '') ? audition.thumbnail_url : ((audition.hiring_profiles?.logo_url && audition.hiring_profiles.logo_url !== 'null' && audition.hiring_profiles.logo_url.trim() !== '') ? audition.hiring_profiles.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }}
+        <ImageWithFallback
+          source={{ uri: audition.thumbnail_url }}
+          fallbackSource={{ uri: audition.hiring_profiles?.logo_url }}
           style={styles.image}
         />
         {audition.is_urgent && (

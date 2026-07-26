@@ -9,6 +9,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { typography, spacing } from '../../theme/theme';
 import { useTheme } from '../../theme/ThemeProvider';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import Typography from '../../components/core/Typography';
 import CustomButton from '../../components/forms/CustomButton';
 import { 
@@ -131,7 +132,7 @@ export default function PublicProfileScreen() {
   
   React.useEffect(() => {
     if (profileData && profileData.role === 'artist' && profileData.profile) {
-      navigation.replace('ArtistProfileScreen', { id: profileData.profile.user_id });
+      navigation.replace('ArtistProfileScreen', { id: profileData.profile.id });
     }
   }, [profileData, navigation]);
 
@@ -265,7 +266,7 @@ export default function PublicProfileScreen() {
         {/* Cover Photo / Header Area */}
         <View style={styles.headerProfile}>
           {profileData.avatar_url ? (
-            <Image source={{ uri: profileData.avatar_url }} style={styles.profileImage} />
+            <ImageWithFallback source={{ uri: profileData.avatar_url }} style={styles.profileImage} />
           ) : (
             <View style={[styles.profileImage, styles.placeholderImage]}>
               <Icon name="person" size={40} color={colors.primary} />
@@ -878,10 +879,10 @@ export default function PublicProfileScreen() {
                           <TouchableOpacity 
                           key={item.id}
                           style={{ width: 140, height: 140, marginRight: spacing.m, backgroundColor: colors.surfaceLight, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderLight }}
-                          onPress={() => navigation.navigate('AuditionDetail', { id: item.id })}
+                          onPress={() => navigation.navigate('AuditionDetails', { auditionId: item.id })}
                         >
                           <View style={{ flex: 1, width: '100%', height: '100%', position: 'relative' }}>
-                            <Image source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop' }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                            <ImageWithFallback source={{ uri: item.thumbnail_url }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
                             <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.xs }}>
                               <Typography variant="caption" style={{ textAlign: 'center', color: '#fff' }} numberOfLines={2}>{item.title}</Typography>
                             </View>

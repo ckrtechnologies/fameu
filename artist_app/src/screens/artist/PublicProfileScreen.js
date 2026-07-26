@@ -11,6 +11,7 @@ import { useSelector } from 'react-redux';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import VerifiedBadge from '../../components/core/VerifiedBadge';
 import CustomButton from '../../components/forms/CustomButton';
 import { 
@@ -194,7 +195,7 @@ export default function PublicProfileScreen() {
               }
             ]} />
             {profileData.avatar_url ? (
-              <Image source={{ uri: profileData.avatar_url }} style={[styles.avatar, { borderWidth: 2, borderColor: colors.backgroundLight }]} />
+              <ImageWithFallback source={{ uri: profileData.avatar_url }} style={[styles.avatar, { borderWidth: 2, borderColor: colors.backgroundLight }]} />
             ) : (
               <View style={[styles.avatarPlaceholder, { borderWidth: 2, borderColor: colors.backgroundLight }]}>
                 <Icon name="person" size={40} color={colors.primary} />
@@ -229,6 +230,28 @@ export default function PublicProfileScreen() {
             <Typography variant="body" style={[styles.nameText, { marginBottom: 0 }]}>{profileData.name}</Typography>
           </View>
           <Typography variant="body" style={styles.roleText}>{profileData.role === 'artist' ? 'Artist' : ((Array.isArray(profileData.profile) ? profileData.profile[0]?.company_type : profileData.profile?.company_type) || 'Recruiter')}</Typography>
+          
+          {/* Contact Info (Only for Recruiters/Agencies) */}
+          {profileData.role !== 'artist' && (
+            <View style={{ marginTop: spacing.xs, marginBottom: spacing.s, alignItems: 'center' }}>
+              {(profileData.email) && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                  <Icon name="mail-outline" size={14} color={colors.textMutedLight} style={{ marginRight: 6 }} />
+                  <Typography variant="body2" style={{ color: colors.textSecondaryLight }}>
+                    {profileData.email}
+                  </Typography>
+                </View>
+              )}
+              {(profileData.phone || profileData.profile?.phone) && (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Icon name="call-outline" size={14} color={colors.textMutedLight} style={{ marginRight: 6 }} />
+                  <Typography variant="body2" style={{ color: colors.textSecondaryLight }}>
+                    {profileData.phone || profileData.profile?.phone}
+                  </Typography>
+                </View>
+              )}
+            </View>
+          )}
           {profileData.profile?.bio && (
             <Typography variant="body" style={styles.bioText}>{profileData.profile.bio}</Typography>
           )}
@@ -838,7 +861,7 @@ export default function PublicProfileScreen() {
                           onPress={() => navigation.navigate('AuditionDetail', { id: item.id })}
                         >
                             <View style={{ flex: 1, width: '100%', height: '100%', position: 'relative' }}>
-                              <Image source={{ uri: item.thumbnail_url || item.hiring_profiles?.logo_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop' }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                              <ImageWithFallback source={{ uri: item.thumbnail_url }} fallbackSource={{ uri: item.hiring_profiles?.logo_url }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
                               <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.xs }}>
                                 <Typography variant="caption" style={{ textAlign: 'center', color: '#fff' }} numberOfLines={2}>{item.title}</Typography>
                               </View>

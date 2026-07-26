@@ -9,6 +9,7 @@ import ArtistProfileScreen from '../screens/hiring/ArtistProfileScreen';
 import AuditionDetailsScreen from '../screens/hiring/AuditionDetailsScreen';
 import NotificationsScreen from '../screens/hiring/NotificationsScreen';
 import SearchScreen from '../screens/hiring/SearchScreen';
+import TalentDiscoveryScreen from '../screens/hiring/TalentDiscoveryScreen';
 import FindTalentScreen from '../screens/hiring/FindTalentScreen';
 import PublicProfileScreen from '../screens/hiring/PublicProfileScreen';
 import VerificationRequiredScreen from '../screens/hiring/VerificationRequiredScreen';
@@ -29,6 +30,7 @@ export default function MainNavigator() {
       <Stack.Screen name="ArtistProfileScreen" component={ArtistProfileScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Search" component={SearchScreen} />
+      <Stack.Screen name="TalentDiscovery" component={TalentDiscoveryScreen} />
       <Stack.Screen name="VideoPortfolio" component={VideoPortfolioScreen} />
       <Stack.Screen name="FindTalent" component={FindTalentScreen} />
       <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />

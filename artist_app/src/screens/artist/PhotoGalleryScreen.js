@@ -7,8 +7,11 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography } from '../../theme/theme';
-import { useGetProfileQuery, useUploadMediaMutation, useUpsertProfileMutation } from '../../services/profileApi';
+import { useGetProfileQuery, useUpsertProfileMutation } from '../../services/profileApi';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { uploadFileWithProgress } from '../../utils/uploadUtils';
+import ProgressBar from '../../components/core/ProgressBar';
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
 const IMAGE_SIZE = (width - 32 - (COLUMN_COUNT - 1) * 8) / COLUMN_COUNT;
@@ -18,9 +21,11 @@ export default function PhotoGalleryScreen() {
   const styles = getStyles(colors);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { data: profileResponse, isLoading: isLoadingProfile , isFetching, refetch} = useGetProfileQuery()
-  const [uploadMedia, { isLoading: isUploading }] = useUploadMediaMutation();
+  const { data: profileResponse, isLoading: isLoadingProfile , isFetching, refetch} = useGetProfileQuery();
   const [upsertProfile] = useUpsertProfileMutation();
+  const token = useSelector(state => state.auth.token);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const photos = profileResponse?.data?.photo_urls || [];
   const artistId = profileResponse?.data?.id;
@@ -116,12 +121,19 @@ export default function PhotoGalleryScreen() {
         });
 
         try {
-          await uploadMedia(formData).unwrap();
+          setIsUploading(true);
+          setUploadProgress(0);
+          await uploadFileWithProgress('/artist_app/profile/upload', formData, (progress) => {
+            setUploadProgress(progress);
+          }, token);
           showSuccess('', 'Photos uploaded successfully!');
+          refetch();
         } catch (error) {
           console.error('Upload photo error:', error);
-          const errMsg = error?.data?.error || error?.message || 'Failed to upload photos';
+          const errMsg = error?.message || 'Failed to upload photos';
           showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+        } finally {
+          setIsUploading(false);
         }
       }
     };
@@ -179,6 +191,9 @@ export default function PhotoGalleryScreen() {
             />
           )}
 
+          <View style={{ position: 'absolute', bottom: 100, left: 16, right: 16 }}>
+            {isUploading && <ProgressBar progress={uploadProgress} />}
+          </View>
           <TouchableOpacity 
             style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]} 
             onPress={handlePickImage}

@@ -9,7 +9,10 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import DocumentPicker from '@react-native-documents/picker';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography } from '../../theme/theme';
-import { useUpdateCategoryMutation, useGetProfileQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
+import { useUpdateCategoryMutation, useGetProfileQuery, useGetProfessionsQuery } from '../../services/profileApi';
+import { useSelector } from 'react-redux';
+import { uploadFileWithProgress } from '../../utils/uploadUtils';
+import ProgressBar from '../../components/core/ProgressBar';
 export default function ArtistFormScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -24,9 +27,11 @@ export default function ArtistFormScreen() {
   const professionsList = professionsResponse?.data || [];
 
   const [updateCategory, { isLoading }] = useUpdateCategoryMutation();
-  const [uploadGenericFile] = useUploadGenericFileMutation();
+  const token = useSelector(state => state.auth.token);
   const [activeTab, setActiveTab] = useState(categories?.[0]);
   const [formData, setFormData] = useState({});
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (profileResponse?.data?.dynamic_details) {
@@ -93,23 +98,35 @@ export default function ArtistFormScreen() {
         name: res.name || `file_${Date.now()}`,
       });
 
-      const response = await uploadGenericFile(formDataUpload).unwrap();
+      setIsUploadingFile(true);
+      setUploadProgress(0);
 
-      if (response.success && response.url) {
-        setFormData(prev => ({
-          ...prev,
-          [category]: {
-            ...(prev[category] || {}),
-            [key]: response.url
-          }
-        }));
-        showSuccess('', 'File uploaded successfully!');
+      try {
+        const response = await uploadFileWithProgress('/artist_app/profile/upload-file', formDataUpload, (progress) => {
+          setUploadProgress(progress);
+        }, token);
+
+        const fileUrl = response.data?.url || response.url;
+        if (fileUrl) {
+          setFormData(prev => ({
+            ...prev,
+            [category]: {
+              ...(prev[category] || {}),
+              [key]: fileUrl
+            }
+          }));
+          showSuccess('', 'File uploaded successfully!');
+        }
+      } catch (uploadErr) {
+        showError('', uploadErr?.message || 'Upload failed');
+      } finally {
+        setIsUploadingFile(false);
       }
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         return;
       }
-      showError('', err?.data?.error || err.message || 'Upload failed');
+      showError('', err?.message || 'Failed to pick file');
     }
   };
 
@@ -267,18 +284,30 @@ export default function ArtistFormScreen() {
                     <TouchableOpacity onPress={() => handleFileUpload(activeTab, field.field_name)} style={{ padding: 4 }}>
                       <Icon name="pencil-outline" size={20} color={colors.primary} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteFile(activeTab, field.field_name)} style={{ padding: 4, marginLeft: 8 }}>
-                      <Icon name="trash-outline" size={20} color="#ef4444" />
+                    <TouchableOpacity onPress={() => handleDeleteFile(activeTab, field.field_name)} style={{ padding: 4, marginLeft: 8 }} disabled={isUploadingFile}>
+                      <Icon name="trash-outline" size={20} color={isUploadingFile ? "#ccc" : "#ef4444"} />
                     </TouchableOpacity>
                   </View>
                 ) : (
                   <TouchableOpacity
                     style={styles.fileButton}
                     onPress={() => handleFileUpload(activeTab, field.field_name)}
+                    disabled={isUploadingFile}
                   >
-                    <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
-                    <Text style={styles.fileButtonText}>Upload File</Text>
+                    {isUploadingFile ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <>
+                        <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
+                        <Text style={styles.fileButtonText}>Upload File</Text>
+                      </>
+                    )}
                   </TouchableOpacity>
+                )}
+                {isUploadingFile && (
+                  <View style={{ marginTop: 8 }}>
+                    <ProgressBar progress={uploadProgress} />
+                  </View>
                 )}
               </>
             )}
@@ -289,9 +318,9 @@ export default function ArtistFormScreen() {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+          style={[styles.saveButton, (isLoading || isUploadingFile) && styles.saveButtonDisabled]}
           onPress={handleSave}
-          disabled={isLoading}
+          disabled={isLoading || isUploadingFile}
         >
           {isLoading ? (
             <ActivityIndicator color={colors.backgroundLight} />

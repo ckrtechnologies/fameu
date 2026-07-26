@@ -83,23 +83,23 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: spacing.m,
   },
   label: {
-    color: colors.textMuted,
+    color: colors.textMutedLight,
     marginBottom: spacing.xs,
   },
   dropdownButton: {
     borderWidth: 1,
     borderColor: colors.borderLight,
     borderRadius: 8,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surfaceLight,
     height: 48,
     justifyContent: 'center',
     paddingHorizontal: spacing.s,
   },
   dropdownText: {
-    color: colors.textMain,
+    color: colors.textMainLight,
   },
   placeholderText: {
-    color: colors.textMuted,
+    color: colors.textMutedLight,
   },
   modalOverlay: {
     flex: 1,
@@ -110,7 +110,7 @@ const getStyles = (colors) => StyleSheet.create({
   modalContent: {
     width: '80%',
     maxHeight: '60%',
-    backgroundColor: colors.card,
+    backgroundColor: colors.surfaceLight,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.borderLight,
@@ -121,7 +121,7 @@ const getStyles = (colors) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     paddingHorizontal: spacing.m,
-    color: colors.textMain,
+    color: colors.textMainLight,
   },
   optionItem: {
     padding: spacing.m,
@@ -129,10 +129,10 @@ const getStyles = (colors) => StyleSheet.create({
     borderBottomColor: colors.borderLight,
   },
   selectedOption: {
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.primary + '20',
   },
   optionText: {
-    color: colors.textMain,
+    color: colors.textMainLight,
   },
   selectedOptionText: {
     color: colors.primary,

@@ -3,24 +3,30 @@ import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, Activit
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Search, XCircle, User, Search as SearchOutline } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useLazySearchUsersQuery } from '../../services/connectionsApi';
-import { useTheme } from '../../theme/ThemeProvider';
 
-export default function SearchScreen() {
-  const { colors } = useTheme();
-  const styles = getStyles(colors);
-  const navigation = useNavigation();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [triggerSearch, { data: searchResults, isFetching, error }] = useLazySearchUsersQuery();
-
-  const handleSearch = (text) => {
-    setSearchQuery(text);
-    if (text.length >= 2) {
-      triggerSearch(text);
-    }
-  };
+  import { useEffect } from 'react';
+  
+  export default function SearchScreen() {
+    const { colors } = useTheme();
+    const styles = getStyles(colors);
+    const navigation = useNavigation();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [triggerSearch, { data: searchResults, isFetching, error }] = useLazySearchUsersQuery();
+  
+    useEffect(() => {
+      triggerSearch('');
+    }, []);
+  
+    const handleSearch = (text) => {
+      setSearchQuery(text);
+      if (text.length !== 1) {
+        triggerSearch(text);
+      }
+    };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 
@@ -48,11 +54,11 @@ export default function SearchScreen() {
           <ArrowLeft size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <View style={styles.searchContainer}>
-          <Search size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
+          <Search size={20} color={colors.textMutedLight} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search users..."
-            placeholderTextColor={colors.textSecondaryLight}
+            placeholderTextColor={colors.textMutedLight}
             value={searchQuery}
             onChangeText={handleSearch}
             autoCapitalize="none"
@@ -60,7 +66,7 @@ export default function SearchScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearButton}>
-              <XCircle size={20} color={colors.textSecondaryLight} />
+              <XCircle size={20} color={colors.textMutedLight} />
             </TouchableOpacity>
           )}
         </View>
@@ -76,22 +82,15 @@ export default function SearchScreen() {
         </View>
       ) : (
         <FlatList
-          data={searchQuery.length >= 2 ? (searchResults?.data || []) : []}
+          data={searchResults?.data || []}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={() => triggerSearch(searchQuery)} tintColor={colors.primary} />}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
-            searchQuery.length >= 2 ? (
-              <View style={styles.centerContainer}>
-                <Typography variant="body" style={styles.emptyText}>No users found</Typography>
-              </View>
-            ) : (
-              <View style={styles.centerContainer}>
-                <SearchOutline size={64} color={colors.borderLight} />
-                <Typography variant="h4" style={styles.promptText}>Search for artists and recruiters</Typography>
-              </View>
-            )
+            <View style={styles.centerContainer}>
+              <Typography variant="body" style={styles.emptyText}>No users found</Typography>
+            </View>
           }
         />
       )}
@@ -173,7 +172,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   handleText: {
     ...typography.body,
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginTop: 2,
   },
   centerContainer: {
@@ -186,10 +185,10 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.error,
   },
   emptyText: {
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
   },
   promptText: {
-    color: colors.textSecondaryLight,
+    color: colors.textMutedLight,
     marginTop: spacing.m,
     textAlign: 'center',
   },

@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Image, FlatList, StatusBar, Modal, Text } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, FlatList, StatusBar, Modal, Text } from 'react-native';
 import { ShieldCheck, Clock, AlertCircle, Video, Star, Users, PlusCircle, Bell, Search, MessageCircle, MapPin, ChevronRight, Briefcase, TrendingUp, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetDashboardDataQuery, useGetNotificationsQuery, useGetCompanyProfileQuery } from '../../services/hiringApi';
@@ -223,8 +224,8 @@ export default function HiringDashboardScreen({ navigation }) {
           </View>
         ) : (
           recentApplicants.map((app) => (
-            <TouchableOpacity key={app.id} style={styles.applicantCard} onPress={() => handleRestrictedNavigation('ArtistProfileScreen', { id: app.users?.id, applicationId: app.id })}>
-              <Image source={{ uri: app.users?.avatar_url || 'https://via.placeholder.com/150' }} style={styles.applicantAvatar} />
+            <TouchableOpacity key={app.id} style={styles.applicantCard} onPress={() => handleRestrictedNavigation('ArtistProfileScreen', { id: app.artist_id, applicationId: app.id })}>
+              <ImageWithFallback source={{ uri: app.users?.avatar_url }} fallbackSource={{ uri: 'https://via.placeholder.com/150' }} style={styles.applicantAvatar} />
               <View style={styles.applicantInfo}>
                 <Typography variant="body" style={styles.applicantName}>{app.users?.artist_profiles?.[0]?.full_name || app.users?.display_name || 'Applicant'}</Typography>
                 <Typography variant="caption" style={styles.applicantRole}>Applied for: {app.audition_title}</Typography>
@@ -270,7 +271,7 @@ export default function HiringDashboardScreen({ navigation }) {
             keyExtractor={item => 'live_' + item.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity style={[styles.auditionCarouselCard, { borderColor: colors.primary, borderWidth: 1 }]} onPress={() => navigation.navigate('AuditionDetails', { auditionId: item.id })}>
-                <Image source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
+                <ImageWithFallback source={{ uri: item.thumbnail_url }} fallbackSource={{ uri: profile?.logo_url }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
                 <View style={{ padding: spacing.m }}>
                   <View style={[styles.auditionCardHeader, { paddingTop: spacing.s }]}>
                     <Typography variant="body" style={styles.auditionCardTitle} numberOfLines={1}>{item.title}</Typography>
@@ -316,7 +317,7 @@ export default function HiringDashboardScreen({ navigation }) {
               const liveStatus = getAuditionLiveStatus(item);
               return (
               <TouchableOpacity style={[styles.auditionCarouselCard, liveStatus ? { borderColor: liveStatus.color, borderWidth: 1 } : {}]} onPress={() => navigation.navigate('AuditionDetails', { auditionId: item.id })}>
-                <Image source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
+                <ImageWithFallback source={{ uri: item.thumbnail_url }} fallbackSource={{ uri: profile?.logo_url }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
                 <View style={{ padding: spacing.m }}>
                   <View style={[styles.auditionCardHeader, { paddingTop: spacing.s }]}>
                     <Typography variant="body" style={styles.auditionCardTitle} numberOfLines={1}>{item.title}</Typography>
@@ -353,7 +354,7 @@ export default function HiringDashboardScreen({ navigation }) {
           draftAuditions.map(draft => (
             <TouchableOpacity key={draft.id} style={styles.draftCard} onPress={() => handleRestrictedNavigation('CreateAudition', { audition: draft })}>
               <View style={styles.draftIconBg}>
-                <Image source={{ uri: (draft.thumbnail_url && draft.thumbnail_url !== 'null' && draft.thumbnail_url.trim() !== '') ? draft.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} style={{ width: 44, height: 44, borderRadius: 22 }} />
+                <ImageWithFallback source={{ uri: draft.thumbnail_url }} fallbackSource={{ uri: profile?.logo_url }} style={{ width: 44, height: 44, borderRadius: 22 }} />
               </View>
               <View style={{ flex: 1 }}>
                 <Typography variant="body" style={styles.draftTitle}>{draft.title || 'Untitled Draft'}</Typography>
@@ -456,7 +457,7 @@ export default function HiringDashboardScreen({ navigation }) {
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.talentCard} onPress={() => navigation.navigate('PublicProfile', { username: item.users?.username || item.user_id })}>
-                <Image source={{ uri: item.photo_urls?.[0] || item.users?.avatar_url || 'https://via.placeholder.com/150' }} style={styles.talentAvatar} />
+                <ImageWithFallback source={{ uri: item.photo_urls?.[0] }} fallbackSource={{ uri: item.users?.avatar_url || 'https://via.placeholder.com/150' }} style={styles.talentAvatar} />
                 <Typography variant="body" style={styles.talentName} numberOfLines={1}>{item.full_name}</Typography>
                 <Typography variant="caption" style={styles.talentCategory} numberOfLines={1}>{item.category}</Typography>
               </TouchableOpacity>
@@ -488,7 +489,7 @@ export default function HiringDashboardScreen({ navigation }) {
                 <Typography variant="body" style={styles.interviewName}>{interview.users?.display_name || 'Candidate'}</Typography>
                 <Typography variant="caption" style={styles.interviewRole}>{interview.audition_title}</Typography>
               </View>
-              <TouchableOpacity style={styles.interviewBtn} onPress={() => handleRestrictedNavigation('ArtistProfileScreen', { id: interview.users?.id, applicationId: interview.id })}>
+              <TouchableOpacity style={styles.interviewBtn} onPress={() => handleRestrictedNavigation('ArtistProfileScreen', { id: interview.artist_id, applicationId: interview.id })}>
                 <Typography variant="body" style={styles.interviewBtnText}>View</Typography>
               </TouchableOpacity>
             </View>

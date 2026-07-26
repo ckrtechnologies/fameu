@@ -10,6 +10,7 @@ import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetMyAuditionsQuery } from '../../services/auditionApi';
 import Typography from '../../components/core/Typography';
 import CommentsSection from '../../components/CommentsSection';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import { useTheme } from '../../theme/ThemeProvider';
 
 const { width } = Dimensions.get('window');
@@ -52,11 +53,7 @@ export default function CompanyProfileScreen() {
     <View style={styles.headerContainer}>
       <View style={styles.topRow}>
         <View style={styles.logoContainer}>
-          {profile?.logo_url ? (
-            <Image source={{ uri: profile.logo_url }} style={styles.logoImage} />
-          ) : (
-            <Icon name="business-outline" size={40} color={colors.textMutedLight} />
-          )}
+          <ImageWithFallback source={{ uri: profile?.logo_url }} fallbackSource={{ uri: profile?.logo_url }} style={styles.logoImage} />
         </View>
         
         <View style={styles.statsRow}>
@@ -86,6 +83,26 @@ export default function CompanyProfileScreen() {
         <Typography variant="h4" style={styles.companyName}>{profile?.company_name || 'Company Name'}</Typography>
         <Typography variant="body2" style={{ color: colors.primary, marginBottom: 4 }}>@{profile?.users?.username || user?.username}</Typography>
         <Typography variant="body2" style={styles.companyType}>{profile?.company_type || 'Company Type'}</Typography>
+        
+        {/* Contact Info */}
+        <View style={{ marginTop: spacing.xs, marginBottom: spacing.s }}>
+          {(profile?.users?.email || profile?.email || user?.email) && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+              <Icon name="mail-outline" size={14} color={colors.textMutedLight} style={{ marginRight: 6 }} />
+              <Typography variant="body2" style={{ color: colors.textSecondaryLight }}>
+                {profile?.users?.email || profile?.email || user?.email}
+              </Typography>
+            </View>
+          )}
+          {(profile?.phone || profile?.users?.phone) && (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Icon name="call-outline" size={14} color={colors.textMutedLight} style={{ marginRight: 6 }} />
+              <Typography variant="body2" style={{ color: colors.textSecondaryLight }}>
+                {profile?.phone || profile?.users?.phone}
+              </Typography>
+            </View>
+          )}
+        </View>
         {profile?.description && (
           <Typography variant="body2" style={styles.description}>{profile.description}</Typography>
         )}
@@ -110,8 +127,9 @@ export default function CompanyProfileScreen() {
       onPress={() => navigation.navigate('AuditionDetails', { auditionId: item.id })}
     >
       <View style={styles.thumbnailContainer}>
-        <Image 
-          source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} 
+        <ImageWithFallback 
+          source={{ uri: item.thumbnail_url }} 
+          fallbackSource={{ uri: profile?.logo_url }}
           style={styles.thumbnailImage} 
         />
         <View style={styles.thumbnailOverlay}>

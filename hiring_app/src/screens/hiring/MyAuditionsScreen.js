@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView, TextInput, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView, TextInput, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { format } from 'date-fns';
@@ -16,6 +16,7 @@ import { getAuditionLiveStatus } from '../../utils/dateUtils';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 
 export default function MyAuditionsScreen() {
   const { colors } = useTheme();
@@ -117,8 +118,9 @@ export default function MyAuditionsScreen() {
         </View>
       </View>
 
-      <Image 
-        source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profileResponse?.data?.logo_url && profileResponse.data.logo_url !== 'null' && profileResponse.data.logo_url.trim() !== '') ? profileResponse.data.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} 
+      <ImageWithFallback 
+        source={{ uri: item.thumbnail_url }} 
+        fallbackSource={{ uri: profileResponse?.data?.logo_url }}
         style={{ width: '100%', height: 160, borderRadius: 8, marginBottom: 10 }} 
       />
 

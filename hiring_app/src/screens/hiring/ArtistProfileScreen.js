@@ -743,15 +743,15 @@ export default function ArtistProfileScreen() {
       <Modal visible={isInviteModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsInviteModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={[typography.h3, { marginBottom: 16 }]}>Invite to Audition</Text>
+            <Text style={[typography.h3, { marginBottom: 16, color: colors.textMainLight }]}>Invite to Audition</Text>
             {myAuditions.length === 0 ? (
               <Text style={[typography.body, { color: colors.textMutedLight, marginBottom: 16 }]}>You have no active auditions. Please create one first.</Text>
             ) : (
               <View style={{ marginBottom: 16, maxHeight: 350 }}>
                 <TextInput
-                  style={[styles.searchInput, { marginBottom: 12, backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8 }]}
+                  style={[styles.searchInput, { marginBottom: 12, backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }]}
                   placeholder="Search auditions..."
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={colors.textMutedLight}
                   value={auditionSearchText}
                   onChangeText={setAuditionSearchText}
                 />
@@ -771,9 +771,9 @@ export default function ArtistProfileScreen() {
                   ))}
                 </ScrollView>
                 <TextInput
-                  style={[styles.searchInput, { marginTop: 12, height: 80, textAlignVertical: 'top', backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8 }]}
+                  style={[styles.searchInput, { marginTop: 12, height: 80, textAlignVertical: 'top', backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }]}
                   placeholder="Type invitation message (optional)..."
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={colors.textMutedLight}
                   multiline
                   value={invitationMessage}
                   onChangeText={setInvitationMessage}
