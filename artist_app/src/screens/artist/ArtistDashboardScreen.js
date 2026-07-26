@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Image, Dimensions, Modal, Text } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -71,9 +71,10 @@ export default function ArtistDashboardScreen() {
     }
   }, [refetchFeed, refetchAll, refetchLive, refetchTrending, refetchProfile, refetchApps, refetchSaved]);
 
-  const handleAuditionPress = (id) => {
+  const handleAuditionPress = useCallback((auditionOrId) => {
+    const id = typeof auditionOrId === 'object' && auditionOrId !== null ? auditionOrId.id : auditionOrId;
     navigation.navigate('AuditionDetail', { id });
-  };
+  }, [navigation]);
 
   const name = profile?.full_name || user?.display_name || user?.full_name || user?.email?.split('@')[0] || 'Artist';
 
@@ -272,8 +273,12 @@ export default function ArtistDashboardScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={item => item.id}
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={5}
+          removeClippedSubviews={true}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item.id)} />}
+          renderItem={({ item }) => <AuditionCard audition={item} onPress={handleAuditionPress} />}
         />
       </View>
     );
@@ -297,8 +302,12 @@ export default function ArtistDashboardScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => item.id}
+            initialNumToRender={4}
+            maxToRenderPerBatch={4}
+            windowSize={5}
+            removeClippedSubviews={true}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item.id)} />}
+            renderItem={({ item }) => <AuditionCard audition={item} onPress={handleAuditionPress} />}
           />
         )}
       </View>
@@ -321,8 +330,12 @@ export default function ArtistDashboardScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={item => 'trend_' + item.id}
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={5}
+          removeClippedSubviews={true}
           contentContainerStyle={{ paddingLeft: spacing.xl, paddingRight: spacing.m }}
-          renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item.id)} compact />}
+          renderItem={({ item }) => <AuditionCard audition={item} onPress={handleAuditionPress} compact />}
         />
       </View>
     );

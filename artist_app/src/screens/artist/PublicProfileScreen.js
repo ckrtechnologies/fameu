@@ -1,13 +1,11 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, TextInput, Animated } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking, RefreshControl, FlatList, TextInput, Animated, Share, Text } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, User, Play, ChevronRight, Youtube, Link, X, AlertTriangle } from 'lucide-react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { WebView } from 'react-native-webview';
 import { parseArray } from '../../utils/dataUtils';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -24,7 +22,6 @@ import {
 import { useStartConversationMutation } from '../../services/chatApi';
 import { useReportUserMutation } from '../../services/authApi';
 import { useGetFeedQuery } from '../../services/discoverApi';
-import { Video as IconVideo, Camera as IconCamera } from 'lucide-react-native';
 import CommentsSection from '../../components/CommentsSection';
 import { getVideoInfo } from '../../utils/media';
 
@@ -43,24 +40,9 @@ export default function PublicProfileScreen() {
   
   const scrollViewRef = React.useRef(null);
 
-  const glowAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-
+      
   useEffect(() => {
-    // Start pulse animation loop
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
-      ])
-    ).start();
-
-    // Start slide & fade entrance
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, tension: 20, friction: 7, useNativeDriver: true }),
-    ]).start();
+    // Animations removed
   }, []);
 
   React.useEffect(() => {
@@ -84,6 +66,14 @@ export default function PublicProfileScreen() {
   }, [profileData?.id]);
   
   const [activeTab, setActiveTab] = useState('Overview');
+  const [showComments, setShowComments] = useState(false);
+
+  useEffect(() => {
+    if (profileData?.id) {
+      const timer = setTimeout(() => setShowComments(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [profileData?.id]);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -139,6 +129,19 @@ export default function PublicProfileScreen() {
     }
   };
 
+  const handleShare = async () => {
+    if (!profileData) return;
+    try {
+      const url = `https://fameu.app/artist/${profileData.username}`;
+      await Share.share({
+        message: `Check out ${profileData.name}'s profile on Fameu! ${url}`,
+        url: url,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
@@ -162,36 +165,39 @@ export default function PublicProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
+          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <Typography variant="body" style={styles.headerTitle}>@{profileData.username}</Typography>
-        {!isSelf ? (
-          <TouchableOpacity onPress={() => setIsReportModalVisible(true)} style={{ width: 40, alignItems: 'center' }}>
-            <AlertTriangle size={24} color={colors.error} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={handleShare} style={{ width: 40, alignItems: 'center' }}>
+            <Icon name="share-social" size={24} color={colors.primary} />
           </TouchableOpacity>
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
+          {!isSelf && (
+            <TouchableOpacity onPress={() => setIsReportModalVisible(true)} style={{ width: 40, alignItems: 'center' }}>
+              <Icon name="warning" size={24} color={colors.error} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
         {/* Cover Photo / Header Area */}
         <View style={styles.profileHeader}>
           <View style={{ position: 'relative' }}>
-            <Animated.View style={[
+            <View style={[
               StyleSheet.absoluteFillObject,
               {
                 backgroundColor: colors.primary,
                 borderRadius: 40,
-                transform: [{ scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] }) }],
-                opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.6] })
+                
+                opacity: 0.2
               }
             ]} />
             {profileData.avatar_url ? (
               <Image source={{ uri: profileData.avatar_url }} style={[styles.avatar, { borderWidth: 2, borderColor: colors.backgroundLight }]} />
             ) : (
               <View style={[styles.avatarPlaceholder, { borderWidth: 2, borderColor: colors.backgroundLight }]}>
-                <User size={40} color={colors.primary} />
+                <Icon name="person" size={40} color={colors.primary} />
               </View>
             )}
           </View>
@@ -265,6 +271,19 @@ export default function PublicProfileScreen() {
               })()}
             </View>
           )}
+
+                    {/* CINTAA Info */}
+                    {profileData.profile.is_cintaa_member && (
+                      <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginTop: 16, marginBottom: 8, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                          <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+                          <View>
+                            <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Typography>
+                            <Typography variant="body" style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({profileData.profile.cintaa_reg_number})</Typography>
+                          </View>
+                        </View>
+                      </View>
+                    )}
         </View>
 
         {!isSelf && (
@@ -347,7 +366,7 @@ export default function PublicProfileScreen() {
                         return <Video source={{ uri: profileData.profile.intro_video_url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
                       })()}
                       <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
-                        <Play size={50} color={colors.white} />
+                        <Icon name="play" size={50} color={colors.white} />
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -394,7 +413,7 @@ export default function PublicProfileScreen() {
                               <Video source={{ uri: vUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
                             )}
                             <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
-                              <Play size={32} color={colors.white} />
+                              <Icon name="play" size={32} color={colors.white} />
                             </View>
                           </TouchableOpacity>
                         );
@@ -403,7 +422,7 @@ export default function PublicProfileScreen() {
                   </View>
                 )}
 
-                <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+                <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
                     <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
                       <Icon name="information-circle-outline" size={24} color={colors.primary} />
@@ -439,25 +458,12 @@ export default function PublicProfileScreen() {
                         </View>
                       );
                     })}
-
-                    {/* CINTAA Info */}
-                    {profileData.profile.is_cintaa_member && (
-                      <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginBottom: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                          <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
-                          <View>
-                            <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Typography>
-                            <Typography variant="body" style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({profileData.profile.cintaa_reg_number})</Typography>
-                          </View>
-                        </View>
-                      </View>
-                    )}
                   </View>
-                </Animated.View>
+                </View>
 
                 {/* Tags / Preferences Section */}
                 {(profileData.profile.work_preference?.length > 0 || profileData.profile.preferred_cities?.length > 0 || profileData.profile.look_alike?.length > 0 || profileData.profile.hashtags?.length > 0) && (
-                  <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+                  <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
                       <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
                         <Icon name="options-outline" size={24} color={colors.primary} />
@@ -528,7 +534,7 @@ export default function PublicProfileScreen() {
                         </View>
                       </View>
                     )}
-                  </Animated.View>
+                  </View>
                 )}
 
                 {/* Recent Assignments Section */}
@@ -571,7 +577,7 @@ export default function PublicProfileScreen() {
                               }}
                               style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s }]}
                             >
-                              <Play size={40} color={colors.primary} />
+                              <Icon name="play" size={40} color={colors.primary} />
                             </TouchableOpacity>
                           ))}
                         </ScrollView>
@@ -682,7 +688,7 @@ export default function PublicProfileScreen() {
                                 >
                                   <Image source={{ uri: thumbnailUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                                   <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
-                                    <Youtube size={48} color="#ef4444" />
+                                    <Icon name="logo-youtube" size={48} color="#ef4444" />
                                   </View>
                                 </TouchableOpacity>
                               </View>
@@ -711,7 +717,7 @@ export default function PublicProfileScreen() {
                                 onPress={() => Linking.openURL(urlStr)}
                                 style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12 }}
                               >
-                                <Link size={20} color={colors.primary} style={{ marginRight: 12 }} />
+                                <Icon name="link" size={20} color={colors.primary} style={{ marginRight: 12 }} />
                                 <Typography variant="body" style={{ ...typography.body, color: colors.primary, flex: 1 }} numberOfLines={1}>{urlStr}</Typography>
                               </TouchableOpacity>
                             </View>
@@ -735,7 +741,7 @@ export default function PublicProfileScreen() {
             {/* Artist Profile Comments */}
             {profileData.profile && profileData.profile.id && (
               <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
-                <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />
+                {showComments && <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />}
               </View>
             )}
           </View>
@@ -772,7 +778,7 @@ export default function PublicProfileScreen() {
               
               {categoriesData.length === 0 ? (
                 <View style={{ alignItems: 'center', marginTop: spacing.xl }}>
-                  <IconCamera size={48} color={colors.borderLight} />
+                  <Icon name="camera" size={48} color={colors.borderLight} />
                   <Typography variant="body2" style={{ color: colors.textMutedLight, marginTop: spacing.s }}>No posts yet</Typography>
                 </View>
               ) : (
@@ -802,7 +808,7 @@ export default function PublicProfileScreen() {
                             </View>
                           ) : (
                             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.s }}>
-                              <IconVideo size={28} color={colors.textMutedLight} />
+                              <Icon name="videocam" size={28} color={colors.textMutedLight} />
                               <Typography variant="caption" style={{ marginTop: spacing.xs, textAlign: 'center', color: colors.textMutedLight }} numberOfLines={2}>{item.title}</Typography>
                             </View>
                           )}
@@ -815,7 +821,7 @@ export default function PublicProfileScreen() {
 
               {hiringProfile && hiringProfile.id && (
                 <View style={{ marginBottom: 24, marginTop: spacing.l }}>
-                  <CommentsSection targetType="profile" targetId={hiringProfile.id} />
+                  {showComments && <CommentsSection targetType="profile" targetId={hiringProfile.id} />}
                 </View>
               )}
             </View>
@@ -826,7 +832,7 @@ export default function PublicProfileScreen() {
       <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsImageModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
-            <X size={30} color="#fff" />
+            <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
           {profileData?.profile?.photo_urls && profileData.profile.photo_urls.length > 0 && (
             <FlatList

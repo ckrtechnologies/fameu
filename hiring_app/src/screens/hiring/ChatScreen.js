@@ -21,6 +21,11 @@ import Typography from '../../components/core/Typography';
 import { useGetMessagesQuery, useGetInboxQuery, chatApi } from '../../services/chatApi';
 import SocketService from '../../services/SocketService';
 import { markConversationAsRead } from '../../store/slices/chatSlice';
+import { useBlockArtistMutation } from '../../services/discoveryApi';
+import { GlobalAlert } from '../../components/core/GlobalAlert';
+import { showError, showSuccess } from '../../utils/toast';
+import CustomButton from '../../components/forms/CustomButton';
+import { Modal } from 'react-native';
 
 export default function ChatScreen() {
   const route = useRoute();
@@ -55,7 +60,11 @@ export default function ChatScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isBlockModalVisible, setIsBlockModalVisible] = useState(false);
+  const [blockReason, setBlockReason] = useState('');
   
+  const [blockArtist, { isLoading: isBlocking }] = useBlockArtistMutation();
+
   const socketRef = useRef(null);
   const flatListRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -203,6 +212,24 @@ export default function ChatScreen() {
     socketRef.current?.emit('typing', { conversationId, isTyping: false });
   };
 
+  const handleBlockSubmit = async () => {
+    if (!resolvedParticipant?.artist_profiles?.user_id && !resolvedParticipant?.user_id) {
+      showError('', 'Unable to identify artist user ID.');
+      return;
+    }
+    
+    try {
+      const targetUserId = resolvedParticipant?.artist_profiles?.user_id || resolvedParticipant?.user_id;
+      await blockArtist({ id: targetUserId, reason: blockReason }).unwrap();
+      showSuccess('', 'Artist blocked successfully.');
+      setIsBlockModalVisible(false);
+      setBlockReason('');
+      navigation.goBack(); // Go back since we can't chat with blocked users
+    } catch (err) {
+      showError('', err?.data?.error || 'Failed to block artist.');
+    }
+  };
+
   const renderMessage = ({ item }) => {
     const isMe = item.sender_id === myId;
     return (
@@ -249,7 +276,9 @@ export default function ChatScreen() {
           </View>
         </TouchableOpacity>
 
-        <View style={styles.iconButton} />
+        <TouchableOpacity style={styles.iconButton} onPress={() => setIsBlockModalVisible(true)}>
+          <Icon name="ban" size={24} color={colors.error} />
+        </TouchableOpacity>
       </View>
 
       {/* Chat Area */}
@@ -294,6 +323,29 @@ export default function ChatScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal visible={isBlockModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsBlockModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Typography variant="h3" style={{ marginBottom: 16, color: colors.error }}>Block Artist</Typography>
+            <Typography variant="body" style={{ color: colors.textSecondaryLight, marginBottom: 12 }}>Are you sure you want to block {displayName}? You won't be able to send or receive messages.</Typography>
+            <View style={{ borderWidth: 1, borderColor: colors.borderLight, borderRadius: 8, padding: 12, marginBottom: 16 }}>
+              <TextInput
+                style={{ minHeight: 100, textAlignVertical: 'top', color: colors.textMainLight }}
+                placeholder="Reason for blocking (optional)..."
+                placeholderTextColor={colors.textMutedLight}
+                multiline
+                value={blockReason}
+                onChangeText={setBlockReason}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <CustomButton title="Cancel" variant="outline" onPress={() => setIsBlockModalVisible(false)} style={{ flex: 1 }} />
+              <CustomButton title="Block" onPress={handleBlockSubmit} isLoading={isBlocking} disabled={isBlocking} style={{ flex: 1, backgroundColor: colors.error, borderColor: colors.error }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

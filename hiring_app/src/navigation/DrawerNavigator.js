@@ -4,11 +4,16 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-na
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Search, Users, Building, ShieldCheck, LogOut, Trash2 } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 
 import TabNavigator from './TabNavigator';
 import CompanyKycScreen from '../screens/hiring/CompanyKycScreen';
+import FaqScreen from '../screens/hiring/FaqScreen';
+import ContactUsScreen from '../screens/hiring/ContactUsScreen';
+import LegalScreen from '../screens/hiring/LegalScreen';
+import TutorialScreen from '../screens/hiring/TutorialScreen';
 
 import { colors, typography, spacing } from '../theme/theme';
 import { useGetCompanyProfileQuery } from '../services/hiringApi';
@@ -137,6 +142,40 @@ function CustomDrawerContent(props) {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.sectionDivider} />
+
+        {/* Static Links */}
+        <View style={styles.menuContainer}>
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => props.navigation.navigate('Faq')}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="help-circle-outline" size={22} color={colors.textMainLight} /></View>
+            <Text style={styles.menuText}>FAQ</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => props.navigation.navigate('ContactUs')}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="mail-outline" size={22} color={colors.textMainLight} /></View>
+            <Text style={styles.menuText}>Contact Us</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => props.navigation.navigate('Tutorial')}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="play-circle-outline" size={22} color={colors.textMainLight} /></View>
+            <Text style={styles.menuText}>How it Works</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => props.navigation.navigate('Legal', { type: 'terms' })}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="document-text-outline" size={22} color={colors.textMainLight} /></View>
+            <Text style={styles.menuText}>Terms of Service</Text>
+          </TouchableOpacity>
+        </View>
+
       </DrawerContentScrollView>
 
       {/* Footer */}
@@ -168,6 +207,10 @@ export default function DrawerNavigator() {
     >
       <Drawer.Screen name="Tabs" component={TabNavigator} />
       <Drawer.Screen name="CompanyKyc" component={CompanyKycScreen} options={{ headerShown: true, headerTitle: 'KYC Verification' }} />
+      <Drawer.Screen name="Faq" component={FaqScreen} />
+      <Drawer.Screen name="ContactUs" component={ContactUsScreen} />
+      <Drawer.Screen name="Legal" component={LegalScreen} />
+      <Drawer.Screen name="Tutorial" component={TutorialScreen} />
     </Drawer.Navigator>
   );
 }
@@ -212,8 +255,14 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.l,
-    paddingHorizontal: spacing.xl,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.l,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: spacing.s,
+    marginHorizontal: spacing.l,
   },
   iconContainer: {
     width: 36,

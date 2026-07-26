@@ -1,5 +1,7 @@
 import artistService from '../../../services/artist.service.js';
 
+const AVAILABLE_LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati', 'Odia', 'Bhojpuri', 'Urdu', 'Assamese'];
+
 class ArtistProfileController {
   
   async getProfile(req, res, next) {
@@ -30,6 +32,13 @@ class ArtistProfileController {
     try {
       const userId = req.user.id;
       const profileData = req.body; // e.g., { full_name, category, age, city... }
+
+      if (profileData.languages && Array.isArray(profileData.languages)) {
+        const invalidLanguages = profileData.languages.filter(lang => !AVAILABLE_LANGUAGES.includes(lang));
+        if (invalidLanguages.length > 0) {
+          return res.status(400).json({ success: false, error: `Invalid languages provided: ${invalidLanguages.join(', ')}` });
+        }
+      }
 
       const result = await artistService.createOrUpdateProfile(userId, profileData);
       res.status(200).json({ success: true, data: result });

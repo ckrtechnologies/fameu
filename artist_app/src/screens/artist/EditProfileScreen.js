@@ -18,6 +18,9 @@ import ValidatedURLInput from '../../components/core/ValidatedURLInput';
 import MediaOrLinkInput from '../../components/core/MediaOrLinkInput';
 import DateRangePicker from '../../components/core/DateRangePicker';
 import { parseArray } from '../../utils/dataUtils';
+import CustomButton from '../../components/forms/CustomButton';
+
+const AVAILABLE_LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati', 'Odia', 'Bhojpuri', 'Urdu', 'Assamese'];
 
 const HEIGHT_OPTIONS = Array.from({ length: 37 }, (_, i) => {
   const totalInches = 48 + i; // Start from 4' 0"
@@ -732,11 +735,30 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Languages</Text>
-              <TagInput
-                tags={formData.languages}
-                onTagsChange={(t) => setFormData(p => ({ ...p, languages: t }))}
-                placeholder="e.g. English, Hindi"
-              />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                {AVAILABLE_LANGUAGES.map(lang => {
+                  const isSelected = formData.languages.includes(lang);
+                  return (
+                    <TouchableOpacity
+                      key={lang}
+                      style={[
+                        { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: colors.borderLight },
+                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }
+                      ]}
+                      onPress={() => {
+                        setFormData(p => ({
+                          ...p,
+                          languages: isSelected 
+                            ? p.languages.filter(l => l !== lang)
+                            : [...p.languages, lang]
+                        }));
+                      }}
+                    >
+                      <Text style={{ color: isSelected ? '#fff' : colors.textMainLight, fontSize: 13 }}>{lang}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
 
           </>

@@ -4,7 +4,6 @@ import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, Touchabl
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, User, Play, ChevronRight, Link, X } from 'lucide-react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -20,7 +19,6 @@ import {
 import { useStartConversationMutation } from '../../services/chatApi';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useGetFeedQuery } from '../../services/discoverApi';
-import { Video as IconVideo, Camera as IconCamera } from 'lucide-react-native';
 import CommentsSection from '../../components/CommentsSection';
 
 const CustomAudioPlayerItem = ({ uri, label }) => {
@@ -151,6 +149,14 @@ export default function PublicProfileScreen() {
   }, [profileData?.id]);
   
   const [activeTab, setActiveTab] = useState('Overview');
+  const [showComments, setShowComments] = useState(false);
+
+  React.useEffect(() => {
+    if (profileData?.id) {
+      const timer = setTimeout(() => setShowComments(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [profileData?.id]);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -214,7 +220,7 @@ export default function PublicProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
+          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <Typography variant="body" style={styles.headerTitle}>@{profileData.username}</Typography>
         <View style={{ width: 40 }} />
@@ -227,7 +233,7 @@ export default function PublicProfileScreen() {
             <Image source={{ uri: profileData.avatar_url }} style={styles.profileImage} />
           ) : (
             <View style={[styles.profileImage, styles.placeholderImage]}>
-              <User size={40} color={colors.primary} />
+              <Icon name="person" size={40} color={colors.primary} />
             </View>
           )}
           
@@ -340,7 +346,7 @@ export default function PublicProfileScreen() {
                               }}
                               style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s }]}
                             >
-                              <Play size={40} color={colors.primary} />
+                              <Icon name="play" size={40} color={colors.primary} />
                             </TouchableOpacity>
                           ))}
                         </ScrollView>
@@ -472,7 +478,7 @@ export default function PublicProfileScreen() {
                                 onPress={() => Linking.openURL(urlStr)}
                                 style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12 }}
                               >
-                                <Link size={20} color={colors.primary} style={{ marginRight: 12 }} />
+                                <Icon name="link" size={20} color={colors.primary} style={{ marginRight: 12 }} />
                                 <Typography variant="body" style={{ ...typography.body, color: colors.primary, flex: 1 }} numberOfLines={1}>{urlStr}</Typography>
                               </TouchableOpacity>
                             </View>
@@ -496,7 +502,7 @@ export default function PublicProfileScreen() {
             {/* Artist Profile Comments */}
             {profileData.profile && profileData.profile.id && (
               <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
-                <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />
+                {showComments && <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />}
               </View>
             )}
           </View>
@@ -533,7 +539,7 @@ export default function PublicProfileScreen() {
               
               {categoriesData.length === 0 ? (
                 <View style={{ alignItems: 'center', marginTop: spacing.xl }}>
-                  <IconCamera size={48} color={colors.borderLight} />
+                  <Icon name="camera" size={48} color={colors.borderLight} />
                   <Typography variant="body2" style={{ color: colors.textMutedLight, marginTop: spacing.s }}>No posts yet</Typography>
                 </View>
               ) : (
@@ -563,7 +569,7 @@ export default function PublicProfileScreen() {
                             </View>
                           ) : (
                             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.s }}>
-                              <IconVideo size={28} color={colors.textMutedLight} />
+                              <Icon name="videocam" size={28} color={colors.textMutedLight} />
                               <Typography variant="caption" style={{ marginTop: spacing.xs, textAlign: 'center', color: colors.textMutedLight }} numberOfLines={2}>{item.title}</Typography>
                             </View>
                           )}
@@ -576,7 +582,7 @@ export default function PublicProfileScreen() {
 
               {hiringProfile && hiringProfile.id && (
                 <View style={{ marginBottom: 24, marginTop: spacing.l }}>
-                  <CommentsSection targetType="profile" targetId={hiringProfile.id} />
+                  {showComments && <CommentsSection targetType="profile" targetId={hiringProfile.id} />}
                 </View>
               )}
             </View>
@@ -587,7 +593,7 @@ export default function PublicProfileScreen() {
       <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsImageModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
-            <X size={30} color="#fff" />
+            <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
           {profileData?.profile?.photo_urls && profileData.profile.photo_urls.length > 0 && (
             <FlatList

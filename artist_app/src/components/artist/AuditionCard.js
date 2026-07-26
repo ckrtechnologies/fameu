@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { differenceInDays, isToday, startOfDay, parseISO } from 'date-fns';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, shadows } from '../../theme/theme';
 
@@ -8,10 +9,53 @@ const AuditionCard = ({ audition, onPress, style }) => {
   const styles = getStyles(colors);
   if (!audition) return null;
 
+  const renderLiveBadge = () => {
+    if (!audition.is_live) return null;
+
+    const targetDateStr = audition.audition_date || audition.date || audition.specific_start_date || audition.start_date;
+    
+    if (targetDateStr) {
+      try {
+        const today = startOfDay(new Date());
+        const targetDate = startOfDay(parseISO(targetDateStr));
+        
+        if (isToday(targetDate)) {
+          return (
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
+          );
+        }
+        
+        if (targetDate > today) {
+          const days = differenceInDays(targetDate, today);
+          return (
+            <View style={[styles.liveBadge, { backgroundColor: 'rgba(59, 130, 246, 0.8)' }]}>
+               <Text style={styles.liveText}>LIVE IN {days} {days === 1 ? 'DAY' : 'DAYS'}</Text>
+            </View>
+          );
+        }
+        
+        // If in the past, don't show LIVE badge
+        return null;
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    return (
+      <View style={styles.liveBadge}>
+        <View style={styles.liveDot} />
+        <Text style={styles.liveText}>LIVE</Text>
+      </View>
+    );
+  };
+
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={onPress}
+      activeOpacity={0.9}
+      onPress={() => onPress && onPress(audition)}
       style={[styles.container, style]}
     >
       <View style={styles.imageContainer}>
@@ -30,12 +74,12 @@ const AuditionCard = ({ audition, onPress, style }) => {
             <Text style={styles.urgentText}>URGENT</Text>
           </View>
         )}
-        {audition.is_live && (
-          <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE</Text>
-          </View>
-        )}
+        {renderLiveBadge()}
+        
+        {/* View Count Badge */}
+        <View style={styles.viewsBadge}>
+          <Text style={styles.viewsText}>👁 {audition.view_count || 0}</Text>
+        </View>
       </View>
       
       <View style={styles.content}>
@@ -150,6 +194,21 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '800',
     fontSize: 10,
   },
+  viewsBadge: {
+    position: 'absolute',
+    bottom: spacing.s,
+    right: spacing.s,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: spacing.s,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  viewsText: {
+    ...typography.caption,
+    color: colors.backgroundLight,
+    fontWeight: '700',
+    fontSize: 11,
+  },
   content: {
     padding: spacing.m,
   },
@@ -205,4 +264,4 @@ const getStyles = (colors) => StyleSheet.create({
   },
 });
 
-export default AuditionCard;
+export default React.memo(AuditionCard);

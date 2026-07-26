@@ -7,8 +7,7 @@ export default function Dashboard() {
   const stats = response?.data || {
     totalUsers: 0,
     activeAuditions: 0,
-    totalApplications: 0,
-    totalRevenue: 0
+    totalApplications: 0
   };
 
   return (
@@ -43,13 +42,6 @@ export default function Dashboard() {
           <p style={{ fontSize: '0.875rem' }}>Submitted by artists</p>
         </div>
 
-        <Link to="/payments" className="glass-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.transform = 'scale(1.02)'} onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>
-          <p style={{ fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Platform Revenue</p>
-          <h2 style={{ fontSize: '2.5rem', margin: '8px 0', color: '#10b981' }}>
-            {loading ? '...' : `₹${stats.totalRevenue.toLocaleString()}`}
-          </h2>
-          <p style={{ fontSize: '0.875rem' }}>Total Cashfree payments</p>
-        </Link>
       </div>
     </div>
   );

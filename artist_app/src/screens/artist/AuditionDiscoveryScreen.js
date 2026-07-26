@@ -7,7 +7,9 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import CustomInput from '../../components/forms/CustomInput';
 import AuditionCard from '../../components/artist/AuditionCard';
+import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useGetFeedQuery } from '../../services/discoverApi';
+import { useGetProfessionsQuery } from '../../services/profileApi';
 
 const CATEGORY_MAP = {
   'Relevant': 'Relevant',
@@ -21,6 +23,8 @@ const CATEGORY_MAP = {
 };
 
 const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
+
+const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
 export default function AuditionDiscoveryScreen() {
   const { colors } = useTheme();
@@ -38,6 +42,7 @@ export default function AuditionDiscoveryScreen() {
 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({
+    category: 'All',
     project_type: 'All',
     duration_type: 'All',
     city: 'All',
@@ -47,6 +52,10 @@ export default function AuditionDiscoveryScreen() {
   });
 
   const [tempFilters, setTempFilters] = useState(filters);
+
+  const { data: professionsResponse } = useGetProfessionsQuery();
+  const dynamicCategories = (professionsResponse?.data || []).map(p => capitalize(p.name));
+  const CATEGORIES = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Singer', 'Dancer', 'Technician', 'Writer', 'Director'])];
 
   const PROJECT_TYPES = ['All', 'Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'];
   const DURATION_TYPES = ['All', 'Full-time', 'Part-time', 'Date Specific'];
@@ -61,12 +70,31 @@ export default function AuditionDiscoveryScreen() {
   } else if (activeCategory !== 'Relevant') {
     queryParams.category = CATEGORY_MAP[activeCategory];
   }
+  
+  if (filters.category !== 'All') {
+     // override the tab category if filter modal has one selected
+     if (Array.isArray(filters.category) && !filters.category.includes('All')) {
+        queryParams.category = filters.category.join(',');
+     } else if (typeof filters.category === 'string') {
+        queryParams.category = filters.category;
+     }
+  }
+
   if (filters.project_type !== 'All') queryParams.project_type = filters.project_type;
   if (filters.duration_type !== 'All') queryParams.duration_type = filters.duration_type;
   if (filters.city !== 'All') queryParams.city = filters.city;
   if (filters.gender_req !== 'All') queryParams.gender_req = filters.gender_req;
   if (filters.age_min) queryParams.age_min = filters.age_min;
   if (filters.age_max) queryParams.age_max = filters.age_max;
+
+  const filterConfig = [
+    { key: 'category', label: 'Profession', type: 'select', options: CATEGORIES, multiSelect: true },
+    { key: 'project_type', label: 'Project Type', type: 'select', options: PROJECT_TYPES },
+    { key: 'duration_type', label: 'Duration', type: 'select', options: DURATION_TYPES },
+    { key: 'city', label: 'City', type: 'select', options: CITIES },
+    { key: 'gender_req', label: 'Gender', type: 'select', options: GENDERS },
+    { key: 'age', label: 'Age Range', type: 'range', minKey: 'age_min', maxKey: 'age_max' }
+  ];
 
   const { data: feedData, isLoading, isError, refetch } = useGetFeedQuery(queryParams);
 
@@ -165,78 +193,14 @@ export default function AuditionDiscoveryScreen() {
       </View>
 
       {/* Filter Modal */}
-      <Modal visible={showFilterModal} animationType="slide" transparent={true} onRequestClose={() => setShowFilterModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Advanced Filters</Text>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <Icon name="close" size={24} color={colors.textMainLight} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              <Text style={styles.filterSectionTitle}>Project Type</Text>
-              <View style={styles.filterOptionsRow}>
-                {PROJECT_TYPES.map(p => (
-                  <TouchableOpacity key={p} style={[styles.filterOptionChip, tempFilters.project_type === p && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, project_type: p})}>
-                    <Text style={[styles.filterOptionText, tempFilters.project_type === p && styles.filterOptionTextActive]}>{p}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.filterSectionTitle}>Duration</Text>
-              <View style={styles.filterOptionsRow}>
-                {DURATION_TYPES.map(d => (
-                  <TouchableOpacity key={d} style={[styles.filterOptionChip, tempFilters.duration_type === d && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, duration_type: d})}>
-                    <Text style={[styles.filterOptionText, tempFilters.duration_type === d && styles.filterOptionTextActive]}>{d}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.filterSectionTitle}>City</Text>
-              <View style={styles.filterOptionsRow}>
-                {CITIES.map(c => (
-                  <TouchableOpacity key={c} style={[styles.filterOptionChip, tempFilters.city === c && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, city: c})}>
-                    <Text style={[styles.filterOptionText, tempFilters.city === c && styles.filterOptionTextActive]}>{c}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.filterSectionTitle}>Gender</Text>
-              <View style={styles.filterOptionsRow}>
-                {GENDERS.map(g => (
-                  <TouchableOpacity key={g} style={[styles.filterOptionChip, tempFilters.gender_req === g && styles.filterOptionChipActive]} onPress={() => setTempFilters({...tempFilters, gender_req: g})}>
-                    <Text style={[styles.filterOptionText, tempFilters.gender_req === g && styles.filterOptionTextActive]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.filterSectionTitle}>Age Range</Text>
-              <View style={styles.ageRangeRow}>
-                <TextInput style={styles.ageInput} placeholder="Min Age" placeholderTextColor={colors.textMutedLight} value={tempFilters.age_min} onChangeText={(val) => setTempFilters({...tempFilters, age_min: val})} keyboardType="number-pad" />
-                <Text style={{ color: colors.textMainLight, marginHorizontal: spacing.m }}>to</Text>
-                <TextInput style={styles.ageInput} placeholder="Max Age" placeholderTextColor={colors.textMutedLight} value={tempFilters.age_max} onChangeText={(val) => setTempFilters({...tempFilters, age_max: val})} keyboardType="number-pad" />
-              </View>
-            </ScrollView>
-
-            <View style={styles.filterActions}>
-              <TouchableOpacity style={styles.clearFiltersBtn} onPress={() => {
-                setFilters({ project_type: 'All', duration_type: 'All', city: 'All', gender_req: 'All', age_min: '', age_max: '' });
-                setShowFilterModal(false);
-              }}>
-                <Text style={styles.clearFiltersText}>Clear</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyFiltersBtn} onPress={() => {
-                setFilters(tempFilters);
-                setShowFilterModal(false);
-              }}>
-                <Text style={styles.applyFiltersText}>Apply Filters</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <SidebarFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={(newFilters) => setFilters(newFilters)}
+        filterConfig={filterConfig}
+        initialFilters={filters}
+        defaultFilters={{ category: 'All', project_type: 'All', duration_type: 'All', city: 'All', gender_req: 'All', age_min: '', age_max: '' }}
+      />
     </SafeAreaView>
   );
 }

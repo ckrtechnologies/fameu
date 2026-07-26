@@ -39,7 +39,6 @@ export default function Layout() {
     {
       title: 'Finance & System',
       items: [
-        { name: 'Payments', path: '/payments', icon: <CreditCard size={20} /> },
         { name: 'Professions', path: '/professions', icon: <Database size={20} /> },
         { name: 'CMS Settings', path: '/cms', icon: <Settings size={20} /> },
         { name: 'Notifications', path: '/nms', icon: <Bell size={20} /> },

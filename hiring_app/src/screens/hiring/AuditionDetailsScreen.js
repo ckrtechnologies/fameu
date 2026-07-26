@@ -1,7 +1,7 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert , RefreshControl, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Linking, ImageBackground } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -12,12 +12,13 @@ import { useGetAuditionDetailsQuery, useDeleteAuditionMutation } from '../../ser
 import SkeletonLoader from '../../components/SkeletonLoader';
 import CustomButton from '../../components/forms/CustomButton';
 import CommentsSection from '../../components/CommentsSection';
+
 export default function AuditionDetailsScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { auditionId, scrollToComments } = route.params;
-  const { data: response, isLoading, error , isFetching, refetch} = useGetAuditionDetailsQuery(auditionId)
+  const { data: response, isLoading, error, isFetching, refetch } = useGetAuditionDetailsQuery(auditionId);
   const [deleteAudition] = useDeleteAuditionMutation();
   const scrollViewRef = useRef(null);
 
@@ -61,9 +62,7 @@ export default function AuditionDetailsScreen() {
         <View style={{ marginTop: spacing.xxl }}>
           <SkeletonLoader width="70%" height={32} style={{ marginBottom: spacing.m }} />
           <SkeletonLoader width="40%" height={20} style={{ marginBottom: spacing.xl }} />
-          
           <SkeletonLoader width="100%" height={120} style={{ marginBottom: spacing.xl }} />
-          
           <SkeletonLoader width="100%" height={60} style={{ marginBottom: spacing.m }} />
           <SkeletonLoader width="100%" height={60} />
         </View>
@@ -80,132 +79,180 @@ export default function AuditionDetailsScreen() {
     );
   }
 
+  const isWalkin = audition.audition_type === 'walkin';
+  const heroImage = audition.thumbnail_url || parsedInstructions.thumbnail_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop';
+
   return (
     <View style={globalStyles.container}>
-      <View style={[styles.appBar, { paddingTop: Math.max(insets.top, spacing.xl) + 10 }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+      <ScrollView 
+        ref={scrollViewRef} 
+        contentContainerStyle={{ paddingBottom: 40 }} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
+      >
+        {/* Hero Image */}
+        <ImageBackground 
+          source={{ uri: heroImage }} 
+          style={styles.heroImage}
+        >
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' }} />
+        </ImageBackground>
+
+        {/* Content Card overlapping the image */}
+        <View style={styles.contentCard}>
+          {/* Title Section */}
+          <View style={styles.headerSection}>
+            <View style={styles.topRow}>
+              <View style={styles.tagContainer}>
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>{audition.category}</Text>
+                </View>
+                {isWalkin && (
+                  <View style={[styles.tag, { backgroundColor: colors.warning + '20' }]}>
+                    <Text style={[styles.tagText, { color: colors.warning }]}>Walk-In</Text>
+                  </View>
+                )}
+                {parsedInstructions.project_type && (
+                  <View style={[styles.tag, { backgroundColor: colors.secondary + '20' }]}>
+                    <Text style={[styles.tagText, { color: colors.secondary }]}>{parsedInstructions.project_type}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={[styles.statusBadge, audition.status === 'active' ? styles.statusActive : styles.statusClosed]}>
+                <Text style={[styles.statusText, audition.status === 'active' ? styles.statusActiveText : styles.statusClosedText]}>
+                  {audition.status === 'active' ? 'Active' : 'Closed'}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.title}>{audition.title}</Text>
+            <Text style={styles.postedDate}>
+              Posted on {format(new Date(audition.created_at), 'MMM dd, yyyy')}
+            </Text>
+          </View>
+
+          {/* Quick Info Grid */}
+          <View style={styles.quickInfoGrid}>
+            <View style={styles.quickInfoCard}>
+              <View style={[styles.iconWrapper, { backgroundColor: colors.primary + '15' }]}>
+                <Icon name="calendar" size={20} color={colors.primary} />
+              </View>
+              <View>
+                <Text style={styles.infoLabel}>Date</Text>
+                <Text style={styles.infoValue}>{new Date(audition.audition_date).toLocaleDateString()}</Text>
+              </View>
+            </View>
+            <View style={styles.quickInfoCard}>
+              <View style={[styles.iconWrapper, { backgroundColor: colors.secondary + '15' }]}>
+                <Icon name="time" size={20} color={colors.secondary} />
+              </View>
+              <View>
+                <Text style={styles.infoLabel}>Time</Text>
+                <Text style={styles.infoValue}>{audition.audition_time}</Text>
+              </View>
+            </View>
+            <View style={[styles.quickInfoCard, { width: '100%' }]}>
+              <View style={[styles.iconWrapper, { backgroundColor: colors.success + '15' }]}>
+                <Icon name="location" size={20} color={colors.success} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoLabel}>Location</Text>
+                <Text style={styles.infoValue} numberOfLines={2}>{audition.venue_address || 'TBA'}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Role Description */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Role Description</Text>
+            <Text style={styles.bodyText}>{audition.role_description || 'No description provided.'}</Text>
+          </View>
+
+          {/* Requirements & Details */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Requirements & Details</Text>
+            <View style={styles.detailsCard}>
+              {(audition.gender || parsedInstructions.gender_req) && (
+                <View style={styles.detailRow}>
+                  <Icon name="male-female" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
+                  <Text style={styles.detailText}>Gender: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{parsedInstructions.gender_req || audition.gender}</Text></Text>
+                </View>
+              )}
+              
+              {(audition.age_min || audition.age_max) && (
+                <View style={styles.detailRow}>
+                  <Icon name="person" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
+                  <Text style={styles.detailText}>Age: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{audition.age_min || 0} - {audition.age_max || 'Any'}</Text></Text>
+                </View>
+              )}
+
+              {(audition.city || parsedInstructions.city) && (
+                <View style={styles.detailRow}>
+                  <Icon name="business" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
+                  <Text style={styles.detailText}>City: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{audition.city || parsedInstructions.city}</Text></Text>
+                </View>
+              )}
+              
+              {(audition.budget || audition.compensation || parsedInstructions.budget) && (
+                <View style={styles.detailRow}>
+                  <Icon name="cash" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
+                  <Text style={styles.detailText}>Compensation: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{parsedInstructions.budget || audition.budget || audition.compensation}</Text></Text>
+                </View>
+              )}
+              
+              {(audition.duration_type || parsedInstructions.duration_type) && (
+                <View style={styles.detailRow}>
+                  <Icon name="hourglass" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
+                  <Text style={styles.detailText}>Duration: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{audition.duration_type || parsedInstructions.duration_type}</Text></Text>
+                </View>
+              )}
+              
+              {((audition.specific_start_date || parsedInstructions.specific_start_date) && (audition.specific_end_date || parsedInstructions.specific_end_date)) && (
+                <View style={[styles.detailRow, { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 0 }]}>
+                  <Icon name="calendar" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
+                  <Text style={styles.detailText}>Dates: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{audition.specific_start_date || parsedInstructions.specific_start_date} to {audition.specific_end_date || parsedInstructions.specific_end_date}</Text></Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Additional Documents */}
+          {parsedInstructions.description_pdf_url && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Additional Documents</Text>
+              <TouchableOpacity style={styles.pdfButton} onPress={() => Linking.openURL(parsedInstructions.description_pdf_url)}>
+                <View style={[styles.iconWrapper, { backgroundColor: colors.danger + '15', marginRight: 12 }]}>
+                  <Icon name="document-text" size={20} color={colors.danger} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.pdfButtonTitle}>Download Brief</Text>
+                  <Text style={styles.pdfButtonSubtitle}>PDF Document</Text>
+                </View>
+                <Icon name="download-outline" size={20} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <CommentsSection targetType="audition" targetId={auditionId} />
+        </View>
+      </ScrollView>
+
+      {/* Floating Header Buttons */}
+      <View style={[styles.floatingHeader, { top: Math.max(insets.top, 20) }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.floatingIconButton}>
+          <Icon name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.appBarTitle}>Audition Details</Text>
-        <View style={{ flexDirection: 'row' }}>
-          <TouchableOpacity onPress={() => navigation.navigate('CreateAudition', { audition })} style={styles.actionBtn}>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity onPress={() => navigation.navigate('CreateAudition', { audition })} style={[styles.floatingIconButton, { backgroundColor: 'rgba(255,255,255,0.9)' }]}>
             <Icon name="pencil" size={20} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} style={styles.actionBtn}>
-            <Icon name="trash" size={20} color={colors.error || 'red'} />
+          <TouchableOpacity onPress={handleDelete} style={[styles.floatingIconButton, { backgroundColor: 'rgba(255,255,255,0.9)' }]}>
+            <Icon name="trash" size={20} color={colors.danger} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
-        {/* Thumbnail Section */}
-        {(audition.thumbnail_url || parsedInstructions.thumbnail_url) && (
-          <Image 
-            source={{ uri: audition.thumbnail_url || parsedInstructions.thumbnail_url }} 
-            style={{ width: '100%', height: 200, resizeMode: 'cover', borderRadius: 8, marginBottom: spacing.m }} 
-          />
-        )}
-
-        {/* Title Section */}
-        <View style={styles.headerSection}>
-          <Text style={styles.title}>{audition.title}</Text>
-          <View style={[styles.statusBadge, audition.status === 'active' ? styles.statusActive : styles.statusClosed]}>
-            <Text style={[styles.statusText, audition.status === 'active' ? styles.statusActiveText : styles.statusClosedText]}>
-              {audition.status === 'active' ? 'Active' : 'Closed'}
-            </Text>
-          </View>
-        </View>
-        
-        <Text style={styles.postedDate}>
-          Posted on {format(new Date(audition.created_at), 'MMM dd, yyyy')}
-        </Text>
-
-        <View style={styles.tagsContainer}>
-          {audition.category && (
-            <View style={styles.tag}>
-              <Icon name="star-outline" size={14} color={colors.primary} />
-              <Text style={styles.tagText}>{audition.category}</Text>
-            </View>
-          )}
-          {audition.audition_type && (
-            <View style={styles.tag}>
-              <Icon name="videocam-outline" size={14} color={colors.primary} />
-              <Text style={styles.tagText}>{audition.audition_type}</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Role Description</Text>
-          <Text style={styles.bodyText}>{audition.role_description}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Requirements & Details</Text>
-          
-          <View style={styles.infoRow}>
-            <Icon name="male-female-outline" size={20} color={colors.textMutedLight} />
-            <Text style={styles.infoText}>Gender: {parsedInstructions.gender_req || audition.gender || 'Any'}</Text>
-          </View>
-          
-          <View style={styles.infoRow}>
-            <Icon name="person-outline" size={20} color={colors.textMutedLight} />
-            <Text style={styles.infoText}>
-              Age: {audition.age_min ? `${audition.age_min} - ${audition.age_max || '+'}` : 'Any'}
-            </Text>
-          </View>
-          
-          <View style={styles.infoRow}>
-            <Icon name="location-outline" size={20} color={colors.textMutedLight} />
-            <Text style={styles.infoText}>Location: {parsedInstructions.city || audition.location || 'Remote / Any'}</Text>
-          </View>
-          
-          {(parsedInstructions.budget || audition.compensation) && (
-            <View style={styles.infoRow}>
-              <Icon name="cash-outline" size={20} color={colors.textMutedLight} />
-              <Text style={styles.infoText}>Compensation: {parsedInstructions.budget || audition.compensation}</Text>
-            </View>
-          )}
-
-          {parsedInstructions.project_type && (
-            <View style={styles.infoRow}>
-              <Icon name="videocam-outline" size={20} color={colors.textMutedLight} />
-              <Text style={styles.infoText}>Project Type: {parsedInstructions.project_type}</Text>
-            </View>
-          )}
-
-          {parsedInstructions.duration_type && (
-            <View style={styles.infoRow}>
-              <Icon name="time-outline" size={20} color={colors.textMutedLight} />
-              <Text style={styles.infoText}>Duration: {parsedInstructions.duration_type}</Text>
-            </View>
-          )}
-
-          {parsedInstructions.duration_type === 'Date Specific' && parsedInstructions.specific_start_date && (
-            <View style={styles.infoRow}>
-              <Icon name="calendar-outline" size={20} color={colors.textMutedLight} />
-              <Text style={styles.infoText}>Dates: {parsedInstructions.specific_start_date} to {parsedInstructions.specific_end_date}</Text>
-            </View>
-          )}
-        </View>
-
-        {parsedInstructions.description_pdf_url && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Additional Documents</Text>
-            <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }} 
-              onPress={() => Linking.openURL(parsedInstructions.description_pdf_url)}
-            >
-              <Icon name="document-text" size={24} color={colors.primary} />
-              <Text style={{ marginLeft: 8, color: colors.primary, fontWeight: '600' }}>Download Brief (PDF)</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <CommentsSection targetType="audition" targetId={auditionId} />
-      </ScrollView>
-
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) + 10 }]}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
         <CustomButton 
           title={`View Applicants (${audition.applicant_count || 0})`} 
           onPress={() => navigation.navigate('ApplicantTracking', { auditionId: audition.id, auditionTitle: audition.title })} 
@@ -230,37 +277,69 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
     backgroundColor: colors.backgroundLight,
   },
-  backBtn: {
-    padding: 4,
+  heroImage: {
+    width: '100%',
+    height: 320,
+    resizeMode: 'cover',
   },
-  actionBtn: {
-    padding: 4,
-    marginLeft: spacing.m,
+  floatingHeader: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
   },
-  appBarTitle: {
-    ...typography.h3,
-    color: colors.textMainLight,
+  floatingIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backdropFilter: 'blur(10px)',
   },
-  scrollContent: {
+  contentCard: {
+    marginTop: -30,
+    backgroundColor: colors.backgroundLight,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     padding: spacing.xl,
-    paddingBottom: 40,
+    paddingTop: 32,
+    minHeight: 500,
   },
   headerSection: {
+    marginBottom: spacing.xl,
+  },
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.s,
+    marginBottom: spacing.m,
   },
-  title: {
-    ...typography.h2,
-    color: colors.textMainLight,
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.s,
     flex: 1,
-    marginRight: spacing.m,
+  },
+  tag: {
+    paddingHorizontal: spacing.m,
+    paddingVertical: 6,
+    backgroundColor: colors.primary + '15',
+    borderRadius: 20,
+  },
+  tagText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginLeft: spacing.s,
   },
   statusActive: {
     backgroundColor: colors.success + '20',
@@ -270,7 +349,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     ...typography.caption,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   statusActiveText: {
     color: colors.success,
@@ -278,34 +358,53 @@ const styles = StyleSheet.create({
   statusClosedText: {
     color: colors.textMutedLight,
   },
+  title: {
+    ...typography.h1,
+    color: colors.textMainLight,
+    marginBottom: 4,
+    lineHeight: 34,
+  },
   postedDate: {
     ...typography.caption,
     color: colors.textMutedLight,
-    marginBottom: spacing.m,
   },
-  tagsContainer: {
+  quickInfoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: spacing.xxl,
+    gap: 12,
+    marginBottom: spacing.xl,
   },
-  tag: {
+  quickInfoCard: {
+    flex: 1,
+    minWidth: '45%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary + '15',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: colors.surfaceLight,
+    padding: spacing.m,
     borderRadius: 16,
-    marginRight: spacing.s,
-    marginBottom: spacing.s,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
-  tagText: {
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  infoLabel: {
     ...typography.caption,
-    color: colors.primary,
-    marginLeft: 4,
-    fontWeight: '600',
+    color: colors.textMutedLight,
+    marginBottom: 2,
+  },
+  infoValue: {
+    ...typography.body2,
+    fontWeight: '700',
+    color: colors.textMainLight,
   },
   section: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   sectionTitle: {
     ...typography.h3,
@@ -313,24 +412,59 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
   },
   bodyText: {
-    ...typography.body1,
-    color: colors.textMainLight,
+    ...typography.body,
+    color: colors.textMutedLight,
     lineHeight: 24,
   },
-  infoRow: {
+  detailsCard: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 16,
+    padding: spacing.l,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.m,
+    paddingVertical: spacing.m,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
   },
-  infoText: {
-    ...typography.body1,
+  detailIcon: {
+    marginRight: 12,
+  },
+  detailText: {
+    ...typography.body,
+    color: colors.textMutedLight,
+    flex: 1,
+  },
+  pdfButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.m,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  pdfButtonTitle: {
+    ...typography.body,
+    fontWeight: '700',
     color: colors.textMainLight,
-    marginLeft: spacing.m,
+  },
+  pdfButtonSubtitle: {
+    ...typography.caption,
+    color: colors.textMutedLight,
   },
   footer: {
-    padding: spacing.xl,
+    padding: spacing.l,
+    backgroundColor: colors.backgroundLight,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
-    backgroundColor: colors.backgroundLight,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 10,
   },
 });

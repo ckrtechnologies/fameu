@@ -1,7 +1,7 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl, TextInput, Share } from 'react-native';
 import Video from 'react-native-video';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,9 +9,9 @@ const { width } = Dimensions.get('window');
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import CommentsSection from '../../components/CommentsSection';
-import { useGetArtistDetailsQuery } from '../../services/discoveryApi';
+import { useGetArtistDetailsQuery, useInviteArtistMutation, useReportArtistMutation } from '../../services/discoveryApi';
 import { useStartConversationMutation } from '../../services/chatApi';
-import { useGetCompanyProfileQuery } from '../../services/hiringApi';
+import { useGetCompanyProfileQuery, useGetDashboardDataQuery } from '../../services/hiringApi';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/forms/CustomButton';
 import SkeletonLoader from '../../components/SkeletonLoader';
@@ -29,7 +29,16 @@ export default function ArtistProfileScreen() {
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const [isInviteModalVisible, setIsInviteModalVisible] = useState(false);
+  const [selectedAuditionId, setSelectedAuditionId] = useState('');
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+
   const [startConversation, { isLoading: isStartingChat }] = useStartConversationMutation();
+  const [inviteArtist, { isLoading: isInviting }] = useInviteArtistMutation();
+  const [reportArtist, { isLoading: isReporting }] = useReportArtistMutation();
+  const { data: dashboardData } = useGetDashboardDataQuery();
+  const myAuditions = dashboardData?.data?.activeAuditions || [];
 
   const artist = response?.data;
   const user = artist?.users;
@@ -68,6 +77,7 @@ export default function ArtistProfileScreen() {
     }
     GlobalAlert.show("Contact Artist", `Would you like to invite ${artist.full_name} to an audition or send a message?`, [
       { text: "Cancel", style: "cancel" },
+      { text: "Invite", onPress: () => setIsInviteModalVisible(true) },
       { text: "Message", onPress: async () => {
           try {
             const response = await startConversation({ targetUserId: artist.user_id }).unwrap();
@@ -84,6 +94,36 @@ export default function ArtistProfileScreen() {
     ]);
   };
 
+  const handleInviteSubmit = async () => {
+    if (!selectedAuditionId) {
+      showError('', 'Please select an audition to invite the artist to.');
+      return;
+    }
+    try {
+      await inviteArtist({ id: artist.user_id, audition_id: selectedAuditionId }).unwrap();
+      showSuccess('', 'Artist has been invited successfully.');
+      setIsInviteModalVisible(false);
+      setSelectedAuditionId('');
+    } catch (err) {
+      showError('', err?.data?.error || 'Failed to send invite.');
+    }
+  };
+
+  const handleReportSubmit = async () => {
+    if (!reportReason.trim()) {
+      showError('', 'Please provide a reason for reporting.');
+      return;
+    }
+    try {
+      await reportArtist({ id: artist.user_id, reason: reportReason }).unwrap();
+      showSuccess('', 'Artist reported successfully. Our team will review this shortly.');
+      setIsReportModalVisible(false);
+      setReportReason('');
+    } catch (err) {
+      showError('', err?.data?.error || 'Failed to report artist.');
+    }
+  };
+
   const openLink = async (url) => {
     if (url) {
       const supported = await Linking.canOpenURL(url);
@@ -95,6 +135,19 @@ export default function ArtistProfileScreen() {
     }
   };
 
+  const handleShare = async () => {
+    if (!user || !user.username) return;
+    try {
+      const url = `https://fameu.app/artist/${user.username}`;
+      await Share.share({
+        message: `Check out ${artist.full_name}'s profile on Fameu! ${url}`,
+        url: url,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <SafeAreaView style={globalStyles.container} edges={['top', 'bottom']}>
       <View style={styles.appBar}>
@@ -102,7 +155,14 @@ export default function ArtistProfileScreen() {
           <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <Text style={styles.appBarTitle}>Profile Details</Text>
-        <View style={{ width: 24 }} />
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <TouchableOpacity onPress={handleShare} style={[styles.backBtn, {marginRight: 8}]}>
+            <Icon name="share-social-outline" size={24} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setIsReportModalVisible(true)} style={styles.backBtn}>
+            <Icon name="warning-outline" size={24} color={colors.error} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
@@ -377,12 +437,67 @@ export default function ArtistProfileScreen() {
           <CommentsSection targetType="artist_profile" targetId={artist.id} />
       </ScrollView>
 
+      {/* Modals for Image, Invite, and Report */}
       <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsImageModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity style={styles.closeBtn} onPress={() => setIsImageModalVisible(false)}>
             <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
-          {selectedImage && <Image source={{ uri: selectedImage }} style={styles.fullScreenImage} resizeMode="contain" />}
+          {selectedImage && <Image source={{ uri: selectedImage }} style={styles.fullImage} resizeMode="contain" />}
+        </View>
+      </Modal>
+
+      <Modal visible={isInviteModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsInviteModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={[typography.h3, { marginBottom: 16 }]}>Invite to Audition</Text>
+            {myAuditions.length === 0 ? (
+              <Text style={[typography.body, { color: colors.textMutedLight, marginBottom: 16 }]}>You have no active auditions. Please create one first.</Text>
+            ) : (
+              <View style={{ marginBottom: 16 }}>
+                {myAuditions.map(audition => (
+                  <TouchableOpacity
+                    key={audition.id}
+                    style={[
+                      styles.auditionSelectBtn,
+                      selectedAuditionId === audition.id && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
+                    ]}
+                    onPress={() => setSelectedAuditionId(audition.id)}
+                  >
+                    <Icon name={selectedAuditionId === audition.id ? "radio-button-on" : "radio-button-off"} size={20} color={selectedAuditionId === audition.id ? colors.primary : colors.textMutedLight} />
+                    <Text style={{ marginLeft: 8, flex: 1, ...typography.body }} numberOfLines={1}>{audition.title}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <CustomButton title="Cancel" variant="outline" onPress={() => setIsInviteModalVisible(false)} style={{ flex: 1 }} />
+              <CustomButton title="Invite" onPress={handleInviteSubmit} isLoading={isInviting} disabled={!selectedAuditionId || isInviting} style={{ flex: 1 }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={isReportModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsReportModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={[typography.h3, { marginBottom: 16, color: colors.error }]}>Report Artist</Text>
+            <Text style={[typography.body, { color: colors.textSecondaryLight, marginBottom: 12 }]}>Please describe why you are reporting this artist. This will be reviewed by our team.</Text>
+            <View style={{ borderWidth: 1, borderColor: colors.borderLight, borderRadius: 8, padding: 12, marginBottom: 16 }}>
+              <TextInput
+                style={{ minHeight: 100, textAlignVertical: 'top', color: colors.textMainLight }}
+                placeholder="Reason for reporting..."
+                placeholderTextColor={colors.textMutedLight}
+                multiline
+                value={reportReason}
+                onChangeText={setReportReason}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <CustomButton title="Cancel" variant="outline" onPress={() => setIsReportModalVisible(false)} style={{ flex: 1 }} />
+              <CustomButton title="Report" onPress={handleReportSubmit} isLoading={isReporting} disabled={!reportReason.trim() || isReporting} style={{ flex: 1, backgroundColor: colors.error, borderColor: colors.error }} />
+            </View>
+          </View>
         </View>
       </Modal>
 
@@ -529,12 +644,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.m },
+  modalContent: { width: '100%', backgroundColor: colors.surfaceLight, borderRadius: 12, padding: spacing.l },
+  auditionSelectBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: colors.borderLight, borderRadius: 8, marginBottom: 8 },
   closeModalBtn: {
     position: 'absolute',
     top: 50,

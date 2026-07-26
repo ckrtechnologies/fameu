@@ -1,4 +1,8 @@
 export const getAuditionLiveStatus = (item) => {
+  if (item.status === 'closed') {
+    return { text: 'Closed', color: '#64748B' };
+  }
+
   let targetDateStr = item.audition_date || item.date || item.specific_start_date;
   if (!targetDateStr && item.instructions) {
     try {
@@ -7,31 +11,20 @@ export const getAuditionLiveStatus = (item) => {
     } catch(e){}
   }
 
-  if (!targetDateStr) return null;
+  if (!targetDateStr) {
+    return { text: 'Active', color: '#10B981' };
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const targetDate = new Date(targetDateStr);
   targetDate.setHours(0, 0, 0, 0);
 
-  const diffTime = targetDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) {
-    return null; // Or { text: 'Closed', color: '#64748B' }
+  if (targetDate.getTime() === today.getTime()) {
+    return { text: 'Live', color: '#EF4444' };
+  } else if (targetDate.getTime() < today.getTime()) {
+    return { text: 'Closed', color: '#64748B' };
+  } else {
+    return { text: 'Active', color: '#10B981' };
   }
-  
-  if (diffDays === 0) {
-    return { text: 'Live Now', color: '#EF4444' };
-  } else if (diffDays === 1 || diffDays === 2) {
-    return { text: `Live in ${diffDays * 24} hours`, color: '#F59E0B' };
-  } else if (diffDays <= 7) {
-    return { text: `Live in ${diffDays} days`, color: '#3B82F6' };
-  } else if (diffDays <= 15) {
-    return { text: `Live in ${diffDays} days`, color: '#10B981' };
-  } else if (diffDays <= 90) {
-    return { text: `Live in ${diffDays} days`, color: '#8B5CF6' };
-  }
-  
-  return null;
 };

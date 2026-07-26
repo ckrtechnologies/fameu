@@ -1,8 +1,42 @@
 import auditionService from '../../../services/audition.service.js';
 import applicationService from '../../../services/application.service.js';
+import supabase from '../../../config/supabase.js';
 
 class ArtistDiscoverController {
   
+  /**
+   * Search for hiring agencies/casting directors
+   */
+  async searchHiringAgencies(req, res, next) {
+    try {
+      const { q, company_type, verification_status } = req.query;
+      
+      let query = supabase
+        .from('hiring_profiles')
+        .select(`
+          *,
+          users!inner (
+            display_name,
+            username
+          )
+        `);
+
+      if (company_type) query = query.eq('company_type', company_type);
+      if (verification_status === 'Verified Only') query = query.eq('is_verified', true);
+
+      if (q) {
+        query = query.or(`company_name.ilike.%${q}%,description.ilike.%${q}%`);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+      res.status(200).json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   /**
    * Get the discovery feed based on filters (e.g., lat/lng bounding box, category)
    */

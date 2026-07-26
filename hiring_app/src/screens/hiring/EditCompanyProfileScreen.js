@@ -17,6 +17,7 @@ import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetCompanyProfileQuery, useUpsertCompanyProfileMutation, useUploadLogoMutation } from '../../services/hiringApi';
 import { useLazyCheckUsernameQuery } from '../../services/profileApi';
 import CommentsSection from '../../components/CommentsSection';
+import CustomDropdown from '../../components/forms/CustomDropdown';
 export default function EditCompanyProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -187,13 +188,45 @@ export default function EditCompanyProfileScreen() {
       </View>
 
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Company Type *</Text>
+        <CustomDropdown
+          label="Company Type *"
+          options={[
+            { label: 'Production House', value: 'Production House' },
+            { label: 'Casting Agency', value: 'Casting Agency' },
+            { label: 'Advertising Agency', value: 'Advertising Agency' },
+            { label: 'Event Management', value: 'Event Management' },
+            { label: 'Modeling Agency', value: 'Modeling Agency' },
+            { label: 'Independent Filmmaker', value: 'Independent Filmmaker' },
+            { label: 'Other', value: 'Other' }
+          ]}
+          selectedValue={form.company_type}
+          onSelect={(val) => handleChange('company_type', val)}
+          placeholder="Select Company Type"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Alternate Phone</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. Casting Agency, Production House"
+          placeholder="e.g. +91 9876543210"
           placeholderTextColor={colors.textMutedLight}
-          value={form.company_type}
-          onChangeText={(text) => handleChange('company_type', text)}
+          value={form.alternate_phone || ''}
+          onChangeText={(text) => handleChange('alternate_phone', text)}
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Alternate Email</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. contact@dharma.com"
+          placeholderTextColor={colors.textMutedLight}
+          value={form.alternate_email || ''}
+          onChangeText={(text) => handleChange('alternate_email', text)}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
       </View>
 

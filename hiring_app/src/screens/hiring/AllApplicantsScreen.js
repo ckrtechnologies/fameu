@@ -9,6 +9,7 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetAllApplicantsQuery, useUpdateApplicationStatusMutation } from '../../services/auditionApi';
 import { useStartConversationMutation } from '../../services/chatApi';
+import SidebarFilterModal from '../../components/SidebarFilterModal';
 export default function AllApplicantsScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -19,16 +20,17 @@ export default function AllApplicantsScreen() {
 
   const route = useRoute();
   const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'pending');
-  const [filterGender, setFilterGender] = useState('All');
-  const [filterLocation, setFilterLocation] = useState('');
-  const [filterProfession, setFilterProfession] = useState('All');
-  const [filterType, setFilterType] = useState('Any');
-  const [filterProjectType, setFilterProjectType] = useState('All');
-  const [filterDate, setFilterDate] = useState('All Time'); // All Time, Last 7 Days, Last 30 Days
+
+  const [filters, setFilters] = useState({
+    gender: 'All',
+    location: 'All Locations',
+    profession: 'All',
+    type: 'Any',
+    projectType: 'All',
+    date: 'All Time'
+  });
 
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [showCityModal, setShowCityModal] = useState(false);
-  const [citySearch, setCitySearch] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -54,76 +56,76 @@ export default function AllApplicantsScreen() {
     const artist = app.artist_profiles || {};
     const audition = app.auditions || {};
 
-    if (filterGender !== 'All') {
-      if (artist.gender !== filterGender) return false;
+    if (filters.gender && filters.gender !== 'All' && !(Array.isArray(filters.gender) && filters.gender.includes('All'))) {
+      if (Array.isArray(filters.gender) ? !filters.gender.includes(artist.gender) : artist.gender !== filters.gender) return false;
     }
-    if (filterLocation && artist.city) {
-      if (!artist.city.toLowerCase().includes(filterLocation.toLowerCase())) return false;
+    
+    if (filters.location && filters.location !== 'All Locations' && !(Array.isArray(filters.location) && filters.location.includes('All Locations'))) {
+      if (!artist.city) return false;
+      if (Array.isArray(filters.location)) {
+        if (!filters.location.some(loc => artist.city.toLowerCase().includes(loc.toLowerCase()))) return false;
+      } else {
+        if (!artist.city.toLowerCase().includes(filters.location.toLowerCase())) return false;
+      }
     }
-    if (filterProfession !== 'All') {
+    
+    if (filters.profession && filters.profession !== 'All' && !(Array.isArray(filters.profession) && filters.profession.includes('All'))) {
       let cats = artist.categories || [];
       if (typeof cats === 'string') {
         try { cats = JSON.parse(cats); } catch(e) { cats = [cats]; }
       }
       if (!Array.isArray(cats)) cats = [cats];
       
-      const hasMatch = cats.includes(filterProfession);
-      if (!hasMatch) return false;
+      if (Array.isArray(filters.profession)) {
+        if (!filters.profession.some(p => cats.includes(p))) return false;
+      } else {
+        if (!cats.includes(filters.profession)) return false;
+      }
     }
 
-    if (filterType !== 'Any') {
+    if (filters.type && filters.type !== 'Any' && !(Array.isArray(filters.type) && filters.type.includes('Any'))) {
       const typeMap = { 'Walk-in': 'walkin', 'Scheduled': 'scheduled', 'Live': 'online' };
-      if (audition.audition_type !== typeMap[filterType]) return false;
-    }
-    
-    if (filterProjectType !== 'All') {
-      if (!audition.project_type) return false;
-      if (typeof audition.project_type === 'string') {
-         if (!audition.project_type.includes(filterProjectType)) return false;
-      } else if (Array.isArray(audition.project_type)) {
-         if (!audition.project_type.includes(filterProjectType)) return false;
+      if (Array.isArray(filters.type)) {
+        if (!filters.type.some(t => audition.audition_type === typeMap[t])) return false;
+      } else {
+        if (audition.audition_type !== typeMap[filters.type]) return false;
       }
     }
     
-    if (filterDate !== 'All Time') {
+    if (filters.projectType && filters.projectType !== 'All' && !(Array.isArray(filters.projectType) && filters.projectType.includes('All'))) {
+      if (!audition.project_type) return false;
+      let projTypes = audition.project_type;
+      if (typeof projTypes === 'string') {
+          projTypes = [projTypes];
+      }
+      
+      if (Array.isArray(filters.projectType)) {
+        if (!filters.projectType.some(pt => projTypes.includes(pt))) return false;
+      } else {
+        if (!projTypes.includes(filters.projectType)) return false;
+      }
+    }
+    
+    if (filters.date && filters.date !== 'All Time') {
       const appDate = new Date(app.created_at);
       const now = new Date();
       const diffTime = Math.abs(now - appDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-      if (filterDate === 'Last 7 Days' && diffDays > 7) return false;
-      if (filterDate === 'Last 30 Days' && diffDays > 30) return false;
+      if (filters.date === 'Last 7 Days' && diffDays > 7) return false;
+      if (filters.date === 'Last 30 Days' && diffDays > 30) return false;
     }
 
     return true;
   });
 
-  // Temporary state for filter modal
-  const [tempFilters, setTempFilters] = useState({ gender: 'All', type: 'Any', date: 'All Time', profession: 'All', status: 'all', projectType: 'All' });
-
-  const openFilterModal = () => {
-    setTempFilters({ gender: filterGender, type: filterType, date: filterDate, profession: filterProfession, status: activeTab, projectType: filterProjectType });
-    setFilterModalVisible(true);
-  };
-
-  const applyFilters = () => {
-    setFilterGender(tempFilters.gender);
-    setFilterType(tempFilters.type);
-    setFilterDate(tempFilters.date);
-    setFilterProfession(tempFilters.profession);
-    setActiveTab(tempFilters.status);
-    setFilterProjectType(tempFilters.projectType);
-    setFilterModalVisible(false);
-  };
-
-  const clearFilters = () => {
-    setFilterGender('All');
-    setFilterType('Any');
-    setFilterDate('All Time');
-    setFilterProfession('All');
-    setFilterLocation('');
-    setFilterProjectType('All');
-    setFilterModalVisible(false);
-  };
+  const filterConfig = [
+    { key: 'date', label: 'Date Range', type: 'select', options: dateRanges },
+    { key: 'type', label: 'Audition Type', type: 'select', options: types, multiSelect: true },
+    { key: 'projectType', label: 'Project Type', type: 'select', options: projectTypes, multiSelect: true },
+    { key: 'profession', label: 'Profession', type: 'select', options: professions, multiSelect: true },
+    { key: 'gender', label: 'Gender', type: 'select', options: genders, multiSelect: true },
+    { key: 'location', label: 'City', type: 'select', options: ['All Locations', ...CITIES], multiSelect: true }
+  ];
 
   const handleUpdateStatus = async (applicationId, newStatus) => {
     try {
@@ -269,17 +271,13 @@ export default function AllApplicantsScreen() {
       </View>
 
       <View style={styles.filterSection}>
-        <View style={styles.searchRow}>
-          <TouchableOpacity style={styles.locationInputBtn} onPress={() => setShowCityModal(true)}>
-             <Text style={{ color: filterLocation ? colors.textMainLight : colors.textMutedLight }}>
-               {filterLocation || "Filter by city..."}
-             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterBtn} onPress={openFilterModal}>
-            <Icon name="filter-outline" size={20} color={colors.primary} />
-            <Text style={styles.filterBtnText}>Filters</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={[styles.filterBtn, {flexDirection: 'row', alignItems: 'center'}]}
+          onPress={() => setFilterModalVisible(true)}
+        >
+          <Icon name="options-outline" size={16} color={colors.textMainLight} style={{marginRight: 4}} />
+          <Text style={styles.filterBtnText}>Advanced Filters</Text>
+        </TouchableOpacity>
       </View>
 
       {isLoading ? (
@@ -303,118 +301,14 @@ export default function AllApplicantsScreen() {
       )}
 
       {/* Filter Modal */}
-      <Modal
+      <SidebarFilterModal
         visible={filterModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setFilterModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { marginTop: 'auto', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, maxHeight: '80%' }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filters</Text>
-              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                <Icon name="close" size={24} color={colors.textMainLight} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.modalBody}>
-              {/* Date Range Filter */}
-              <Text style={styles.filterSectionTitle}>Date Range</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
-                {dateRanges.map(d => (
-                  <TouchableOpacity 
-                    key={d} 
-                    style={[styles.filterOptionChip, tempFilters.date === d && styles.filterOptionChipActive]}
-                    onPress={() => setTempFilters({...tempFilters, date: d})}
-                  >
-                    <Text style={[styles.filterOptionText, tempFilters.date === d && styles.filterOptionTextActive]}>{d}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Status Filter */}
-              <Text style={styles.filterSectionTitle}>Application Status</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
-                {tabs.map(t => (
-                  <TouchableOpacity 
-                    key={t} 
-                    style={[styles.filterOptionChip, tempFilters.status === t && styles.filterOptionChipActive]}
-                    onPress={() => setTempFilters({...tempFilters, status: t})}
-                  >
-                    <Text style={[styles.filterOptionText, tempFilters.status === t && styles.filterOptionTextActive]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Audition Type Filter */}
-              <Text style={styles.filterSectionTitle}>Audition Type</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
-                {types.map(t => (
-                  <TouchableOpacity 
-                    key={t} 
-                    style={[styles.filterOptionChip, tempFilters.type === t && styles.filterOptionChipActive]}
-                    onPress={() => setTempFilters({...tempFilters, type: t})}
-                  >
-                    <Text style={[styles.filterOptionText, tempFilters.type === t && styles.filterOptionTextActive]}>{t}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Project Type Filter */}
-              <Text style={styles.filterSectionTitle}>Project Type</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
-                {projectTypes.map(p => (
-                  <TouchableOpacity 
-                    key={p} 
-                    style={[styles.filterOptionChip, tempFilters.projectType === p && styles.filterOptionChipActive]}
-                    onPress={() => setTempFilters({...tempFilters, projectType: p})}
-                  >
-                    <Text style={[styles.filterOptionText, tempFilters.projectType === p && styles.filterOptionTextActive]}>{p}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Profession Filter */}
-              <Text style={styles.filterSectionTitle}>Profession</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
-                {professions.map(p => (
-                  <TouchableOpacity 
-                    key={p} 
-                    style={[styles.filterOptionChip, tempFilters.profession === p && styles.filterOptionChipActive]}
-                    onPress={() => setTempFilters({...tempFilters, profession: p})}
-                  >
-                    <Text style={[styles.filterOptionText, tempFilters.profession === p && styles.filterOptionTextActive]}>{p}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Gender Filter */}
-              <Text style={styles.filterSectionTitle}>Gender</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterOptionsRow}>
-                {genders.map(g => (
-                  <TouchableOpacity 
-                    key={g} 
-                    style={[styles.filterOptionChip, tempFilters.gender === g && styles.filterOptionChipActive]}
-                    onPress={() => setTempFilters({...tempFilters, gender: g})}
-                  >
-                    <Text style={[styles.filterOptionText, tempFilters.gender === g && styles.filterOptionTextActive]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-            </ScrollView>
-            <View style={styles.filterActions}>
-              <TouchableOpacity style={styles.clearFiltersBtn} onPress={clearFilters}>
-                <Text style={styles.clearFiltersText}>Clear All</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyFiltersBtn} onPress={applyFilters}>
-                <Text style={styles.applyFiltersText}>Apply Filters</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setFilterModalVisible(false)}
+        onApply={(newFilters) => setFilters(newFilters)}
+        filterConfig={filterConfig}
+        initialFilters={filters}
+        defaultFilters={{ gender: 'All', location: 'All Locations', profession: 'All', type: 'Any', projectType: 'All', date: 'All Time' }}
+      />
 
       {/* Application Details Modal */}
       <Modal
@@ -472,46 +366,7 @@ export default function AllApplicantsScreen() {
           </View>
         </View>
       </Modal>
-      {/* City Modal */}
-      <Modal visible={showCityModal} animationType="slide" transparent={true} onRequestClose={() => setShowCityModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select City</Text>
-              <TouchableOpacity onPress={() => setShowCityModal(false)}>
-                <Icon name="close" size={24} color={colors.textMainLight} />
-              </TouchableOpacity>
-            </View>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search city..."
-              placeholderTextColor={colors.textMutedLight}
-              value={citySearch}
-              onChangeText={setCitySearch}
-            />
-            <FlatList
-              data={CITIES.filter(c => c.toLowerCase().includes(citySearch.toLowerCase()))}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => {
-                const isSelected = filterLocation === item;
-                return (
-                <TouchableOpacity 
-                  style={styles.modalItem} 
-                  onPress={() => {
-                    setFilterLocation(item);
-                    setShowCityModal(false);
-                  }}
-                >
-                  <Text style={[styles.modalItemText, isSelected && styles.modalItemTextSelected]}>
-                    {item}
-                  </Text>
-                  {isSelected && <Icon name="checkmark" size={24} color={colors.primary} />}
-                </TouchableOpacity>
-              )}}
-            />
-          </View>
-        </View>
-      </Modal>
+
     </View>
   );
 }

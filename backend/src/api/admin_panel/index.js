@@ -223,16 +223,13 @@ router.get('/analytics', async (req, res) => {
     const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
     const { count: auditionsCount } = await supabase.from('auditions').select('*', { count: 'exact', head: true }).eq('status', 'active');
     const { count: applicationsCount } = await supabase.from('applications').select('*', { count: 'exact', head: true });
-    const { data: payments } = await supabase.from('payments').select('amount').eq('status', 'success');
-    const revenue = payments ? payments.reduce((sum, p) => sum + Number(p.amount), 0) : 0;
     
     res.json({ 
       success: true, 
       data: { 
         totalUsers: usersCount || 0, 
         activeAuditions: auditionsCount || 0, 
-        totalApplications: applicationsCount || 0, 
-        totalRevenue: revenue 
+        totalApplications: applicationsCount || 0
       } 
     });
   } catch (error) {
@@ -359,17 +356,6 @@ router.get('/applications', async (req, res) => {
       }
     }));
     
-    res.json({ success: true, data });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Payments
-router.get('/payments', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('payments').select('*, hiring_profiles(company_name)').order('created_at', { ascending: false });
-    if (error) throw error;
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

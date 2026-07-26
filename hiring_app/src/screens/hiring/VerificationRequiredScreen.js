@@ -1,21 +1,41 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
+import { useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import CustomButton from '../../components/forms/CustomButton';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 
 export default function VerificationRequiredScreen({ navigation }) {
-  const { data: profileResponse } = useGetCompanyProfileQuery();
+  const user = useSelector(state => state.auth?.user);
+  const { data: profileResponse, refetch, isFetching } = useGetCompanyProfileQuery(user?.id, { skip: !user?.id });
   const verificationStatus = profileResponse?.data?.verification_status || 'unverified';
   const insets = useSafeAreaInsets();
+  
+  const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) refetch();
+    }, [user?.id, refetch])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    if (user?.id) await refetch();
+    setRefreshing(false);
+  }, [user?.id, refetch]);
 
   const isPending = verificationStatus === 'pending';
 
   return (
-    <View style={[globalStyles.container, styles.center, { padding: spacing.xl }]}>
+    <ScrollView 
+      contentContainerStyle={[globalStyles.container, styles.center, { padding: spacing.xl, flexGrow: 1 }]}
+      refreshControl={<RefreshControl refreshing={refreshing || isFetching} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
+    >
       <TouchableOpacity 
         style={[styles.closeButton, { top: insets.top + spacing.m }]} 
         onPress={() => navigation.goBack()}
@@ -35,7 +55,7 @@ export default function VerificationRequiredScreen({ navigation }) {
       
       <Text style={[typography.body1, { textAlign: 'center', color: colors.textMutedLight, marginBottom: spacing.xl }]}>
         {isPending 
-          ? 'Your KYC documents have been submitted and are currently being reviewed by our team. We will notify you once your account is fully verified.'
+          ? 'Your KYC documents have been submitted and are currently being reviewed by our team. Pull down to refresh and check your status.'
           : 'You must complete your KYC verification to access this feature. We require standard documentation to ensure a safe environment for all talents.'}
       </Text>
       
@@ -47,9 +67,7 @@ export default function VerificationRequiredScreen({ navigation }) {
           <Text style={globalStyles.primaryButtonText}>Complete KYC Verification</Text>
         </TouchableOpacity>
       )}
-      
-
-    </View>
+    </ScrollView>
   );
 }
 

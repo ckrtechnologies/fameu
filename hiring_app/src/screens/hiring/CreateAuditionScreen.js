@@ -8,7 +8,7 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker from '@react-native-documents/picker';
 
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import { useCreateAuditionMutation, useUpdateAuditionMutation, useUploadPdfMutation, useUploadThumbnailMutation } from '../../services/auditionApi';
@@ -53,8 +53,8 @@ export default function CreateAuditionScreen({ route }) {
 
   const dynamicCategories = (professionsResponse?.data || []).map(p => p.name);
   const CATEGORIES = dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Dancer', 'Singer', 'Musician', 'Comedian', 'Other'];
-  const TYPES = ['Walk-in', 'Scheduled'];
-  const PROJECT_TYPES = ['Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'];
+  const TYPES = ['Walk-in', 'Scheduled', 'Online'];
+  const PROJECT_TYPES = ['Web-series', 'Films', 'TV serials', 'Ad films', 'Short films', 'Music albums', 'Documentaries', 'Corporate shoots', 'Print shoots', 'Events', 'Theatre/Plays', 'Voice-overs', 'Anchoring/Hosting', 'Other'];
   const CITIES = ['Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Chandigarh', 'Other'];
   const DURATION_TYPES = ['Full-time', 'Part-time', 'Date Specific'];
   const GENDERS = ['Male', 'Female', 'Other', 'Any'];

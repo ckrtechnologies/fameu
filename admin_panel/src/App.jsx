@@ -14,7 +14,6 @@ import Auditions from './pages/Auditions';
 import Applications from './pages/Applications';
 import FraudReports from './pages/FraudReports';
 import Blacklist from './pages/Blacklist';
-import Payments from './pages/Payments';
 import CMS from './pages/CMS';
 import ProfessionsManagement from './pages/ProfessionsManagement';
 import NMS from './pages/NMS';
@@ -76,7 +75,6 @@ export default function App() {
           <Route path="applications" element={<Applications />} />
           <Route path="fraud-reports" element={<FraudReports />} />
           <Route path="blacklist" element={<Blacklist />} />
-          <Route path="payments" element={<Payments />} />
           <Route path="cms" element={<CMS />} />
           <Route path="professions" element={<ProfessionsManagement />} />
           <Route path="nms" element={<NMS />} />

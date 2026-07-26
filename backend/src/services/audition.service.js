@@ -131,9 +131,9 @@ class AuditionService {
 
     // Home Screen specific filters
     if (filters.filter === 'live') {
-      const today = new Date().toISOString().split('T')[0];
-      // assuming audition_date or date holds the date
-      query = query.gte('created_at', today); // Fallback: live usually means created today or audition date is today. Let's use is_live = true for today, or order by most recent. For "Live (today)", let's check created_at >= today.
+      // Use IST timezone to match user's local time accurately
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      query = query.eq('audition_date', today);
     }
 
     if (filters.filter === 'trending') {
@@ -167,13 +167,17 @@ class AuditionService {
       });
       
       if (catArray.length > 0) {
+        // Need to wrap the or conditions in a parenthesis-like structure using filter strings so it doesn't break other AND conditions
         const orQuery = catArray.map(c => `category.ilike.%${c}%`).join(',');
         query = query.or(orQuery);
       }
     }
     if (filters.audition_type) query = query.eq('audition_type', filters.audition_type);
     if (filters.hiring_id) query = query.eq('hiring_id', filters.hiring_id);
-    if (filters.is_live === 'true' || filters.is_live === true) query = query.eq('is_live', true);
+    if (filters.is_live === 'true' || filters.is_live === true) {
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      query = query.eq('audition_date', today);
+    }
     
     // Note: project_type, city, duration_type, budget are stored in JSON inside instructions
     // Note: project_type, city, duration_type, budget, gender_req are stored in JSON inside instructions

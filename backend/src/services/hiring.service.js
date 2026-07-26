@@ -148,15 +148,27 @@ class HiringService {
       company_reg_url: docsUrls.company_reg_url,
       gst_url: docsUrls.gst_url,
       selfie_url: docsUrls.selfie_url,
+      passport_url: docsUrls.passport_url,
+      voter_id_url: docsUrls.voter_id_url,
+      driving_license_url: docsUrls.driving_license_url,
       status: 'pending', // Reset status on re-upload
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { data: existing } = await supabase
       .from('verification_documents')
-      .upsert(payload, { onConflict: 'hiring_id' })
-      .select()
-      .single();
+      .select('id')
+      .eq('hiring_id', hiringId)
+      .maybeSingle();
+
+    let query;
+    if (existing) {
+      query = supabase.from('verification_documents').update(payload).eq('hiring_id', hiringId);
+    } else {
+      query = supabase.from('verification_documents').insert(payload);
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) throw new Error(`Failed to submit KYC documents: ${error.message}`);
     

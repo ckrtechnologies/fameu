@@ -9,6 +9,13 @@ export const discoveryApi = apiSlice.injectEndpoints({
       }),
       providesTags: ['Profile'],
     }),
+    searchHiringAgencies: builder.query({
+      query: (params) => ({
+        url: '/artist_app/discover/hiring-agencies',
+        params: params,
+      }),
+      providesTags: ['Profile'],
+    }),
     getArtistDetails: builder.query({
       query: (id) => `/hiring_app/artists/${id}`,
       providesTags: ['Profile'],
@@ -19,5 +26,7 @@ export const discoveryApi = apiSlice.injectEndpoints({
 export const {
   useSearchArtistsQuery,
   useLazySearchArtistsQuery,
+  useSearchHiringAgenciesQuery,
+  useLazySearchHiringAgenciesQuery,
   useGetArtistDetailsQuery,
 } = discoveryApi;

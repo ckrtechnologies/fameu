@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 // Discovery Feed & Details
 router.get('/feed', discoverController.getFeed);
+router.get('/hiring-agencies', discoverController.searchHiringAgencies);
 router.get('/:id', discoverController.getAuditionDetails);
 
 // Applications

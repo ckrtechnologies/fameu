@@ -9,5 +9,8 @@ router.use(authMiddleware);
 router.get('/', artistsController.searchArtists);
 router.get('/search', artistsController.searchArtists);
 router.get('/:id', artistsController.getArtistDetails);
+router.post('/:id/invite', artistsController.inviteArtist);
+router.post('/:id/block', artistsController.blockArtist);
+router.post('/:id/report', artistsController.reportArtist);
 
 export default router;

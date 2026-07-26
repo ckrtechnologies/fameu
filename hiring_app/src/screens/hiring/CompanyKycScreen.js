@@ -50,9 +50,10 @@ export default function CompanyKycScreen({ navigation }) {
       return;
     }
 
-    // Validation
-    if (!docs.aadhaar || !docs.pan || !docs.company_reg || !docs.selfie) {
-      showError('', 'Aadhaar, PAN, Company Registration, and Selfie are mandatory.');
+    const hasIdentityDoc = docs.aadhaar || docs.passport || docs.voter_id || docs.driving_license;
+    
+    if (!hasIdentityDoc || !docs.pan || !docs.company_reg || !docs.selfie) {
+      showError('', 'You must provide at least one Identity Document (Aadhaar, Passport, Voter ID, or DL) along with PAN, Company Registration, and Selfie.');
       return;
     }
 
@@ -132,7 +133,10 @@ export default function CompanyKycScreen({ navigation }) {
               <Text style={styles.subtitle}>To verify your company and start hiring on FameU, please provide the following documents. Ensure images are clear and readable.</Text>
             </View>
 
-        <DocumentPicker label="Aadhaar Card (Front & Back merged)" docKey="aadhaar" />
+        <DocumentPicker label="Aadhaar Card (Front & Back merged)" docKey="aadhaar" required={false} />
+        <DocumentPicker label="Passport" docKey="passport" required={false} />
+        <DocumentPicker label="Voter ID" docKey="voter_id" required={false} />
+        <DocumentPicker label="Driving License" docKey="driving_license" required={false} />
         <DocumentPicker label="Company PAN Card" docKey="pan" />
         <DocumentPicker label="Company Registration Certificate" docKey="company_reg" />
         <DocumentPicker label="GST Certificate" docKey="gst" required={false} />

@@ -10,6 +10,7 @@ import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
 import CustomButton from '../../components/forms/CustomButton';
 import AnimatedTileGrid from '../../components/forms/AnimatedTileGrid';
+import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { getAuditionLiveStatus } from '../../utils/dateUtils';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,12 +23,14 @@ export default function MyAuditionsScreen() {
   const { data: professionsResponse } = useGetProfessionsQuery();
   
   const statuses = ['All', 'Active', 'Closed'];
-  const [filterCategory, setFilterCategory] = React.useState('All');
   const [filterStatus, setFilterStatus] = React.useState(statuses.includes(route.params?.initialStatus) ? route.params.initialStatus : 'All');
-  const [filterGender, setFilterGender] = React.useState('All');
-  const [filterProjectType, setFilterProjectType] = React.useState('All');
-  const [filterCity, setFilterCity] = React.useState('All');
-  const [filterAuditionType, setFilterAuditionType] = React.useState('All');
+  const [filters, setFilters] = React.useState({
+    category: 'All',
+    gender: 'All',
+    projectType: 'All',
+    city: 'All',
+    auditionType: 'All'
+  });
 
   React.useEffect(() => {
     if (route.params?.initialStatus && statuses.includes(route.params.initialStatus)) {
@@ -40,7 +43,10 @@ export default function MyAuditionsScreen() {
   
   // Apply filtering
   const filteredAuditions = auditions.filter(item => {
-    const matchCategory = filterCategory === 'All' || item.category === filterCategory;
+    const matchCategory = filters.category === 'All' || 
+      (Array.isArray(filters.category) && filters.category.includes('All')) ||
+      (Array.isArray(filters.category) ? filters.category.includes(item.category) : item.category === filters.category);
+      
     const matchStatus = filterStatus === 'All' 
       ? true 
       : filterStatus === 'Active' ? item.status === 'active' : item.status !== 'active';
@@ -50,16 +56,39 @@ export default function MyAuditionsScreen() {
       if (item.instructions) instructions = JSON.parse(item.instructions);
     } catch (e) {}
     
-    const matchGender = filterGender === 'All' || (instructions.gender_req === filterGender);
-    const matchProject = filterProjectType === 'All' || (instructions.project_type && instructions.project_type.includes(filterProjectType));
-    const matchCity = filterCity === 'All' || (instructions.city === filterCity);
-    const matchAuditionType = filterAuditionType === 'All' || (item.audition_type === filterAuditionType || (item.audition_type === 'live' && filterAuditionType === 'Walk-in')); // naive map
+    const matchGender = filters.gender === 'All' || 
+      (Array.isArray(filters.gender) && filters.gender.includes('All')) ||
+      (Array.isArray(filters.gender) ? filters.gender.includes(instructions.gender_req) : instructions.gender_req === filters.gender);
+      
+    const matchProject = filters.projectType === 'All' || 
+      (Array.isArray(filters.projectType) && filters.projectType.includes('All')) ||
+      (Array.isArray(filters.projectType) 
+        ? filters.projectType.some(pt => instructions.project_type?.includes(pt))
+        : instructions.project_type?.includes(filters.projectType));
+        
+    const matchCity = filters.city === 'All' || 
+      (Array.isArray(filters.city) && filters.city.includes('All')) ||
+      (Array.isArray(filters.city) ? filters.city.includes(instructions.city) : instructions.city === filters.city);
+      
+    const matchAuditionType = filters.auditionType === 'All' || 
+      (Array.isArray(filters.auditionType) && filters.auditionType.includes('All')) ||
+      (Array.isArray(filters.auditionType) 
+        ? filters.auditionType.includes(item.audition_type) || (item.audition_type === 'live' && filters.auditionType.includes('Walk-in'))
+        : item.audition_type === filters.auditionType || (item.audition_type === 'live' && filters.auditionType === 'Walk-in'));
 
     return matchCategory && matchStatus && matchGender && matchProject && matchCity && matchAuditionType;
   });
 
   const dynamicCategories = (professionsResponse?.data || []).map(p => p.name);
   const categories = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Singer', 'Dancer', 'Technician'])];
+  
+  const filterConfig = [
+    { key: 'category', label: 'Profession', type: 'select', options: categories, multiSelect: true },
+    { key: 'gender', label: 'Gender', type: 'select', options: ['All', 'Male', 'Female', 'Other', 'Any'], multiSelect: true },
+    { key: 'projectType', label: 'Project Type', type: 'select', options: ['All', 'Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'], multiSelect: true },
+    { key: 'city', label: 'City', type: 'select', options: ['All', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Chandigarh', 'Other'], multiSelect: true },
+    { key: 'auditionType', label: 'Audition Type', type: 'select', options: ['All', 'Online', 'Walk-in'], multiSelect: true }
+  ];
   const isVerified = profileResponse?.data?.is_verified;
 
   const renderAuditionCard = ({ item }) => {
@@ -155,62 +184,14 @@ export default function MyAuditionsScreen() {
         </TouchableOpacity>
 
       {/* Filter Modal */}
-      <Modal visible={showFilterModal} animationType="slide" transparent={true} onRequestClose={() => setShowFilterModal(false)}>
-        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'}}>
-          <View style={{backgroundColor: colors.backgroundLight, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%'}}>
-            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.xl, borderBottomWidth: 1, borderColor: colors.borderLight}}>
-              <Text style={{...typography.h2, fontWeight: 'bold', color: colors.textMainLight}}>Filters</Text>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <Icon name="close" size={24} color={colors.textMainLight} />
-              </TouchableOpacity>
-            </View>
-          <ScrollView style={{padding: spacing.xl}} showsVerticalScrollIndicator={false}>
-            
-            <Text style={styles.filterSectionTitle}>Category</Text>
-            <View style={{flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20}}>
-              {categories.map(cat => (
-                <TouchableOpacity key={cat} style={[styles.filterChip, filterCategory === cat && styles.filterChipActive]} onPress={() => setFilterCategory(cat)}>
-                  <Text style={[styles.filterChipText, filterCategory === cat && styles.filterChipTextActive]}>{cat}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.filterSectionTitle}>Gender</Text>
-            <View style={{flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20}}>
-              {['All', ...["Male","Female","Other","Any"]].map(g => (
-                <TouchableOpacity key={g} style={[styles.filterChip, filterGender === g && styles.filterChipActive]} onPress={() => setFilterGender(g)}>
-                  <Text style={[styles.filterChipText, filterGender === g && styles.filterChipTextActive]}>{g}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.filterSectionTitle}>Project Type</Text>
-            <View style={{flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20}}>
-              {['All', ...["Audition","Casting call","Photo shoot","Shoot","Freelance project/assignment"]].map(pt => (
-                <TouchableOpacity key={pt} style={[styles.filterChip, filterProjectType === pt && styles.filterChipActive]} onPress={() => setFilterProjectType(pt)}>
-                  <Text style={[styles.filterChipText, filterProjectType === pt && styles.filterChipTextActive]}>{pt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.filterSectionTitle}>City</Text>
-            <View style={{flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20}}>
-              {['All', ...["Mumbai","Delhi NCR","Bangalore","Hyderabad","Chennai","Kolkata","Pune","Ahmedabad","Chandigarh","Other"]].map(c => (
-                <TouchableOpacity key={c} style={[styles.filterChip, filterCity === c && styles.filterChipActive]} onPress={() => setFilterCity(c)}>
-                  <Text style={[styles.filterChipText, filterCity === c && styles.filterChipTextActive]}>{c}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={{ height: 40 }} />
-          </ScrollView>
-            <View style={{padding: spacing.xl, paddingBottom: 40, borderTopWidth: 1, borderColor: colors.borderLight, flexDirection: 'row', justifyContent: 'space-between'}}>
-              <CustomButton title="Clear All" variant="outline" onPress={() => { setFilterCategory('All'); setFilterGender('All'); setFilterProjectType('All'); setFilterCity('All'); setFilterAuditionType('All'); }} style={{flex: 1, marginRight: 10}} />
-              <CustomButton title="Apply Filters" variant="primary" onPress={() => setShowFilterModal(false)} style={{flex: 1}} />
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <SidebarFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={(newFilters) => setFilters(newFilters)}
+        filterConfig={filterConfig}
+        initialFilters={filters}
+        defaultFilters={{ category: 'All', gender: 'All', projectType: 'All', city: 'All', auditionType: 'All' }}
+      />
       </View>
 
 

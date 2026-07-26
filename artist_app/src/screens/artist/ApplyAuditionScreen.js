@@ -19,13 +19,14 @@ export default function ApplyAuditionScreen() {
   const { auditionId } = route.params;
 
   const [coverNote, setCoverNote] = useState('');
+  const [videoLink, setVideoLink] = useState('');
   
   const { data: profile, isLoading: isProfileLoading , isFetching, refetch} = useGetProfileQuery()
   const [applyToAudition, { isLoading: isApplying }] = useApplyToAuditionMutation();
 
   const handleApply = async () => {
     try {
-      await applyToAudition({ id: auditionId, cover_note: coverNote }).unwrap();
+      await applyToAudition({ id: auditionId, cover_note: coverNote, selected_video: videoLink }).unwrap();
       showSuccess('', 'Application submitted successfully!');
       setTimeout(() => {
         navigation.navigate('MainTabs', { screen: 'Tabs', params: { screen: 'Applications' } });
@@ -94,11 +95,16 @@ export default function ApplyAuditionScreen() {
           textAlignVertical="top"
         />
 
-        {/* Video selector placeholder */}
-        <View style={styles.videoSection}>
-          <Icon name="videocam-outline" size={24} color={colors.textMutedLight} />
-          <Text style={styles.videoText}>Attach audition video (Coming soon)</Text>
-        </View>
+        <Text style={[styles.label, { marginTop: spacing.l }]}>Audition Video Link (Optional)</Text>
+        <TextInput
+          style={[styles.input, { borderColor: colors.borderLight, color: colors.textMainLight }]}
+          placeholder="e.g. YouTube or Instagram URL"
+          placeholderTextColor={colors.textMutedLight}
+          value={videoLink}
+          onChangeText={setVideoLink}
+          autoCapitalize="none"
+          keyboardType="url"
+        />
 
         <CustomButton 
           title="Submit Application" 
@@ -157,8 +163,13 @@ const getStyles = (colors) => StyleSheet.create({
     ...typography.body,
     color: colors.textMainLight,
     minHeight: 120,
+    borderRadius: 8,
+  },
+  input: {
+    ...typography.body,
+    padding: spacing.m,
     borderWidth: 1,
-    borderColor: colors.textMutedLight + '30',
+    borderRadius: 8,
   },
   videoSection: {
     flexDirection: 'row',

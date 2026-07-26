@@ -8,7 +8,7 @@ import { ArrowLeft, User, Filter, X } from 'lucide-react-native';
 
 import { colors, typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
-import CustomDropdown from '../../components/forms/CustomDropdown';
+import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useSearchArtistsQuery } from '../../services/discoveryApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
 
@@ -25,17 +25,25 @@ export default function FindTalentScreen() {
   const dynamicCategories = (professionsResponse?.data || []).map(p => capitalize(p.name));
   const CATEGORIES = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Singer', 'Dancer', 'Technician', 'Writer', 'Director'])];
 
-  // Filters State
-  const [filterCategories, setFilterCategories] = useState([]);
-  const [filterGender, setFilterGender] = useState('All');
-  const [filterMinAge, setFilterMinAge] = useState('');
-  const [filterMaxAge, setFilterMaxAge] = useState('');
-  const [filterLocation, setFilterLocation] = useState('');
-
   // Active Search Params State (applied on submit)
   const [searchParams, setSearchParams] = useState({});
+  
+  // Format searchParams for API
+  const apiParams = useMemo(() => {
+    const params = { ...searchParams };
+    
+    if (params.category === 'All' || (Array.isArray(params.category) && params.category.includes('All'))) delete params.category;
+    else if (Array.isArray(params.category)) params.category = params.category.join(',');
+    
+    if (params.gender === 'All' || (Array.isArray(params.gender) && params.gender.includes('All'))) delete params.gender;
+    else if (Array.isArray(params.gender)) params.gender = params.gender.join(',');
+    
+    if (params.location === 'All Locations') delete params.location;
+    if (params.language === 'All Languages') delete params.language;
+    return params;
+  }, [searchParams]);
 
-  const { data: searchResponse, isFetching, refetch } = useSearchArtistsQuery(searchParams);
+  const { data: searchResponse, isFetching, refetch } = useSearchArtistsQuery(apiParams);
   const artists = searchResponse?.data || [];
 
   const { data: allArtistsResponse } = useSearchArtistsQuery({});
@@ -45,37 +53,28 @@ export default function FindTalentScreen() {
     const unique = [...new Set(locs)].sort();
     return [{ label: 'All Locations', value: '' }, ...unique.map(l => ({ label: l, value: l }))];
   }, [allArtistsResponse]);
+  
+  const LANGUAGES = [
+    'All Languages', 'English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 
+    'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati'
+  ];
 
-  const handleApplyFilters = () => {
-    const params = {};
-    if (filterCategories.length > 0) params.category = filterCategories.join(',');
-    if (filterGender !== 'All') params.gender = filterGender;
-    if (filterMinAge) params.minAge = filterMinAge;
-    if (filterMaxAge) params.maxAge = filterMaxAge;
-    if (filterLocation) params.location = filterLocation;
-    
-    setSearchParams(params);
-    setShowFilterModal(false);
-  };
-
-  const handleClearFilters = () => {
-    setFilterCategories([]);
-    setFilterGender('All');
-    setFilterMinAge('');
-    setFilterMaxAge('');
-    setFilterLocation('');
-    setSearchParams({});
-    setShowFilterModal(false);
-  };
+  const filterConfig = [
+    { key: 'category', label: 'Profession', type: 'select', options: CATEGORIES, multiSelect: true },
+    { key: 'gender', label: 'Gender', type: 'select', options: ['All', 'Male', 'Female', 'Non-Binary', 'Other'], multiSelect: true },
+    { key: 'age', label: 'Age Range', type: 'range', minKey: 'minAge', maxKey: 'maxAge' },
+    { key: 'location', label: 'Location', type: 'select', options: dynamicLocations.map(l => l.label) },
+    { key: 'language', label: 'Language', type: 'select', options: LANGUAGES }
+  ];
 
   const renderTalentCard = ({ item }) => {
-    const mainImage = (item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : item.avatar_url;
+    const mainImage = item.avatar_url || ((item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : null);
     
     return (
       <TouchableOpacity 
         style={styles.premiumCard}
         activeOpacity={0.9}
-        onPress={() => navigation.navigate('PublicProfile', { username: item.user_id })}
+        onPress={() => navigation.navigate('ArtistProfileScreen', { id: item.id })}
       >
         {mainImage ? (
           <Image source={{ uri: mainImage }} style={styles.cardCoverImage} resizeMode="cover" />
@@ -150,96 +149,14 @@ export default function FindTalentScreen() {
         />
       )}
 
-      <Modal visible={showFilterModal} animationType="slide" transparent={true} onRequestClose={() => setShowFilterModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { marginTop: 'auto', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, maxHeight: '80%', paddingBottom: Math.max(insets.bottom, 24) }]}>
-            <View style={styles.modalHeader}>
-              <Typography variant="h2" style={styles.modalTitle}>Filters</Typography>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <X size={24} color={colors.textMainLight} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView contentContainerStyle={styles.modalBody} showsVerticalScrollIndicator={false}>
-              <Typography variant="h4" style={styles.filterSectionTitle}>Profession</Typography>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.m }}>
-                <View style={[styles.chipContainer, { flexDirection: 'column', height: 160, alignContent: 'flex-start', flexWrap: 'wrap' }]}>
-                  {CATEGORIES.map(cat => {
-                    const isActive = cat === 'All' ? filterCategories.length === 0 : filterCategories.includes(cat);
-                    return (
-                      <TouchableOpacity
-                        key={cat}
-                        style={[styles.filterChip, isActive && styles.filterChipActive, { marginRight: 8 }]}
-                        onPress={() => {
-                          if (cat === 'All') {
-                            setFilterCategories([]);
-                          } else {
-                            setFilterCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
-                          }
-                        }}
-                      >
-                        <Typography variant="body" style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{cat}</Typography>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-
-              <Typography variant="h4" style={styles.filterSectionTitle}>Gender</Typography>
-              <View style={styles.chipContainer}>
-                {['All', 'Male', 'Female', 'Non-Binary', 'Other'].map(g => (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.filterChip, filterGender === g && styles.filterChipActive]}
-                    onPress={() => setFilterGender(g)}
-                  >
-                    <Typography variant="body" style={[styles.filterChipText, filterGender === g && styles.filterChipTextActive]}>{g}</Typography>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Typography variant="h4" style={styles.filterSectionTitle}>Age Range</Typography>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.m }}>
-                <TextInput
-                  style={styles.ageInput}
-                  placeholder="Min Age"
-                  keyboardType="number-pad"
-                  value={filterMinAge}
-                  onChangeText={setFilterMinAge}
-                  placeholderTextColor={colors.textMutedLight}
-                />
-                <Typography variant="body" style={{ marginHorizontal: spacing.s, color: colors.textMutedLight }}>-</Typography>
-                <TextInput
-                  style={styles.ageInput}
-                  placeholder="Max Age"
-                  keyboardType="number-pad"
-                  value={filterMaxAge}
-                  onChangeText={setFilterMaxAge}
-                  placeholderTextColor={colors.textMutedLight}
-                />
-              </View>
-
-              <Typography variant="h4" style={styles.filterSectionTitle}>Location / City</Typography>
-              <CustomDropdown
-                options={dynamicLocations}
-                selectedValue={filterLocation}
-                onSelect={(val) => setFilterLocation(val)}
-                placeholder="Select city"
-                searchable={true}
-              />
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.clearBtn} onPress={handleClearFilters}>
-                <Typography variant="body" style={styles.clearBtnText}>Clear All</Typography>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyBtn} onPress={handleApplyFilters}>
-                <Typography variant="body" style={styles.applyBtnText}>Apply Filters</Typography>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <SidebarFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={(filters) => setSearchParams(filters)}
+        filterConfig={filterConfig}
+        initialFilters={searchParams}
+        defaultFilters={{ category: 'All', gender: 'All', location: 'All Locations', language: 'All Languages' }}
+      />
 
     </SafeAreaView>
   );

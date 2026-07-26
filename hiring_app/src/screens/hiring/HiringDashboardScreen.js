@@ -1,13 +1,17 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Image, FlatList, StatusBar } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Image, FlatList, StatusBar, Modal } from 'react-native';
 import { ShieldCheck, Clock, AlertCircle, Video, Star, Users, PlusCircle, Bell, Search, MessageCircle, MapPin, ChevronRight, Briefcase, TrendingUp, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { colors, typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
-import { useGetDashboardDataQuery, useGetNotificationsQuery } from '../../services/hiringApi';
+import { useGetDashboardDataQuery, useGetNotificationsQuery, useGetCompanyProfileQuery } from '../../services/hiringApi';
+import { useAcceptDisclaimerMutation } from '../../services/authApi';
+import { logout } from '../../store/slices/authSlice';
+import { useDispatch } from 'react-redux';
 import AnimatedBorderCard from '../../components/AnimatedBorderCard';
 import { getAuditionLiveStatus } from '../../utils/dateUtils';
 
@@ -26,18 +30,23 @@ const timeAgo = (dateStr) => {
   if (interval > 1) return Math.floor(interval) + " hours ago";
   interval = seconds / 60;
   if (interval > 1) return Math.floor(interval) + " minutes ago";
-  return "just now";
+  return Math.floor(seconds) + " seconds ago";
 };
 
 export default function HiringDashboardScreen({ navigation }) {
+  const { user, token } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const [acceptDisclaimer, { isLoading: isAccepting }] = useAcceptDisclaimerMutation();
   const { data: dashboardResponse, isLoading, isFetching, refetch: refetchDashboard } = useGetDashboardDataQuery();
   const { refetch: refetchNotifications } = useGetNotificationsQuery();
+  const { refetch: refetchProfile } = useGetCompanyProfileQuery(user?.id, { skip: !user?.id });
 
   useFocusEffect(
     useCallback(() => {
       refetchDashboard();
       refetchNotifications();
-    }, [refetchDashboard, refetchNotifications])
+      if (user?.id) refetchProfile();
+    }, [refetchDashboard, refetchNotifications, refetchProfile, user?.id])
   );
 
   const data = dashboardResponse?.data;
@@ -46,7 +55,8 @@ export default function HiringDashboardScreen({ navigation }) {
   const handleRefresh = useCallback(() => {
     refetchDashboard();
     refetchNotifications();
-  }, [refetchDashboard, refetchNotifications]);
+    if (user?.id) refetchProfile();
+  }, [refetchDashboard, refetchNotifications, refetchProfile, user?.id]);
 
   if (isLoading && !data) {
     return (
@@ -489,19 +499,54 @@ export default function HiringDashboardScreen({ navigation }) {
     );
   };
 
-  // Network & Followers and Platform News placeholders removed.
-
-
-
   return (
     <SafeAreaView style={[globalStyles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+      <Modal
+        visible={user && !user.disclaimer_accepted}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.disclaimerOverlay}>
+          <View style={styles.disclaimerContainer}>
+            <Text style={styles.disclaimerTitle}>Disclaimer</Text>
+            <Text style={styles.disclaimerText}>
+              We request all users to check the credentials of the artists and verify the same independently before deciding to work with them.
+            </Text>
+            <Text style={styles.disclaimerText}>
+              You should never transfer any money to anyone claiming to be representing FAMEU and demanding money.
+            </Text>
+            
+            <View style={styles.disclaimerActions}>
+              <TouchableOpacity 
+                style={[styles.disclaimerBtn, styles.disclaimerBtnDeny]} 
+                onPress={() => dispatch(logout())}
+              >
+                <Text style={styles.disclaimerBtnText}>Deny</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.disclaimerBtn, styles.disclaimerBtnAgree]} 
+                onPress={async () => {
+                  try {
+                    await acceptDisclaimer().unwrap();
+                    dispatch({ type: 'auth/setCredentials', payload: { user: { ...user, disclaimer_accepted: true }, token } });
+                  } catch (e) {
+                    console.error("Failed to accept disclaimer", e);
+                  }
+                }}
+                disabled={isAccepting}
+              >
+                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnText}>I Agree</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: spacing.m }]}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={handleRefresh} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
-
-
         {renderVerificationBanner()}
         {renderProfileCompleteness()}
         {renderQuickActions()}
@@ -513,7 +558,6 @@ export default function HiringDashboardScreen({ navigation }) {
         {renderUpcomingInterviews()}
         {renderDraftAuditions()}
         {renderCharts()}
-
 
         <View style={{ height: 60 }} />
       </ScrollView>
@@ -567,6 +611,61 @@ const styles = StyleSheet.create({
   auditionCardTitle: { flex: 1, color: colors.textMainLight, fontWeight: 'bold', marginRight: 12, fontSize: 16 },
   activeBadge: { backgroundColor: colors.success + '20', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
   activeBadgeText: { color: colors.success, fontSize: 12, fontWeight: 'bold' },
+  badgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  disclaimerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  disclaimerContainer: {
+    backgroundColor: colors.surface,
+    padding: spacing.xl,
+    borderRadius: 16,
+    width: '100%',
+    alignItems: 'center',
+  },
+  disclaimerTitle: {
+    ...typography.h2,
+    color: colors.error,
+    marginBottom: spacing.l,
+    fontWeight: 'bold',
+  },
+  disclaimerText: {
+    ...typography.body2,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.m,
+    lineHeight: 22,
+  },
+  disclaimerActions: {
+    flexDirection: 'row',
+    marginTop: spacing.xl,
+    gap: spacing.m,
+  },
+  disclaimerBtn: {
+    flex: 1,
+    paddingVertical: spacing.m,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  disclaimerBtnDeny: {
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  disclaimerBtnAgree: {
+    backgroundColor: colors.primary,
+  },
+  disclaimerBtnText: {
+    ...typography.button,
+    color: colors.white,
+  },
   auditionStatsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary + '10', padding: 12, borderRadius: 12 },
   auditionStatText: { color: colors.primary, marginLeft: 8, fontWeight: 'bold' },
   draftCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: spacing.m, borderRadius: 20, marginBottom: spacing.m, borderWidth: 2, borderColor: colors.borderLight, borderStyle: 'dashed' },

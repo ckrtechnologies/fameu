@@ -128,12 +128,6 @@ export const adminApi = apiSlice.injectEndpoints({
       invalidatesTags: ['FraudReport'],
     }),
 
-    // Payments
-    getPayments: builder.query({
-      query: () => '/admin_panel/payments',
-      providesTags: ['Payment'],
-    }),
-
     // CMS
     getCMS: builder.query({
       query: () => '/admin_panel/cms',
@@ -194,7 +188,6 @@ export const {
   useGetApplicationsQuery,
   useGetFraudReportsQuery,
   useResolveFraudReportMutation,
-  useGetPaymentsQuery,
   useGetCMSQuery,
   useUpdateCMSMutation,
   useGetNotificationHistoryQuery,

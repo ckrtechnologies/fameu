@@ -5,16 +5,14 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { ArrowLeft, User, Filter, X } from 'lucide-react-native';
+import { ArrowLeft, User, Filter, X, Briefcase } from 'lucide-react-native';
 
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
-import CustomDropdown from '../../components/forms/CustomDropdown';
-import { useSearchArtistsQuery } from '../../services/discoveryApi';
+import SidebarFilterModal from '../../components/SidebarFilterModal';
+import { useSearchArtistsQuery, useSearchHiringAgenciesQuery } from '../../services/discoveryApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
-
-
 
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
@@ -23,25 +21,40 @@ export default function ArtistDiscoveryScreen() {
   const styles = getStyles(colors);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  
+  const [activeTab, setActiveTab] = useState('Talents'); // 'Talents' | 'Agencies'
   const [showFilterModal, setShowFilterModal] = useState(false);
   const { data: professionsResponse } = useGetProfessionsQuery();
 
   const dynamicCategories = (professionsResponse?.data || []).map(p => capitalize(p.name));
   const CATEGORIES = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Singer', 'Dancer', 'Technician', 'Writer', 'Director'])];
 
-  // Filters State
-  const [filterCategories, setFilterCategories] = useState([]);
-  const [filterGender, setFilterGender] = useState('All');
-  const [filterMinAge, setFilterMinAge] = useState('');
-  const [filterMaxAge, setFilterMaxAge] = useState('');
-  const [filterLocation, setFilterLocation] = useState('');
-
   // Active Search Params State (applied on submit)
   const [searchParams, setSearchParams] = useState({});
 
   const currentUser = useSelector(state => state.auth.user);
-  const { data: searchResponse, isFetching, refetch } = useSearchArtistsQuery(searchParams);
+  
+  // Format searchParams for API
+  const apiParams = useMemo(() => {
+    const params = { ...searchParams };
+    if (params.category === 'All' || (Array.isArray(params.category) && params.category.includes('All'))) {
+       delete params.category;
+    } else if (Array.isArray(params.category)) {
+       params.category = params.category.join(',');
+    }
+
+    if (params.gender === 'All') delete params.gender;
+    if (params.location === 'All Locations') delete params.location;
+    if (params.company_type === 'All') delete params.company_type;
+    if (params.verification_status === 'All') delete params.verification_status;
+    return params;
+  }, [searchParams]);
+
+  const { data: searchResponse, isFetching: isFetchingArtists, refetch: refetchArtists } = useSearchArtistsQuery(apiParams, { skip: activeTab !== 'Talents' });
   const artists = (searchResponse?.data || []).filter(artist => artist.user_id !== currentUser?.id);
+
+  const { data: agencyResponse, isFetching: isFetchingAgencies, refetch: refetchAgencies } = useSearchHiringAgenciesQuery(apiParams, { skip: activeTab !== 'Agencies' });
+  const agencies = agencyResponse?.data || [];
 
   const { data: allArtistsResponse } = useSearchArtistsQuery({});
   const dynamicLocations = useMemo(() => {
@@ -51,30 +64,18 @@ export default function ArtistDiscoveryScreen() {
     return [{ label: 'All Locations', value: '' }, ...unique.map(l => ({ label: l, value: l }))];
   }, [allArtistsResponse]);
 
-  const handleApplyFilters = () => {
-    const params = {};
-    if (filterCategories.length > 0) params.category = filterCategories.join(',');
-    if (filterGender !== 'All') params.gender = filterGender;
-    if (filterMinAge) params.minAge = filterMinAge;
-    if (filterMaxAge) params.maxAge = filterMaxAge;
-    if (filterLocation) params.location = filterLocation;
-    
-    setSearchParams(params);
-    setShowFilterModal(false);
-  };
-
-  const handleClearFilters = () => {
-    setFilterCategories([]);
-    setFilterGender('All');
-    setFilterMinAge('');
-    setFilterMaxAge('');
-    setFilterLocation('');
-    setSearchParams({});
-    setShowFilterModal(false);
-  };
+  const filterConfig = activeTab === 'Talents' ? [
+    { key: 'category', label: 'Profession', type: 'select', options: CATEGORIES, multiSelect: true },
+    { key: 'gender', label: 'Gender', type: 'select', options: ['All', 'Male', 'Female', 'Non-Binary', 'Other'] },
+    { key: 'age', label: 'Age Range', type: 'range', minKey: 'minAge', maxKey: 'maxAge' },
+    { key: 'location', label: 'Location', type: 'select', options: dynamicLocations.map(l => l.label) }
+  ] : [
+    { key: 'company_type', label: 'Agency Type', type: 'select', options: ['All', 'Production House', 'Casting Agency', 'Ad Agency', 'Event Management', 'Record Label', 'Other'] },
+    { key: 'verification_status', label: 'Verification', type: 'select', options: ['All', 'Verified Only'] }
+  ];
 
   const renderTalentCard = ({ item }) => {
-    const mainImage = (item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : item.avatar_url;
+    const mainImage = item.avatar_url || ((item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : null);
     
     return (
       <TouchableOpacity 
@@ -111,6 +112,40 @@ export default function ArtistDiscoveryScreen() {
     );
   };
 
+  const renderAgencyCard = ({ item }) => {
+    const mainImage = item.logo_url || null;
+    return (
+      <TouchableOpacity 
+        style={styles.agencyCard}
+        activeOpacity={0.9}
+        onPress={() => navigation.navigate('PublicProfile', { username: item.user_id })}
+      >
+        <View style={styles.agencyCardHeader}>
+          {mainImage ? (
+            <Image source={{ uri: mainImage }} style={styles.agencyAvatar} />
+          ) : (
+            <View style={[styles.agencyAvatar, { backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }]}>
+              <Briefcase size={24} color={colors.textMutedLight} />
+            </View>
+          )}
+          <View style={styles.agencyInfo}>
+            <Typography variant="h4" style={{ color: colors.textMainLight, fontWeight: 'bold' }}>{item.company_name}</Typography>
+            <Typography variant="body2" style={{ color: colors.textMutedLight }}>{item.city || 'No Location'}</Typography>
+          </View>
+        </View>
+        {item.description && (
+          <Typography variant="body2" numberOfLines={2} style={styles.agencyDesc}>
+            {item.description}
+          </Typography>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const isFetching = activeTab === 'Talents' ? isFetchingArtists : isFetchingAgencies;
+  const listData = activeTab === 'Talents' ? artists : agencies;
+  const refetch = activeTab === 'Talents' ? refetchArtists : refetchAgencies;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -123,30 +158,46 @@ export default function ArtistDiscoveryScreen() {
           activeOpacity={0.8}
         >
           <Icon name="search-outline" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
-          <Typography variant="body" style={styles.searchPlaceholder}>Search username/handle...</Typography>
+          <Typography variant="body" style={styles.searchPlaceholder}>Search {activeTab.toLowerCase()}...</Typography>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.filterButton}>
           <Filter size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      {isFetching && !artists.length ? (
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity 
+          style={[styles.tabButton, activeTab === 'Talents' && styles.tabButtonActive]}
+          onPress={() => setActiveTab('Talents')}
+        >
+          <Typography variant="h4" style={[styles.tabText, activeTab === 'Talents' && styles.tabTextActive]}>Talents</Typography>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tabButton, activeTab === 'Agencies' && styles.tabButtonActive]}
+          onPress={() => setActiveTab('Agencies')}
+        >
+          <Typography variant="h4" style={[styles.tabText, activeTab === 'Agencies' && styles.tabTextActive]}>Hiring Agencies</Typography>
+        </TouchableOpacity>
+      </View>
+
+      {isFetching && !listData.length ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
-          data={artists}
+          data={listData}
           keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
+          numColumns={activeTab === 'Talents' ? 2 : 1}
+          key={activeTab} // Force re-render on tab change for numColumns
+          columnWrapperStyle={activeTab === 'Talents' ? styles.row : undefined}
           refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />}
-          renderItem={renderTalentCard}
+          renderItem={activeTab === 'Talents' ? renderTalentCard : renderAgencyCard}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.centerContainer}>
               <User size={64} color={colors.borderLight} />
-              <Typography variant="h4" style={styles.emptyText}>No talents found</Typography>
+              <Typography variant="h4" style={styles.emptyText}>No {activeTab.toLowerCase()} found</Typography>
               <Typography variant="body" style={{ color: colors.textMutedLight, marginTop: 8 }}>
                 Try adjusting your filters
               </Typography>
@@ -155,97 +206,14 @@ export default function ArtistDiscoveryScreen() {
         />
       )}
 
-      <Modal visible={showFilterModal} animationType="slide" transparent={true} onRequestClose={() => setShowFilterModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { marginTop: 'auto', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, maxHeight: '80%', paddingBottom: Math.max(insets.bottom, 24) }]}>
-            <View style={styles.modalHeader}>
-              <Typography variant="h2" style={styles.modalTitle}>Filters</Typography>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <X size={24} color={colors.textMainLight} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView contentContainerStyle={styles.modalBody} showsVerticalScrollIndicator={false}>
-              <Typography variant="h4" style={styles.filterSectionTitle}>Profession</Typography>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.m }}>
-                <View style={[styles.chipContainer, { flexDirection: 'column', height: 160, alignContent: 'flex-start', flexWrap: 'wrap' }]}>
-                  {CATEGORIES.map(cat => {
-                    const isActive = cat === 'All' ? filterCategories.length === 0 : filterCategories.includes(cat);
-                    return (
-                      <TouchableOpacity
-                        key={cat}
-                        style={[styles.filterChip, isActive && styles.filterChipActive, { marginRight: 8 }]}
-                        onPress={() => {
-                          if (cat === 'All') {
-                            setFilterCategories([]);
-                          } else {
-                            setFilterCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
-                          }
-                        }}
-                      >
-                        <Typography variant="body" style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{cat}</Typography>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-
-              <Typography variant="h4" style={styles.filterSectionTitle}>Gender</Typography>
-              <View style={styles.chipContainer}>
-                {['All', 'Male', 'Female', 'Non-Binary', 'Other'].map(g => (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.filterChip, filterGender === g && styles.filterChipActive]}
-                    onPress={() => setFilterGender(g)}
-                  >
-                    <Typography variant="body" style={[styles.filterChipText, filterGender === g && styles.filterChipTextActive]}>{g}</Typography>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Typography variant="h4" style={styles.filterSectionTitle}>Age Range</Typography>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.m }}>
-                <TextInput
-                  style={styles.ageInput}
-                  placeholder="Min Age"
-                  keyboardType="number-pad"
-                  value={filterMinAge}
-                  onChangeText={setFilterMinAge}
-                  placeholderTextColor={colors.textMutedLight}
-                />
-                <Typography variant="body" style={{ marginHorizontal: spacing.s, color: colors.textMutedLight }}>-</Typography>
-                <TextInput
-                  style={styles.ageInput}
-                  placeholder="Max Age"
-                  keyboardType="number-pad"
-                  value={filterMaxAge}
-                  onChangeText={setFilterMaxAge}
-                  placeholderTextColor={colors.textMutedLight}
-                />
-              </View>
-
-              <Typography variant="h4" style={styles.filterSectionTitle}>Location / City</Typography>
-              <CustomDropdown
-                options={dynamicLocations}
-                selectedValue={filterLocation}
-                onSelect={(val) => setFilterLocation(val)}
-                placeholder="Select city"
-                searchable={true}
-              />
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.clearBtn} onPress={handleClearFilters}>
-                <Typography variant="body" style={styles.clearBtnText}>Clear All</Typography>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyBtn} onPress={handleApplyFilters}>
-                <Typography variant="body" style={styles.applyBtnText}>Apply Filters</Typography>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
+      <SidebarFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={(filters) => setSearchParams(filters)}
+        filterConfig={filterConfig}
+        initialFilters={searchParams}
+        defaultFilters={{ category: 'All', gender: 'All', location: 'All Locations' }}
+      />
     </SafeAreaView>
   );
 }
@@ -277,6 +245,11 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMutedLight,
   },
   filterButton: { padding: spacing.xs },
+  tabsContainer: { flexDirection: 'row', paddingHorizontal: spacing.m, borderBottomWidth: 1, borderBottomColor: colors.borderLight, backgroundColor: '#fff' },
+  tabButton: { flex: 1, paddingVertical: spacing.m, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabButtonActive: { borderBottomColor: colors.primary },
+  tabText: { color: colors.textMutedLight },
+  tabTextActive: { color: colors.primary, fontWeight: 'bold' },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   listContainer: {
     padding: spacing.s,
@@ -320,6 +293,21 @@ const getStyles = (colors) => StyleSheet.create({
   chip: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, marginRight: 6, marginBottom: 6 },
   chipText: { color: '#fff', fontSize: 11 },
   emptyText: { color: colors.textMainLight, marginTop: spacing.m },
+  
+  agencyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: spacing.m,
+    marginBottom: spacing.m,
+    marginHorizontal: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+  },
+  agencyCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.s },
+  agencyAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: spacing.m },
+  agencyInfo: { flex: 1 },
+  agencyDesc: { color: colors.textMainLight, marginTop: spacing.xs, lineHeight: 20 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: colors.surfaceLight, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.l, maxHeight: '90%' },
