@@ -8,19 +8,25 @@ import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useLazySearchUsersQuery } from '../../services/connectionsApi';
 
-export default function SearchScreen() {
-  const { colors } = useTheme();
-  const styles = getStyles(colors);
-  const navigation = useNavigation();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [triggerSearch, { data: searchResults, isFetching, error }] = useLazySearchUsersQuery();
-
-  const handleSearch = (text) => {
-    setSearchQuery(text);
-    if (text.length >= 2) {
-      triggerSearch(text);
-    }
-  };
+  import { useEffect } from 'react';
+  
+  export default function SearchScreen() {
+    const { colors } = useTheme();
+    const styles = getStyles(colors);
+    const navigation = useNavigation();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [triggerSearch, { data: searchResults, isFetching, error }] = useLazySearchUsersQuery();
+  
+    useEffect(() => {
+      triggerSearch('');
+    }, []);
+  
+    const handleSearch = (text) => {
+      setSearchQuery(text);
+      if (text.length !== 1) {
+        triggerSearch(text);
+      }
+    };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 
@@ -76,22 +82,15 @@ export default function SearchScreen() {
         </View>
       ) : (
         <FlatList
-          data={searchQuery.length >= 2 ? (searchResults?.data || []) : []}
+          data={searchResults?.data || []}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={() => triggerSearch(searchQuery)} tintColor={colors.primary} />}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
-            searchQuery.length >= 2 ? (
-              <View style={styles.centerContainer}>
-                <Typography variant="body" style={styles.emptyText}>No users found</Typography>
-              </View>
-            ) : (
-              <View style={styles.centerContainer}>
-                <SearchOutline size={64} color={colors.borderLight} />
-                <Typography variant="h4" style={styles.promptText}>Search for artists and recruiters</Typography>
-              </View>
-            )
+            <View style={styles.centerContainer}>
+              <Typography variant="body" style={styles.emptyText}>No users found</Typography>
+            </View>
           }
         />
       )}

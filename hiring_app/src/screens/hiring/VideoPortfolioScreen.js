@@ -4,12 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Play, X, Volume2, VolumeX } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Video from 'react-native-video';
-import { colors, typography, spacing } from '../../theme/theme';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const { width, height } = Dimensions.get('window');
 
 export default function VideoPortfolioScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   const videos = route.params?.videos || [];
@@ -86,7 +89,7 @@ export default function VideoPortfolioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

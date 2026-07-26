@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text, TextInput, ActivityIndicator } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
@@ -10,6 +11,7 @@ import CustomButton from '../../components/forms/CustomButton';
 
 export default function ContactUsScreen() {
   const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -41,7 +43,13 @@ export default function ContactUsScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.xl }}>
+      <KeyboardAwareScrollView 
+        style={styles.container} 
+        contentContainerStyle={{ padding: spacing.xl }}
+        enableOnAndroid={true}
+        extraScrollHeight={100}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={[styles.subtitle, { color: colors.text }]}>
           Need help? Have a question about your account or posting an audition? Send us a message and we'll be in touch!
         </Text>
@@ -76,12 +84,12 @@ export default function ContactUsScreen() {
           loading={isSubmitting} 
           style={{ marginTop: spacing.l }} 
         />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
   },

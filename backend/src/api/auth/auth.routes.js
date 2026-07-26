@@ -13,6 +13,7 @@ router.post('/social-login', authController.socialLogin);
 router.post('/set-role', authMiddleware, authController.setRole);
 router.patch('/accept-disclaimer', authMiddleware, authController.acceptDisclaimer);
 router.post('/report-user', authMiddleware, authController.reportUser);
+router.post('/change-password', authMiddleware, authController.changePassword);
 router.delete('/delete-account', authMiddleware, authController.deleteAccount);
 
 export default router;

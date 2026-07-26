@@ -18,6 +18,7 @@ class HiringService {
       company_type: profileData.company_type,
       description: profileData.description,
       social_links: profileData.social_links,
+      alternate_contact: profileData.alternate_contact,
       updated_at: new Date().toISOString()
     };
 

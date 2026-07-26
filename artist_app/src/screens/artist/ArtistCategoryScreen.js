@@ -232,7 +232,7 @@ const getStyles = (colors) => StyleSheet.create({
     borderWidth: 2,
   },
   cardSelected: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.surfaceDark || (colors.primary + '10'),
   },
   iconContainer: {
     width: 64,
@@ -271,7 +271,7 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: 'center',
   },
   continueButtonDisabled: {
-    backgroundColor: colors.borderLight,
+    opacity: 0.5,
   },
   continueButtonText: {
     ...typography.h3,

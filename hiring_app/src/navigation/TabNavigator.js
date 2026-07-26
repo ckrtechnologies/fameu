@@ -13,12 +13,14 @@ import MyAuditionsScreen from '../screens/hiring/MyAuditionsScreen';
 import InboxScreen from '../screens/hiring/InboxScreen';
 import AllApplicantsScreen from '../screens/hiring/AllApplicantsScreen';
 
-import { colors, typography, spacing } from '../theme/theme';
+import { typography, spacing } from '../theme/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../theme/ThemeProvider';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const totalUnreadCount = useSelector((state) => state.chat.totalUnreadCount);
   const { user } = useSelector((state) => state.auth);
@@ -55,8 +57,8 @@ export default function TabNavigator() {
             shadowOpacity: 0.05,
             shadowRadius: 12,
             elevation: 5,
-            borderBottomLeftRadius: 24,
-            borderBottomRightRadius: 24,
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
             zIndex: 10,
           }}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
@@ -116,7 +118,7 @@ export default function TabNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMutedLight,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.surfaceLight,
           borderTopColor: colors.borderLight,
           borderTopWidth: 1,
           height: 60 + insets.bottom,
@@ -149,7 +151,7 @@ export default function TabNavigator() {
         name="Inbox"
         component={InboxScreen}
         options={{
-          tabBarLabel: 'Inbox',
+          tabBarLabel: 'Messages',
           tabBarBadge: totalUnreadCount > 0 ? totalUnreadCount : undefined,
           tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.white }
         }}

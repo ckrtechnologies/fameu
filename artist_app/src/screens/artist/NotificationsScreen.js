@@ -14,12 +14,14 @@ import {
   useMarkNotificationReadMutation, 
   useMarkAllNotificationsReadMutation 
 } from '../../services/notificationsApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
 export default function NotificationsScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
   const { data: response, isLoading, isFetching, refetch } = useGetNotificationsQuery();
+  useRefetchOnFocus(refetch);
   const [markRead] = useMarkNotificationReadMutation();
   const [markAllRead] = useMarkAllNotificationsReadMutation();
 
@@ -98,7 +100,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <SafeAreaView style={globalStyles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundLight }} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ArrowLeft size={24} color={colors.textMainLight} />

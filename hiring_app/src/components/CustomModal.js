@@ -1,8 +1,11 @@
 import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback } from 'react-native';
-import { colors, typography, spacing } from '../theme/theme';
+import { typography, spacing } from '../theme/theme';
+import { useTheme } from '../theme/ThemeProvider';
 
 const CustomModal = ({ visible, onClose, title, children }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Modal
       transparent
@@ -24,7 +27,7 @@ const CustomModal = ({ visible, onClose, title, children }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

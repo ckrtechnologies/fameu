@@ -55,7 +55,7 @@ export default function AuditionDetailScreen() {
   }
 
   const handleApply = () => {
-    navigation.navigate('ApplyAudition', { auditionId: id });
+    navigation.navigate('ApplyAudition', { auditionId: id, mode: audition.mode || parsedInstructions.mode || 'Offline' });
   };
 
   const handleBookmark = async () => {
@@ -67,7 +67,7 @@ export default function AuditionDetailScreen() {
   };
 
   const isWalkin = audition.audition_type === 'walkin';
-  const heroImage = audition.thumbnail_url || parsedInstructions.thumbnail_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop';
+  const heroImage = audition.thumbnail_url || parsedInstructions.thumbnail_url || audition.hiring_profiles?.logo_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop';
 
   return (
     <View style={styles.safeArea}>
@@ -104,6 +104,11 @@ export default function AuditionDetailScreen() {
                   <Text style={[styles.tagText, { color: colors.secondary }]}>{audition.project_type}</Text>
                 </View>
               )}
+              {(audition.mode || parsedInstructions.mode) && (
+                <View style={[styles.tag, { backgroundColor: colors.primary + '20' }]}>
+                  <Text style={[styles.tagText, { color: colors.primary }]}>{audition.mode || parsedInstructions.mode}</Text>
+                </View>
+              )}
             </View>
             
             <Text style={styles.title}>{audition.title}</Text>
@@ -120,7 +125,7 @@ export default function AuditionDetailScreen() {
               >
                 {audition.hiring_profiles?.logo_url ? (
                   <ImageBackground 
-                    source={{ uri: audition.hiring_profiles.logo_url }}
+                    source={{ uri: audition.hiring_profiles?.logo_url }}
                     style={styles.companyLogo}
                     imageStyle={{ borderRadius: 16 }}
                   />

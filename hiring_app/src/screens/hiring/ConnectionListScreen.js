@@ -3,11 +3,14 @@ import { View, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, User, Users } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../theme/theme';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetFollowersQuery, useGetFollowingQuery } from '../../services/connectionsApi';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export default function ConnectionListScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   
@@ -88,7 +91,7 @@ export default function ConnectionListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

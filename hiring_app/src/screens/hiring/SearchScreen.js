@@ -3,11 +3,14 @@ import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, Activit
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Search, XCircle, User, Search as SearchOutline } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../theme/theme';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useLazySearchUsersQuery } from '../../services/connectionsApi';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export default function SearchScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [triggerSearch, { data: searchResults, isFetching, error }] = useLazySearchUsersQuery();
@@ -96,7 +99,7 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

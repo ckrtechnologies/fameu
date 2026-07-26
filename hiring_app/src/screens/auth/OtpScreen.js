@@ -7,12 +7,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Typography from '../../components/core/Typography';
 import CustomButton from '../../components/forms/CustomButton';
 import CustomOtpInput from '../../components/forms/CustomOtpInput';
-import { spacing, colors } from '../../theme/theme';
+import { spacing } from '../../theme/theme';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../store/slices/authSlice';
 import { useVerifyOtpMutation } from '../../services/authApi';
 import { Alert, ActivityIndicator } from 'react-native';
+import { useTheme } from '../../theme/ThemeProvider';
 const OtpScreen = ({ route, navigation }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const autoFillOtp = route?.params?.autoFillOtp || '';
   const identifier = route?.params?.identifier || '';
   const [otpCode, setOtpCode] = React.useState(autoFillOtp);
@@ -94,7 +97,7 @@ const OtpScreen = ({ route, navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -117,7 +120,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surfaceLight,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',

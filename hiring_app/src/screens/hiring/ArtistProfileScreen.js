@@ -1,13 +1,14 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl, TextInput, Share } from 'react-native';
+import { View, Animated, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl, TextInput, Share } from 'react-native';
 import Video from 'react-native-video';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { width } = Dimensions.get('window');
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
 import CommentsSection from '../../components/CommentsSection';
 import { useGetArtistDetailsQuery, useInviteArtistMutation, useReportArtistMutation } from '../../services/discoveryApi';
 import { useStartConversationMutation } from '../../services/chatApi';
@@ -18,6 +19,8 @@ import SkeletonLoader from '../../components/SkeletonLoader';
 export default function ArtistProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const insets = useSafeAreaInsets();
   
   const { id } = route.params;
@@ -31,6 +34,8 @@ export default function ArtistProfileScreen() {
 
   const [isInviteModalVisible, setIsInviteModalVisible] = useState(false);
   const [selectedAuditionId, setSelectedAuditionId] = useState('');
+  const [auditionSearchText, setAuditionSearchText] = useState('');
+  const [invitationMessage, setInvitationMessage] = useState('');
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState('');
 
@@ -39,6 +44,32 @@ export default function ArtistProfileScreen() {
   const [reportArtist, { isLoading: isReporting }] = useReportArtistMutation();
   const { data: dashboardData } = useGetDashboardDataQuery();
   const myAuditions = dashboardData?.data?.activeAuditions || [];
+
+  
+  const parseArray = (str) => {
+    if (!str) return [];
+    if (typeof str === 'string') {
+      try { return JSON.parse(str); } catch(e) { return str.split(',').filter(Boolean); }
+    }
+    if (Array.isArray(str)) return str;
+    return [];
+  };
+
+  const getVideoInfo = (url) => {
+    if (!url) return null;
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return { type: 'youtube', thumbnail: `https://img.youtube.com/vi/${url.split('v=')[1]?.split('&')[0] || url.split('youtu.be/')[1]?.split('?')[0]}/0.jpg` };
+    if (url.includes('vimeo.com')) return { type: 'vimeo' };
+    return { type: 'other' };
+  };
+
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(20)).current;
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true })
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   const artist = response?.data;
   const user = artist?.users;
@@ -76,21 +107,20 @@ export default function ArtistProfileScreen() {
       return;
     }
     GlobalAlert.show("Contact Artist", `Would you like to invite ${artist.full_name} to an audition or send a message?`, [
-      { text: "Cancel", style: "cancel" },
       { text: "Invite", onPress: () => setIsInviteModalVisible(true) },
       { text: "Message", onPress: async () => {
           try {
             const response = await startConversation({ targetUserId: artist.user_id }).unwrap();
             navigation.navigate('ChatScreen', { 
-              conversationId: response.data.id, 
+              conversationId: response.data.id,
               otherUserName: artist.full_name 
             });
           } catch (err) {
-            console.error(err);
-            showError('', "Could not start conversation.");
+            showError('', 'Failed to start conversation.');
           }
         } 
-      }
+      },
+      { text: "Cancel", style: "cancel" }
     ]);
   };
 
@@ -100,10 +130,12 @@ export default function ArtistProfileScreen() {
       return;
     }
     try {
-      await inviteArtist({ id: artist.user_id, audition_id: selectedAuditionId }).unwrap();
+      await inviteArtist({ id: artist.user_id, audition_id: selectedAuditionId, message: invitationMessage }).unwrap();
       showSuccess('', 'Artist has been invited successfully.');
       setIsInviteModalVisible(false);
       setSelectedAuditionId('');
+      setAuditionSearchText('');
+      setInvitationMessage('');
     } catch (err) {
       showError('', err?.data?.error || 'Failed to send invite.');
     }
@@ -212,86 +244,347 @@ export default function ArtistProfileScreen() {
             
             {activeTab === 'Overview' ? (
               <View style={styles.portfolioSection}>
-                <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24 }}>
-                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Basic Info</Text>
-                  {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills'].map((k) => {
-                    const v = artist[k];
-                    if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                    const label = k.charAt(0).toUpperCase() + k.slice(1);
-                    const value = Array.isArray(v) ? v.join(', ') : String(v);
+            {(() => {
+              const profileVideos = [
+                { url: artist.intro_video_url, title: 'Intro Video' },
+                { url: artist.left_profile_url, title: 'Left Profile' },
+                { url: artist.right_profile_url, title: 'Right Profile' }
+              ].filter(v => v.url && v.url.trim().length > 0);
+
+              if (profileVideos.length === 0) return null;
+
+              return (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12, paddingHorizontal: spacing.xl }}>Profile Videos</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                    {profileVideos.map((video, index) => (
+                          <View key={index} style={{ marginRight: spacing.m, width: 140 }}>
+                            <TouchableOpacity 
+                              onPress={() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.type !== 'direct') {
+                                  import('react-native').then(({ Linking }) => {
+                                    Linking.openURL(video.url).catch(() => {});
+                                  });
+                                } else {
+                                  navigation.navigate('VideoPortfolio', { videos: profileVideos.map(v => v.url), initialIndex: index });
+                                }
+                              }}
+                              style={{ width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden', borderRadius: 12, position: 'relative' }}
+                            >
+                              {(() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.thumbnail === 'INSTAGRAM') {
+                                  return (
+                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Icon name="logo-instagram" color={colors.primary} size={40} />
+                                    </View>
+                                  );
+                                }
+                                if (info?.thumbnail === 'LINK') {
+                                  return (
+                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Web Link</Text>
+                                    </View>
+                                  );
+                                }
+                                if (info?.thumbnail) {
+                                  return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />;
+                                }
+                                return <Video source={{ uri: video.url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
+                              })()}
+                              <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon name="play" size={40} color={colors.white} />
+                              </View>
+                            </TouchableOpacity>
+                            <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 8, textAlign: 'center', fontWeight: '600' }}>{video.title}</Text>
+                          </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              );
+            })()}
+
+            {/* Video Portfolio Grid */}
+            {typeof artist.video_url === 'string' && artist.video_url.trim().length > 0 && (
+              <View style={{ marginBottom: 24 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: 12 }}>
+                  <Text style={{ ...typography.h3, color: colors.primary }}>Video Portfolio</Text>
+                  <TouchableOpacity onPress={() => navigation.navigate('VideoPortfolio', { isOwner: true })}>
+                    <Text style={{ color: colors.primary, fontWeight: 'bold' }}>See All</Text>
+                  </TouchableOpacity>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                  {artist.video_url.split(',').filter(Boolean).map((vUrl, idx) => {
+                    const info = getVideoInfo(vUrl);
                     return (
-                      <View key={k} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                        <Text style={{ ...typography.caption, color: colors.textMutedLight, width: 80 }}>{label}</Text>
-                        <Text style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>{value}</Text>
-                      </View>
+                      <TouchableOpacity 
+                        key={`vid-${idx}`}
+                        style={{ width: 140, height: 200, borderRadius: 12, backgroundColor: colors.surfaceDark, marginRight: 12, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}
+                        onPress={() => {
+                          if (info?.type !== 'direct') {
+                            import('react-native').then(({ Linking }) => {
+                              Linking.openURL(vUrl).catch(() => {});
+                            });
+                          } else {
+                            navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: idx });
+                          }
+                        }}
+                      >
+                        {info?.thumbnail === 'INSTAGRAM' ? (
+                          <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                            <Icon name="logo-instagram" color={colors.primary} size={32} />
+                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
+                          </View>
+                        ) : info?.thumbnail === 'LINK' ? (
+                          <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
+                          </View>
+                        ) : info?.thumbnail ? (
+                          <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
+                        ) : (
+                          <Video source={{ uri: vUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                        )}
+                        <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                          <Icon name="play" size={32} color={colors.white} />
+                        </View>
+                      </TouchableOpacity>
                     );
                   })}
-                </View>
+                </ScrollView>
+              </View>
+            )}
 
-                {(artist.portfolio_url || artist.instagram_url || artist.youtube_url) && (
-                  <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24 }}>
-                    <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Links</Text>
-                    {artist.portfolio_url && (
-                      <TouchableOpacity style={styles.linkRow} onPress={() => openLink(artist.portfolio_url)}>
-                        <Icon name="globe-outline" size={20} color={colors.primary} />
-                        <Text style={styles.linkText}>Portfolio</Text>
-                      </TouchableOpacity>
-                    )}
-                    {artist.instagram_url && (
-                      <TouchableOpacity style={styles.linkRow} onPress={() => openLink(artist.instagram_url)}>
-                        <Icon name="logo-instagram" size={20} color={'#E1306C'} />
-                        <Text style={styles.linkText}>Instagram</Text>
-                      </TouchableOpacity>
-                    )}
-                    {artist.youtube_url && (
-                      <TouchableOpacity style={styles.linkRow} onPress={() => openLink(artist.youtube_url)}>
-                        <Icon name="logo-youtube" size={20} color={'#FF0000'} />
-                        <Text style={styles.linkText}>YouTube</Text>
-                      </TouchableOpacity>
-                    )}
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                  <Icon name="information-circle-outline" size={24} color={colors.primary} />
+                </View>
+                <Text style={{ ...typography.h3, color: colors.primary }}>Basic Info</Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
+                  const v = artist[k];
+                  if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
+                  
+                  const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const value = Array.isArray(v) ? v.join(', ') : String(v);
+                  
+                  const icons = {
+                    age: 'calendar-outline',
+                    gender: 'male-female-outline',
+                    height: 'resize-outline',
+                    weight: 'barbell-outline',
+                    city: 'location-outline',
+                    languages: 'language-outline',
+                    skills: 'star-outline',
+                    availability_type: 'time-outline',
+                    available_dates: 'calendar-number-outline'
+                  };
+
+                  return (
+                    <View key={k} style={{ width: '48%', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }}>
+                      <Icon name={icons[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
+                      <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 4 }}>{label}</Text>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '600' }} numberOfLines={2}>{value}</Text>
+                    </View>
+                  );
+                })}
+
+                {/* CINTAA Info */}
+                {artist.is_cintaa_member && (
+                  <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginBottom: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                      <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+                      <View>
+                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Text>
+                        <Text style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({artist.cintaa_reg_number})</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </Animated.View>
+
+            {/* Tags / Preferences Section */}
+            {(artist.work_preference?.length > 0 || artist.preferred_cities?.length > 0 || artist.look_alike?.length > 0 || artist.hashtags?.length > 0) && (
+              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                  <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                    <Icon name="options-outline" size={24} color={colors.primary} />
+                  </View>
+                  <Text style={{ ...typography.h3, color: colors.primary }}>Preferences & Tags</Text>
+                </View>
+                
+                {artist.work_preference?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="briefcase" size={16} color="#f97316" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Work Preference</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(artist.work_preference).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(249, 115, 22, 0.15)' }]}><Text style={[styles.chipText, { color: '#f97316' }]}>{t}</Text></View>
+                      ))}
+                    </View>
                   </View>
                 )}
                 
-                <View style={{ marginBottom: 24 }}>
-                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Text>
-                  
-                  {(!artist.photo_urls || artist.photo_urls.length === 0) && !artist.video_url ? (
-                    <View style={styles.emptyPortfolio}>
-                      <Text style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Text>
+                {artist.preferred_cities?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="location" size={16} color="#14b8a6" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Preferred Locations</Text>
                     </View>
-                  ) : (
-                    <View>
-                      {/* Video Section */}
-                      {artist.video_url ? (
-                        <View style={[styles.galleryGrid, { marginHorizontal: 0, marginBottom: 16 }]}>
-                          {artist.video_url.split(',').map((vidUrl, index) => (
-                            <TouchableOpacity 
-                              key={index} 
-                              onPress={() => {
-                                navigation.navigate('VideoPortfolio', { videos: artist.video_url.split(','), initialIndex: index });
-                              }}
-                              style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark }]}
-                            >
-                              <Icon name="play" size={40} color={colors.primary} />
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      ) : null}
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(artist.preferred_cities).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}><Text style={[styles.chipText, { color: '#14b8a6' }]}>{t}</Text></View>
+                      ))}
+                    </View>
+                  </View>
+                )}
 
-                      {/* Photo Section */}
-                      {artist.photo_urls && artist.photo_urls.length > 0 ? (
-                        <View style={[styles.galleryGrid, { marginHorizontal: 0 }]}>
-                          {artist.photo_urls.map((imgUrl, index) => (
-                            <TouchableOpacity key={index} onPress={() => { setSelectedImage(imgUrl); setIsImageModalVisible(true); }}>
-                              <Image source={{ uri: imgUrl }} style={styles.galleryItem} />
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      ) : null}
+                {artist.look_alike?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="people" size={16} color="#a855f7" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Look Alikes</Text>
                     </View>
-                  )}
-                </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(artist.look_alike).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}><Text style={[styles.chipText, { color: '#a855f7' }]}>{t}</Text></View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {artist.hashtags?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="pricetag" size={16} color="#ec4899" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Hashtags</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(artist.hashtags).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}><Text style={[styles.chipText, { color: '#ec4899' }]}>#{t}</Text></View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </Animated.View>
+            )}
+
+            {/* Recent Assignments Section */}
+            {artist.recent_assignments?.length > 0 && (
+              <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+                <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Text>
+                {parseArray(artist.recent_assignments).map((assignment, idx) => (
+                  <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
+                      <View style={{ flex: 1, marginBottom: assignment.link ? 12 : 0 }}>
+                        <Text style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Text>
+                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{assignment.role ? `Role: ${assignment.role}` : ''} {assignment.year ? `• ${assignment.year}` : ''}</Text>
+                      </View>
+                      {assignment.link && assignment.link.trim().length > 0 && (() => {
+                        const linkStr = assignment.link.trim();
+                        const info = getVideoInfo(linkStr);
+                        return (
+                          <TouchableOpacity 
+                            style={{ 
+                              width: '100%', height: 160, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceDark, justifyContent: 'center', alignItems: 'center', position: 'relative'
+                            }}
+                            onPress={() => import('react-native').then(({ Linking }) => Linking.openURL(linkStr).catch(() => {}))}
+                          >
+                            {info?.thumbnail && info.thumbnail !== 'INSTAGRAM' && info.thumbnail !== 'LINK' ? (
+                              <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />
+                            ) : info?.type === 'direct' ? (
+                              <Video source={{ uri: linkStr }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                            ) : null}
+                            <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: (info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? 'rgba(0,0,0,0.3)' : colors.primary + '20', justifyContent: 'center', alignItems: 'center' }}>
+                              <Icon name={info?.thumbnail === 'INSTAGRAM' ? 'logo-instagram' : (!info || info?.thumbnail === 'LINK' ? 'link-outline' : 'play')} size={32} color={(info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? colors.white : colors.primary} />
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })()}
+                  </View>
+                ))}
               </View>
+            )}
+
+            <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+              <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Text>
+              
+              {(!artist.photo_urls || artist.photo_urls.length === 0) && !artist.video_url ? (
+                <View style={styles.emptyPortfolio}>
+                  <Text style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Text>
+                </View>
+              ) : (
+                <View>
+                  {/* Video Section */}
+                  {typeof artist.video_url === 'string' && artist.video_url.trim().length > 0 ? (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0, marginBottom: 16 }}>
+                    {artist.video_url.split(',').filter(Boolean).map((vidUrl, index) => {
+                      const info = getVideoInfo(vidUrl);
+                      return (
+                        <TouchableOpacity 
+                          key={index} 
+                          onPress={() => {
+                            const info = getVideoInfo(artist.video_url.split(',').filter(Boolean)[index]);
+                            if (info?.type !== 'direct') {
+                              import('react-native').then(({ Linking }) => {
+                                Linking.openURL(artist.video_url.split(',').filter(Boolean)[index]).catch(() => {});
+                              });
+                            } else {
+                              navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: index });
+                            }
+                          }}
+                          style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s, overflow: 'hidden' }]}
+                        >
+                          {info?.thumbnail === 'INSTAGRAM' ? (
+                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                              <Icon name="logo-instagram" color={colors.primary} size={32} />
+                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
+                            </View>
+                          ) : info?.thumbnail === 'LINK' ? (
+                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
+                            </View>
+                          ) : info?.thumbnail ? (
+                            <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' }} />
+                          ) : (
+                            <Video source={{ uri: vidUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                          )}
+                          <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                            <Icon name="play" size={40} color={colors.white} />
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
+
+                  {/* Photo Section */}
+                  {artist.photo_urls && artist.photo_urls.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
+                      {parseArray(artist.photo_urls).map((imgUrl, index) => (
+                        <TouchableOpacity key={index} onPress={() => { setSelectedImage(imgUrl); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
+                          <Image source={{ uri: imgUrl }} style={styles.galleryItem} resizeMode="contain" />
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          </View>
             ) : (
               <View style={{ marginTop: spacing.l }}>
                 {(() => {
@@ -454,20 +747,37 @@ export default function ArtistProfileScreen() {
             {myAuditions.length === 0 ? (
               <Text style={[typography.body, { color: colors.textMutedLight, marginBottom: 16 }]}>You have no active auditions. Please create one first.</Text>
             ) : (
-              <View style={{ marginBottom: 16 }}>
-                {myAuditions.map(audition => (
-                  <TouchableOpacity
-                    key={audition.id}
-                    style={[
-                      styles.auditionSelectBtn,
-                      selectedAuditionId === audition.id && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
-                    ]}
-                    onPress={() => setSelectedAuditionId(audition.id)}
-                  >
-                    <Icon name={selectedAuditionId === audition.id ? "radio-button-on" : "radio-button-off"} size={20} color={selectedAuditionId === audition.id ? colors.primary : colors.textMutedLight} />
-                    <Text style={{ marginLeft: 8, flex: 1, ...typography.body }} numberOfLines={1}>{audition.title}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={{ marginBottom: 16, maxHeight: 350 }}>
+                <TextInput
+                  style={[styles.searchInput, { marginBottom: 12, backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8 }]}
+                  placeholder="Search auditions..."
+                  placeholderTextColor={colors.textMuted}
+                  value={auditionSearchText}
+                  onChangeText={setAuditionSearchText}
+                />
+                <ScrollView style={{ maxHeight: 150 }}>
+                  {myAuditions.filter(a => a.title.toLowerCase().includes(auditionSearchText.toLowerCase())).map(audition => (
+                    <TouchableOpacity
+                      key={audition.id}
+                      style={[
+                        styles.auditionSelectBtn,
+                        selectedAuditionId === audition.id && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
+                      ]}
+                      onPress={() => setSelectedAuditionId(audition.id)}
+                    >
+                      <Icon name={selectedAuditionId === audition.id ? "radio-button-on" : "radio-button-off"} size={20} color={selectedAuditionId === audition.id ? colors.primary : colors.textMutedLight} />
+                      <Text style={{ marginLeft: 8, flex: 1, ...typography.body }} numberOfLines={1}>{audition.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <TextInput
+                  style={[styles.searchInput, { marginTop: 12, height: 80, textAlignVertical: 'top', backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8 }]}
+                  placeholder="Type invitation message (optional)..."
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  value={invitationMessage}
+                  onChangeText={setInvitationMessage}
+                />
               </View>
             )}
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
@@ -508,7 +818,7 @@ export default function ArtistProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',

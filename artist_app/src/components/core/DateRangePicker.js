@@ -200,7 +200,7 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.borderLight,
     borderRadius: 8,
@@ -219,7 +219,7 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surfaceLight,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,

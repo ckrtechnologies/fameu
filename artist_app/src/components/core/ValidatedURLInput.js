@@ -65,7 +65,7 @@ const getStyles = (colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.borderLight,
     borderRadius: 8,

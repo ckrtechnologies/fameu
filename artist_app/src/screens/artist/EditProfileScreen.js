@@ -19,6 +19,7 @@ import MediaOrLinkInput from '../../components/core/MediaOrLinkInput';
 import DateRangePicker from '../../components/core/DateRangePicker';
 import { parseArray } from '../../utils/dataUtils';
 import CustomButton from '../../components/forms/CustomButton';
+import { INDIAN_CITIES } from '../../constants/cities';
 
 const AVAILABLE_LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati', 'Odia', 'Bhojpuri', 'Urdu', 'Assamese'];
 
@@ -180,8 +181,7 @@ export default function EditProfileScreen() {
         city: p.city || '',
         bio: p.bio || '',
         experience: p.experience || '',
-        experience: p.experience || '',
-        languages: p.languages || [],
+        languages: parseArray(p.languages).filter(l => AVAILABLE_LANGUAGES.includes(l)),
         username: p.users?.username || '',
         is_cintaa_member: p.is_cintaa_member || false,
         cintaa_reg_number: p.cintaa_reg_number || '',
@@ -332,8 +332,8 @@ export default function EditProfileScreen() {
 
   const updateAssignment = (index, key, value) => {
     setFormData(p => {
-      const newAssignments = [...p.recent_assignments];
-      newAssignments[index][key] = value;
+      const newAssignments = [...(p.recent_assignments || [])];
+      newAssignments[index] = { ...newAssignments[index], [key]: value };
       return { ...p, recent_assignments: newAssignments };
     });
   };
@@ -490,7 +490,7 @@ export default function EditProfileScreen() {
           activeOpacity={1}
           onPress={() => setGenderModalVisible(false)}
         >
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+          <View style={{ backgroundColor: colors.surfaceLight, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: colors.textMainLight }}>Select Gender</Text>
             {['Male', 'Female', 'Other'].map(opt => (
               <TouchableOpacity
@@ -508,7 +508,14 @@ export default function EditProfileScreen() {
         </TouchableOpacity>
       </Modal>
 
-      <KeyboardAwareScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+      <KeyboardAwareScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.content} 
+        enableOnAndroid={true}
+        extraScrollHeight={100}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
+      >
 
         {activeTab === 'Basic Info' ? (
           <>
@@ -766,10 +773,14 @@ export default function EditProfileScreen() {
           <>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Preferred Cities</Text>
-              <TagInput
-                tags={formData.preferred_cities}
-                onTagsChange={(t) => setFormData(p => ({ ...p, preferred_cities: t }))}
-                placeholder="e.g. Mumbai, Delhi"
+              <BottomSheetSelect
+                placeholder="Select Cities"
+                options={INDIAN_CITIES}
+                value={formData.preferred_cities}
+                onSelect={(val) => setFormData(p => ({ ...p, preferred_cities: val }))}
+                style={styles.input}
+                multiSelect={true}
+                searchable={true}
               />
             </View>
 
@@ -831,6 +842,30 @@ export default function EditProfileScreen() {
                 platform="any"
                 onFileSelect={(file) => handleMediaFieldSelect('intro_video_url', file)}
                 isUploading={uploadingField === 'intro_video_url'}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Left Profile Video</Text>
+              <MediaOrLinkInput
+                placeholder="YouTube, Insta or Upload (30 sec)"
+                value={formData.left_profile_url}
+                onChangeText={(t) => setFormData(p => ({ ...p, left_profile_url: t }))}
+                platform="any"
+                onFileSelect={(file) => handleMediaFieldSelect('left_profile_url', file)}
+                isUploading={uploadingField === 'left_profile_url'}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Right Profile Video</Text>
+              <MediaOrLinkInput
+                placeholder="YouTube, Insta or Upload (30 sec)"
+                value={formData.right_profile_url}
+                onChangeText={(t) => setFormData(p => ({ ...p, right_profile_url: t }))}
+                platform="any"
+                onFileSelect={(file) => handleMediaFieldSelect('right_profile_url', file)}
+                isUploading={uploadingField === 'right_profile_url'}
               />
             </View>
 
@@ -919,6 +954,14 @@ export default function EditProfileScreen() {
                       <Icon name="trash-outline" size={20} color="#FF3B30" />
                     </TouchableOpacity>
                   </View>
+                  <TextInput
+                    style={[styles.input, { marginTop: 10, marginBottom: 0 }]}
+                    placeholder="Link (e.g. YouTube/IMDb)"
+                    placeholderTextColor={colors.textMutedLight}
+                    value={assignment.link}
+                    onChangeText={(text) => updateAssignment(index, 'link', text)}
+                    autoCapitalize="none"
+                  />
                 </View>
               ))}
               <TouchableOpacity onPress={addAssignment} style={{ padding: 15, alignItems: 'center', backgroundColor: colors.primary + '15', borderRadius: 8 }}>
@@ -1116,6 +1159,17 @@ const getStyles = (colors) => StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 20,
+  },
+  sectionHeader: {
+    marginTop: 12,
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  sectionTitle: {
+    ...typography.h3,
+    color: colors.textMainLight,
   },
   label: {
     ...typography.body,

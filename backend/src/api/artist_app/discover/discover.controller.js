@@ -19,7 +19,8 @@ class ArtistDiscoverController {
             display_name,
             username
           )
-        `);
+        `)
+        .eq('users.is_blacklisted', false);
 
       if (company_type) query = query.eq('company_type', company_type);
       if (verification_status === 'Verified Only') query = query.eq('is_verified', true);

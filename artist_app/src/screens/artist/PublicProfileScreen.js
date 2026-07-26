@@ -227,9 +227,8 @@ export default function PublicProfileScreen() {
         <View style={styles.bioSection}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
             <Typography variant="body" style={[styles.nameText, { marginBottom: 0 }]}>{profileData.name}</Typography>
-            {profileData.profile?.is_verified && <VerifiedBadge size={22} style={{ marginLeft: 6 }} />}
           </View>
-          <Typography variant="body" style={styles.roleText}>{profileData.role === 'artist' ? 'Artist' : 'Recruiter'}</Typography>
+          <Typography variant="body" style={styles.roleText}>{profileData.role === 'artist' ? 'Artist' : ((Array.isArray(profileData.profile) ? profileData.profile[0]?.company_type : profileData.profile?.company_type) || 'Recruiter')}</Typography>
           {profileData.profile?.bio && (
             <Typography variant="body" style={styles.bioText}>{profileData.profile.bio}</Typography>
           )}
@@ -326,51 +325,67 @@ export default function PublicProfileScreen() {
             
             {activeTab === 'Overview' ? (
               <View style={styles.portfolioSection}>
-                {/* Intro Video Section */}
-                {profileData.profile.intro_video_url && (
-                  <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-                    <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Intro Video</Typography>
-                    <TouchableOpacity 
-                      onPress={() => {
-                        const info = getVideoInfo(profileData.profile.intro_video_url);
-                        if (info?.type !== 'direct') {
-                          import('react-native').then(({ Linking }) => {
-                            Linking.openURL(profileData.profile.intro_video_url).catch(() => {});
-                          });
-                        } else {
-                          navigation.navigate('VideoPortfolio', { videos: [profileData.profile.intro_video_url], initialIndex: 0 });
-                        }
-                      }}
-                      style={[styles.galleryItem, { width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden' }]}
-                    >
-                      {(() => {
-                        const info = getVideoInfo(profileData.profile.intro_video_url);
-                        if (info?.thumbnail === 'INSTAGRAM') {
-                          return (
-                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                              <Icon name="logo-instagram" color={colors.primary} size={48} />
-                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram Reel</Text>
-                            </View>
-                          );
-                        }
-                        if (info?.thumbnail === 'LINK') {
-                          return (
-                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
-                            </View>
-                          );
-                        }
-                        if (info?.thumbnail) {
-                          return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' }} />;
-                        }
-                        return <Video source={{ uri: profileData.profile.intro_video_url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
-                      })()}
-                      <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
-                        <Icon name="play" size={50} color={colors.white} />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                {/* Profile Videos Section */}
+                {(() => {
+                  const profileVideos = [
+                    { url: profileData.profile.intro_video_url, title: 'Intro Video' },
+                    { url: profileData.profile.left_profile_url, title: 'Left Profile' },
+                    { url: profileData.profile.right_profile_url, title: 'Right Profile' }
+                  ].filter(v => v.url && v.url.trim().length > 0);
+
+                  if (profileVideos.length === 0) return null;
+
+                  return (
+                    <View style={{ marginBottom: 24 }}>
+                      <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12, paddingHorizontal: spacing.xl }}>Profile Videos</Typography>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                        {profileVideos.map((video, index) => (
+                          <View key={index} style={{ marginRight: spacing.m, width: 140 }}>
+                            <TouchableOpacity 
+                              onPress={() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.type !== 'direct') {
+                                  import('react-native').then(({ Linking }) => {
+                                    Linking.openURL(video.url).catch(() => {});
+                                  });
+                                } else {
+                                  navigation.navigate('VideoPortfolio', { videos: profileVideos.map(v => v.url), initialIndex: index });
+                                }
+                              }}
+                              style={{ width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden', borderRadius: 12, position: 'relative' }}
+                            >
+                              {(() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.thumbnail === 'INSTAGRAM') {
+                                  return (
+                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Icon name="logo-instagram" color={colors.primary} size={40} />
+                                    </View>
+                                  );
+                                }
+                                if (info?.thumbnail === 'LINK') {
+                                  return (
+                                    <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Web Link</Text>
+                                    </View>
+                                  );
+                                }
+                                  if (info?.thumbnail) {
+                                    return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />;
+                                  }
+                                  return <Video source={{ uri: video.url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
+                                })()}
+                                <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                  <Icon name="play" size={40} color={colors.white} />
+                                </View>
+                            </TouchableOpacity>
+                            <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 8, textAlign: 'center', fontWeight: '600' }}>{video.title}</Text>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  );
+                })()}
 
                 {/* Video Portfolio Grid */}
                 {typeof profileData.profile.video_url === 'string' && profileData.profile.video_url.trim().length > 0 && (
@@ -543,8 +558,31 @@ export default function PublicProfileScreen() {
                     <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Typography>
                     {parseArray(profileData.profile.recent_assignments).map((assignment, idx) => (
                       <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
-                        <Typography variant="body" style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Typography>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>{assignment.role ? `Role: ${assignment.role}` : ''} {assignment.year ? `• ${assignment.year}` : ''}</Typography>
+                        <View style={{ flex: 1, marginBottom: assignment.link ? 12 : 0 }}>
+                          <Typography variant="body" style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Typography>
+                          <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight }}>{assignment.role ? `Role: ${assignment.role}` : ''} {assignment.year ? `• ${assignment.year}` : ''}</Typography>
+                        </View>
+                        {assignment.link && assignment.link.trim().length > 0 && (() => {
+                          const linkStr = assignment.link.trim();
+                          const info = getVideoInfo(linkStr);
+                          return (
+                            <TouchableOpacity 
+                              style={{ 
+                                width: '100%', height: 160, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceDark, justifyContent: 'center', alignItems: 'center', position: 'relative'
+                              }}
+                              onPress={() => import('react-native').then(({ Linking }) => Linking.openURL(linkStr).catch(() => {}))}
+                            >
+                              {info?.thumbnail && info.thumbnail !== 'INSTAGRAM' && info.thumbnail !== 'LINK' ? (
+                                <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />
+                              ) : info?.type === 'direct' ? (
+                                <Video source={{ uri: linkStr }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                              ) : null}
+                              <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: (info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? 'rgba(0,0,0,0.3)' : colors.primary + '20', justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon name={info?.thumbnail === 'INSTAGRAM' ? 'logo-instagram' : (!info || info?.thumbnail === 'LINK' ? 'link-outline' : 'play')} size={32} color={(info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? colors.white : colors.primary} />
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })()}
                       </View>
                     ))}
                   </View>
@@ -799,19 +837,12 @@ export default function PublicProfileScreen() {
                           style={{ width: 140, height: 140, marginRight: spacing.m, backgroundColor: colors.surfaceLight, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderLight }}
                           onPress={() => navigation.navigate('AuditionDetail', { id: item.id })}
                         >
-                          {item.thumbnail_url ? (
                             <View style={{ flex: 1, width: '100%', height: '100%', position: 'relative' }}>
-                              <Image source={{ uri: item.thumbnail_url }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                              <Image source={{ uri: item.thumbnail_url || item.hiring_profiles?.logo_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop' }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
                               <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.xs }}>
                                 <Typography variant="caption" style={{ textAlign: 'center', color: '#fff' }} numberOfLines={2}>{item.title}</Typography>
                               </View>
                             </View>
-                          ) : (
-                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.s }}>
-                              <Icon name="videocam" size={28} color={colors.textMutedLight} />
-                              <Typography variant="caption" style={{ marginTop: spacing.xs, textAlign: 'center', color: colors.textMutedLight }} numberOfLines={2}>{item.title}</Typography>
-                            </View>
-                          )}
                         </TouchableOpacity>
                       ))}
                     </ScrollView>

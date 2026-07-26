@@ -230,7 +230,7 @@ export default function NMS() {
                   <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Date</th>
                     <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Title</th>
-                    <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Audience</th>
+                    <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Recipient</th>
                     <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Success</th>
                   </tr>
                 </thead>
@@ -248,15 +248,38 @@ export default function NMS() {
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.body.substring(0, 40)}{item.body.length > 40 ? '...' : ''}</div>
                         </td>
                         <td style={{ padding: '1rem' }}>
-                          <span style={{ 
-                            padding: '4px 8px', 
-                            borderRadius: '4px', 
-                            background: 'rgba(255,255,255,0.1)', 
-                            fontSize: '0.8rem',
-                            textTransform: 'capitalize'
-                          }}>
-                            {item.data?.target || 'unknown'}
-                          </span>
+                          {item.users ? (
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
+                                {item.users.display_name || 'No Name'}
+                                <span style={{ fontSize: '0.75rem', padding: '2px 6px', background: 'var(--bg-light)', borderRadius: '4px', marginLeft: '6px' }}>{item.users.role}</span>
+                              </span>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.users.email || item.users.mobile}</span>
+                              {item.data?.target && (
+                                <span style={{ 
+                                  alignSelf: 'flex-start',
+                                  marginTop: '4px',
+                                  padding: '2px 6px', 
+                                  borderRadius: '4px', 
+                                  background: 'rgba(255,255,255,0.05)', 
+                                  fontSize: '0.7rem',
+                                  textTransform: 'capitalize'
+                                }}>
+                                  Target: {item.data.target}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ 
+                              padding: '4px 8px', 
+                              borderRadius: '4px', 
+                              background: 'rgba(255,255,255,0.1)', 
+                              fontSize: '0.8rem',
+                              textTransform: 'capitalize'
+                            }}>
+                              {item.data?.target || 'unknown'}
+                            </span>
+                          )}
                         </td>
                         <td style={{ padding: '1rem' }}>
                           <div style={{ color: '#10b981', fontWeight: '600' }}>{item.data?.successCount || 0}</div>

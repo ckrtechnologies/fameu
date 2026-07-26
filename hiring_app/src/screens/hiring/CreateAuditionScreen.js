@@ -8,12 +8,16 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import DocumentPicker from '@react-native-documents/picker';
+import { pickSingle, types, isCancel } from '@react-native-documents/picker';
+import { INDIAN_CITIES } from '../../constants/cities';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useCreateAuditionMutation, useUpdateAuditionMutation, useUploadPdfMutation, useUploadThumbnailMutation } from '../../services/auditionApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
+import { useTheme } from '../../theme/ThemeProvider';
 export default function CreateAuditionScreen({ route }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const editAudition = route?.params?.audition;
@@ -39,6 +43,8 @@ export default function CreateAuditionScreen({ route }) {
     budget: editAudition?.budget || '',
     age_min: editAudition?.age_min ? String(editAudition.age_min) : '18',
     age_max: editAudition?.age_max ? String(editAudition.age_max) : '35',
+    mode: editAudition?.mode || 'Offline',
+    video_link: editAudition?.video_link || '',
     description_pdf_url: editAudition?.description_pdf_url || null,
     thumbnail_url: editAudition?.thumbnail_url || null,
     audition_type: (editAudition?.audition_type === 'walkin' ? 'Walk-in' : 
@@ -54,8 +60,9 @@ export default function CreateAuditionScreen({ route }) {
   const dynamicCategories = (professionsResponse?.data || []).map(p => p.name);
   const CATEGORIES = dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Dancer', 'Singer', 'Musician', 'Comedian', 'Other'];
   const TYPES = ['Walk-in', 'Scheduled', 'Online'];
-  const PROJECT_TYPES = ['Web-series', 'Films', 'TV serials', 'Ad films', 'Short films', 'Music albums', 'Documentaries', 'Corporate shoots', 'Print shoots', 'Events', 'Theatre/Plays', 'Voice-overs', 'Anchoring/Hosting', 'Other'];
-  const CITIES = ['Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Chandigarh', 'Other'];
+  const PROJECT_TYPES = ['Web-series', 'Films', 'TV serials', 'Short Films', 'Ad films', 'Reality Shows', 'Talent Hunt', 'Regional Movies', 'Regional Shows', 'Branded Content', 'Music Videos', 'Music Albums', 'Print shoots', 'Catalog Shoots', 'Documentary', 'Other'];
+  const PROJECT_MODES = ['Offline', 'Online'];
+  const CITIES = INDIAN_CITIES;
   const DURATION_TYPES = ['Full-time', 'Part-time', 'Date Specific'];
   const GENDERS = ['Male', 'Female', 'Other', 'Any'];
 
@@ -106,8 +113,8 @@ export default function CreateAuditionScreen({ route }) {
 
   const handlePdfUpload = async () => {
     try {
-      const res = await DocumentPicker.pickSingle({
-        type: [DocumentPicker.types.pdf],
+      const res = await pickSingle({
+        type: [types.pdf],
       });
       
       const formData = new FormData();
@@ -123,7 +130,7 @@ export default function CreateAuditionScreen({ route }) {
         showSuccess('', 'PDF uploaded successfully!');
       }
     } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
+      if (!isCancel(err)) {
         showError('', 'Failed to upload PDF');
         console.error(err);
       }
@@ -132,8 +139,8 @@ export default function CreateAuditionScreen({ route }) {
 
   const handleThumbnailUpload = async () => {
     try {
-      const res = await DocumentPicker.pickSingle({
-        type: [DocumentPicker.types.images],
+      const res = await pickSingle({
+        type: [types.images],
       });
       
       const formData = new FormData();
@@ -149,7 +156,7 @@ export default function CreateAuditionScreen({ route }) {
         showSuccess('', 'Thumbnail uploaded successfully!');
       }
     } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
+      if (!isCancel(err)) {
         showError('', 'Failed to upload Thumbnail');
         console.error(err);
       }
@@ -199,6 +206,8 @@ export default function CreateAuditionScreen({ route }) {
         budget: form.budget,
         age_min: parseInt(form.age_min) || 0,
         age_max: parseInt(form.age_max) || 75,
+        mode: form.mode,
+        video_link: form.video_link,
         description_pdf_url: form.description_pdf_url,
         thumbnail_url: form.thumbnail_url,
         audition_type: finalType,
@@ -242,7 +251,13 @@ export default function CreateAuditionScreen({ route }) {
         <Text style={styles.headerTitle}>{isEditMode ? 'Edit Audition' : 'Post New Audition'}</Text>
       </View>
 
-      <KeyboardAwareScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAwareScrollView 
+        style={{ flex: 1 }} 
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid={true}
+        extraScrollHeight={100}
+        keyboardShouldPersistTaps="handled"
+      >
         
         <View style={styles.formGroup}>
           <Text style={styles.label}>Audition Title *</Text>
@@ -276,6 +291,28 @@ export default function CreateAuditionScreen({ route }) {
             isMulti
           />
         </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Project Mode *</Text>
+          <AnimatedTileGrid 
+            options={PROJECT_MODES} 
+            selectedValue={form.mode} 
+            onSelect={(val) => handleChange('mode', val)} 
+          />
+        </View>
+
+        {form.mode === 'Online' && (
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Video Instruction Link (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. YouTube/Instagram link for reference"
+              placeholderTextColor={colors.textMutedLight}
+              value={form.video_link}
+              onChangeText={(text) => handleChange('video_link', text)}
+            />
+          </View>
+        )}
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Duration Type *</Text>
@@ -565,7 +602,7 @@ export default function CreateAuditionScreen({ route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',

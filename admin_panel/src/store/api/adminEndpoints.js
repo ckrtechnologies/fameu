@@ -127,21 +127,14 @@ export const adminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['FraudReport'],
     }),
-
-    // CMS
-    getCMS: builder.query({
-      query: () => '/admin_panel/cms',
-      providesTags: ['CMS'],
-    }),
-    updateCMS: builder.mutation({
-      query: (body) => ({
-        url: '/admin_panel/cms',
-        method: 'PUT',
-        body,
+    deleteFraudReport: builder.mutation({
+      query: (id) => ({
+        url: `/admin_panel/fraud-reports/${id}`,
+        method: 'DELETE',
       }),
-      invalidatesTags: ['CMS'],
+      invalidatesTags: ['FraudReport'],
     }),
-    
+
     // Notifications (NMS)
     getNotificationHistory: builder.query({
       query: () => '/admin_panel/notifications/history',
@@ -188,8 +181,7 @@ export const {
   useGetApplicationsQuery,
   useGetFraudReportsQuery,
   useResolveFraudReportMutation,
-  useGetCMSQuery,
-  useUpdateCMSMutation,
+  useDeleteFraudReportMutation,
   useGetNotificationHistoryQuery,
   useSendNotificationMutation,
   useGetConversationsQuery,

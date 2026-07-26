@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomButton from './forms/CustomButton';
-import { colors, typography, spacing } from '../theme/theme';
+import { typography, spacing } from '../theme/theme';
+import { useTheme } from '../theme/ThemeProvider';
 
 const EmptyState = ({
   title = 'No results found',
@@ -11,6 +12,8 @@ const EmptyState = ({
   actionTitle,
   onAction,
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <View style={styles.container}>
       <Icon name={iconName} size={64} color={colors.textMutedLight} style={styles.icon} />
@@ -27,7 +30,7 @@ const EmptyState = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',

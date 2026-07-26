@@ -1,8 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
-import { colors, typography, spacing } from '../../theme/theme';
+import { typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const CustomOtpInput = ({ length = 4, onComplete, initialCode }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [code, setCode] = useState(
     initialCode ? initialCode.split('').slice(0, length) : Array(length).fill('')
   );
@@ -48,7 +51,7 @@ const CustomOtpInput = ({ length = 4, onComplete, initialCode }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',

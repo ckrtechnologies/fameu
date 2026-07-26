@@ -34,7 +34,7 @@ export const discoverApi = apiSlice.injectEndpoints({
         url: `/artist_app/discover/${id}/bookmark`,
         method: 'POST',
       }),
-      invalidatesTags: (result, error, id) => [{ type: 'Audition', id }],
+      invalidatesTags: (result, error, id) => [{ type: 'Audition', id }, 'Audition'],
     }),
     checkIn: builder.mutation({
       query: (id) => ({

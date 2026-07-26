@@ -5,9 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useUploadKycDocsMutation, useGetCompanyProfileQuery } from '../../services/hiringApi';
+import { useTheme } from '../../theme/ThemeProvider';
 export default function CompanyKycScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { data: profileResponse , isFetching, refetch} = useGetCompanyProfileQuery()
   const profile = profileResponse?.data;
   
@@ -78,6 +81,8 @@ export default function CompanyKycScreen({ navigation }) {
   };
 
   const DocumentPicker = ({ label, docKey, required = true }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
     const doc = docs[docKey];
 
     return (
@@ -163,7 +168,7 @@ export default function CompanyKycScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',

@@ -1,17 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors as staticColors } from './theme';
+import { useColorScheme } from 'react-native';
+import { lightColors, darkColors } from './theme';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const systemColorScheme = useColorScheme();
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isManualOverride, setIsManualOverride] = useState(false);
 
   useEffect(() => {
     const loadTheme = async () => {
       try {
         const storedTheme = await AsyncStorage.getItem('@theme_mode');
-        if (storedTheme === 'dark') {
+        if (storedTheme) {
+          setIsDarkMode(storedTheme === 'dark');
+          setIsManualOverride(true);
+        } else {
           setIsDarkMode(true);
         }
       } catch (e) {
@@ -21,35 +27,24 @@ export const ThemeProvider = ({ children }) => {
     loadTheme();
   }, []);
 
+  // Update theme if system changes, but ONLY if there's no manual override
+  useEffect(() => {
+    // We default to dark theme. If we wanted to follow system:
+    // if (!isManualOverride) setIsDarkMode(systemColorScheme === 'dark');
+  }, [systemColorScheme, isManualOverride]);
+
   const toggleTheme = async () => {
     try {
       const newMode = !isDarkMode;
       setIsDarkMode(newMode);
+      setIsManualOverride(true);
       await AsyncStorage.setItem('@theme_mode', newMode ? 'dark' : 'light');
     } catch (e) {
       console.error('Failed to save theme', e);
     }
   };
 
-  // Basic dark mode palette mapping
-  const darkColors = {
-    ...staticColors,
-    background: '#121212',
-    backgroundLight: '#121212',
-    backgroundDark: '#000000',
-    surface: '#1E1E1E',
-    surfaceLight: '#1E1E1E',
-    surfaceDark: '#2C2C2C',
-    card: '#1E1E1E',
-    textMain: '#FFFFFF',
-    textMainLight: '#FFFFFF',
-    textMuted: '#A0A0A0',
-    textMutedLight: '#A0A0A0',
-    borderLight: '#333333',
-    borderDark: '#444444',
-  };
-
-  const colors = isDarkMode ? darkColors : staticColors;
+  const colors = isDarkMode ? darkColors : lightColors;
 
   return (
     <ThemeContext.Provider value={{ colors, isDarkMode, toggleTheme }}>
@@ -61,7 +56,8 @@ export const ThemeProvider = ({ children }) => {
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
-    return { colors: staticColors, isDarkMode: false, toggleTheme: () => {} };
+    return { colors: lightColors, isDarkMode: false, toggleTheme: () => {} };
   }
   return context;
 };
+

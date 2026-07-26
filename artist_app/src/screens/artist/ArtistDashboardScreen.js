@@ -7,8 +7,10 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import AuditionCard from '../../components/artist/AuditionCard';
+import AuditionPeekModal from '../../components/artist/AuditionPeekModal';
 import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery } from '../../services/discoverApi';
 import { useGetProfileQuery } from '../../services/profileApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
 import { LineChart } from 'react-native-chart-kit';
@@ -43,6 +45,7 @@ export default function ArtistDashboardScreen() {
   
   const [acceptDisclaimer, { isLoading: isAccepting }] = useAcceptDisclaimerMutation();
   const { data: profileResponse, refetch: refetchProfile } = useGetProfileQuery();
+  useRefetchOnFocus(refetchProfile);
   const profile = profileResponse?.data;
   
   const categories = profile?.categories || [];
@@ -54,10 +57,23 @@ export default function ArtistDashboardScreen() {
   const { data: allFeedData, refetch: refetchAll } = useGetFeedQuery({}, { refetchOnMountOrArgChange: true });
   const { data: liveData, refetch: refetchLive } = useGetFeedQuery({ filter: 'live', ...feedParams }, { refetchOnMountOrArgChange: true });
   const { data: trendingData, refetch: refetchTrending } = useGetFeedQuery({ filter: 'trending', ...feedParams }, { refetchOnMountOrArgChange: true });
+
+  useRefetchOnFocus(refetchFeed);
+  useRefetchOnFocus(refetchAll);
+  useRefetchOnFocus(refetchLive);
+  useRefetchOnFocus(refetchTrending);
   const { data: myAppsData, refetch: refetchApps } = useGetMyApplicationsQuery();
   const { data: savedData, refetch: refetchSaved } = useGetSavedAuditionsQuery();
 
+  useRefetchOnFocus(refetchApps);
+  useRefetchOnFocus(refetchSaved);
+
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Peek Modal State
+  const [peekVisible, setPeekVisible] = useState(false);
+  const [peekAuditions, setPeekAuditions] = useState([]);
+  const [peekIndex, setPeekIndex] = useState(0);
 
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -71,10 +87,21 @@ export default function ArtistDashboardScreen() {
     }
   }, [refetchFeed, refetchAll, refetchLive, refetchTrending, refetchProfile, refetchApps, refetchSaved]);
 
-  const handleAuditionPress = useCallback((auditionOrId) => {
+  const handleViewAuditionDetails = useCallback((auditionOrId) => {
     const id = typeof auditionOrId === 'object' && auditionOrId !== null ? auditionOrId.id : auditionOrId;
     navigation.navigate('AuditionDetail', { id });
   }, [navigation]);
+
+  const handleAuditionPress = useCallback((item, list = []) => {
+    if (list && list.length > 0) {
+      const index = list.findIndex(a => a.id === item.id);
+      setPeekAuditions(list);
+      setPeekIndex(index !== -1 ? index : 0);
+      setPeekVisible(true);
+    } else {
+      handleViewAuditionDetails(item);
+    }
+  }, [handleViewAuditionDetails]);
 
   const name = profile?.full_name || user?.display_name || user?.full_name || user?.email?.split('@')[0] || 'Artist';
 
@@ -89,7 +116,6 @@ export default function ArtistDashboardScreen() {
   const recommendedAuditions = Array.isArray(feedData?.data) ? feedData.data : [];
   const allAuditions = Array.isArray(allFeedData?.data) ? allFeedData.data : [];
   
-  // If the user has a specific category, don't fall back to all auditions if their category has none.
   const displayAuditions = (categoryString && recommendedAuditions.length === 0) ? [] : (recommendedAuditions.length > 0 ? recommendedAuditions : allAuditions);
   const liveAuditions = Array.isArray(liveData?.data) ? liveData.data : [];
   
@@ -111,9 +137,8 @@ export default function ArtistDashboardScreen() {
     if (p.height || p.weight) score += 5;
     return Math.min(100, score);
   };
-  const profileCompletePct = profile?.profile_complete_pct || calculateProfileCompletion(profile);
+  const profileCompletePct = Math.max(profile?.profile_complete_pct || 0, calculateProfileCompletion(profile));
 
-  // 1. Welcome Header
   const renderWelcomeHeader = () => (
     <View style={styles.headerContainer}>
       <View style={styles.headerTextContainer}>
@@ -145,7 +170,6 @@ export default function ArtistDashboardScreen() {
     </View>
   );
 
-  // 2. Profile Setup Banner
   const renderProfileBanner = () => {
     if (profileCompletePct >= 100) return null;
     return (
@@ -164,7 +188,6 @@ export default function ArtistDashboardScreen() {
     );
   };
 
-  // 3. Overview Stats
   const renderOverviewStats = () => {
     const totalApps = myApplications.length;
     const shortlistedStatuses = ['shortlisted', 'interview_scheduled', 'hired'];
@@ -189,7 +212,6 @@ export default function ArtistDashboardScreen() {
     );
   };
 
-  // 4. Quick Actions
   const renderQuickActions = () => (
     <View style={styles.quickActionsContainer}>
       <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Auditions')}>
@@ -219,7 +241,6 @@ export default function ArtistDashboardScreen() {
     </View>
   );
 
-  // 5. Recent Applications
   const renderRecentApplications = () => {
     if (myApplications.length === 0) return null;
     const recent = myApplications.slice(0, 2);
@@ -227,7 +248,7 @@ export default function ArtistDashboardScreen() {
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
           <Typography variant="h3" style={styles.sectionTitle}>Recent Applications</Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('MyApplications')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Applications')}>
             <Typography variant="body" style={styles.seeAllText}>See All</Typography>
           </TouchableOpacity>
         </View>
@@ -257,7 +278,6 @@ export default function ArtistDashboardScreen() {
     );
   };
 
-  // 6. Live Auditions
   const renderLiveAuditions = () => {
     if (liveAuditions.length === 0) return null;
     return (
@@ -278,13 +298,12 @@ export default function ArtistDashboardScreen() {
           windowSize={5}
           removeClippedSubviews={true}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => <AuditionCard audition={item} onPress={handleAuditionPress} />}
+          renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item, liveAuditions)} />}
         />
       </View>
     );
   };
 
-  // 7. Recommended Auditions
   const renderRecommendedAuditions = () => {
     return (
       <View style={styles.sectionContainer}>
@@ -307,14 +326,13 @@ export default function ArtistDashboardScreen() {
             windowSize={5}
             removeClippedSubviews={true}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => <AuditionCard audition={item} onPress={handleAuditionPress} />}
+            renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item, displayAuditions)} />}
           />
         )}
       </View>
     );
   };
 
-  // 8. Trending Auditions
   const renderTrendingAuditions = () => {
     if (trendingAuditions.length === 0) return null;
     return (
@@ -335,13 +353,12 @@ export default function ArtistDashboardScreen() {
           windowSize={5}
           removeClippedSubviews={true}
           contentContainerStyle={{ paddingLeft: spacing.xl, paddingRight: spacing.m }}
-          renderItem={({ item }) => <AuditionCard audition={item} onPress={handleAuditionPress} compact />}
+          renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item, trendingAuditions)} compact />}
         />
       </View>
     );
   };
 
-  // 9. Saved Auditions
   const renderSavedAuditions = () => {
     if (savedAuditions.length === 0) return null;
     return (
@@ -359,15 +376,11 @@ export default function ArtistDashboardScreen() {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.savedCard} onPress={() => handleAuditionPress(item.auditions?.id)}>
+            <TouchableOpacity style={styles.savedCard} onPress={() => handleAuditionPress(item, savedAuditions)}>
                <View style={styles.savedIconBg}>
-                  {item.auditions?.thumbnail_url ? (
-                    <Image source={{ uri: item.auditions.thumbnail_url }} style={{ width: 60, height: 60, borderRadius: 12 }} />
-                  ) : (
-                    <Bookmark size={24} color={colors.primary} />
-                  )}
+                  <Image source={{ uri: item.thumbnail_url || item.hiring_profiles?.logo_url || 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop' }} style={{ width: 60, height: 60, borderRadius: 12 }} />
                </View>
-               <Typography variant="body" style={styles.savedTitle} numberOfLines={2}>{item.auditions?.title}</Typography>
+               <Typography variant="body" style={styles.savedTitle} numberOfLines={2}>{item.title}</Typography>
             </TouchableOpacity>
           )}
         />
@@ -375,9 +388,7 @@ export default function ArtistDashboardScreen() {
     );
   };
 
-  // 10. Upcoming Schedule
   const renderUpcomingSchedule = () => {
-    // Upcoming based on shortlisted apps
     const upcoming = myApplications.filter(a => a.status === 'shortlisted' || a.status === 'hired');
     if (upcoming.length === 0) return null;
 
@@ -420,9 +431,7 @@ export default function ArtistDashboardScreen() {
     );
   };
 
-  // 11. Activity Chart
   const renderActivityChart = () => {
-    // Generate sparkline data based on application history
     let dataPoints = [0, 0, 0, 0, 0, 0, 0];
     let labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -450,39 +459,44 @@ export default function ArtistDashboardScreen() {
       labels = last7Days.map(d => d.dayName);
     }
     
-    // Ensure we don't crash if all points are 0
     if (Math.max(...dataPoints) === 0) dataPoints = [0,0,0,0,0,0,0];
+
+    const datasets = [{ data: dataPoints }];
+    if (Math.max(...dataPoints) === 0) {
+      datasets.push({ data: [5], color: () => 'transparent', strokeWidth: 0, withDots: false });
+    }
 
     return (
       <View style={styles.sectionContainer}>
         <Typography variant="h3" style={styles.sectionTitle}>Application Growth</Typography>
         <LineChart
-          data={{ labels, datasets: [{ data: dataPoints }] }}
+          data={{ labels, datasets }}
           width={width - spacing.xl * 2}
           height={180}
           withInnerLines={false}
           withOuterLines={false}
           yAxisLabel=""
+          fromZero={true}
+          formatYLabel={(y) => Number(y) % 1 !== 0 ? '' : y}
           chartConfig={{
-            backgroundColor: '#fff',
+            backgroundColor: colors.surfaceLight,
             backgroundGradientFrom: '#fff',
             backgroundGradientTo: '#fff',
             decimalPlaces: 0,
             color: (opacity = 1) => `rgba(${parseInt(colors.primary.slice(1,3),16)}, ${parseInt(colors.primary.slice(3,5),16)}, ${parseInt(colors.primary.slice(5,7),16)}, ${opacity})`,
             labelColor: (opacity = 1) => colors.textMutedLight,
             style: { borderRadius: 16 },
-            propsForDots: { r: "4", strokeWidth: "2", stroke: colors.primary }
+            propsForDots: { r: "4", strokeWidth: "2", stroke: colors.primary },
+            propsForLabels: { dy: 15 }, // Push labels down to prevent overlap
+            paddingRight: 32 // Add internal padding to balance the Y-axis labels on the left
           }}
           bezier
-          style={{ marginVertical: 8, borderRadius: 16, marginLeft: -16 }}
+          style={{ marginVertical: 8, borderRadius: 16, paddingBottom: 16 }}
         />
       </View>
     );
   };
 
-
-
-  // 14. Pro Tips
   const renderProTips = () => (
     <View style={styles.proTipCard}>
       <View style={styles.proTipHeader}>
@@ -496,7 +510,6 @@ export default function ArtistDashboardScreen() {
     </View>
   );
 
-  // 15. Recent Profile Visitors Removed
   return (
     <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <Modal
@@ -519,7 +532,7 @@ export default function ArtistDashboardScreen() {
                 style={[styles.disclaimerBtn, styles.disclaimerBtnDeny]} 
                 onPress={() => dispatch(logout())}
               >
-                <Text style={styles.disclaimerBtnText}>Deny</Text>
+                <Text style={styles.disclaimerBtnTextDeny}>Deny</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.disclaimerBtn, styles.disclaimerBtnAgree]} 
@@ -533,7 +546,7 @@ export default function ArtistDashboardScreen() {
                 }}
                 disabled={isAccepting}
               >
-                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnText}>I Agree</Text>}
+                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnTextAgree}>I Agree</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -556,11 +569,22 @@ export default function ArtistDashboardScreen() {
         {renderSavedAuditions()}
         {renderUpcomingSchedule()}
         {renderActivityChart()}
-
         {renderProTips()}
         
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Peek Modal */}
+      <AuditionPeekModal
+        visible={peekVisible}
+        auditions={peekAuditions}
+        initialIndex={peekIndex}
+        onClose={() => setPeekVisible(false)}
+        onViewDetails={(item) => {
+          setPeekVisible(false);
+          handleViewAuditionDetails(item);
+        }}
+      />
     </View>
   );
 }
@@ -658,7 +682,8 @@ const getStyles = (colors) => StyleSheet.create({
   disclaimerText: { ...typography.body, color: colors.textMutedLight, marginBottom: 16, lineHeight: 22 },
   disclaimerActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
   disclaimerBtn: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
-  disclaimerBtnDeny: { backgroundColor: colors.surfaceDark, marginRight: 10 },
+  disclaimerBtnDeny: { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight, marginRight: 10 },
   disclaimerBtnAgree: { backgroundColor: colors.primary, marginLeft: 10 },
-  disclaimerBtnText: { color: '#fff', fontWeight: 'bold' }
+  disclaimerBtnTextDeny: { color: colors.textMainLight, fontWeight: 'bold' },
+  disclaimerBtnTextAgree: { color: '#fff', fontWeight: 'bold' }
 });

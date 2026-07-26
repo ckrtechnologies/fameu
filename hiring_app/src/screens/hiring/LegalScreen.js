@@ -101,7 +101,7 @@ const getStyles = (colors) => StyleSheet.create({
     paddingVertical: spacing.m,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surfaceLight,
   },
   backButton: {
     padding: spacing.xs,

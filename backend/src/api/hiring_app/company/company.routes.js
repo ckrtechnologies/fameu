@@ -21,7 +21,10 @@ router.post('/kyc',
     { name: 'pan', maxCount: 1 },
     { name: 'company_reg', maxCount: 1 },
     { name: 'gst', maxCount: 1 },
-    { name: 'selfie', maxCount: 1 }
+    { name: 'selfie', maxCount: 1 },
+    { name: 'driving_license', maxCount: 1 },
+    { name: 'passport', maxCount: 1 },
+    { name: 'voter_id', maxCount: 1 }
   ]), 
   companyController.uploadKYC
 );

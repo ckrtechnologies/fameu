@@ -70,6 +70,9 @@ class HiringCompanyController {
         if (req.files.company_reg && req.files.company_reg[0]) docsUrls.company_reg_url = baseUrl + req.files.company_reg[0].filename;
         if (req.files.gst && req.files.gst[0]) docsUrls.gst_url = baseUrl + req.files.gst[0].filename;
         if (req.files.selfie && req.files.selfie[0]) docsUrls.selfie_url = baseUrl + req.files.selfie[0].filename;
+        if (req.files.driving_license && req.files.driving_license[0]) docsUrls.driving_license_url = baseUrl + req.files.driving_license[0].filename;
+        if (req.files.passport && req.files.passport[0]) docsUrls.passport_url = baseUrl + req.files.passport[0].filename;
+        if (req.files.voter_id && req.files.voter_id[0]) docsUrls.voter_id_url = baseUrl + req.files.voter_id[0].filename;
       }
 
       if (Object.keys(docsUrls).length === 0) {

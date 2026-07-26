@@ -94,12 +94,9 @@ class ConnectionService {
    * Search users by handle or name (wildcard)
    */
   async searchUsers(query, currentUserId) {
-    if (!query || query.length < 2) return [];
+    if (query && query.length === 1) return []; // Require at least 2 chars if typing
 
-    const searchTerm = `%${query}%`;
-    
-    // We will query 'users' directly.
-    const { data, error } = await supabase
+    let dbQuery = supabase
       .from('users')
       .select(`
         id, 
@@ -109,35 +106,43 @@ class ConnectionService {
         artist_profiles (full_name),
         hiring_profiles (company_name)
       `)
-      .neq('id', currentUserId)
-      .or(`username.ilike.${searchTerm},display_name.ilike.${searchTerm},email.ilike.${searchTerm},mobile.ilike.${searchTerm}`)
-      .limit(50);
+      .eq('is_blacklisted', false)
+      .neq('id', currentUserId);
 
+    if (query) {
+      const searchTerm = `%${query}%`;
+      dbQuery = dbQuery.or(`username.ilike.${searchTerm},display_name.ilike.${searchTerm},email.ilike.${searchTerm},mobile.ilike.${searchTerm}`);
+    }
+
+    const { data, error } = await dbQuery.limit(50);
     if (error) throw new Error(error.message);
     
-    const { data: artistData, error: artistErr } = await supabase
-      .from('artist_profiles')
-      .select('user_id')
-      .ilike('full_name', searchTerm);
-
-    const { data: hiringData, error: hiringErr } = await supabase
-      .from('hiring_profiles')
-      .select('user_id')
-      .ilike('company_name', searchTerm);
-      
-    let additionalIds = [];
-    if (!artistErr && artistData) {
-        additionalIds = additionalIds.concat(artistData.map(a => a.user_id));
-    }
-    if (!hiringErr && hiringData) {
-        additionalIds = additionalIds.concat(hiringData.map(a => a.user_id));
-    }
-    
-    // Fetch those additional users if any
     let combinedData = [...data];
-    if (additionalIds.length > 0) {
-        const existingIds = new Set(data.map(u => u.id));
-        const idsToFetch = additionalIds.filter(id => !existingIds.has(id));
+
+    // Additional search in profiles only if there is a query
+    if (query) {
+      const searchTerm = `%${query}%`;
+      const { data: artistData, error: artistErr } = await supabase
+        .from('artist_profiles')
+        .select('user_id')
+        .ilike('full_name', searchTerm);
+
+      const { data: hiringData, error: hiringErr } = await supabase
+        .from('hiring_profiles')
+        .select('user_id')
+        .ilike('company_name', searchTerm);
+        
+      let additionalIds = [];
+      if (!artistErr && artistData) {
+          additionalIds = additionalIds.concat(artistData.map(a => a.user_id));
+      }
+      if (!hiringErr && hiringData) {
+          additionalIds = additionalIds.concat(hiringData.map(a => a.user_id));
+      }
+      
+      if (additionalIds.length > 0) {
+          const existingIds = new Set(data.map(u => u.id));
+          const idsToFetch = additionalIds.filter(id => !existingIds.has(id));
         
         if (idsToFetch.length > 0) {
             const { data: extraUsers } = await supabase
@@ -149,6 +154,7 @@ class ConnectionService {
                 combinedData = [...combinedData, ...extraUsers];
             }
         }
+      }
     }
 
     return combinedData.map(u => ({

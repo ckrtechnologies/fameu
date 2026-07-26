@@ -1,6 +1,7 @@
 import { apiSlice } from './apiSlice';
 
 export const discoveryApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     searchArtists: builder.query({
       query: (params) => ({

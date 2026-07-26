@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { spacing } from '../../theme/theme';
 import Typography from '../core/Typography';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const CustomInput = ({
   label,
@@ -18,6 +19,8 @@ const CustomInput = ({
   rightIcon,
   ...props
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -52,7 +55,7 @@ const CustomInput = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginBottom: spacing.m,
   },

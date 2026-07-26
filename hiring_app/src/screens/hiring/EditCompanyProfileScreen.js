@@ -1,7 +1,7 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image , RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, RefreshControl, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSelector } from 'react-redux';
@@ -13,12 +13,15 @@ import AnimatedBorderCard from '../../components/AnimatedBorderCard';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetCompanyProfileQuery, useUpsertCompanyProfileMutation, useUploadLogoMutation } from '../../services/hiringApi';
 import { useLazyCheckUsernameQuery } from '../../services/profileApi';
 import CommentsSection from '../../components/CommentsSection';
 import CustomDropdown from '../../components/forms/CustomDropdown';
+import { useTheme } from '../../theme/ThemeProvider';
 export default function EditCompanyProfileScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
@@ -34,11 +37,31 @@ export default function EditCompanyProfileScreen() {
     company_name: '',
     company_type: '',
     description: '',
+    alternate_phone: '',
+    alternate_email: '',
   });
   
   const [logoUri, setLogoUri] = useState(null);
   const [selectedLogo, setSelectedLogo] = useState(null);
+  const [showCompanyTypeModal, setShowCompanyTypeModal] = useState(false);
   const scrollViewRef = React.useRef(null);
+
+  const COMPANY_TYPE_OPTIONS = [
+    { label: 'Production house', value: 'Production house', icon: 'videocam', color: '#8b5cf6' },
+    { label: 'Casting company or director', value: 'Casting company or director', icon: 'person-add', color: '#3b82f6' },
+    { label: 'Free lancer', value: 'Free lancer', icon: 'person', color: '#10b981' },
+    { label: 'Theater group or institution', value: 'Theater group or institution', icon: 'business', color: '#f59e0b' },
+    { label: 'Music company', value: 'Music company', icon: 'musical-notes', color: '#ec4899' },
+    { label: 'Post production Studio', value: 'Post production Studio', icon: 'desktop', color: '#6366f1' },
+    { label: 'Brand or Corporate', value: 'Brand or Corporate', icon: 'briefcase', color: '#0ea5e9' },
+    { label: 'Broadcaster or channel', value: 'Broadcaster or channel', icon: 'tv', color: '#ef4444' },
+    { label: 'Filmmaker', value: 'Filmmaker', icon: 'film', color: '#8b5cf6' },
+    { label: 'Media or Advertising agency', value: 'Media or Advertising agency', icon: 'megaphone', color: '#f97316' },
+    { label: 'Event or outdoor', value: 'Event or outdoor', icon: 'calendar', color: '#14b8a6' },
+    { label: 'Media company or network', value: 'Media company or network', icon: 'globe', color: '#06b6d4' },
+    { label: 'Talent management agency', value: 'Talent management agency', icon: 'star', color: '#eab308' },
+    { label: 'Others', value: 'Others', icon: 'ellipsis-horizontal', color: '#94a3b8' }
+  ];
   const scrollToComments = route.params?.scrollToComments;
 
   useEffect(() => {
@@ -56,6 +79,8 @@ export default function EditCompanyProfileScreen() {
         company_name: profile.company_name || '',
         company_type: profile.company_type || '',
         description: profile.description || '',
+        alternate_phone: profile.alternate_contact?.phone || '',
+        alternate_email: profile.alternate_contact?.email || '',
       });
     }
   }, [profile, user]);
@@ -84,7 +109,17 @@ export default function EditCompanyProfileScreen() {
       return;
     }
     try {
-      const res = await upsertProfile(form).unwrap();
+      const payload = {
+        username: form.username,
+        company_name: form.company_name,
+        company_type: form.company_type,
+        description: form.description,
+        alternate_contact: {
+          phone: form.alternate_phone,
+          email: form.alternate_email
+        }
+      };
+      const res = await upsertProfile(payload).unwrap();
       const profileId = res?.data?.id || res?.id || profile?.id;
 
       if (selectedLogo && profileId) {
@@ -128,7 +163,14 @@ export default function EditCompanyProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-    <KeyboardAwareScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
+    <KeyboardAwareScrollView 
+      ref={scrollViewRef} 
+      contentContainerStyle={styles.scrollContent} 
+      enableOnAndroid={true}
+      extraScrollHeight={100}
+      keyboardShouldPersistTaps="handled"
+      refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
+    >
       
       <View style={styles.logoSection}>
         <TouchableOpacity style={styles.logoContainer} onPress={handleSelectLogo}>
@@ -188,21 +230,16 @@ export default function EditCompanyProfileScreen() {
       </View>
 
       <View style={styles.formGroup}>
-        <CustomDropdown
-          label="Company Type *"
-          options={[
-            { label: 'Production House', value: 'Production House' },
-            { label: 'Casting Agency', value: 'Casting Agency' },
-            { label: 'Advertising Agency', value: 'Advertising Agency' },
-            { label: 'Event Management', value: 'Event Management' },
-            { label: 'Modeling Agency', value: 'Modeling Agency' },
-            { label: 'Independent Filmmaker', value: 'Independent Filmmaker' },
-            { label: 'Other', value: 'Other' }
-          ]}
-          selectedValue={form.company_type}
-          onSelect={(val) => handleChange('company_type', val)}
-          placeholder="Select Company Type"
-        />
+        <Text style={styles.label}>Company Type *</Text>
+        <TouchableOpacity 
+          style={styles.customSelectInput}
+          onPress={() => setShowCompanyTypeModal(true)}
+        >
+          <Text style={[styles.customSelectText, !form.company_type && { color: colors.textMutedLight }]}>
+            {form.company_type || 'Select Company Type'}
+          </Text>
+          <Icon name="chevron-down" size={20} color={colors.textMutedLight} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.formGroup}>
@@ -261,11 +298,61 @@ export default function EditCompanyProfileScreen() {
       )}
 
     </KeyboardAwareScrollView>
+
+    <Modal
+      visible={showCompanyTypeModal}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowCompanyTypeModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Company Type</Text>
+            <TouchableOpacity onPress={() => setShowCompanyTypeModal(false)} style={styles.modalCloseButton}>
+              <Icon name="close" size={24} color={colors.textMainLight} />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={COMPANY_TYPE_OPTIONS}
+            keyExtractor={(item) => item.value}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.modalList}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.companyTypeOption,
+                  form.company_type === item.value && { backgroundColor: item.color + '15', borderColor: item.color }
+                ]}
+                onPress={() => {
+                  handleChange('company_type', item.value);
+                  setShowCompanyTypeModal(false);
+                }}
+              >
+                <View style={[styles.companyTypeIconWrapper, { backgroundColor: item.color + '20' }]}>
+                  <Icon name={item.icon} size={20} color={item.color} />
+                </View>
+                <Text style={[
+                  styles.companyTypeText,
+                  form.company_type === item.value && { color: item.color, fontWeight: '700' }
+                ]}>
+                  {item.label}
+                </Text>
+                {form.company_type === item.value && (
+                  <Icon name="checkmark-circle" size={24} color={item.color} style={{ marginLeft: 'auto' }} />
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </View>
+    </Modal>
+
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -392,8 +479,78 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   kycButtonText: {
-    ...typography.body2,
+    ...typography.body1,
     color: colors.primary,
     fontWeight: 'bold',
+  },
+  customSelectInput: {
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 8,
+    paddingHorizontal: spacing.l,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  customSelectText: {
+    ...typography.body1,
+    color: colors.textMainLight,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.backgroundLight,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '90%',
+    padding: spacing.xl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.l,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    paddingBottom: spacing.m,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.textMainLight,
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    padding: spacing.s,
+  },
+  modalList: {
+    paddingBottom: spacing.xxl,
+  },
+  companyTypeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.l,
+    marginBottom: spacing.l,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceLight,
+  },
+  companyTypeIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.l,
+  },
+  companyTypeText: {
+    ...typography.h3,
+    color: colors.textMainLight,
+    flex: 1,
   }
 });

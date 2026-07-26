@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { useTheme } from '../theme/ThemeProvider';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
   withRepeat, 
   withTiming, 
   withSequence,
-  interpolateColor
+  interpolateColor,
+  interpolate
 } from 'react-native-reanimated';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
@@ -18,6 +20,8 @@ export default function AnimatedBorderCard({
   delay = 0,
   style
 }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -42,9 +46,25 @@ export default function AnimatedBorderCard({
       ['rgba(0,0,0,0.05)', color]
     );
     
+    const shadowRadius = interpolate(
+      progress.value,
+      [0, 1],
+      [4, 15]
+    );
+
+    const shadowOpacity = interpolate(
+      progress.value,
+      [0, 1],
+      [0.02, 0.25]
+    );
+    
     return {
       borderColor,
       borderWidth: 1.5,
+      shadowColor: color,
+      shadowRadius,
+      shadowOpacity,
+      elevation: interpolate(progress.value, [0, 1], [2, 8]),
       transform: [
         { scale: 1 + (progress.value * 0.015) } // Very subtle breathing effect
       ]
@@ -63,10 +83,10 @@ export default function AnimatedBorderCard({
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 22,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

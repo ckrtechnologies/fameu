@@ -415,3 +415,7 @@ Every repository root must contain a `README.md` with all of the following secti
 ---
 
 *Argosmob Tech and AI Pvt. Ltd. · Confidential · Version 2.0*
+
+---
+## Modals
+- All modals should close when clicking outside the modal content, usually achieved by a full-screen `TouchableOpacity` with `activeOpacity={1}` behind the modal content.

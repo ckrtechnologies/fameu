@@ -29,8 +29,14 @@ function CustomDrawerContent(props) {
   const avatarUrl = profile?.avatar_url || user?.avatar_url || null;
 
   const handleLogout = () => {
+    props.navigation.closeDrawer();
     dispatch(apiSlice.util.resetApiState());
     dispatch(logout());
+  };
+
+  const handleNavigation = (screenName, params) => {
+    props.navigation.closeDrawer();
+    props.navigation.navigate(screenName, params);
   };
 
   const handleDeleteAccount = () => {
@@ -73,44 +79,54 @@ function CustomDrawerContent(props) {
       </View>
       
       <ScrollView>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('EditProfile')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('EditProfile')}>
           <Icon name="person-circle-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Edit Profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('PhotoGallery')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('PhotoGallery')}>
           <Icon name="images-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Photo Gallery</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('VideoPortfolio')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('VideoPortfolio')}>
           <Icon name="videocam-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Video Portfolio</Text>
         </TouchableOpacity>
 
 
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('SavedAuditions')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('SavedAuditions')}>
           <Icon name="bookmark-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Saved Auditions</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Verification')}>
-          <Icon name="shield-checkmark-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Get Verified</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Search')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Search')}>
           <Icon name="search-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Search Users</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('Notifications')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Notifications')}>
           <Icon name="notifications-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Notifications</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => props.navigation.navigate('ArtistSettings')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Tutorial')}>
+          <Icon name="play-circle-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>How it Works</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Faq')}>
+          <Icon name="help-circle-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>FAQ</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Legal', { type: 'terms' })}>
+          <Icon name="document-text-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>Terms & Conditions</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('ArtistSettings')}>
           <Icon name="settings-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Settings</Text>
         </TouchableOpacity>

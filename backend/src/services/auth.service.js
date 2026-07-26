@@ -148,6 +148,11 @@ class AuthService {
       isNewUser = true;
     }
 
+    // Check if the user is blacklisted
+    if (user && user.is_blacklisted) {
+      throw new Error('Your account has been suspended. Please contact support.');
+    }
+
     // 5. Generate JWT for the Express API
     const token = this.generateToken(user);
     return { token, user, isNewUser };
@@ -164,9 +169,14 @@ class AuthService {
     // 2. Get public user
     const { data: publicUser } = await supabase.from('users').select('*').eq('id', user.id).single();
 
+    const finalUser = publicUser || user;
+    if (finalUser && finalUser.is_blacklisted) {
+      throw new Error('Your account has been suspended. Please contact support.');
+    }
+
     // 3. Generate our Express API JWT
-    const token = this.generateToken(publicUser || user);
-    return { token, user: publicUser || user, isNewUser: !publicUser };
+    const token = this.generateToken(finalUser);
+    return { token, user: finalUser, isNewUser: !publicUser };
   }
 
   // --- Helper Methods ---

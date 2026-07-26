@@ -34,6 +34,7 @@ class ApplicationService {
       audition_id: auditionId,
       cover_note: applicationData.cover_note,
       selected_video: applicationData.selected_video,
+      video_link: applicationData.video_link,
       status: 'pending'
     };
 

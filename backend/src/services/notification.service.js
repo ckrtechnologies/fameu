@@ -95,14 +95,18 @@ const notificationService = {
           data,
           tokens: chunk,
           android: {
+            priority: 'high',
             notification: {
-              sound: 'default'
+              sound: 'fameu_sound',
+              channelId: 'fameu_notifications_channel_v2',
+              tag: data?.conversationId || 'general'
             }
           },
           apns: {
             payload: {
               aps: {
-                sound: 'default'
+                sound: 'fameu_sound.wav',
+                'thread-id': data?.conversationId || 'general'
               }
             }
           }

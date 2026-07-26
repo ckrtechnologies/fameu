@@ -4,22 +4,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetMyAuditionsQuery } from '../../services/auditionApi';
 import Typography from '../../components/core/Typography';
 import CommentsSection from '../../components/CommentsSection';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
 const IMAGE_SIZE = (width - spacing.xl * 2 - (COLUMN_COUNT - 1) * spacing.xs) / COLUMN_COUNT;
 
 export default function CompanyProfileScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
   
   const { data: profileResponse, isLoading: isProfileLoading, refetch: refetchProfile } = useGetCompanyProfileQuery(user?.id);
   const { data: auditionsResponse, isLoading: isAuditionsLoading, refetch: refetchAuditions } = useGetMyAuditionsQuery();
+
+  useRefetchOnFocus(refetchProfile);
+  useRefetchOnFocus(refetchAuditions);
 
   const profile = profileResponse?.data;
   const auditions = auditionsResponse?.data || [];
@@ -102,19 +109,15 @@ export default function CompanyProfileScreen() {
       style={styles.horizontalItem}
       onPress={() => navigation.navigate('AuditionDetails', { auditionId: item.id })}
     >
-      {item.thumbnail_url ? (
-        <View style={styles.thumbnailContainer}>
-          <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailImage} />
-          <View style={styles.thumbnailOverlay}>
-            <Typography variant="caption" style={[styles.horizontalItemText, { color: '#fff' }]} numberOfLines={2}>{item.title}</Typography>
-          </View>
+      <View style={styles.thumbnailContainer}>
+        <Image 
+          source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} 
+          style={styles.thumbnailImage} 
+        />
+        <View style={styles.thumbnailOverlay}>
+          <Typography variant="caption" style={[styles.horizontalItemText, { color: '#fff' }]} numberOfLines={2}>{item.title}</Typography>
         </View>
-      ) : (
-        <View style={styles.horizontalItemPlaceholder}>
-          <Icon name="videocam-outline" size={28} color={colors.textMutedLight} />
-          <Typography variant="caption" style={styles.horizontalItemText} numberOfLines={2}>{item.title}</Typography>
-        </View>
-      )}
+      </View>
     </TouchableOpacity>
   );
 
@@ -185,7 +188,7 @@ export default function CompanyProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

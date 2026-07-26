@@ -32,7 +32,14 @@ export const authApi = apiSlice.injectEndpoints({
     acceptDisclaimer: builder.mutation({
       query: () => ({
         url: '/auth/accept-disclaimer',
+        method: 'PATCH',
+      }),
+    }),
+    changePassword: builder.mutation({
+      query: (data) => ({
+        url: '/auth/change-password',
         method: 'POST',
+        body: data,
       }),
     }),
   }),
@@ -44,4 +51,5 @@ export const {
   useSetRoleMutation,
   useDeleteAccountMutation,
   useAcceptDisclaimerMutation,
+  useChangePasswordMutation,
 } = authApi;

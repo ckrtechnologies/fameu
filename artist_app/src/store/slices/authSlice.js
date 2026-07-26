@@ -46,12 +46,16 @@ const initialState = {
   token: null,
   user: null,
   loading: true, // initial load state
+  isBlacklisted: false,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setBlacklisted: (state, action) => {
+      state.isBlacklisted = action.payload;
+    },
     setCredentials: (state, action) => {
       const { user, token } = action.payload;
       state.user = user;
@@ -99,5 +103,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials } = authSlice.actions;
+export const { setCredentials, setBlacklisted } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,4 +1,5 @@
 import supabase from '../config/supabase.js';
+import { INDIAN_CITIES } from '../constants/cities.js';
 
 class AuditionService {
   /**
@@ -17,9 +18,15 @@ class AuditionService {
     // if (profile.credits <= 0) throw new Error('Insufficient credits to post an audition');
 
     // 2. Insert Audition
-    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
+    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, mode, video_link, ...restData } = auditionData;
+    
+    // Validate city if present
+    if (city && !INDIAN_CITIES.includes(city)) {
+      throw new Error(`Invalid city: ${city}`);
+    }
+
     const extraMeta = JSON.stringify({
-      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date
+      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, video_link
     });
 
     const payload = {
@@ -28,6 +35,7 @@ class AuditionService {
       compensation: budget || restData.compensation,
       instructions: extraMeta,
       thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
+      mode: mode || 'Offline',
       status: 'active',
       is_live: true
     };
@@ -50,15 +58,16 @@ class AuditionService {
    * Update an existing audition
    */
   async updateAudition(hiringId, auditionId, auditionData) {
-    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, ...restData } = auditionData;
+    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, mode, video_link, ...restData } = auditionData;
     const extraMeta = JSON.stringify({
-      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date
+      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, video_link
     });
     
     const payload = {
       ...restData,
       instructions: extraMeta,
       thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
+      mode: mode || undefined,
       updated_at: new Date().toISOString(),
       is_live: true
     };
@@ -127,7 +136,7 @@ class AuditionService {
    * Supports filtering by category, gender, and geographic bounding box (for map)
    */
   async discoverAuditions(filters = {}, userId = null) {
-    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username))').eq('status', 'active');
+    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username, is_blacklisted))').eq('status', 'active');
 
     // Home Screen specific filters
     if (filters.filter === 'live') {
@@ -215,6 +224,8 @@ class AuditionService {
     });
 
     if (filters.project_type) results = results.filter(i => i.project_type === filters.project_type);
+    // Filter out blacklisted companies
+    results = results.filter(i => !i.hiring_profiles?.users?.is_blacklisted);
     if (filters.city) results = results.filter(i => i.city && i.city.toLowerCase() === filters.city.toLowerCase());
     if (filters.duration_type) results = results.filter(i => i.duration_type === filters.duration_type);
     if (filters.budget) results = results.filter(i => i.budget === filters.budget || i.compensation === filters.budget);

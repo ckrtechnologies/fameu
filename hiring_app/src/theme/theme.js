@@ -1,36 +1,8 @@
-export const colors = {
-  // Brand
-  primary: '#007AFF', // Vibrant Blue
-  secondary: '#1E3A8A',
-  accent: '#007AFF',
-  white: '#FFFFFF',
-  
-  // Backgrounds
-  background: '#FFFFFF', // Crisp White
-  backgroundDark: '#F8FAFC', 
-  backgroundLight: '#FFFFFF',
-  surface: '#F1F5F9', 
-  surfaceLight: '#F1F5F9',
-  card: '#FFFFFF',
-  
-  // Typography
-  textMain: '#1E293B', // Slate dark text for light mode
-  textMuted: '#64748B', 
-  textMainDark: '#FFFFFF', // For text on blue buttons
-  textMutedDark: '#94A3B8',
-  textMainLight: '#1E293B',
-  textMutedLight: '#64748B',
-  
-  // Status
-  success: '#10B981',
-  danger: '#EF4444',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  
-  // Borders
-  borderLight: '#E2E8F0',
-  borderDark: '#CBD5E1', 
-};
+import { lightColors } from './colors.light';
+import { darkColors } from './colors.dark';
+
+export const colors = lightColors; // Default export for backwards compatibility
+export { lightColors, darkColors };
 
 export const typography = {
   fontFamily: 'Comic Sans MS', // Strict Requirement
@@ -65,10 +37,27 @@ export const spacing = {
   xxl: 32,
 };
 
+export const cardDimensions = {
+  compact: {
+    height: 120,
+    width: 200, // For horizontal scrolls
+    thumbnailSize: 50,
+  },
+  standard: {
+    height: 140,
+    width: 260, // For horizontal scrolls
+    thumbnailSize: 60,
+  },
+  large: {
+    height: 200,
+    thumbnailSize: 80,
+  }
+};
+
 export const globalStyles = {
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   primaryButton: {
     backgroundColor: colors.primary,

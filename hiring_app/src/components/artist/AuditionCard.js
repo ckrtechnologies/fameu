@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { colors, typography, spacing, shadows } from '../../theme/theme';
+import { typography, spacing, shadows } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const AuditionCard = ({ audition, onPress, style }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   if (!audition) return null;
 
   return (
@@ -12,16 +15,10 @@ const AuditionCard = ({ audition, onPress, style }) => {
       style={[styles.container, style]}
     >
       <View style={styles.imageContainer}>
-        {audition.thumbnail_url || audition.hiring_profiles?.logo_url ? (
-          <Image
-            source={{ uri: audition.thumbnail_url || audition.hiring_profiles.logo_url }}
-            style={styles.image}
-          />
-        ) : (
-          <View style={styles.categoryPlaceholder}>
-            <Text style={styles.categoryText}>{audition.category || 'Audition'}</Text>
-          </View>
-        )}
+        <Image
+          source={{ uri: (audition.thumbnail_url && audition.thumbnail_url !== 'null' && audition.thumbnail_url.trim() !== '') ? audition.thumbnail_url : ((audition.hiring_profiles?.logo_url && audition.hiring_profiles.logo_url !== 'null' && audition.hiring_profiles.logo_url.trim() !== '') ? audition.hiring_profiles.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }}
+          style={styles.image}
+        />
         {audition.is_urgent && (
           <View style={styles.urgentBadge}>
             <Text style={styles.urgentText}>URGENT</Text>
@@ -69,22 +66,23 @@ const AuditionCard = ({ audition, onPress, style }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     backgroundColor: colors.surfaceLight,
     borderRadius: 16,
     overflow: 'hidden',
-    width: 260, // Fixed width for horizontal scroll
-    marginRight: spacing.l,
+    width: 220, // Reduced from 260
+    marginRight: spacing.m, // Reduced from spacing.l
     ...shadows.medium,
   },
   imageContainer: {
-    height: 140,
+    height: 90, // Reduced from 100
     width: '100%',
     backgroundColor: colors.surfaceLight,
     position: 'relative',
   },
   image: {
+    ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
@@ -142,17 +140,17 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   content: {
-    padding: spacing.m,
+    padding: spacing.xs,
   },
   roleTitle: {
     ...typography.h3,
     color: colors.textMainLight,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   productionName: {
     ...typography.caption,
     color: colors.textMutedLight,
-    marginBottom: spacing.s,
+    marginBottom: 4,
   },
   detailsRow: {
     flexDirection: 'row',

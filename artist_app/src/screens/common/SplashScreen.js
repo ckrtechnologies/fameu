@@ -157,7 +157,7 @@ const getStyles = (colors) => StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.backgroundLight,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 10,

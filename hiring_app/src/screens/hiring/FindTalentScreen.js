@@ -6,17 +6,21 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ArrowLeft, User, Filter, X } from 'lucide-react-native';
 
-import { colors, typography, spacing } from '../../theme/theme';
+import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useSearchArtistsQuery } from '../../services/discoveryApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetProfessionsQuery } from '../../services/profileApi';
+import { useTheme } from '../../theme/ThemeProvider';
 
 
 
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
 export default function FindTalentScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -44,6 +48,7 @@ export default function FindTalentScreen() {
   }, [searchParams]);
 
   const { data: searchResponse, isFetching, refetch } = useSearchArtistsQuery(apiParams);
+  useRefetchOnFocus(refetch);
   const artists = searchResponse?.data || [];
 
   const { data: allArtistsResponse } = useSearchArtistsQuery({});
@@ -162,11 +167,11 @@ export default function FindTalentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundLight },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.m, paddingVertical: spacing.s,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderLight, backgroundColor: '#fff'
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderLight, backgroundColor: colors.surfaceLight
   },
   backButton: { padding: spacing.xs, marginRight: spacing.s },
   headerTitle: { flex: 1, color: colors.textMainLight },
@@ -205,7 +210,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xs,
     overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
-    height: 280,
+    height: 180,
     flex: 1,
     position: 'relative',
   },
@@ -220,7 +225,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     justifyContent: 'flex-end',
-    padding: spacing.m,
+    padding: spacing.xs,
   },
   cardContent: {
     width: '100%',
@@ -240,12 +245,12 @@ const styles = StyleSheet.create({
   modalBody: { paddingBottom: spacing.xxl },
   filterSectionTitle: { color: colors.textMainLight, marginBottom: spacing.s, marginTop: spacing.m },
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.borderLight },
+  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight },
   filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   filterChipText: { color: colors.textSecondaryLight },
   filterChipTextActive: { color: '#fff', fontWeight: 'bold' },
-  ageInput: { flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: '#fff', paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body },
-  locationInput: { height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: '#fff', paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body, marginBottom: spacing.m },
+  ageInput: { flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: colors.surfaceLight, paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body },
+  locationInput: { height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: colors.surfaceLight, paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body, marginBottom: spacing.m },
   modalFooter: { flexDirection: 'row', gap: spacing.m, paddingTop: spacing.m, borderTopWidth: 1, borderTopColor: colors.borderLight },
   clearBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, alignItems: 'center' },
   clearBtnText: { color: colors.textMainLight, fontWeight: '600' },

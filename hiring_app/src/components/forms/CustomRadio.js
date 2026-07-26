@@ -1,9 +1,12 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { spacing } from '../../theme/theme';
 import Typography from '../core/Typography';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const CustomRadio = ({ label, selected, onPress, style }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <TouchableOpacity style={[styles.container, style]} onPress={onPress} activeOpacity={0.8}>
       <View style={[styles.outer, selected && styles.outerSelected]}>
@@ -14,7 +17,7 @@ const CustomRadio = ({ label, selected, onPress, style }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',

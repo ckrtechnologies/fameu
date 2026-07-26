@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme, Alert } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef, DefaultTheme } from '@react-navigation/native';
 import { View, Text, Image, TouchableOpacity, Vibration, TextStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { store } from './src/store/store';
@@ -15,7 +15,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification } from '@react-native-firebase/messaging';
 import { setupPushNotifications } from './src/services/PushNotificationService';
 import { colors, typography } from './src/theme/theme';
-import { ThemeProvider } from './src/theme/ThemeProvider';
+import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 
 import Toast from 'react-native-toast-message';
 import ErrorBoundary from './src/components/core/ErrorBoundary';
@@ -202,6 +202,28 @@ const toastConfig = {
   )
 };
 
+const RootNavigation = () => {
+  const { colors, isDarkMode } = useTheme();
+  
+  const navigationTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: colors.backgroundLight,
+      card: colors.surfaceLight,
+      text: colors.textMainLight,
+      border: colors.borderLight,
+      primary: colors.primary,
+    },
+  };
+
+  return (
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+      <AppNavigator />
+    </NavigationContainer>
+  );
+};
+
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
@@ -303,6 +325,10 @@ function App(): React.JSX.Element {
         if (navigationRef.isReady()) {
           navigationRef.navigate('CompanyProfile', { scrollToComments: true });
         }
+      } else if (type === 'application') {
+        if (navigationRef.isReady()) {
+          navigationRef.navigate('AllApplicants');
+        }
       }
     });
 
@@ -330,6 +356,8 @@ function App(): React.JSX.Element {
               navigationRef.navigate('AuditionDetails', { auditionId: targetId, scrollToComments: true });
             } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'profile') {
               navigationRef.navigate('CompanyProfile', { scrollToComments: true });
+            } else if (type === 'application') {
+              navigationRef.navigate('AllApplicants');
             }
           }, 1000);
         }
@@ -344,9 +372,7 @@ function App(): React.JSX.Element {
       <SafeAreaProvider>
         <ThemeProvider>
           <GlobalStatusBar />
-          <NavigationContainer ref={navigationRef}>
-            <AppNavigator />
-          </NavigationContainer>
+          <RootNavigation />
           <Toast config={toastConfig} />
           <GlobalAlertProvider ref={GlobalAlertRef} />
         </ThemeProvider>

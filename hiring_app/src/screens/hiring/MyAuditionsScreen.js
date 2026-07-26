@@ -4,8 +4,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { format } from 'date-fns';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetMyAuditionsQuery } from '../../services/auditionApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
 import CustomButton from '../../components/forms/CustomButton';
@@ -14,11 +15,15 @@ import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { getAuditionLiveStatus } from '../../utils/dateUtils';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export default function MyAuditionsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
   const { data: auditionsResponse, isLoading, isFetching, refetch } = useGetMyAuditionsQuery();
+  useRefetchOnFocus(refetch);
   const { data: profileResponse } = useGetCompanyProfileQuery();
   const { data: professionsResponse } = useGetProfessionsQuery();
   
@@ -112,9 +117,10 @@ export default function MyAuditionsScreen() {
         </View>
       </View>
 
-      {item.thumbnail_url && (
-        <Image source={{ uri: item.thumbnail_url }} style={{ width: '100%', height: 160, borderRadius: 8, marginBottom: 10 }} />
-      )}
+      <Image 
+        source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profileResponse?.data?.logo_url && profileResponse.data.logo_url !== 'null' && profileResponse.data.logo_url.trim() !== '') ? profileResponse.data.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} 
+        style={{ width: '100%', height: 160, borderRadius: 8, marginBottom: 10 }} 
+      />
 
       <Text style={styles.cardRole}>{item.role_description}</Text>
 
@@ -223,7 +229,7 @@ export default function MyAuditionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',

@@ -16,7 +16,7 @@ export default function ApplyAuditionScreen() {
   const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
-  const { auditionId } = route.params;
+  const { auditionId, mode } = route.params;
 
   const [coverNote, setCoverNote] = useState('');
   const [videoLink, setVideoLink] = useState('');
@@ -26,7 +26,7 @@ export default function ApplyAuditionScreen() {
 
   const handleApply = async () => {
     try {
-      await applyToAudition({ id: auditionId, cover_note: coverNote, selected_video: videoLink }).unwrap();
+      await applyToAudition({ id: auditionId, cover_note: coverNote, video_link: videoLink }).unwrap();
       showSuccess('', 'Application submitted successfully!');
       setTimeout(() => {
         navigation.navigate('MainTabs', { screen: 'Tabs', params: { screen: 'Applications' } });
@@ -82,7 +82,13 @@ export default function ApplyAuditionScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Apply for Role</Text>
       </View>
-      <KeyboardAwareScrollView style={styles.container}>
+      <KeyboardAwareScrollView 
+        style={styles.container}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: spacing.xl }}
+        enableOnAndroid={true}
+        extraScrollHeight={100}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.label}>Cover Note (Optional)</Text>
         <TextInput
           style={styles.textArea}
@@ -95,16 +101,20 @@ export default function ApplyAuditionScreen() {
           textAlignVertical="top"
         />
 
-        <Text style={[styles.label, { marginTop: spacing.l }]}>Audition Video Link (Optional)</Text>
-        <TextInput
-          style={[styles.input, { borderColor: colors.borderLight, color: colors.textMainLight }]}
-          placeholder="e.g. YouTube or Instagram URL"
-          placeholderTextColor={colors.textMutedLight}
-          value={videoLink}
-          onChangeText={setVideoLink}
-          autoCapitalize="none"
-          keyboardType="url"
-        />
+        {mode === 'Online' && (
+          <>
+            <Text style={[styles.label, { marginTop: spacing.l }]}>Audition Video Link (Optional)</Text>
+            <TextInput
+              style={[styles.input, { borderColor: colors.borderLight, color: colors.textMainLight }]}
+              placeholder="e.g. YouTube or Instagram URL"
+              placeholderTextColor={colors.textMutedLight}
+              value={videoLink}
+              onChangeText={setVideoLink}
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+          </>
+        )}
 
         <CustomButton 
           title="Submit Application" 
@@ -158,7 +168,6 @@ const getStyles = (colors) => StyleSheet.create({
   },
   textArea: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
     padding: spacing.m,
     ...typography.body,
     color: colors.textMainLight,

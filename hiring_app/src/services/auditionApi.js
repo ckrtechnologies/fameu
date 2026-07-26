@@ -1,6 +1,7 @@
 import { apiSlice } from './apiSlice';
 
 export const auditionApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     uploadPdf: builder.mutation({
       query: (formData) => ({

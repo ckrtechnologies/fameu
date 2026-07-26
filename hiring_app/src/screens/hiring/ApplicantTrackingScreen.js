@@ -5,10 +5,13 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetApplicantsQuery, useUpdateApplicationStatusMutation } from '../../services/auditionApi';
 import { useStartConversationMutation } from '../../services/chatApi';
+import { useTheme } from '../../theme/ThemeProvider';
 export default function ApplicantTrackingScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -248,7 +251,7 @@ export default function ApplicantTrackingScreen() {
                   style={styles.viewAuditionBtn}
                   onPress={() => {
                     setModalVisible(false);
-                    navigation.navigate('AuditionDetails', { id: auditionId });
+                    navigation.navigate('AuditionDetails', { auditionId: auditionId });
                   }}
                 >
                   <Icon name="open-outline" size={16} color={colors.primary} />
@@ -263,12 +266,12 @@ export default function ApplicantTrackingScreen() {
                 </Text>
               </View>
 
-              {selectedApp?.selected_video && (
+              {(selectedApp?.video_link || selectedApp?.selected_video || selectedApp?.users?.artist_profiles?.[0]?.video_url) && (
                 <View style={styles.videoSection}>
-                  <Text style={styles.modalLabel}>Submitted Video:</Text>
+                  <Text style={styles.modalLabel}>{(selectedApp?.video_link || selectedApp?.selected_video) ? 'Submission Video:' : 'Profile Video:'}</Text>
                   <TouchableOpacity 
                     style={styles.videoLinkBtn}
-                    onPress={() => Linking.openURL(selectedApp.selected_video)}
+                    onPress={() => Linking.openURL(selectedApp?.video_link || selectedApp?.selected_video || selectedApp?.users?.artist_profiles?.[0]?.video_url)}
                   >
                     <Icon name="play-circle-outline" size={20} color="#FFF" />
                     <Text style={styles.videoLinkText}> Watch Video</Text>
@@ -283,7 +286,7 @@ export default function ApplicantTrackingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     flex: 1,
     justifyContent: 'center',

@@ -7,13 +7,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { format } from 'date-fns';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetAuditionDetailsQuery, useDeleteAuditionMutation } from '../../services/auditionApi';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import CustomButton from '../../components/forms/CustomButton';
 import CommentsSection from '../../components/CommentsSection';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export default function AuditionDetailsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -262,7 +265,7 @@ export default function AuditionDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',

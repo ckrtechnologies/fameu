@@ -118,7 +118,7 @@ const getStyles = (colors) => StyleSheet.create({
   visitorCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surfaceLight,
     padding: spacing.m,
     borderRadius: 12,
     marginBottom: spacing.m,

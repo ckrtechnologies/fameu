@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { spacing } from '../../theme/theme';
 import Typography from './Typography';
 import CustomButton from '../forms/CustomButton';
+import { useTheme } from '../../theme/ThemeProvider';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -57,38 +58,38 @@ class ErrorBoundary extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
-  },
-  content: {
-    flex: 1,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
-    alignItems: 'center',
     padding: spacing.xl,
   },
+  content: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
-    color: colors.primary,
     marginBottom: spacing.m,
+    color: '#ef4444',
     textAlign: 'center',
   },
   message: {
-    color: colors.textMuted,
     textAlign: 'center',
     marginBottom: spacing.xl,
-  },
-  button: {
-    minWidth: 200,
+    color: '#6b7280',
   },
   devErrorBox: {
-    backgroundColor: '#FFE5E5',
+    backgroundColor: '#f3f4f6',
     padding: spacing.m,
     borderRadius: 8,
     marginBottom: spacing.xl,
     width: '100%',
   },
   devErrorText: {
-    color: '#D8000C',
+    color: '#374151',
     fontSize: 12,
   },
+  button: {
+    width: '100%',
+  }
 });
 
 export default ErrorBoundary;

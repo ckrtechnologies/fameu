@@ -7,6 +7,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetSavedAuditionsQuery } from '../../services/discoverApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
 export default function SavedAuditionsScreen() {
   const { colors } = useTheme();
@@ -14,6 +15,7 @@ export default function SavedAuditionsScreen() {
   const navigation = useNavigation();
 
   const { data: savedResponse, isLoading, isError, refetch, isFetching } = useGetSavedAuditionsQuery();
+  useRefetchOnFocus(refetch);
 
   const handleAuditionPress = (item) => {
     navigation.navigate('AuditionDetail', { id: item.id });
@@ -59,6 +61,7 @@ export default function SavedAuditionsScreen() {
               <AuditionCard 
                 audition={item} 
                 onPress={() => handleAuditionPress(item)} 
+                style={{ width: '100%', marginBottom: spacing.l, marginRight: 0 }}
               />
             )}
             contentContainerStyle={styles.listContent}

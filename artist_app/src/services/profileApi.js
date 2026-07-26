@@ -31,14 +31,6 @@ export const profileApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Profile'],
     }),
-    requestVerification: builder.mutation({
-      query: (verificationData) => ({
-        url: '/artist_app/profile/verify',
-        method: 'POST',
-        body: verificationData,
-      }),
-      invalidatesTags: ['Profile'],
-    }),
     uploadMedia: builder.mutation({
       queryFn: async (formData, api) => {
         try {
@@ -99,6 +91,5 @@ export const {
   useUpdateCategoryMutation,
   useUploadMediaMutation,
   useUploadGenericFileMutation,
-  useRequestVerificationMutation,
   useLazyCheckUsernameQuery,
 } = profileApi;

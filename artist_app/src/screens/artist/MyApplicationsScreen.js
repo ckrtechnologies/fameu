@@ -6,6 +6,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
 import { useGetMyApplicationsQuery } from '../../services/discoverApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
 const TABS = ['All', 'Pending', 'Accepted', 'Rejected'];
 
@@ -23,6 +24,7 @@ export default function MyApplicationsScreen() {
   }, [route.params?.initialTab]);
 
   const { data: applications = [], isLoading, isError, refetch } = useGetMyApplicationsQuery();
+  useRefetchOnFocus(refetch);
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -102,7 +104,7 @@ export default function MyApplicationsScreen() {
               <View style={styles.cardWrapper}>
                 <AuditionCard 
                   // Pass the nested audition data if present, else fallback to item
-                  audition={item.audition || item} 
+                  audition={item.auditions || item.audition || item} 
                   onPress={() => handleAuditionPress(item)} 
                   style={styles.fullWidthCard}
                 />

@@ -295,7 +295,7 @@ router.delete('/auditions/:id', async (req, res) => {
 // Fraud Reports
 router.get('/fraud-reports', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('fraud_reports').select('*, reporter:users(display_name, email), audition:auditions(title)').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('fraud_reports').select('*, reporter:users!fraud_reports_reported_by_fkey(display_name, email), reported_user:users!fraud_reports_reported_user_id_fkey(display_name, email), audition:auditions(title)').order('created_at', { ascending: false });
     if (error) throw error;
     res.json({ success: true, data });
   } catch (error) {
@@ -307,6 +307,16 @@ router.put('/fraud-reports/:id/action', async (req, res) => {
   try {
     const { action_taken, status } = req.body;
     const { error } = await supabase.from('fraud_reports').update({ action_taken, status }).eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/fraud-reports/:id', async (req, res) => {
+  try {
+    const { error } = await supabase.from('fraud_reports').delete().eq('id', req.params.id);
     if (error) throw error;
     res.json({ success: true });
   } catch (error) {
@@ -362,30 +372,6 @@ router.get('/applications', async (req, res) => {
   }
 });
 
-// CMS
-router.get('/cms', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('cms_content').select('*');
-    if (error) throw error;
-    const cmsMap = {};
-    data.forEach(item => cmsMap[item.key] = item.value);
-    res.json({ success: true, data: cmsMap });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-router.put('/cms', async (req, res) => {
-  try {
-    const { key, value } = req.body;
-    const { error } = await supabase.from('cms_content').update({ value }).eq('key', key);
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 // Notification Management System (NMS)
 router.post('/notifications/send', async (req, res) => {
   try {
@@ -422,7 +408,7 @@ router.post('/notifications/send', async (req, res) => {
       title,
       body,
       type: 'admin_broadcast',
-      data: { deepLink: deepLink || '' }
+      data: { deepLink: deepLink || '', target }
     }));
 
     // Batch insert in chunks of 500 to avoid limits
@@ -442,7 +428,7 @@ router.get('/notifications/history', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('notifications')
-      .select('*')
+      .select('*, users!notifications_user_id_fkey(display_name, email, mobile, role)')
       .eq('type', 'admin_broadcast')
       .order('created_at', { ascending: false });
       

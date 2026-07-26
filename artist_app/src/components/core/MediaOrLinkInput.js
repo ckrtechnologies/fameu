@@ -124,7 +124,7 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   actionBtn: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.borderLight,
     borderRadius: 8,

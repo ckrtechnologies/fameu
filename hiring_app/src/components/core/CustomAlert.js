@@ -1,8 +1,9 @@
 import React from 'react';
 import { Modal, View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { spacing } from '../../theme/theme';
 import Typography from './Typography';
 import CustomButton from '../forms/CustomButton';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const CustomAlert = ({
   visible,
@@ -11,6 +12,8 @@ const CustomAlert = ({
   onClose,
   buttons = [], 
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Modal
       transparent
@@ -23,7 +26,7 @@ const CustomAlert = ({
           <Typography variant="h2" style={styles.title}>{title}</Typography>
           <Typography variant="body" style={styles.message}>{message}</Typography>
           
-          <View style={styles.buttonContainer}>
+          <View style={buttons.length > 2 ? styles.buttonContainerVertical : styles.buttonContainer}>
             {buttons.length > 0 ? (
               buttons.map((btn, index) => (
                 <CustomButton
@@ -33,8 +36,11 @@ const CustomAlert = ({
                     btn.onPress && btn.onPress();
                     onClose();
                   }}
-                  variant={btn.variant || 'primary'}
-                  style={[styles.button, index > 0 && styles.buttonMargin]}
+                  variant={btn.variant || (btn.style === 'cancel' ? 'outline' : 'primary')}
+                  style={[
+                    buttons.length > 2 ? { width: '100%' } : styles.button, 
+                    index > 0 && (buttons.length > 2 ? styles.buttonMarginVertical : styles.buttonMargin)
+                  ]}
                 />
               ))
             ) : (
@@ -51,7 +57,7 @@ const CustomAlert = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -83,11 +89,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
+  buttonContainerVertical: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
   button: {
     flex: 1,
   },
   buttonMargin: {
     marginLeft: spacing.m,
+  },
+  buttonMarginVertical: {
+    marginTop: spacing.m,
   },
   singleButton: {
     minWidth: 120,

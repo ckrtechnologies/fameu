@@ -3,7 +3,7 @@ import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Refres
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { setConversations } from '../../store/slices/chatSlice';
+
 import Icon from 'react-native-vector-icons/Ionicons';
 import { format } from 'date-fns';
 
@@ -11,6 +11,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetInboxQuery } from '../../services/chatApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
 export default function InboxScreen() {
   const { colors } = useTheme();
@@ -18,16 +19,11 @@ export default function InboxScreen() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { data: response, isLoading, isFetching, refetch } = useGetInboxQuery();
+  useRefetchOnFocus(refetch);
   const { user } = useSelector((state) => state.auth);
   const conversations = useSelector(state => state.chat.conversations);
   
   const [searchQuery, setSearchQuery] = useState('');
-
-  React.useEffect(() => {
-    if (response?.data) {
-      dispatch(setConversations(response.data));
-    }
-  }, [response, dispatch]);
 
   const filteredConversations = useMemo(() => {
     if (!searchQuery.trim() || !conversations) return conversations;
@@ -101,14 +97,14 @@ export default function InboxScreen() {
 
   if (isLoading) {
     return (
-      <View style={[globalStyles.container, styles.center]}>
+      <View style={[globalStyles.container, styles.center, { backgroundColor: colors.backgroundLight }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={globalStyles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={[globalStyles.container, { backgroundColor: colors.backgroundLight }]} edges={['bottom', 'left', 'right']}>
       <View style={styles.searchContainer}>
         <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
         <TextInput

@@ -1,5 +1,7 @@
 import supabase from "../../../config/supabase.js";
 import artistService from "../../../services/artist.service.js";
+import notificationService from "../../../services/notification.service.js";
+import chatService from "../../../services/chat.service.js";
 
 const artistsController = {
   // Search and Discover Artists
@@ -12,12 +14,13 @@ const artistsController = {
         .from('artist_profiles')
         .select(`
           *,
-          users (
+          users!inner (
             display_name,
             email,
             username
           )
-        `);
+        `)
+        .eq('users.is_blacklisted', false);
 
       if (category) {
         const cats = category.split(',').map(c => c.trim().toLowerCase());
@@ -64,24 +67,26 @@ const artistsController = {
   inviteArtist: async (req, res, next) => {
     try {
       const { id: artistId } = req.params;
-      const { audition_id } = req.body;
-      const hiringId = req.user.id;
+      const { audition_id, message } = req.body;
+
+      // Get hiring profile id
+      const { data: hiringProfile } = await supabase.from('hiring_profiles').select('id').eq('user_id', req.user.id).single();
+      if (!hiringProfile) {
+        return res.status(403).json({ success: false, error: 'Hiring profile not found' });
+      }
+      const hiringId = hiringProfile.id;
 
       // Ensure the audition belongs to the hiring company
-      const { data: audition } = await supabase.from('auditions').select('hiring_id, title').eq('id', audition_id).single();
+      const { data: audition } = await supabase.from('auditions').select('hiring_id, title, thumbnail_url').eq('id', audition_id).single();
       if (!audition || audition.hiring_id !== hiringId) {
         return res.status(403).json({ success: false, error: 'Not authorized to invite for this audition' });
       }
 
-      // Insert notification
-      const { error } = await supabase.from('notifications').insert([{
-        user_id: artistId,
-        type: 'invite',
-        message: `You have been invited to audition for: ${audition.title}`,
-        related_id: audition_id
-      }]);
+      // Send chat message (this automatically sends a chat push notification)
+      const content = `I would like to invite you to audition for: ${audition.title}.${message ? `\n\nMessage: ${message}` : ''}\n\n[AUDITION_INVITE:${audition_id}|${audition.title}|${audition.thumbnail_url || ''}]`;
+      const conversation = await chatService.getOrCreateConversation(req.user.id, artistId);
+      await chatService.saveMessage(conversation.id, req.user.id, content);
 
-      if (error) throw error;
       res.status(200).json({ success: true, message: 'Invitation sent' });
     } catch (error) {
       next(error);

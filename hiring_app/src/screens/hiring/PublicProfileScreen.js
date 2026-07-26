@@ -1,13 +1,14 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, Animated, Text } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { colors, typography, spacing } from '../../theme/theme';
+import { typography, spacing } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
 import Typography from '../../components/core/Typography';
 import CustomButton from '../../components/forms/CustomButton';
 import { 
@@ -114,6 +115,8 @@ const CustomVideoPlayerItem = ({ uri, label }) => {
 };
 
 export default function PublicProfileScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
   const { username, scrollToComments } = route.params;
@@ -126,6 +129,12 @@ export default function PublicProfileScreen() {
   const hiringId = profileData?.role === 'hiring' ? (Array.isArray(profileData?.profile) ? profileData?.profile[0]?.id : profileData?.profile?.id) : null;
   const { data: auditions, isLoading: isAuditionsLoading } = useGetFeedQuery({ hiring_id: hiringId }, { skip: !hiringId });
   
+  React.useEffect(() => {
+    if (profileData && profileData.role === 'artist' && profileData.profile) {
+      navigation.replace('ArtistProfileScreen', { id: profileData.profile.user_id });
+    }
+  }, [profileData, navigation]);
+
   const scrollViewRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -141,12 +150,38 @@ export default function PublicProfileScreen() {
   const [startConversation, { isLoading: isStartingChat }] = useStartConversationMutation();
   const [recordVisit] = useRecordVisitMutation();
 
+  const parseArray = (str) => {
+    if (!str) return [];
+    if (typeof str === 'string') {
+      try { return JSON.parse(str); } catch(e) { return str.split(',').filter(Boolean); }
+    }
+    if (Array.isArray(str)) return str;
+    return [];
+  };
+
+  const getVideoInfo = (url) => {
+    if (!url) return null;
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return { type: 'youtube', thumbnail: `https://img.youtube.com/vi/${url.split('v=')[1]?.split('&')[0] || url.split('youtu.be/')[1]?.split('?')[0]}/0.jpg` };
+    if (url.includes('vimeo.com')) return { type: 'vimeo' };
+    return { type: 'other' };
+  };
+
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(20)).current;
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true })
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
+
   // Record a profile visit when the profile loads (skip self-views)
   React.useEffect(() => {
     if (profileData?.id && currentUserId !== profileData.id) {
       recordVisit(profileData.id).catch(() => {}); // Fire-and-forget
     }
-  }, [profileData?.id]);
+  }, [profileData?.id, currentUserId, recordVisit]);
   
   const [activeTab, setActiveTab] = useState('Overview');
   const [showComments, setShowComments] = useState(false);
@@ -310,62 +345,347 @@ export default function PublicProfileScreen() {
             
             {activeTab === 'Overview' ? (
               <View style={styles.portfolioSection}>
-                <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 24, marginHorizontal: spacing.xl }}>
-                  <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Basic Info</Typography>
-                  {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills'].map((k) => {
-                    const v = profileData.profile[k];
-                    if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                    const label = k.charAt(0).toUpperCase() + k.slice(1);
-                    const value = Array.isArray(v) ? v.join(', ') : String(v);
+            {(() => {
+              const profileVideos = [
+                { url: profileData.profile.intro_video_url, title: 'Intro Video' },
+                { url: profileData.profile.left_profile_url, title: 'Left Profile' },
+                { url: profileData.profile.right_profile_url, title: 'Right Profile' }
+              ].filter(v => v.url && v.url.trim().length > 0);
+
+              if (profileVideos.length === 0) return null;
+
+              return (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12, paddingHorizontal: spacing.xl }}>Profile Videos</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                    {profileVideos.map((video, index) => (
+                          <View key={index} style={{ marginRight: spacing.m, width: 140 }}>
+                            <TouchableOpacity 
+                              onPress={() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.type !== 'direct') {
+                                  import('react-native').then(({ Linking }) => {
+                                    Linking.openURL(video.url).catch(() => {});
+                                  });
+                                } else {
+                                  navigation.navigate('VideoPortfolio', { videos: profileVideos.map(v => v.url), initialIndex: index });
+                                }
+                              }}
+                              style={{ width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden', borderRadius: 12, position: 'relative' }}
+                            >
+                              {(() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.thumbnail === 'INSTAGRAM') {
+                                  return (
+                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Icon name="logo-instagram" color={colors.primary} size={40} />
+                                    </View>
+                                  );
+                                }
+                                if (info?.thumbnail === 'LINK') {
+                                  return (
+                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Web Link</Text>
+                                    </View>
+                                  );
+                                }
+                                if (info?.thumbnail) {
+                                  return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />;
+                                }
+                                return <Video source={{ uri: video.url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
+                              })()}
+                              <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon name="play" size={40} color={colors.white} />
+                              </View>
+                            </TouchableOpacity>
+                            <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 8, textAlign: 'center', fontWeight: '600' }}>{video.title}</Text>
+                          </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              );
+            })()}
+
+            {/* Video Portfolio Grid */}
+            {typeof profileData.profile.video_url === 'string' && profileData.profile.video_url.trim().length > 0 && (
+              <View style={{ marginBottom: 24 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: 12 }}>
+                  <Text style={{ ...typography.h3, color: colors.primary }}>Video Portfolio</Text>
+                  <TouchableOpacity onPress={() => navigation.navigate('VideoPortfolio', { isOwner: true })}>
+                    <Text style={{ color: colors.primary, fontWeight: 'bold' }}>See All</Text>
+                  </TouchableOpacity>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                  {profileData.profile.video_url.split(',').filter(Boolean).map((vUrl, idx) => {
+                    const info = getVideoInfo(vUrl);
                     return (
-                      <View key={k} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-                        <Typography variant="body" style={{ ...typography.caption, color: colors.textMutedLight, width: 80 }}>{label}</Typography>
-                        <Typography variant="body" style={{ ...typography.body, color: colors.textMainLight, flex: 1 }}>{value}</Typography>
-                      </View>
+                      <TouchableOpacity 
+                        key={`vid-${idx}`}
+                        style={{ width: 140, height: 200, borderRadius: 12, backgroundColor: colors.surfaceDark, marginRight: 12, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}
+                        onPress={() => {
+                          if (info?.type !== 'direct') {
+                            import('react-native').then(({ Linking }) => {
+                              Linking.openURL(vUrl).catch(() => {});
+                            });
+                          } else {
+                            navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: idx });
+                          }
+                        }}
+                      >
+                        {info?.thumbnail === 'INSTAGRAM' ? (
+                          <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                            <Icon name="logo-instagram" color={colors.primary} size={32} />
+                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
+                          </View>
+                        ) : info?.thumbnail === 'LINK' ? (
+                          <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
+                          </View>
+                        ) : info?.thumbnail ? (
+                          <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
+                        ) : (
+                          <Video source={{ uri: vUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                        )}
+                        <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                          <Icon name="play" size={32} color={colors.white} />
+                        </View>
+                      </TouchableOpacity>
                     );
                   })}
+                </ScrollView>
+              </View>
+            )}
+
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                  <Icon name="information-circle-outline" size={24} color={colors.primary} />
+                </View>
+                <Text style={{ ...typography.h3, color: colors.primary }}>Basic Info</Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
+                  const v = profileData.profile[k];
+                  if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
+                  
+                  const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const value = Array.isArray(v) ? v.join(', ') : String(v);
+                  
+                  const icons = {
+                    age: 'calendar-outline',
+                    gender: 'male-female-outline',
+                    height: 'resize-outline',
+                    weight: 'barbell-outline',
+                    city: 'location-outline',
+                    languages: 'language-outline',
+                    skills: 'star-outline',
+                    availability_type: 'time-outline',
+                    available_dates: 'calendar-number-outline'
+                  };
+
+                  return (
+                    <View key={k} style={{ width: '48%', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }}>
+                      <Icon name={icons[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
+                      <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 4 }}>{label}</Text>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '600' }} numberOfLines={2}>{value}</Text>
+                    </View>
+                  );
+                })}
+
+                {/* CINTAA Info */}
+                {profileData.profile.is_cintaa_member && (
+                  <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginBottom: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                      <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+                      <View>
+                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Text>
+                        <Text style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({profileData.profile.cintaa_reg_number})</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </Animated.View>
+
+            {/* Tags / Preferences Section */}
+            {(profileData.profile.work_preference?.length > 0 || profileData.profile.preferred_cities?.length > 0 || profileData.profile.look_alike?.length > 0 || profileData.profile.hashtags?.length > 0) && (
+              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                  <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
+                    <Icon name="options-outline" size={24} color={colors.primary} />
+                  </View>
+                  <Text style={{ ...typography.h3, color: colors.primary }}>Preferences & Tags</Text>
                 </View>
                 
-                <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-                  <Typography variant="body" style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Typography>
-                  
-                  {(!profileData.profile.photo_urls || profileData.profile.photo_urls.length === 0) && !profileData.profile.video_url ? (
-                    <View style={styles.emptyPortfolio}>
-                      <Typography variant="body" style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Typography>
+                {profileData.profile.work_preference?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="briefcase" size={16} color="#f97316" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Work Preference</Text>
                     </View>
-                  ) : (
-                    <View>
-                      {/* Video Section */}
-                      {profileData.profile.video_url ? (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0, marginBottom: 16 }}>
-                          {profileData.profile.video_url.split(',').map((vidUrl, index) => (
-                            <TouchableOpacity 
-                              key={index} 
-                              onPress={() => {
-                                navigation.navigate('VideoPortfolio', { videos: profileData.profile.video_url.split(','), initialIndex: index });
-                              }}
-                              style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s }]}
-                            >
-                              <Icon name="play" size={40} color={colors.primary} />
-                            </TouchableOpacity>
-                          ))}
-                        </ScrollView>
-                      ) : null}
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(profileData.profile.work_preference).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(249, 115, 22, 0.15)' }]}><Text style={[styles.chipText, { color: '#f97316' }]}>{t}</Text></View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+                
+                {profileData.profile.preferred_cities?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="location" size={16} color="#14b8a6" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Preferred Locations</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(profileData.profile.preferred_cities).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}><Text style={[styles.chipText, { color: '#14b8a6' }]}>{t}</Text></View>
+                      ))}
+                    </View>
+                  </View>
+                )}
 
-                      {/* Photo Section */}
-                      {profileData.profile.photo_urls && profileData.profile.photo_urls.length > 0 ? (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
-                          {profileData.profile.photo_urls.map((imgUrl, index) => (
-                            <TouchableOpacity key={index} onPress={() => { setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
-                              <Image source={{ uri: imgUrl }} style={styles.galleryItem} />
-                            </TouchableOpacity>
-                          ))}
-                        </ScrollView>
-                      ) : null}
+                {profileData.profile.look_alike?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="people" size={16} color="#a855f7" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Look Alikes</Text>
                     </View>
-                  )}
-                </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(profileData.profile.look_alike).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}><Text style={[styles.chipText, { color: '#a855f7' }]}>{t}</Text></View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {profileData.profile.hashtags?.length > 0 && (
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                      <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
+                        <Icon name="pricetag" size={16} color="#ec4899" />
+                      </View>
+                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Hashtags</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                      {parseArray(profileData.profile.hashtags).map((t, i) => (
+                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}><Text style={[styles.chipText, { color: '#ec4899' }]}>#{t}</Text></View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </Animated.View>
+            )}
+
+            {/* Recent Assignments Section */}
+            {profileData.profile.recent_assignments?.length > 0 && (
+              <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+                <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Text>
+                {parseArray(profileData.profile.recent_assignments).map((assignment, idx) => (
+                  <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
+                      <View style={{ flex: 1, marginBottom: assignment.link ? 12 : 0 }}>
+                        <Text style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Text>
+                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{assignment.role ? `Role: ${assignment.role}` : ''} {assignment.year ? `• ${assignment.year}` : ''}</Text>
+                      </View>
+                      {assignment.link && assignment.link.trim().length > 0 && (() => {
+                        const linkStr = assignment.link.trim();
+                        const info = getVideoInfo(linkStr);
+                        return (
+                          <TouchableOpacity 
+                            style={{ 
+                              width: '100%', height: 160, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceDark, justifyContent: 'center', alignItems: 'center', position: 'relative'
+                            }}
+                            onPress={() => import('react-native').then(({ Linking }) => Linking.openURL(linkStr).catch(() => {}))}
+                          >
+                            {info?.thumbnail && info.thumbnail !== 'INSTAGRAM' && info.thumbnail !== 'LINK' ? (
+                              <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />
+                            ) : info?.type === 'direct' ? (
+                              <Video source={{ uri: linkStr }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                            ) : null}
+                            <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: (info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? 'rgba(0,0,0,0.3)' : colors.primary + '20', justifyContent: 'center', alignItems: 'center' }}>
+                              <Icon name={info?.thumbnail === 'INSTAGRAM' ? 'logo-instagram' : (!info || info?.thumbnail === 'LINK' ? 'link-outline' : 'play')} size={32} color={(info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? colors.white : colors.primary} />
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })()}
+                  </View>
+                ))}
               </View>
+            )}
+
+            <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+              <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Text>
+              
+              {(!profileData.profile.photo_urls || profileData.profile.photo_urls.length === 0) && !profileData.profile.video_url ? (
+                <View style={styles.emptyPortfolio}>
+                  <Text style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Text>
+                </View>
+              ) : (
+                <View>
+                  {/* Video Section */}
+                  {typeof profileData.profile.video_url === 'string' && profileData.profile.video_url.trim().length > 0 ? (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0, marginBottom: 16 }}>
+                    {profileData.profile.video_url.split(',').filter(Boolean).map((vidUrl, index) => {
+                      const info = getVideoInfo(vidUrl);
+                      return (
+                        <TouchableOpacity 
+                          key={index} 
+                          onPress={() => {
+                            const info = getVideoInfo(profileData.profile.video_url.split(',').filter(Boolean)[index]);
+                            if (info?.type !== 'direct') {
+                              import('react-native').then(({ Linking }) => {
+                                Linking.openURL(profileData.profile.video_url.split(',').filter(Boolean)[index]).catch(() => {});
+                              });
+                            } else {
+                              navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: index });
+                            }
+                          }}
+                          style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s, overflow: 'hidden' }]}
+                        >
+                          {info?.thumbnail === 'INSTAGRAM' ? (
+                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                              <Icon name="logo-instagram" color={colors.primary} size={32} />
+                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
+                            </View>
+                          ) : info?.thumbnail === 'LINK' ? (
+                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
+                            </View>
+                          ) : info?.thumbnail ? (
+                            <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' }} />
+                          ) : (
+                            <Video source={{ uri: vidUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                          )}
+                          <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                            <Icon name="play" size={40} color={colors.white} />
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
+
+                  {/* Photo Section */}
+                  {profileData.profile.photo_urls && profileData.profile.photo_urls.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
+                      {parseArray(profileData.profile.photo_urls).map((imgUrl, index) => (
+                        <TouchableOpacity key={index} onPress={() => { setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
+                          <Image source={{ uri: imgUrl }} style={styles.galleryItem} resizeMode="contain" />
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          </View>
             ) : (
               <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
                 {(() => {
@@ -560,19 +880,12 @@ export default function PublicProfileScreen() {
                           style={{ width: 140, height: 140, marginRight: spacing.m, backgroundColor: colors.surfaceLight, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderLight }}
                           onPress={() => navigation.navigate('AuditionDetail', { id: item.id })}
                         >
-                          {item.thumbnail_url ? (
-                            <View style={{ flex: 1, width: '100%', height: '100%', position: 'relative' }}>
-                              <Image source={{ uri: item.thumbnail_url }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-                              <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.xs }}>
-                                <Typography variant="caption" style={{ textAlign: 'center', color: '#fff' }} numberOfLines={2}>{item.title}</Typography>
-                              </View>
+                          <View style={{ flex: 1, width: '100%', height: '100%', position: 'relative' }}>
+                            <Image source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop' }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.xs }}>
+                              <Typography variant="caption" style={{ textAlign: 'center', color: '#fff' }} numberOfLines={2}>{item.title}</Typography>
                             </View>
-                          ) : (
-                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.s }}>
-                              <Icon name="videocam" size={28} color={colors.textMutedLight} />
-                              <Typography variant="caption" style={{ marginTop: spacing.xs, textAlign: 'center', color: colors.textMutedLight }} numberOfLines={2}>{item.title}</Typography>
-                            </View>
-                          )}
+                          </View>
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
@@ -621,7 +934,11 @@ export default function PublicProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: colors.backgroundLight,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.backgroundLight,

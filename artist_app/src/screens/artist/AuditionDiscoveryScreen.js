@@ -4,11 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
-import { typography, spacing } from '../../theme/theme';
-import CustomInput from '../../components/forms/CustomInput';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
+import AuditionPeekModal from '../../components/artist/AuditionPeekModal';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
+import CustomInput from '../../components/forms/CustomInput';
 import { useGetFeedQuery } from '../../services/discoverApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetProfessionsQuery } from '../../services/profileApi';
 
 const CATEGORY_MAP = {
@@ -63,18 +65,25 @@ export default function AuditionDiscoveryScreen() {
   const GENDERS = ['All', 'Male', 'Female', 'Other', 'Any'];
 
   const queryParams = { search };
+  
   if (activeCategory === 'Live (Today)') {
     queryParams.is_live = true;
   } else if (activeCategory === 'Trending') {
     queryParams.filter = 'trending';
-  } else if (activeCategory !== 'Relevant') {
+  } else if (activeCategory === 'Relevant') {
+    if (!search) {
+      queryParams.filter = 'relevant';
+    }
+  } else if (CATEGORY_MAP[activeCategory]) {
     queryParams.category = CATEGORY_MAP[activeCategory];
   }
   
-  if (filters.category !== 'All') {
+  if (filters?.category && filters.category !== 'All' && filters.category !== 'Any') {
      // override the tab category if filter modal has one selected
-     if (Array.isArray(filters.category) && !filters.category.includes('All')) {
-        queryParams.category = filters.category.join(',');
+     if (Array.isArray(filters.category)) {
+        if (!filters.category.includes('All') && !filters.category.includes('Any') && filters.category.length > 0) {
+            queryParams.category = filters.category.join(',');
+        }
      } else if (typeof filters.category === 'string') {
         queryParams.category = filters.category;
      }
@@ -97,6 +106,13 @@ export default function AuditionDiscoveryScreen() {
   ];
 
   const { data: feedData, isLoading, isError, refetch } = useGetFeedQuery(queryParams);
+  
+  // Peek Modal State
+  const [peekVisible, setPeekVisible] = useState(false);
+  const [peekAuditions, setPeekAuditions] = useState([]);
+  const [peekIndex, setPeekIndex] = useState(0);
+
+  useRefetchOnFocus(refetch);
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -108,8 +124,20 @@ export default function AuditionDiscoveryScreen() {
     }
   };
 
-  const handleAuditionPress = (id) => {
+  const handleViewAuditionDetails = (auditionOrId) => {
+    const id = typeof auditionOrId === 'object' && auditionOrId !== null ? auditionOrId.id : auditionOrId;
     navigation.navigate('AuditionDetail', { id });
+  };
+
+  const handleAuditionPress = (item, list = []) => {
+    if (list && list.length > 0) {
+      const index = list.findIndex(a => a.id === item.id);
+      setPeekAuditions(list);
+      setPeekIndex(index !== -1 ? index : 0);
+      setPeekVisible(true);
+    } else {
+      handleViewAuditionDetails(item);
+    }
   };
 
   const renderCategory = ({ item }) => (
@@ -124,6 +152,8 @@ export default function AuditionDiscoveryScreen() {
   );
 
   const auditions = Array.isArray(feedData?.data) ? feedData.data : [];
+
+  const loading = isLoading;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
@@ -155,7 +185,7 @@ export default function AuditionDiscoveryScreen() {
           />
         </View>
 
-        {isLoading ? (
+        {loading ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
@@ -172,19 +202,23 @@ export default function AuditionDiscoveryScreen() {
           </View>
         ) : (
           <FlatList
+            key={'grid_2_cols'}
             data={auditions}
+            numColumns={2}
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            columnWrapperStyle={styles.columnWrapper}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
             }
             renderItem={({ item }) => (
-              <View style={styles.cardWrapper}>
+              <View style={styles.gridCardWrapper}>
                 <AuditionCard 
                   audition={item} 
-                  onPress={() => handleAuditionPress(item.id)} 
-                  style={styles.fullWidthCard}
+                  onPress={() => handleAuditionPress(item, auditions)} 
+                  style={styles.gridCard}
+                  compact
                 />
               </View>
             )}
@@ -200,6 +234,16 @@ export default function AuditionDiscoveryScreen() {
         filterConfig={filterConfig}
         initialFilters={filters}
         defaultFilters={{ category: 'All', project_type: 'All', duration_type: 'All', city: 'All', gender_req: 'All', age_min: '', age_max: '' }}
+      />
+      <AuditionPeekModal
+        visible={peekVisible}
+        auditions={peekAuditions}
+        initialIndex={peekIndex}
+        onClose={() => setPeekVisible(false)}
+        onViewDetails={(item) => {
+          setPeekVisible(false);
+          handleViewAuditionDetails(item);
+        }}
       />
     </SafeAreaView>
   );
@@ -260,14 +304,19 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '700',
   },
   listContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.l, // slightly less padding to maximize space
     paddingBottom: spacing.xxl,
   },
-  cardWrapper: {
-    marginBottom: spacing.l,
-    alignItems: 'center',
+  columnWrapper: {
+    justifyContent: 'space-between',
   },
-  fullWidthCard: {
+  gridCardWrapper: {
+    flex: 1,
+    marginHorizontal: spacing.xs,
+    marginBottom: spacing.m,
+    maxWidth: '48%', // Ensure 2 columns fit evenly
+  },
+  gridCard: {
     width: '100%',
     marginRight: 0,
   },

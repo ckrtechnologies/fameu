@@ -1,4 +1,5 @@
 import supabase from '../config/supabase.js';
+import { INDIAN_CITIES } from '../constants/cities.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -39,8 +40,18 @@ class ArtistService {
       'look_alike', 'hashtags', 'intro_video_url', 'left_profile_url',
       'right_profile_url', 'recent_assignments', 'alternate_phone', 'alternate_email'
     ];
-    
     const payload = { updated_at: new Date().toISOString() };
+    
+    // Validate cities if present
+    if (profileData.city && !INDIAN_CITIES.includes(profileData.city)) {
+      throw new Error(`Invalid city: ${profileData.city}`);
+    }
+    if (profileData.preferred_cities && Array.isArray(profileData.preferred_cities)) {
+      const invalidCities = profileData.preferred_cities.filter(c => !INDIAN_CITIES.includes(c));
+      if (invalidCities.length > 0) {
+        throw new Error(`Invalid preferred cities: ${invalidCities.join(', ')}`);
+      }
+    }
     if (!existing) {
       payload.user_id = userId;
     }
@@ -185,6 +196,7 @@ class ArtistService {
       .from('artist_profiles')
       .select('*, users!inner(username, avatar_url, followers_count, following_count)')
       .eq('id', artistId)
+      .eq('users.is_blacklisted', false)
       .single();
 
     if (error || !profile) return null;
@@ -314,51 +326,6 @@ class ArtistService {
     }
 
     return data;
-  }
-
-  /**
-   * Submit a verification request
-   */
-  async submitVerificationRequest(userId, payload) {
-    const { documentUrl, socialLinks } = payload;
-    
-    // Check if a request already exists
-    const { data: existingRequest } = await supabase
-      .from('verification_requests')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', 'pending')
-      .single();
-
-    if (existingRequest) {
-      throw new Error('You already have a pending verification request.');
-    }
-
-    // Insert new request
-    const { error: insertError } = await supabase
-      .from('verification_requests')
-      .insert({
-        user_id: userId,
-        document_url: documentUrl,
-        social_links: socialLinks,
-        status: 'pending'
-      });
-
-    if (insertError) {
-      throw new Error(`Failed to submit verification request: ${insertError.message}`);
-    }
-
-    // Update artist profile status
-    const { error: updateError } = await supabase
-      .from('artist_profiles')
-      .update({ verification_status: 'pending' })
-      .eq('user_id', userId);
-
-    if (updateError) {
-      throw new Error(`Failed to update profile status: ${updateError.message}`);
-    }
-
-    return { success: true, message: 'Verification request submitted successfully.' };
   }
 }
 

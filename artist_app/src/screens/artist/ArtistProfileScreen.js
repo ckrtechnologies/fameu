@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import { useGetProfileQuery } from '../../services/profileApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
 import CommentsSection from '../../components/CommentsSection';
@@ -30,6 +31,7 @@ export default function ArtistProfileScreen() {
   const [acceptDisclaimer, { isLoading: isAccepting }] = useAcceptDisclaimerMutation();
   
   const { data: profileResponse, isLoading, isError, error, refetch } = useGetProfileQuery();
+  useRefetchOnFocus(refetch);
   
   const profile = profileResponse?.data;
   const [activeTab, setActiveTab] = useState('Overview');
@@ -139,25 +141,18 @@ export default function ArtistProfileScreen() {
             </Text>
             
             <View style={styles.disclaimerActions}>
-              <TouchableOpacity 
-                style={[styles.disclaimerBtn, styles.disclaimerBtnDeny]} 
-                onPress={() => dispatch(logout())}
-              >
-                <Text style={styles.disclaimerBtnText}>Deny</Text>
+              <TouchableOpacity style={[styles.disclaimerBtn, styles.disclaimerBtnDeny]} onPress={() => dispatch(logout())}>
+                <Text style={styles.disclaimerBtnTextDeny}>Deny</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.disclaimerBtn, styles.disclaimerBtnAgree]} 
-                onPress={async () => {
-                  try {
-                    await acceptDisclaimer().unwrap();
-                    dispatch({ type: 'auth/setCredentials', payload: { user: { ...user, disclaimer_accepted: true }, token } });
-                  } catch (e) {
-                    console.error("Failed to accept disclaimer", e);
-                  }
-                }}
-                disabled={isAccepting}
-              >
-                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnText}>I Agree</Text>}
+              <TouchableOpacity style={[styles.disclaimerBtn, styles.disclaimerBtnAgree]} onPress={async () => {
+                try {
+                  await acceptDisclaimer().unwrap();
+                  dispatch({ type: 'auth/setCredentials', payload: { user: { ...user, disclaimer_accepted: true }, token } });
+                } catch (e) {
+                  console.error("Failed to accept disclaimer", e);
+                }
+              }} disabled={isAccepting}>
+                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnTextAgree}>I Agree</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -217,7 +212,6 @@ export default function ArtistProfileScreen() {
         <View style={styles.bioSection}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
             <Text style={[styles.fullNameInsta, { marginBottom: 0 }]}>{fullName}</Text>
-            {profile?.is_verified && <VerifiedBadge size={22} style={{ marginLeft: 6 }} />}
           </View>
           <Text style={{ ...typography.body, color: colors.textMutedLight, marginBottom: 4 }}>@{username}</Text>
           {categories.length > 0 && (
@@ -291,51 +285,67 @@ export default function ArtistProfileScreen() {
         {/* Tab Content */}
         {activeTab === 'Overview' ? (
           <View style={styles.portfolioSection}>
-            {/* Intro Video Section */}
-            {profile.intro_video_url && (
-              <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-                <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Intro Video</Text>
-                <TouchableOpacity 
-                  onPress={() => {
-                    const info = getVideoInfo(profile.intro_video_url);
-                    if (info?.type !== 'direct') {
-                      import('react-native').then(({ Linking }) => {
-                        Linking.openURL(profile.intro_video_url).catch(() => {});
-                      });
-                    } else {
-                      navigation.navigate('VideoPortfolio', { videos: [profile.intro_video_url], initialIndex: 0 });
-                    }
-                  }}
-                  style={[styles.galleryItem, { width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden' }]}
-                >
-                  {(() => {
-                    const info = getVideoInfo(profile.intro_video_url);
-                    if (info?.thumbnail === 'INSTAGRAM') {
-                      return (
-                        <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                          <Icon name="logo-instagram" color={colors.primary} size={48} />
-                          <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
-                        </View>
-                      );
-                    }
-                    if (info?.thumbnail === 'LINK') {
-                      return (
-                        <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                          <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
-                        </View>
-                      );
-                    }
-                    if (info?.thumbnail) {
-                      return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' }} />;
-                    }
-                    return <Video source={{ uri: profile.intro_video_url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
-                  })()}
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
-                    <Icon name="play" size={50} color={colors.white} />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            )}
+            {/* Profile Videos Section */}
+            {(() => {
+              const profileVideos = [
+                { url: profile.intro_video_url, title: 'Intro Video' },
+                { url: profile.left_profile_url, title: 'Left Profile' },
+                { url: profile.right_profile_url, title: 'Right Profile' }
+              ].filter(v => v.url && v.url.trim().length > 0);
+
+              if (profileVideos.length === 0) return null;
+
+              return (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12, paddingHorizontal: spacing.xl }}>Profile Videos</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                    {profileVideos.map((video, index) => (
+                          <View key={index} style={{ marginRight: spacing.m, width: 140 }}>
+                            <TouchableOpacity 
+                              onPress={() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.type !== 'direct') {
+                                  import('react-native').then(({ Linking }) => {
+                                    Linking.openURL(video.url).catch(() => {});
+                                  });
+                                } else {
+                                  navigation.navigate('VideoPortfolio', { videos: profileVideos.map(v => v.url), initialIndex: index });
+                                }
+                              }}
+                              style={{ width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden', borderRadius: 12, position: 'relative' }}
+                            >
+                              {(() => {
+                                const info = getVideoInfo(video.url);
+                                if (info?.thumbnail === 'INSTAGRAM') {
+                                  return (
+                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Icon name="logo-instagram" color={colors.primary} size={40} />
+                                    </View>
+                                  );
+                                }
+                                if (info?.thumbnail === 'LINK') {
+                                  return (
+                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Web Link</Text>
+                                    </View>
+                                  );
+                                }
+                                if (info?.thumbnail) {
+                                  return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />;
+                                }
+                                return <Video source={{ uri: video.url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
+                              })()}
+                              <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon name="play" size={40} color={colors.white} />
+                              </View>
+                            </TouchableOpacity>
+                            <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 8, textAlign: 'center', fontWeight: '600' }}>{video.title}</Text>
+                          </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              );
+            })()}
 
             {/* Video Portfolio Grid */}
             {typeof profile.video_url === 'string' && profile.video_url.trim().length > 0 && (
@@ -521,8 +531,31 @@ export default function ArtistProfileScreen() {
                 <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Text>
                 {parseArray(profile.recent_assignments).map((assignment, idx) => (
                   <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
-                    <Text style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Text>
-                    <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{assignment.role ? `Role: ${assignment.role}` : ''} {assignment.year ? `• ${assignment.year}` : ''}</Text>
+                      <View style={{ flex: 1, marginBottom: assignment.link ? 12 : 0 }}>
+                        <Text style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Text>
+                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{assignment.role ? `Role: ${assignment.role}` : ''} {assignment.year ? `• ${assignment.year}` : ''}</Text>
+                      </View>
+                      {assignment.link && assignment.link.trim().length > 0 && (() => {
+                        const linkStr = assignment.link.trim();
+                        const info = getVideoInfo(linkStr);
+                        return (
+                          <TouchableOpacity 
+                            style={{ 
+                              width: '100%', height: 160, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceDark, justifyContent: 'center', alignItems: 'center', position: 'relative'
+                            }}
+                            onPress={() => import('react-native').then(({ Linking }) => Linking.openURL(linkStr).catch(() => {}))}
+                          >
+                            {info?.thumbnail && info.thumbnail !== 'INSTAGRAM' && info.thumbnail !== 'LINK' ? (
+                              <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />
+                            ) : info?.type === 'direct' ? (
+                              <Video source={{ uri: linkStr }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                            ) : null}
+                            <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: (info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? 'rgba(0,0,0,0.3)' : colors.primary + '20', justifyContent: 'center', alignItems: 'center' }}>
+                              <Icon name={info?.thumbnail === 'INSTAGRAM' ? 'logo-instagram' : (!info || info?.thumbnail === 'LINK' ? 'link-outline' : 'play')} size={32} color={(info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? colors.white : colors.primary} />
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })()}
                   </View>
                 ))}
               </View>
@@ -958,14 +991,20 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   disclaimerBtnDeny: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     marginRight: 10,
   },
   disclaimerBtnAgree: {
     backgroundColor: colors.primary,
     marginLeft: 10,
   },
-  disclaimerBtnText: {
+  disclaimerBtnTextDeny: {
+    color: colors.textMainLight,
+    fontWeight: 'bold',
+  },
+  disclaimerBtnTextAgree: {
     color: '#fff',
     fontWeight: 'bold',
   },

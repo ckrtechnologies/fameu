@@ -1,6 +1,6 @@
 import { GlobalAlert } from '../components/core/GlobalAlert';
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, Switch } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Search, Users, Building, ShieldCheck, LogOut, Trash2 } from 'lucide-react-native';
@@ -14,14 +14,18 @@ import FaqScreen from '../screens/hiring/FaqScreen';
 import ContactUsScreen from '../screens/hiring/ContactUsScreen';
 import LegalScreen from '../screens/hiring/LegalScreen';
 import TutorialScreen from '../screens/hiring/TutorialScreen';
+import ChangePasswordScreen from '../screens/common/ChangePasswordScreen';
 
-import { colors, typography, spacing } from '../theme/theme';
+import { typography, spacing } from '../theme/theme';
 import { useGetCompanyProfileQuery } from '../services/hiringApi';
 import { useDeleteAccountMutation } from '../services/authApi';
 import { apiSlice } from '../services/apiSlice';
+import { useTheme } from '../theme/ThemeProvider';
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props) {
+  const { colors, isDarkMode, toggleTheme } = useTheme();
+  const styles = getStyles(colors);
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { data: profileResponse } = useGetCompanyProfileQuery(user?.id, {
@@ -155,6 +159,13 @@ function CustomDrawerContent(props) {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.menuItem} 
+            onPress={() => props.navigation.navigate('ChangePassword')}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="lock-closed-outline" size={22} color={colors.textMainLight} /></View>
+            <Text style={styles.menuText}>Change Password</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuItem} 
             onPress={() => props.navigation.navigate('ContactUs')}
           >
             <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="mail-outline" size={22} color={colors.textMainLight} /></View>
@@ -174,6 +185,21 @@ function CustomDrawerContent(props) {
             <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="document-text-outline" size={22} color={colors.textMainLight} /></View>
             <Text style={styles.menuText}>Terms of Service</Text>
           </TouchableOpacity>
+          
+          <View style={[styles.menuItem, { justifyContent: 'space-between', paddingRight: spacing.xl }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+                <Icon name={isDarkMode ? "moon-outline" : "sunny-outline"} size={22} color={colors.primary} />
+              </View>
+              <Text style={styles.menuText}>Dark Mode</Text>
+            </View>
+            <Switch 
+              value={isDarkMode} 
+              onValueChange={toggleTheme}
+              trackColor={{ false: colors.borderDark, true: colors.primary }}
+              thumbColor={colors.white}
+            />
+          </View>
         </View>
 
       </DrawerContentScrollView>
@@ -195,6 +221,8 @@ function CustomDrawerContent(props) {
 }
 
 export default function DrawerNavigator() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
@@ -211,11 +239,12 @@ export default function DrawerNavigator() {
       <Drawer.Screen name="ContactUs" component={ContactUsScreen} />
       <Drawer.Screen name="Legal" component={LegalScreen} />
       <Drawer.Screen name="Tutorial" component={TutorialScreen} />
+      <Drawer.Screen name="ChangePassword" component={ChangePasswordScreen} />
     </Drawer.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     padding: spacing.xl,
     backgroundColor: colors.surfaceLight,

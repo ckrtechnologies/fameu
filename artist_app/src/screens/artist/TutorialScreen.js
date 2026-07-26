@@ -1,22 +1,39 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import Video from 'react-native-video';
 import Typography from '../../components/core/Typography';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/theme';
 
 const { width } = Dimensions.get('window');
 
+const STEPS = [
+  {
+    title: 'Complete Your Profile',
+    description: 'Add your best photos, an intro video, and details about your skills and measurements to stand out to casting directors.',
+    icon: 'person-circle-outline',
+    color: '#3b82f6'
+  },
+  {
+    title: 'Browse & Apply',
+    description: 'Search for auditions that match your profile, read the requirements, and submit your application with one tap.',
+    icon: 'search-outline',
+    color: '#f59e0b'
+  },
+  {
+    title: 'Communicate & Get Hired',
+    description: 'Chat directly with casting directors, send additional media if requested, and land your next big role!',
+    icon: 'chatbubbles-outline',
+    color: '#8b5cf6'
+  }
+];
+
 export default function TutorialScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
-
-  // For demonstration, a sample tutorial video URL
-  const tutorialVideoUrl = "https://www.w3schools.com/html/mov_bbb.mp4"; 
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -24,24 +41,33 @@ export default function TutorialScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
-        <Typography variant="body" style={styles.title}>How this app works</Typography>
+        <Typography variant="h2" style={styles.title}>How it Works</Typography>
         <View style={{ width: 24 }} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Typography variant="body" style={styles.description}>
-          Welcome to Fameu! Watch the short video below to learn how to create your profile, apply to auditions, and get discovered by casting directors.
+          Welcome to Fameu! Here is a quick overview of how you can use this app to jumpstart your career.
         </Typography>
 
-        <View style={styles.videoContainer}>
-          <Video 
-            source={{ uri: tutorialVideoUrl }}
-            style={styles.video}
-            controls={true}
-            resizeMode="contain"
-          />
+        <View style={styles.stepsContainer}>
+          {STEPS.map((step, index) => (
+            <View key={index} style={styles.stepCard}>
+              <View style={[styles.iconContainer, { backgroundColor: step.color + '15' }]}>
+                <Icon name={step.icon} size={32} color={step.color} />
+              </View>
+              <View style={styles.stepTextContainer}>
+                <Typography variant="h3" style={styles.stepTitle}>{step.title}</Typography>
+                <Typography variant="body" style={styles.stepDescription}>{step.description}</Typography>
+              </View>
+            </View>
+          ))}
         </View>
-      </View>
+        
+        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.goBack()}>
+          <Typography variant="h3" style={styles.actionBtnText}>Get Started</Typography>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -55,37 +81,68 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.xl,
+    padding: spacing.l,
     borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceDark,
+    borderBottomColor: colors.borderLight,
+    backgroundColor: colors.surfaceLight,
   },
   backButton: {
     padding: spacing.xs,
   },
   title: {
-    ...typography.h2,
     color: colors.textMainLight,
   },
   content: {
-    padding: spacing.xl,
-    alignItems: 'center',
+    padding: spacing.l,
   },
   description: {
-    ...typography.body,
     color: colors.textMutedLight,
     textAlign: 'center',
     marginBottom: spacing.xl,
     lineHeight: 24,
   },
-  videoContainer: {
-    width: width - (spacing.xl * 2),
-    height: (width - (spacing.xl * 2)) * (9 / 16),
-    backgroundColor: colors.surfaceDark,
-    borderRadius: 12,
-    overflow: 'hidden',
+  stepsContainer: {
+    marginTop: spacing.m,
   },
-  video: {
-    width: '100%',
-    height: '100%',
+  stepCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 16,
+    padding: spacing.l,
+    marginBottom: spacing.l,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'flex-start',
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.l,
+  },
+  stepTextContainer: {
+    flex: 1,
+  },
+  stepTitle: {
+    color: colors.textMainLight,
+    marginBottom: spacing.xs,
+  },
+  stepDescription: {
+    color: colors.textMutedLight,
+    lineHeight: 20,
+    fontSize: 14,
+  },
+  actionBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: spacing.l,
+    marginBottom: spacing.xxl,
+  },
+  actionBtnText: {
+    color: '#fff',
   }
 });

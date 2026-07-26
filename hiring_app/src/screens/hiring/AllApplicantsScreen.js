@@ -1,4 +1,5 @@
 import { showError, showSuccess } from '../../utils/toast';
+import messaging from '@react-native-firebase/messaging';
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image, Alert, TextInput, ScrollView, Modal, Linking , RefreshControl } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -6,11 +7,14 @@ import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context'
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetAllApplicantsQuery, useUpdateApplicationStatusMutation } from '../../services/auditionApi';
 import { useStartConversationMutation } from '../../services/chatApi';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
+import { useTheme } from '../../theme/ThemeProvider';
 export default function AllApplicantsScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -20,6 +24,15 @@ export default function AllApplicantsScreen() {
 
   const route = useRoute();
   const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'pending');
+
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      if (remoteMessage?.data?.type === 'application') {
+        refetch();
+      }
+    });
+    return unsubscribe;
+  }, [refetch]);
 
   const [filters, setFilters] = useState({
     gender: 'All',
@@ -350,12 +363,12 @@ export default function AllApplicantsScreen() {
                 </Text>
               </View>
 
-              {selectedApp?.selected_video && (
+              { (selectedApp?.video_link || selectedApp?.selected_video || selectedApp?.users?.artist_profiles?.[0]?.video_url) && (
                 <View style={styles.videoSection}>
-                  <Text style={styles.modalLabel}>Submitted Video:</Text>
+                  <Text style={styles.modalLabel}>{(selectedApp?.video_link || selectedApp?.selected_video) ? 'Submission Video:' : 'Profile Video:'}</Text>
                   <TouchableOpacity 
                     style={styles.videoLinkBtn}
-                    onPress={() => Linking.openURL(selectedApp.selected_video)}
+                    onPress={() => Linking.openURL(selectedApp?.video_link || selectedApp?.selected_video || selectedApp?.users?.artist_profiles?.[0]?.video_url)}
                   >
                     <Icon name="play-circle-outline" size={20} color="#FFF" />
                     <Text style={styles.videoLinkText}> Watch Video</Text>
@@ -371,7 +384,7 @@ export default function AllApplicantsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     flex: 1,
     justifyContent: 'center',

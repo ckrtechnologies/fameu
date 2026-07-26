@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, Image , RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useSearchArtistsQuery } from '../../services/discoveryApi';
 import FilterModal from '../../components/FilterModal';
@@ -10,8 +10,11 @@ import CustomButton from '../../components/forms/CustomButton';
 import EmptyState from '../../components/EmptyState';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import { useSelector } from 'react-redux';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export default function TalentSearchScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const user = useSelector(state => state.auth.user);
   const { data: profileResponse, isLoading: isProfileLoading , isFetching: isProfileFetching, refetch} = useGetCompanyProfileQuery(user?.id);
   const profile = profileResponse?.data;
@@ -119,11 +122,15 @@ export default function TalentSearchScreen({ navigation }) {
         </View>
       ) : (
         <FlatList
+          key={'grid_2_cols'}
           data={artists}
+          numColumns={2}
           keyExtractor={(item) => item.id.toString()}
           refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
           renderItem={renderArtistCard}
           contentContainerStyle={styles.listContent}
+          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <EmptyState 
               title="No artists found" 
@@ -144,7 +151,7 @@ export default function TalentSearchScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -183,8 +190,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   listContent: {
-    padding: spacing.m,
+    paddingHorizontal: spacing.s,
+    paddingTop: spacing.m,
     paddingBottom: 80,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.s,
   },
   card: {
     backgroundColor: colors.surfaceLight,
@@ -193,17 +205,26 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
     borderWidth: 1,
     borderColor: colors.borderLight,
+    flex: 1,
+    marginHorizontal: spacing.xs,
+    maxWidth: '48%',
+    alignItems: 'center',
   },
   cardHeader: {
-    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: spacing.m,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginBottom: spacing.s,
   },
   placeholderAvatar: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginBottom: spacing.s,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -213,23 +234,28 @@ const styles = StyleSheet.create({
     ...typography.h2,
   },
   cardInfo: {
-    flex: 1,
-    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   artistName: {
     ...typography.h3,
     color: colors.textMainLight,
+    textAlign: 'center',
+    width: '100%',
   },
   categoryText: {
-    ...typography.body2,
+    ...typography.caption,
     color: colors.primary,
     marginTop: 2,
     fontWeight: '600',
+    textAlign: 'center',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    justifyContent: 'center',
+    marginTop: 6,
+    width: '100%',
   },
   locationText: {
     ...typography.caption,
@@ -240,18 +266,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginTop: spacing.m,
-    alignItems: 'center',
+    justifyContent: 'center',
   },
   skillBadge: {
     backgroundColor: colors.borderLight,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    marginRight: 6,
+    marginRight: 4,
     marginBottom: 6,
   },
   skillText: {
     ...typography.caption,
+    fontSize: 10,
     color: colors.textMainLight,
   },
   moreSkillsText: {

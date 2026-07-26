@@ -1,11 +1,14 @@
 import React from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+;
 
-const Screen = ({ children, style, barStyle = 'light-content', backgroundColor = colors.backgroundDark }) => {
+const Screen = ({ children, style, barStyle = 'light-content', backgroundColor }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: backgroundColor || colors.backgroundDark }]}>
       <StatusBar barStyle={barStyle} backgroundColor={backgroundColor} />
       <View style={[styles.inner, style]}>
         {children}
@@ -14,7 +17,7 @@ const Screen = ({ children, style, barStyle = 'light-content', backgroundColor =
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background, // Pure white

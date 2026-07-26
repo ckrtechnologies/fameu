@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import { colors, spacing } from '../theme/theme';
+import { spacing } from '../theme/theme';
+import { useTheme } from '../theme/ThemeProvider';
 
 const SkeletonLoader = ({ width = '100%', height = 60, borderRadius = 8, style }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const animatedValue = new Animated.Value(0);
 
   React.useEffect(() => {
@@ -38,7 +41,7 @@ const SkeletonLoader = ({ width = '100%', height = 60, borderRadius = 8, style }
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   skeleton: {
     backgroundColor: colors.textMutedLight,
     marginBottom: spacing.m,

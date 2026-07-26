@@ -1,9 +1,12 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/theme';
+import { spacing } from '../../theme/theme';
 import Typography from '../core/Typography';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const CustomSlider = ({ label, value = 50, min = 0, max = 100 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
 
   return (
@@ -22,7 +25,7 @@ const CustomSlider = ({ label, value = 50, min = 0, max = 100 }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginBottom: spacing.m,
   },

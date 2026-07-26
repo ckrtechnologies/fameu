@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { colors, typography, spacing } from '../theme/theme';
+import { typography, spacing } from '../theme/theme';
 import CustomModal from './CustomModal';
 import CustomInput from './forms/CustomInput';
 import CustomButton from './forms/CustomButton';
 import { useGetProfessionsQuery } from '../services/profileApi';
+import { useTheme } from '../theme/ThemeProvider';
 
 export default function FilterModal({ visible, onClose, onApply, initialFilters }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [filters, setFilters] = useState(initialFilters || {
     category: '',
     gender: '',
     minAge: '',
     maxAge: '',
     location: '',
-  });
   });
 
   const { data: professionsResponse } = useGetProfessionsQuery();
@@ -106,7 +108,7 @@ export default function FilterModal({ visible, onClose, onApply, initialFilters 
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

@@ -113,7 +113,6 @@ export default function ArtistSettingsScreen() {
           </View>
           {renderSettingItem('person-outline', 'Edit Profile', () => navigation.navigate('EditProfile'))}
           {renderSettingItem('notifications-outline', 'Notifications', () => {})}
-          {renderSettingItem('shield-checkmark-outline', 'Verification', () => navigation.navigate('Verification'))}
         </View>
 
         <View style={styles.section}>

@@ -1,9 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { MapPin, Calendar, MonitorPlay, Mic2, Camera, Clapperboard, Briefcase, Clock, User, Users, Globe, Star } from 'lucide-react-native';
-import { colors } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
+;
 
 export const AnimatedTileGrid = ({ options, selectedValue, onSelect, isMulti }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <View style={styles.tileGridContainer}>
       {options.map((option, index) => {
@@ -30,6 +33,8 @@ export const AnimatedTileGrid = ({ options, selectedValue, onSelect, isMulti }) 
 };
 
 const AnimatedTile = ({ option, isSelected, onSelect, index }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fillAnim = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
 
@@ -90,7 +95,7 @@ const AnimatedTile = ({ option, isSelected, onSelect, index }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   tileGridContainer: {
     flexDirection: 'row', 
     flexWrap: 'wrap', 

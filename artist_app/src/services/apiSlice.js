@@ -22,9 +22,14 @@ const baseQuery = fetchBaseQuery({
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
   
-  if (result.error && result.error.status === 401) {
-    const { logout } = require('../store/slices/authSlice');
-    api.dispatch(logout());
+  if (result.error) {
+    if (result.error.status === 401) {
+      const { logout } = require('../store/slices/authSlice');
+      api.dispatch(logout());
+    } else if (result.error.status === 403 && result.error.data?.error?.includes('suspended')) {
+      const { setBlacklisted } = require('../store/slices/authSlice');
+      api.dispatch(setBlacklisted(true));
+    }
   }
   
   return result;

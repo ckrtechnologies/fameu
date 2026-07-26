@@ -9,11 +9,14 @@ import Typography from '../../components/core/Typography';
 import CustomAlert from '../../components/core/CustomAlert';
 import CustomInput from '../../components/forms/CustomInput';
 import CustomButton from '../../components/forms/CustomButton';
-import { spacing, colors } from '../../theme/theme';
+import { spacing } from '../../theme/theme';
 import { User } from 'lucide-react-native';
 import { useSendOtpMutation } from '../../services/authApi';
 import { Alert, ActivityIndicator } from 'react-native';
+import { useTheme } from '../../theme/ThemeProvider';
 const LoginScreen = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [identifier, setIdentifier] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
@@ -108,7 +111,7 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surfaceLight,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',

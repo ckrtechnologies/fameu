@@ -172,7 +172,8 @@ export default function ChatScreen() {
     
     if (!isTyping) {
       setIsTyping(true);
-      socketRef.current?.emit('typing', { conversationId, isTyping: true });
+      const socket = socketRef.current || SocketService.getSocket();
+      socket?.emit('typing', { conversationId, isTyping: true });
     }
 
     if (typingTimeoutRef.current) {
@@ -186,16 +187,58 @@ export default function ChatScreen() {
 
   const handleStopTyping = () => {
     setIsTyping(false);
-    socketRef.current?.emit('typing', { conversationId, isTyping: false });
+    const socket = socketRef.current || SocketService.getSocket();
+    socket?.emit('typing', { conversationId, isTyping: false });
   };
 
   const renderMessage = ({ item }) => {
     const isMe = item.sender_id === myId;
+    
+    // Parse [AUDITION_INVITE:id|title|image_url]
+    const inviteMatch = item.content.match(/\[AUDITION_INVITE:([^|\]]+)(?:\|([^|\]]+))?(?:\|([^|\]]*))?\]/);
+    let displayText = item.content;
+    let auditionId = null;
+    let auditionTitle = null;
+    let auditionImage = null;
+    
+    if (inviteMatch) {
+      auditionId = inviteMatch[1];
+      auditionTitle = inviteMatch[2] || 'Audition Details';
+      auditionImage = inviteMatch[3];
+      displayText = item.content.replace(inviteMatch[0], '').trim();
+    }
+
     return (
       <View style={[styles.messageBubble, isMe ? styles.messageMe : styles.messageThem]}>
-        <Typography variant="body" style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>
-          {item.content}
-        </Typography>
+        {displayText ? (
+          <Typography variant="body" style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>
+            {displayText}
+          </Typography>
+        ) : null}
+        
+        {auditionId && (
+          <TouchableOpacity 
+            style={[styles.auditionCardButton, { backgroundColor: isMe ? 'rgba(255,255,255,0.1)' : colors.surface }]}
+            onPress={() => navigation.navigate('AuditionDetail', { id: auditionId })}
+            activeOpacity={0.8}
+          >
+            {auditionImage ? (
+              <Image source={{ uri: auditionImage }} style={styles.auditionCardImage} />
+            ) : (
+              <View style={[styles.auditionCardImagePlaceholder, { backgroundColor: isMe ? 'rgba(255,255,255,0.2)' : colors.borderLight }]}>
+                <Icon name="image-outline" size={32} color={isMe ? colors.white : colors.textMutedLight} />
+              </View>
+            )}
+            <View style={styles.auditionCardContent}>
+              <Typography variant="body2" style={{ color: isMe ? colors.white : colors.textMainLight, fontWeight: 'bold' }} numberOfLines={2}>
+                {auditionTitle}
+              </Typography>
+              <Typography variant="caption" style={{ color: isMe ? 'rgba(255,255,255,0.7)' : colors.textMutedLight, marginTop: 4 }}>
+                View Audition Details &rarr;
+              </Typography>
+            </View>
+          </TouchableOpacity>
+        )}
         <Typography variant="caption" style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
           {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </Typography>
@@ -241,7 +284,7 @@ export default function ChatScreen() {
       {/* Chat Area */}
       <KeyboardAvoidingView 
         style={styles.container} 
-        behavior="padding"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 25}
       >
         {isLoading ? (
@@ -368,6 +411,28 @@ const getStyles = (colors) => StyleSheet.create({
   },
   messageTimeThem: {
     color: colors.textMutedLight,
+  },
+  auditionCardButton: {
+    marginTop: spacing.m,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    width: 240,
+  },
+  auditionCardImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: colors.borderLight,
+  },
+  auditionCardImagePlaceholder: {
+    width: '100%',
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  auditionCardContent: {
+    padding: spacing.s,
   },
   inputContainer: {
     flexDirection: 'row',

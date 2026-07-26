@@ -12,6 +12,7 @@ import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useSearchArtistsQuery, useSearchHiringAgenciesQuery } from '../../services/discoveryApi';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetProfessionsQuery } from '../../services/profileApi';
 
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
@@ -46,7 +47,6 @@ export default function ArtistDiscoveryScreen() {
     if (params.gender === 'All') delete params.gender;
     if (params.location === 'All Locations') delete params.location;
     if (params.company_type === 'All') delete params.company_type;
-    if (params.verification_status === 'All') delete params.verification_status;
     return params;
   }, [searchParams]);
 
@@ -54,6 +54,9 @@ export default function ArtistDiscoveryScreen() {
   const artists = (searchResponse?.data || []).filter(artist => artist.user_id !== currentUser?.id);
 
   const { data: agencyResponse, isFetching: isFetchingAgencies, refetch: refetchAgencies } = useSearchHiringAgenciesQuery(apiParams, { skip: activeTab !== 'Agencies' });
+
+  useRefetchOnFocus(refetchArtists);
+  useRefetchOnFocus(refetchAgencies);
   const agencies = agencyResponse?.data || [];
 
   const { data: allArtistsResponse } = useSearchArtistsQuery({});
@@ -70,8 +73,7 @@ export default function ArtistDiscoveryScreen() {
     { key: 'age', label: 'Age Range', type: 'range', minKey: 'minAge', maxKey: 'maxAge' },
     { key: 'location', label: 'Location', type: 'select', options: dynamicLocations.map(l => l.label) }
   ] : [
-    { key: 'company_type', label: 'Agency Type', type: 'select', options: ['All', 'Production House', 'Casting Agency', 'Ad Agency', 'Event Management', 'Record Label', 'Other'] },
-    { key: 'verification_status', label: 'Verification', type: 'select', options: ['All', 'Verified Only'] }
+    { key: 'company_type', label: 'Agency Type', type: 'select', options: ['All', 'Production House', 'Casting Agency', 'Ad Agency', 'Event Management', 'Record Label', 'Other'] }
   ];
 
   const renderTalentCard = ({ item }) => {
@@ -222,7 +224,7 @@ const getStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundLight },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.m, paddingVertical: spacing.s,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderLight, backgroundColor: '#fff'
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderLight, backgroundColor: colors.backgroundLight
   },
   headerTitle: { flex: 1, color: colors.textMainLight },
   backButton: { padding: spacing.xs, marginRight: spacing.s },
@@ -245,7 +247,7 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMutedLight,
   },
   filterButton: { padding: spacing.xs },
-  tabsContainer: { flexDirection: 'row', paddingHorizontal: spacing.m, borderBottomWidth: 1, borderBottomColor: colors.borderLight, backgroundColor: '#fff' },
+  tabsContainer: { flexDirection: 'row', paddingHorizontal: spacing.m, borderBottomWidth: 1, borderBottomColor: colors.borderLight, backgroundColor: colors.backgroundLight },
   tabButton: { flex: 1, paddingVertical: spacing.m, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabButtonActive: { borderBottomColor: colors.primary },
   tabText: { color: colors.textMutedLight },
@@ -295,7 +297,7 @@ const getStyles = (colors) => StyleSheet.create({
   emptyText: { color: colors.textMainLight, marginTop: spacing.m },
   
   agencyCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surfaceLight,
     borderRadius: 16,
     padding: spacing.m,
     marginBottom: spacing.m,
@@ -316,12 +318,12 @@ const getStyles = (colors) => StyleSheet.create({
   modalBody: { paddingBottom: spacing.xxl },
   filterSectionTitle: { color: colors.textMainLight, marginBottom: spacing.s, marginTop: spacing.m },
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.borderLight },
+  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight },
   filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   filterChipText: { color: colors.textMutedLight },
   filterChipTextActive: { color: '#fff', fontWeight: 'bold' },
-  ageInput: { flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: '#fff', paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body },
-  locationInput: { height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: '#fff', paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body, marginBottom: spacing.m },
+  ageInput: { flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: colors.surfaceLight, paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body },
+  locationInput: { height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: colors.surfaceLight, paddingHorizontal: spacing.m, color: colors.textMainLight, ...typography.body, marginBottom: spacing.m },
   modalFooter: { flexDirection: 'row', gap: spacing.m, paddingTop: spacing.m, borderTopWidth: 1, borderTopColor: colors.borderLight },
   clearBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, alignItems: 'center' },
   clearBtnText: { color: colors.textMainLight, fontWeight: '600' },

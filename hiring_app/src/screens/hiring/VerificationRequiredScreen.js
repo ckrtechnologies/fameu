@@ -5,11 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import CustomButton from '../../components/forms/CustomButton';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export default function VerificationRequiredScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const user = useSelector(state => state.auth?.user);
   const { data: profileResponse, refetch, isFetching } = useGetCompanyProfileQuery(user?.id, { skip: !user?.id });
   const verificationStatus = profileResponse?.data?.verification_status || 'unverified';
@@ -71,7 +74,7 @@ export default function VerificationRequiredScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',

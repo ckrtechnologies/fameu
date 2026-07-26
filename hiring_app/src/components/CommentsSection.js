@@ -5,13 +5,16 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useGetCommentsQuery, useAddCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from '../services/commentsApi';
-import { colors, typography, spacing } from '../theme/theme';
+import { typography, spacing } from '../theme/theme';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useTheme } from '../theme/ThemeProvider';
 
 dayjs.extend(relativeTime);
 
 const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUserId, onPressProfile }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const isOwner = comment.user_id === currentUserId;
 
   return (
@@ -81,6 +84,8 @@ const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUse
 };
 
 export default function CommentsSection({ targetType, targetId, disableComment = false }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
   const { data: response, isLoading } = useGetCommentsQuery({ type: targetType, targetId }, { skip: !targetId, refetchOnMountOrArgChange: true });
@@ -209,7 +214,7 @@ export default function CommentsSection({ targetType, targetId, disableComment =
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginTop: spacing.xl,
     paddingHorizontal: spacing.m,

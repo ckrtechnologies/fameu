@@ -13,7 +13,6 @@ import EditProfileScreen from '../screens/artist/EditProfileScreen';
 import PhotoGalleryScreen from '../screens/artist/PhotoGalleryScreen';
 import VideoPortfolioScreen from '../screens/artist/VideoPortfolioScreen';
 
-import VerificationScreen from '../screens/artist/VerificationScreen';
 import ArtistCategoryScreen from '../screens/artist/ArtistCategoryScreen';
 import ArtistFormScreen from '../screens/artist/ArtistFormScreen';
 import AuditionSearchScreen from '../screens/artist/AuditionSearchScreen';
@@ -29,6 +28,7 @@ import ConnectionListScreen from '../screens/artist/ConnectionListScreen';
 import SavedAuditionsScreen from '../screens/artist/SavedAuditionsScreen';
 import ProfileVisitorsScreen from '../screens/artist/ProfileVisitorsScreen';
 import LegalScreen from '../screens/artist/LegalScreen';
+import FaqScreen from '../screens/artist/FaqScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,7 +48,6 @@ export default function MainNavigator() {
       <Stack.Screen name="PhotoGallery" component={PhotoGalleryScreen} />
       <Stack.Screen name="VideoPortfolio" component={VideoPortfolioScreen} />
 
-      <Stack.Screen name="Verification" component={VerificationScreen} />
       <Stack.Screen name="ArtistCategory" component={ArtistCategoryScreen} />
       <Stack.Screen name="ArtistForm" component={ArtistFormScreen} />
       <Stack.Screen name="AuditionSearch" component={AuditionSearchScreen} />
@@ -64,6 +63,7 @@ export default function MainNavigator() {
       <Stack.Screen name="SavedAuditions" component={SavedAuditionsScreen} />
       <Stack.Screen name="ProfileVisitors" component={ProfileVisitorsScreen} />
       <Stack.Screen name="Legal" component={LegalScreen} />
+      <Stack.Screen name="Faq" component={FaqScreen} />
       <Stack.Screen name="Tutorial" component={TutorialScreen} />
     </Stack.Navigator>
   );

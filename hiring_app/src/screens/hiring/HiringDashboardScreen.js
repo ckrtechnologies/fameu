@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Image, FlatList, StatusBar, Modal } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Image, FlatList, StatusBar, Modal, Text } from 'react-native';
 import { ShieldCheck, Clock, AlertCircle, Video, Star, Users, PlusCircle, Bell, Search, MessageCircle, MapPin, ChevronRight, Briefcase, TrendingUp, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { colors, typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useGetDashboardDataQuery, useGetNotificationsQuery, useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
@@ -14,6 +14,7 @@ import { logout } from '../../store/slices/authSlice';
 import { useDispatch } from 'react-redux';
 import AnimatedBorderCard from '../../components/AnimatedBorderCard';
 import { getAuditionLiveStatus } from '../../utils/dateUtils';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -34,6 +35,8 @@ const timeAgo = (dateStr) => {
 };
 
 export default function HiringDashboardScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { user, token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const [acceptDisclaimer, { isLoading: isAccepting }] = useAcceptDisclaimerMutation();
@@ -267,16 +270,16 @@ export default function HiringDashboardScreen({ navigation }) {
             keyExtractor={item => 'live_' + item.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity style={[styles.auditionCarouselCard, { borderColor: colors.primary, borderWidth: 1 }]} onPress={() => navigation.navigate('AuditionDetails', { auditionId: item.id })}>
-                {item.thumbnail_url && (
-                  <Image source={{ uri: item.thumbnail_url }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
-                )}
-                <View style={[styles.auditionCardHeader, item.thumbnail_url ? { paddingTop: spacing.s } : {}]}>
-                  <Typography variant="body" style={styles.auditionCardTitle} numberOfLines={1}>{item.title}</Typography>
-                  <View style={[styles.activeBadge, { backgroundColor: colors.error }]}><Typography variant="caption" style={[styles.activeBadgeText, { color: '#FFF' }]}>Live Now</Typography></View>
-                </View>
-                <View style={styles.auditionStatsRow}>
-                  <Users size={16} color={colors.primary} />
-                  <Typography variant="body" style={styles.auditionStatText}>{item.applications?.length || 0} Applicants</Typography>
+                <Image source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
+                <View style={{ padding: spacing.m }}>
+                  <View style={[styles.auditionCardHeader, { paddingTop: spacing.s }]}>
+                    <Typography variant="body" style={styles.auditionCardTitle} numberOfLines={1}>{item.title}</Typography>
+                    <View style={[styles.activeBadge, { backgroundColor: colors.error }]}><Typography variant="caption" style={[styles.activeBadgeText, { color: '#FFF' }]}>Live Now</Typography></View>
+                  </View>
+                  <View style={styles.auditionStatsRow}>
+                    <Users size={16} color={colors.primary} />
+                    <Typography variant="body" style={styles.auditionStatText}>{item.applications?.length || 0} Applicants</Typography>
+                  </View>
                 </View>
               </TouchableOpacity>
             )}
@@ -313,20 +316,20 @@ export default function HiringDashboardScreen({ navigation }) {
               const liveStatus = getAuditionLiveStatus(item);
               return (
               <TouchableOpacity style={[styles.auditionCarouselCard, liveStatus ? { borderColor: liveStatus.color, borderWidth: 1 } : {}]} onPress={() => navigation.navigate('AuditionDetails', { auditionId: item.id })}>
-                {item.thumbnail_url && (
-                  <Image source={{ uri: item.thumbnail_url }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
-                )}
-                <View style={[styles.auditionCardHeader, item.thumbnail_url ? { paddingTop: spacing.s } : {}]}>
-                  <Typography variant="body" style={styles.auditionCardTitle} numberOfLines={1}>{item.title}</Typography>
-                  {liveStatus ? (
-                    <View style={[styles.activeBadge, { backgroundColor: liveStatus.color }]}><Typography variant="caption" style={[styles.activeBadgeText, { color: '#FFF' }]}>{liveStatus.text}</Typography></View>
-                  ) : (
-                    <View style={[styles.activeBadge, { backgroundColor: colors.success + '20' }]}><Typography variant="caption" style={[styles.activeBadgeText, { color: colors.success }]}>Active</Typography></View>
-                  )}
-                </View>
-                <View style={styles.auditionStatsRow}>
-                  <Users size={16} color={colors.primary} />
-                  <Typography variant="body" style={styles.auditionStatText}>{item.applications?.length || 0} Applicants</Typography>
+                <Image source={{ uri: (item.thumbnail_url && item.thumbnail_url !== 'null' && item.thumbnail_url.trim() !== '') ? item.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} style={{ width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
+                <View style={{ padding: spacing.m }}>
+                  <View style={[styles.auditionCardHeader, { paddingTop: spacing.s }]}>
+                    <Typography variant="body" style={styles.auditionCardTitle} numberOfLines={1}>{item.title}</Typography>
+                    {liveStatus ? (
+                      <View style={[styles.activeBadge, { backgroundColor: liveStatus.color }]}><Typography variant="caption" style={[styles.activeBadgeText, { color: '#FFF' }]}>{liveStatus.text}</Typography></View>
+                    ) : (
+                      <View style={[styles.activeBadge, { backgroundColor: colors.success + '20' }]}><Typography variant="caption" style={[styles.activeBadgeText, { color: colors.success }]}>Active</Typography></View>
+                    )}
+                  </View>
+                  <View style={styles.auditionStatsRow}>
+                    <Users size={16} color={colors.primary} />
+                    <Typography variant="body" style={styles.auditionStatText}>{item.applications?.length || 0} Applicants</Typography>
+                  </View>
                 </View>
               </TouchableOpacity>
             )}}
@@ -350,11 +353,7 @@ export default function HiringDashboardScreen({ navigation }) {
           draftAuditions.map(draft => (
             <TouchableOpacity key={draft.id} style={styles.draftCard} onPress={() => handleRestrictedNavigation('CreateAudition', { audition: draft })}>
               <View style={styles.draftIconBg}>
-                {draft.thumbnail_url ? (
-                  <Image source={{ uri: draft.thumbnail_url }} style={{ width: 44, height: 44, borderRadius: 22 }} />
-                ) : (
-                  <Briefcase size={22} color={colors.primary} />
-                )}
+                <Image source={{ uri: (draft.thumbnail_url && draft.thumbnail_url !== 'null' && draft.thumbnail_url.trim() !== '') ? draft.thumbnail_url : ((profile?.logo_url && profile.logo_url !== 'null' && profile.logo_url.trim() !== '') ? profile.logo_url : 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=800&auto=format&fit=crop') }} style={{ width: 44, height: 44, borderRadius: 22 }} />
               </View>
               <View style={{ flex: 1 }}>
                 <Typography variant="body" style={styles.draftTitle}>{draft.title || 'Untitled Draft'}</Typography>
@@ -423,7 +422,7 @@ export default function HiringDashboardScreen({ navigation }) {
             height={220}
             yAxisInterval={1}
             chartConfig={{
-              backgroundColor: '#fff', backgroundGradientFrom: '#fff', backgroundGradientTo: '#fff', decimalPlaces: 0,
+              backgroundColor: colors.surfaceLight, backgroundGradientFrom: colors.surfaceLight, backgroundGradientTo: colors.surfaceLight, decimalPlaces: 0,
               color: (opacity = 1) => `rgba(${parseInt(colors.primary.slice(1, 3), 16)}, ${parseInt(colors.primary.slice(3, 5), 16)}, ${parseInt(colors.primary.slice(5, 7), 16)}, ${opacity})`,
               labelColor: (opacity = 1) => colors.textMainLight, style: { borderRadius: 16 }, propsForDots: { r: "5", strokeWidth: "2", stroke: colors.primary }
             }}
@@ -521,7 +520,7 @@ export default function HiringDashboardScreen({ navigation }) {
                 style={[styles.disclaimerBtn, styles.disclaimerBtnDeny]} 
                 onPress={() => dispatch(logout())}
               >
-                <Text style={styles.disclaimerBtnText}>Deny</Text>
+                <Text style={styles.disclaimerBtnTextDeny}>Deny</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.disclaimerBtn, styles.disclaimerBtnAgree]} 
@@ -535,7 +534,7 @@ export default function HiringDashboardScreen({ navigation }) {
                 }}
                 disabled={isAccepting}
               >
-                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnText}>I Agree</Text>}
+                {isAccepting ? <ActivityIndicator color="#fff" /> : <Text style={styles.disclaimerBtnTextAgree}>I Agree</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -565,23 +564,23 @@ export default function HiringDashboardScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   center: { justifyContent: 'center', alignItems: 'center' },
-  topVibrantHeader: { position: 'absolute', top: 0, left: 0, right: 0, height: 180, backgroundColor: colors.primary + '10', borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
+  topVibrantHeader: { position: 'absolute', top: 0, left: 0, right: 0, height: 180, backgroundColor: colors.primary + '10', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
   scrollContent: { paddingHorizontal: spacing.l },
   headerTitleContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl },
   headerTitle: { color: colors.textMainLight, fontWeight: 'bold' },
   headerSubtitle: { color: colors.textSecondaryLight, marginTop: 4, fontWeight: '600' },
-  notificationBtn: { padding: 12, backgroundColor: '#fff', borderRadius: 24, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
-  notificationBadge: { position: 'absolute', top: 12, right: 12, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.error, borderWidth: 2, borderColor: '#fff' },
+  notificationBtn: { padding: 12, backgroundColor: colors.surfaceLight, borderRadius: 24, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
+  notificationBadge: { position: 'absolute', top: 12, right: 12, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.error, borderWidth: 2, borderColor: colors.surfaceLight },
   banner: { flexDirection: 'row', padding: spacing.m, borderRadius: 20, borderWidth: 2, marginBottom: spacing.s, position: 'relative' },
   bannerIcon: { marginRight: spacing.m, marginTop: 4 },
   bannerTextContainer: { flex: 1 },
   bannerTitle: { fontWeight: 'bold', marginBottom: 4, fontSize: 16 },
   bannerDesc: { opacity: 0.8, fontWeight: '500' },
   bannerButton: { marginTop: spacing.m, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 12, alignSelf: 'flex-start' },
-  bannerButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  completenessCard: { backgroundColor: '#fff', padding: spacing.l, borderRadius: 20, marginBottom: spacing.l, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10, borderWidth: 1, borderColor: colors.borderLight },
+  bannerButtonText: { color: colors.textMainLight, fontWeight: 'bold', fontSize: 14 },
+  completenessCard: { backgroundColor: colors.surfaceLight, padding: spacing.l, borderRadius: 20, marginBottom: spacing.l, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10, borderWidth: 1, borderColor: colors.borderLight },
   completenessHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' },
   completenessTitle: { color: colors.textMainLight, fontWeight: 'bold' },
   progressBarBg: { height: 12, backgroundColor: colors.borderLight, borderRadius: 6, overflow: 'hidden' },
@@ -590,32 +589,27 @@ const styles = StyleSheet.create({
   actionBtn: { alignItems: 'center', flex: 1 },
   actionBtnIcon: { width: 64, height: 64, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 12, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
   actionBtnText: { color: colors.textMainLight, textAlign: 'center', fontWeight: 'bold' },
-  badge: { position: 'absolute', top: -4, right: -4, backgroundColor: colors.error, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 2, borderColor: '#fff' },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  badge: { position: 'absolute', top: -4, right: -4, backgroundColor: colors.error, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 2, borderColor: colors.surfaceLight },
+  badgeText: { color: colors.textMainLight, fontSize: 12, fontWeight: 'bold' },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: spacing.l },
   metricCardWrapper: { width: '48%', marginBottom: spacing.m },
   metricIconBg: { width: 48, height: 48, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  metricValue: { color: colors.textMainLight, marginBottom: 4, fontWeight: 'bold' },
-  metricLabel: { color: colors.textSecondaryLight, fontWeight: '600' },
+  metricValue: { marginBottom: 4, fontWeight: 'bold' },
+  metricLabel: { color: colors.textMuted, fontWeight: '600' },
   sectionContainer: { marginBottom: spacing.xl },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.l },
-  sectionTitle: { color: colors.textMainLight, fontWeight: 'bold' },
+  sectionTitle: { fontWeight: 'bold' },
   seeAllText: { color: colors.primary, fontFamily: typography.fontFamily, fontWeight: 'bold' },
-  applicantCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: spacing.m, borderRadius: 20, marginBottom: spacing.m, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6 },
+  applicantCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: spacing.m, borderRadius: 20, marginBottom: spacing.m, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6 },
   applicantAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: spacing.m },
   applicantInfo: { flex: 1 },
-  applicantName: { color: colors.textMainLight, fontWeight: 'bold', fontSize: 16 },
-  applicantRole: { color: colors.textSecondaryLight, marginTop: 4, fontWeight: '600' },
-  auditionCarouselCard: { backgroundColor: '#fff', padding: spacing.l, borderRadius: 24, width: 260, marginRight: spacing.m, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, borderWidth: 1, borderColor: colors.borderLight },
-  auditionCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.l },
-  auditionCardTitle: { flex: 1, color: colors.textMainLight, fontWeight: 'bold', marginRight: 12, fontSize: 16 },
-  activeBadge: { backgroundColor: colors.success + '20', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  activeBadgeText: { color: colors.success, fontSize: 12, fontWeight: 'bold' },
-  badgeText: {
-    color: colors.white,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
+  applicantName: { fontWeight: 'bold', fontSize: 16 },
+  applicantRole: { color: colors.textMuted, marginTop: 4, fontWeight: '600' },
+  auditionCarouselCard: { backgroundColor: colors.surfaceLight, padding: 0, borderRadius: 16, width: 220, marginRight: spacing.m, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, borderWidth: 1, borderColor: colors.borderLight, overflow: 'hidden' },
+  auditionCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.m },
+  auditionCardTitle: { flex: 1, fontWeight: 'bold', marginRight: 8, fontSize: 15 },
+  activeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  activeBadgeText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
   disclaimerOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
@@ -662,35 +656,39 @@ const styles = StyleSheet.create({
   disclaimerBtnAgree: {
     backgroundColor: colors.primary,
   },
-  disclaimerBtnText: {
+  disclaimerBtnTextDeny: {
+    ...typography.button,
+    color: colors.textMainLight,
+  },
+  disclaimerBtnTextAgree: {
     ...typography.button,
     color: colors.white,
   },
   auditionStatsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary + '10', padding: 12, borderRadius: 12 },
   auditionStatText: { color: colors.primary, marginLeft: 8, fontWeight: 'bold' },
-  draftCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: spacing.m, borderRadius: 20, marginBottom: spacing.m, borderWidth: 2, borderColor: colors.borderLight, borderStyle: 'dashed' },
+  draftCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: spacing.m, borderRadius: 20, marginBottom: spacing.m, borderWidth: 2, borderColor: colors.borderLight, borderStyle: 'dashed' },
   draftIconBg: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: spacing.m },
   draftTitle: { color: colors.textMainLight, fontWeight: 'bold', fontSize: 16 },
   draftDate: { color: colors.textSecondaryLight, marginTop: 4, fontWeight: '600' },
-  talentCard: { backgroundColor: '#fff', borderRadius: 24, width: 160, marginRight: spacing.m, padding: spacing.l, alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10 },
+  talentCard: { backgroundColor: colors.surfaceLight, borderRadius: 24, width: 160, marginRight: spacing.m, padding: spacing.l, alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10 },
   talentAvatar: { width: 90, height: 90, borderRadius: 45, marginBottom: spacing.m, borderWidth: 3, borderColor: colors.primary + '30' },
   talentName: { color: colors.textMainLight, fontWeight: 'bold', textAlign: 'center', fontSize: 16 },
   talentCategory: { color: colors.primary, textAlign: 'center', marginTop: 4, fontWeight: 'bold' },
-  interviewCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: spacing.m, borderRadius: 20, marginBottom: spacing.m, elevation: 2 },
+  interviewCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: spacing.m, borderRadius: 20, marginBottom: spacing.m, elevation: 2 },
   interviewDateBox: { backgroundColor: colors.primary, padding: 12, borderRadius: 16, alignItems: 'center', width: 70, marginRight: spacing.m },
-  interviewMonth: { color: '#fff', textTransform: 'uppercase', fontWeight: 'bold', fontSize: 12 },
-  interviewDay: { color: '#fff', marginTop: 4, fontWeight: 'bold' },
+  interviewMonth: { color: colors.textMainLight, textTransform: 'uppercase', fontWeight: 'bold', fontSize: 12 },
+  interviewDay: { color: colors.textMainLight, marginTop: 4, fontWeight: 'bold' },
   interviewInfo: { flex: 1 },
   interviewName: { color: colors.textMainLight, fontWeight: 'bold', fontSize: 16 },
   interviewRole: { color: colors.textSecondaryLight, marginTop: 4, fontWeight: '600' },
   interviewBtn: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: colors.primary + '15', borderRadius: 16 },
   interviewBtnText: { color: colors.primary, fontWeight: 'bold' },
-  networkCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: spacing.xl, borderRadius: 24, elevation: 4, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12 },
+  networkCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: spacing.xl, borderRadius: 24, elevation: 4, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12 },
   networkIconBg: { backgroundColor: colors.primary, padding: 20, borderRadius: 24 },
   newsBanner: { backgroundColor: '#8b5cf6', borderRadius: 24, padding: spacing.xl, flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xl, elevation: 4 },
-  newsTitle: { color: '#fff', fontWeight: 'bold', marginBottom: 8, fontSize: 18 },
+  newsTitle: { color: colors.textMainLight, fontWeight: 'bold', marginBottom: 8, fontSize: 18 },
   newsDesc: { color: 'rgba(255,255,255,0.9)', fontWeight: '600', lineHeight: 20 },
-  chartSection: { backgroundColor: '#fff', padding: spacing.l, borderRadius: 24, marginBottom: spacing.xl, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10 },
+  chartSection: { backgroundColor: colors.surfaceLight, padding: spacing.l, borderRadius: 24, marginBottom: spacing.xl, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10 },
   emptyState: { backgroundColor: colors.backgroundLight, padding: spacing.l, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.borderLight, borderStyle: 'dashed' },
   emptyStateText: { color: colors.textSecondaryLight, fontWeight: 'bold' },
   lockBadge: {
@@ -704,6 +702,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: colors.borderLight,
   }
 });

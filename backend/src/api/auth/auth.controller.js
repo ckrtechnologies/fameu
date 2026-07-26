@@ -32,6 +32,8 @@ class AuthController {
       // If error is incorrect otp, return 400 instead of 500
       if (err.message === 'Incorrect OTP' || err.message === 'OTP has expired') {
         err.statusCode = 400;
+      } else if (err.message.includes('suspended')) {
+        err.statusCode = 403;
       }
       next(err);
     }
@@ -48,6 +50,7 @@ class AuthController {
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       if (err.message.includes('Invalid')) err.statusCode = 401;
+      else if (err.message.includes('suspended')) err.statusCode = 403;
       next(err);
     }
   }
@@ -110,6 +113,30 @@ class AuthController {
 
       if (error) throw error;
       res.status(201).json({ success: true, data, message: 'Report submitted successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async changePassword(req, res, next) {
+    try {
+      const { password } = req.body;
+      if (!password) {
+        return res.status(400).json({ success: false, error: 'New password is required' });
+      }
+      
+      // If using Supabase GoTrue Auth for passwords:
+      // Note: This requires the user's JWT to be passed to Supabase to update their password.
+      // Since this backend uses a custom JWT (or Supabase JWT), we can try to update it using the admin client,
+      // but Supabase auth requires the user's access_token to change their own password directly via client.
+      // Alternatively, we use admin API:
+      const { data, error } = await supabase.auth.admin.updateUserById(
+        req.user.id,
+        { password: password }
+      );
+
+      if (error) throw error;
+      res.status(200).json({ success: true, message: 'Password updated successfully' });
     } catch (err) {
       next(err);
     }
