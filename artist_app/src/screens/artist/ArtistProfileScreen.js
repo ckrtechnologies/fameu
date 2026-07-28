@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking, FlatList, Animated } from 'react-native';
 import Video from 'react-native-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +20,21 @@ import { getVideoInfo } from '../../utils/media';
 import VerifiedBadge from '../../components/core/VerifiedBadge';
 
 const { width } = Dimensions.get('window');
+
+const BASIC_INFO_KEYS = ['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'];
+const BASIC_INFO_ICONS = {
+  age: 'calendar-outline',
+  gender: 'male-female-outline',
+  height: 'resize-outline',
+  weight: 'barbell-outline',
+  city: 'location-outline',
+  languages: 'language-outline',
+  skills: 'star-outline',
+  availability_type: 'time-outline',
+  available_dates: 'calendar-number-outline'
+};
+const URL_REGEX = /^(https?:\/\/[^\s]+)$/i;
+const MEDIA_REGEX = /\.(mp4|mov|avi|wmv|mkv|mp3|wav|aac|ogg|webm|m4a|flac|jpg|jpeg|png|webp)$/i;
 
 export default function ArtistProfileScreen() {
   const { colors } = useTheme();
@@ -45,19 +60,24 @@ export default function ArtistProfileScreen() {
 
   useEffect(() => {
     // Start pulse animation loop
-    Animated.loop(
+    const glowLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
         Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    glowLoop.start();
 
     // Start slide & fade entrance
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, tension: 20, friction: 7, useNativeDriver: true }),
     ]).start();
-  }, []);
+
+    return () => {
+      glowLoop.stop();
+    };
+  }, [glowAnim, fadeAnim, slideAnim]);
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -79,8 +99,17 @@ export default function ArtistProfileScreen() {
   const followersCount = profile?.users?.followers_count || 0;
   const followingCount = profile?.users?.following_count || 0;
   const is404 = isError && error?.status === 404;
-  const categories = parseArray(profile?.categories);
-  const tabs = ['Overview', ...categories];
+  const categories = useMemo(() => parseArray(profile?.categories), [profile?.categories]);
+  const tabs = useMemo(() => ['Overview', ...categories], [categories]);
+
+  const workPreferences = useMemo(() => parseArray(profile?.work_preference), [profile?.work_preference]);
+  const preferredCities = useMemo(() => parseArray(profile?.preferred_cities), [profile?.preferred_cities]);
+  const lookAlikes = useMemo(() => parseArray(profile?.look_alike), [profile?.look_alike]);
+  const hashtags = useMemo(() => parseArray(profile?.hashtags), [profile?.hashtags]);
+  const recentAssignments = useMemo(() => parseArray(profile?.recent_assignments), [profile?.recent_assignments]);
+  const parsedPhotoUrls = useMemo(() => parseArray(profile?.photo_urls), [profile?.photo_urls]);
+  const parsedVideoUrls = useMemo(() => (typeof profile?.video_url === 'string' && profile.video_url.trim().length > 0) ? profile.video_url.split(',').filter(Boolean) : [], [profile?.video_url]);
+
 
   const openDrawer = () => {
     navigation.openDrawer();
@@ -356,12 +385,18 @@ export default function ArtistProfileScreen() {
                     <Text style={{ color: colors.primary, fontWeight: 'bold' }}>See All</Text>
                   </TouchableOpacity>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
-                  {profile.video_url.split(',').filter(Boolean).map((vUrl, idx) => {
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: spacing.xl }}
+                  data={parsedVideoUrls}
+                  keyExtractor={(_, idx) => `vid-${idx}`}
+                  initialNumToRender={2}
+                  windowSize={3}
+                  renderItem={({ item: vUrl, index: idx }) => {
                     const info = getVideoInfo(vUrl);
                     return (
                       <TouchableOpacity 
-                        key={`vid-${idx}`}
                         style={{ width: 140, height: 200, borderRadius: 12, backgroundColor: colors.surfaceDark, marginRight: 12, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}
                         onPress={() => {
                           if (info?.type !== 'direct') {
@@ -392,8 +427,8 @@ export default function ArtistProfileScreen() {
                         </View>
                       </TouchableOpacity>
                     );
-                  })}
-                </ScrollView>
+                  }}
+                />
               </View>
             )}
 
@@ -406,28 +441,16 @@ export default function ArtistProfileScreen() {
               </View>
 
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
+                {BASIC_INFO_KEYS.map((k) => {
                   const v = profile[k];
                   if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
                   
                   const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                   const value = Array.isArray(v) ? v.join(', ') : String(v);
-                  
-                  const icons = {
-                    age: 'calendar-outline',
-                    gender: 'male-female-outline',
-                    height: 'resize-outline',
-                    weight: 'barbell-outline',
-                    city: 'location-outline',
-                    languages: 'language-outline',
-                    skills: 'star-outline',
-                    availability_type: 'time-outline',
-                    available_dates: 'calendar-number-outline'
-                  };
 
                   return (
                     <View key={k} style={{ width: '48%', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }}>
-                      <Icon name={icons[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
+                      <Icon name={BASIC_INFO_ICONS[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
                       <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 4 }}>{label}</Text>
                       <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '600' }} numberOfLines={2}>{value}</Text>
                     </View>
@@ -468,7 +491,7 @@ export default function ArtistProfileScreen() {
                       <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Work Preference</Text>
                     </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                      {parseArray(profile.work_preference).map((t, i) => (
+                      {workPreferences.map((t, i) => (
                         <View key={i} style={[styles.chip, { backgroundColor: 'rgba(249, 115, 22, 0.15)' }]}><Text style={[styles.chipText, { color: '#f97316' }]}>{t}</Text></View>
                       ))}
                     </View>
@@ -484,7 +507,7 @@ export default function ArtistProfileScreen() {
                       <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Preferred Locations</Text>
                     </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                      {parseArray(profile.preferred_cities).map((t, i) => (
+                      {preferredCities.map((t, i) => (
                         <View key={i} style={[styles.chip, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}><Text style={[styles.chipText, { color: '#14b8a6' }]}>{t}</Text></View>
                       ))}
                     </View>
@@ -500,7 +523,7 @@ export default function ArtistProfileScreen() {
                       <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Look Alikes</Text>
                     </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                      {parseArray(profile.look_alike).map((t, i) => (
+                      {lookAlikes.map((t, i) => (
                         <View key={i} style={[styles.chip, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}><Text style={[styles.chipText, { color: '#a855f7' }]}>{t}</Text></View>
                       ))}
                     </View>
@@ -516,7 +539,7 @@ export default function ArtistProfileScreen() {
                       <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Hashtags</Text>
                     </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                      {parseArray(profile.hashtags).map((t, i) => (
+                      {hashtags.map((t, i) => (
                         <View key={i} style={[styles.chip, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}><Text style={[styles.chipText, { color: '#ec4899' }]}>#{t}</Text></View>
                       ))}
                     </View>
@@ -529,7 +552,7 @@ export default function ArtistProfileScreen() {
             {profile.recent_assignments?.length > 0 && (
               <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
                 <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Text>
-                {parseArray(profile.recent_assignments).map((assignment, idx) => (
+                {recentAssignments.map((assignment, idx) => (
                   <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
                       <View style={{ flex: 1, marginBottom: assignment.link ? 12 : 0 }}>
                         <Text style={{ ...typography.body, fontWeight: 'bold', color: colors.textMainLight }}>{assignment.title || 'Untitled'}</Text>
@@ -571,18 +594,23 @@ export default function ArtistProfileScreen() {
               ) : (
                 <View>
                   {/* Video Section */}
-                  {typeof profile.video_url === 'string' && profile.video_url.trim().length > 0 ? (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0, marginBottom: 16 }}>
-                    {profile.video_url.split(',').filter(Boolean).map((vidUrl, index) => {
+                  {parsedVideoUrls.length > 0 ? (
+                  <FlatList 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    style={{ marginHorizontal: 0, marginBottom: 16 }}
+                    data={parsedVideoUrls}
+                    keyExtractor={(_, index) => index.toString()}
+                    initialNumToRender={2}
+                    windowSize={3}
+                    renderItem={({ item: vidUrl, index }) => {
                       const info = getVideoInfo(vidUrl);
                       return (
                         <TouchableOpacity 
-                          key={index} 
                           onPress={() => {
-                            const info = getVideoInfo(profile.video_url.split(',').filter(Boolean)[index]);
                             if (info?.type !== 'direct') {
                               import('react-native').then(({ Linking }) => {
-                                Linking.openURL(profile.video_url.split(',').filter(Boolean)[index]).catch(() => {});
+                                Linking.openURL(vidUrl).catch(() => {});
                               });
                             } else {
                               navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: index });
@@ -609,19 +637,26 @@ export default function ArtistProfileScreen() {
                           </View>
                         </TouchableOpacity>
                       );
-                    })}
-                  </ScrollView>
+                    }}
+                  />
                 ) : null}
 
                   {/* Photo Section */}
-                  {profile.photo_urls && profile.photo_urls.length > 0 ? (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
-                      {parseArray(profile.photo_urls).map((imgUrl, index) => (
-                        <TouchableOpacity key={index} onPress={() => { setModalImages(profile.photo_urls); setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
+                  {parsedPhotoUrls.length > 0 ? (
+                    <FlatList 
+                      horizontal 
+                      showsHorizontalScrollIndicator={false} 
+                      style={{ marginHorizontal: 0 }}
+                      data={parsedPhotoUrls}
+                      keyExtractor={(_, index) => index.toString()}
+                      initialNumToRender={3}
+                      windowSize={5}
+                      renderItem={({ item: imgUrl, index }) => (
+                        <TouchableOpacity onPress={() => { setModalImages(profile.photo_urls); setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
                           <Image source={{ uri: imgUrl }} style={styles.galleryItem} resizeMode="contain" />
                         </TouchableOpacity>
-                      ))}
-                    </ScrollView>
+                      )}
+                    />
                   ) : null}
                 </View>
               )}

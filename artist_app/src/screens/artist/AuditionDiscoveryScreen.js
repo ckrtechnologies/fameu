@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
@@ -9,6 +10,7 @@ import AuditionCard from '../../components/artist/AuditionCard';
 import AuditionPeekModal from '../../components/artist/AuditionPeekModal';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
 import CustomInput from '../../components/forms/CustomInput';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import { useGetFeedQuery } from '../../services/discoverApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetProfessionsQuery } from '../../services/profileApi';
@@ -33,6 +35,7 @@ export default function AuditionDiscoveryScreen() {
   const styles = getStyles(colors);
   const navigation = useNavigation();
   const route = useRoute();
+  const { user } = useSelector((state) => state.auth);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'Relevant');
 
@@ -159,6 +162,16 @@ export default function AuditionDiscoveryScreen() {
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
         <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Profile')}
+            style={styles.headerAvatarBtn}
+          >
+            <ImageWithFallback 
+              source={{ uri: user?.avatar_url }} 
+              fallbackSource={{ uri: 'https://via.placeholder.com/150' }}
+              style={styles.headerAvatar}
+            />
+          </TouchableOpacity>
           <View style={styles.searchContainer}>
             <CustomInput
               placeholder="Search by role, location..."
@@ -263,6 +276,16 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerAvatarBtn: {
+    marginRight: spacing.m,
+  },
+  headerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.primary + '30',
   },
   searchContainer: {
     flex: 1,

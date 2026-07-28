@@ -78,7 +78,7 @@ const artistsController = {
 
       // Ensure the audition belongs to the hiring company
       const { data: audition } = await supabase.from('auditions').select('hiring_id, title, thumbnail_url').eq('id', audition_id).single();
-      if (!audition || audition.hiring_id !== hiringId) {
+      if (!audition || audition.hiring_id != hiringId) {
         return res.status(403).json({ success: false, error: 'Not authorized to invite for this audition' });
       }
 
