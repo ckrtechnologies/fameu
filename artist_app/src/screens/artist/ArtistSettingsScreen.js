@@ -118,6 +118,7 @@ export default function ArtistSettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textMutedLight }]}>Support & About</Text>
           {renderSettingItem('play-circle-outline', 'How this app works', () => navigation.navigate('Tutorial'))}
+          {renderSettingItem('chatbubble-ellipses-outline', 'Contact Us', () => navigation.navigate('ContactUs'))}
           {renderSettingItem('star-outline', 'Rate our App', handleRateApp)}
           {renderSettingItem('document-text-outline', 'Terms of Service', () => navigation.navigate('Legal', { type: 'terms' }))}
           {renderSettingItem('information-circle-outline', 'Privacy Policy', () => navigation.navigate('Legal', { type: 'privacy' }))}

@@ -94,14 +94,40 @@ export default function CompanyProfileScreen() {
               </Typography>
             </View>
           )}
-          {(profile?.phone || profile?.users?.phone) && (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {(profile?.phone || profile?.users?.mobile) && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
               <Icon name="call-outline" size={14} color={colors.textMutedLight} style={{ marginRight: 6 }} />
               <Typography variant="body2" style={{ color: colors.textSecondaryLight }}>
-                {profile?.phone || profile?.users?.phone}
+                {profile?.phone || profile?.users?.mobile}
               </Typography>
             </View>
           )}
+          {(() => {
+            let altContact = profile?.alternate_contact;
+            if (typeof altContact === 'string') {
+              try { altContact = JSON.parse(altContact); } catch (e) { altContact = null; }
+            }
+            return (
+              <>
+                {!!altContact?.phone && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                    <Icon name="call-outline" size={14} color={colors.textMutedLight} style={{ marginRight: 6 }} />
+                    <Typography variant="body2" style={{ color: colors.textSecondaryLight }}>
+                      {altContact.phone}
+                    </Typography>
+                  </View>
+                )}
+                {!!altContact?.email && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Icon name="mail-outline" size={14} color={colors.textMutedLight} style={{ marginRight: 6 }} />
+                    <Typography variant="body2" style={{ color: colors.textSecondaryLight }}>
+                      {altContact.email}
+                    </Typography>
+                  </View>
+                )}
+              </>
+            );
+          })()}
         </View>
         {profile?.description && (
           <Typography variant="body2" style={styles.description}>{profile.description}</Typography>

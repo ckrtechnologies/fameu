@@ -297,7 +297,63 @@ export default function PublicProfileScreen() {
 
         <View style={styles.bioSection}>
           <Typography variant="h2" style={styles.name}>{profileData.name}</Typography>
-          <Typography variant="body" style={styles.category}>{profileData.role === 'artist' ? 'Artist' : 'Recruiter'}</Typography>
+          <Typography variant="body" style={styles.category}>{profileData.role === 'artist' ? 'Artist' : ((Array.isArray(profileData.profile) ? profileData.profile[0]?.company_type : profileData.profile?.company_type) || 'Recruiter')}</Typography>
+          {/* Contact Info (Only for Recruiters/Agencies) */}
+          {profileData.role !== 'artist' && (
+            <View style={{ 
+              marginTop: spacing.s, 
+              marginBottom: spacing.m, 
+              backgroundColor: colors.surfaceLight,
+              padding: spacing.m,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.borderLight
+            }}>
+              <Typography variant="body2" style={{ color: colors.textMainLight, fontWeight: '600', marginBottom: spacing.xs }}>Contact Information</Typography>
+              {(profileData.email) && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Icon name="mail-outline" size={16} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+                  <Typography variant="body2" style={{ color: colors.textMainLight }}>
+                    {profileData.email}
+                  </Typography>
+                </View>
+              )}
+              {(profileData.mobile || profileData.profile?.phone) && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Icon name="call-outline" size={16} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+                  <Typography variant="body2" style={{ color: colors.textMainLight }}>
+                    {profileData.mobile || profileData.profile?.phone}
+                  </Typography>
+                </View>
+              )}
+              {(() => {
+                let altContact = profileData.profile?.alternate_contact;
+                if (typeof altContact === 'string') {
+                  try { altContact = JSON.parse(altContact); } catch (e) { altContact = null; }
+                }
+                return (
+                  <>
+                    {!!altContact?.phone && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                        <Icon name="call-outline" size={16} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+                        <Typography variant="body2" style={{ color: colors.textMainLight }}>
+                          {altContact.phone}
+                        </Typography>
+                      </View>
+                    )}
+                    {!!altContact?.email && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                        <Icon name="mail-outline" size={16} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+                        <Typography variant="body2" style={{ color: colors.textMainLight }}>
+                          {altContact.email}
+                        </Typography>
+                      </View>
+                    )}
+                  </>
+                );
+              })()}
+            </View>
+          )}
           {profileData.profile?.bio && (
             <Typography variant="body" style={styles.bioText}>{profileData.profile.bio}</Typography>
           )}

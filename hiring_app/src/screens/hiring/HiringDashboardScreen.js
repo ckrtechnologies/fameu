@@ -223,16 +223,17 @@ export default function HiringDashboardScreen({ navigation }) {
             <Typography variant="body" style={styles.emptyStateText}>No recent applicants yet.</Typography>
           </View>
         ) : (
-          recentApplicants.map((app) => (
-            <TouchableOpacity key={app.id} style={styles.applicantCard} onPress={() => handleRestrictedNavigation('ArtistProfileScreen', { id: app.artist_id, applicationId: app.id })}>
-              <ImageWithFallback source={{ uri: app.users?.avatar_url }} fallbackSource={{ uri: 'https://via.placeholder.com/150' }} style={styles.applicantAvatar} />
-              <View style={styles.applicantInfo}>
-                <Typography variant="body" style={styles.applicantName}>{app.users?.artist_profiles?.[0]?.full_name || app.users?.display_name || 'Applicant'}</Typography>
-                <Typography variant="caption" style={styles.applicantRole}>Applied for: {app.audition_title}</Typography>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondaryLight} />
-            </TouchableOpacity>
-          ))
+          <View style={styles.applicantsGrid}>
+            {recentApplicants.map((app) => (
+              <TouchableOpacity key={app.id} style={styles.applicantCardGrid} onPress={() => handleRestrictedNavigation('ArtistProfileScreen', { id: app.artist_id, applicationId: app.id })}>
+                <ImageWithFallback source={{ uri: app.users?.avatar_url }} fallbackSource={{ uri: 'https://via.placeholder.com/150' }} style={styles.applicantGridAvatar} />
+                <View style={styles.applicantGridInfo}>
+                  <Typography variant="body" style={styles.applicantName} numberOfLines={1}>{app.users?.artist_profiles?.[0]?.full_name || app.users?.display_name || 'Applicant'}</Typography>
+                  <Typography variant="caption" style={styles.applicantRole} numberOfLines={2}>Applied for: {app.audition_title}</Typography>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
       </View>
     );
@@ -606,6 +607,10 @@ const getStyles = (colors) => StyleSheet.create({
   applicantInfo: { flex: 1 },
   applicantName: { fontWeight: 'bold', fontSize: 16 },
   applicantRole: { color: colors.textMuted, marginTop: 4, fontWeight: '600' },
+  applicantsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  applicantCardGrid: { width: '48%', backgroundColor: colors.surfaceLight, padding: spacing.m, borderRadius: 16, marginBottom: spacing.m, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, alignItems: 'center' },
+  applicantGridAvatar: { width: 60, height: 60, borderRadius: 30, marginBottom: spacing.s },
+  applicantGridInfo: { width: '100%', alignItems: 'center' },
   auditionCarouselCard: { backgroundColor: colors.surfaceLight, padding: 0, borderRadius: 16, width: 220, marginRight: spacing.m, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, borderWidth: 1, borderColor: colors.borderLight, overflow: 'hidden' },
   auditionCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.m },
   auditionCardTitle: { flex: 1, fontWeight: 'bold', marginRight: 8, fontSize: 15 },

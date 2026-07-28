@@ -552,7 +552,7 @@ export default function CreateAuditionScreen({ route }) {
         <TouchableOpacity 
           style={globalStyles.primaryButton} 
           onPress={handleSubmit}
-          disabled={isLoading || isUploadingPDF || isUploadingThumbnail}
+          disabled={isLoading || isUploadingPdf || isUploadingThumbnail}
         >
           {isLoading ? (
             <ActivityIndicator color="white" />

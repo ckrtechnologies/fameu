@@ -63,7 +63,7 @@ class ApplicationService {
             hiringProfile.user_id,
             'New Audition Application',
             `Someone has applied to your audition: ${audition.title || 'Untitled'}`,
-            { type: 'application', targetId: data.id }
+            { type: 'application', targetId: data.id, artistId: profile.id }
           );
         }
       }

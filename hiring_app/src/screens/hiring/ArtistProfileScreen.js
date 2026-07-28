@@ -130,7 +130,7 @@ export default function ArtistProfileScreen() {
       return;
     }
     try {
-      await inviteArtist({ id: artist.user_id, audition_id: selectedAuditionId, message: invitationMessage }).unwrap();
+      await inviteArtist({ id: artist.id, audition_id: selectedAuditionId, message: invitationMessage }).unwrap();
       showSuccess('', 'Artist has been invited successfully.');
       setIsInviteModalVisible(false);
       setSelectedAuditionId('');
@@ -147,7 +147,7 @@ export default function ArtistProfileScreen() {
       return;
     }
     try {
-      await reportArtist({ id: artist.user_id, reason: reportReason }).unwrap();
+      await reportArtist({ id: artist.id, reason: reportReason }).unwrap();
       showSuccess('', 'Artist reported successfully. Our team will review this shortly.');
       setIsReportModalVisible(false);
       setReportReason('');
@@ -766,7 +766,7 @@ export default function ArtistProfileScreen() {
                       onPress={() => setSelectedAuditionId(audition.id)}
                     >
                       <Icon name={selectedAuditionId === audition.id ? "radio-button-on" : "radio-button-off"} size={20} color={selectedAuditionId === audition.id ? colors.primary : colors.textMutedLight} />
-                      <Text style={{ marginLeft: 8, flex: 1, ...typography.body }} numberOfLines={1}>{audition.title}</Text>
+                      <Text style={{ marginLeft: 8, flex: 1, color: colors.textMainLight, ...typography.body }} numberOfLines={1}>{audition.title}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>

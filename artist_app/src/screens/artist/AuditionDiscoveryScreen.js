@@ -319,6 +319,7 @@ const getStyles = (colors) => StyleSheet.create({
   gridCard: {
     width: '100%',
     marginRight: 0,
+    flex: 1,
   },
   centerContent: {
     flex: 1,

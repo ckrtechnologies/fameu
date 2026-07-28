@@ -15,8 +15,10 @@ import Applications from './pages/Applications';
 import FraudReports from './pages/FraudReports';
 import Blacklist from './pages/Blacklist';
 import ProfessionsManagement from './pages/ProfessionsManagement';
+import BannersManagement from './pages/BannersManagement';
 import NMS from './pages/NMS';
 import Messaging from './pages/Messaging';
+import SupportTickets from './pages/SupportTickets';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -75,7 +77,9 @@ export default function App() {
           <Route path="fraud-reports" element={<FraudReports />} />
           <Route path="blacklist" element={<Blacklist />} />
           <Route path="professions" element={<ProfessionsManagement />} />
+          <Route path="banners" element={<BannersManagement />} />
           <Route path="nms" element={<NMS />} />
+          <Route path="support" element={<SupportTickets />} />
         </Route>
       </Routes>
     </BrowserRouter>

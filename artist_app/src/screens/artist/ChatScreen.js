@@ -110,7 +110,7 @@ export default function ChatScreen() {
         if (prev.some(msg => msg.id === newMessage.id)) return prev;
         return [newMessage, ...prev];
       });
-      dispatch(chatApi.util.invalidateTags(['Chat']));
+      dispatch(chatApi.util.invalidateTags(['Chat', { type: 'ChatMessages', id: conversationId }]));
     };
 
     const handleUserTyping = ({ userId, isTyping: typingStatus }) => {
@@ -129,6 +129,7 @@ export default function ChatScreen() {
     // Also subscribe to future (re)connections via SocketService event bus
     const unsubConnect = SocketService.on('connected', (newSocket) => {
       attachListeners(newSocket);
+      refetch();
     });
 
     return () => {

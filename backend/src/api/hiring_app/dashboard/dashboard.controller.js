@@ -19,7 +19,7 @@ const dashboardController = {
       // 2. Get Auditions
       const { data: auditions, error: auditionsError } = await supabase
         .from('auditions')
-        .select('*, applications(id, status, created_at, artist_profiles(id, full_name, categories, avatar_url, users(id, display_name, username)))')
+        .select('*, applications(id, artist_id, status, created_at, artist_profiles(id, full_name, categories, avatar_url, users(id, display_name, username)))')
         .eq('hiring_id', profile.id)
         .order('created_at', { ascending: false });
 
@@ -55,7 +55,7 @@ const dashboardController = {
       // Sort by newest first
       allApplicants.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-      const recentApplicants = allApplicants.slice(0, 5);
+      const recentApplicants = allApplicants.slice(0, 10);
       
       const stats = {
         totalApplicants: allApplicants.length,

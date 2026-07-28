@@ -142,11 +142,13 @@ class ChatService {
         const title = unreadCount && unreadCount > 1 
           ? `${unreadCount} new messages from ${senderName}` 
           : `New message from ${senderName}`;
+        
+        const pushContent = content.replace(/\[AUDITION_INVITE:[^\]]+\]/g, '').trim();
 
         await notificationService.sendPushNotification(
           receiverId,
           title,
-          content,
+          pushContent,
           { 
             type: 'chat_message', 
             conversationId: String(conversationId),

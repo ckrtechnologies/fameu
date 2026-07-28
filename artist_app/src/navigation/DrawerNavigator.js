@@ -126,6 +126,11 @@ function CustomDrawerContent(props) {
           <Text style={styles.drawerItemText}>Terms & Conditions</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('ContactUs')}>
+          <Icon name="chatbubble-ellipses-outline" size={24} color={colors.textMainLight} />
+          <Text style={styles.drawerItemText}>Contact Us</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('ArtistSettings')}>
           <Icon name="settings-outline" size={24} color={colors.textMainLight} />
           <Text style={styles.drawerItemText}>Settings</Text>

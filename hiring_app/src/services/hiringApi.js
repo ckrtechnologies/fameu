@@ -54,6 +54,13 @@ export const hiringApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Notifications'],
     }),
+    submitSupportTicket: builder.mutation({
+      query: (ticketData) => ({
+        url: '/support/contact',
+        method: 'POST',
+        body: ticketData,
+      }),
+    }),
   }),
 });
 
@@ -65,5 +72,6 @@ export const {
   useGetNotificationsQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
+  useSubmitSupportTicketMutation,
   useGetDashboardDataQuery,
 } = hiringApi;

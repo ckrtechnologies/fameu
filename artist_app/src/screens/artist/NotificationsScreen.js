@@ -89,7 +89,9 @@ export default function NotificationsScreen() {
         </View>
         <View style={styles.contentContainer}>
           <Typography variant="body" style={styles.titleText}>{item.title}</Typography>
-          <Typography variant="caption" style={styles.bodyText}>{item.body}</Typography>
+          <Typography variant="caption" style={styles.bodyText}>
+            {item.body ? item.body.replace(/\[AUDITION_INVITE:[^\]]+\]/g, '').trim() : ''}
+          </Typography>
           <Typography variant="caption" style={styles.timeText}>
             {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
           </Typography>

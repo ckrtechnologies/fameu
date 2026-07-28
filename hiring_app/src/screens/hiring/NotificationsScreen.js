@@ -67,6 +67,13 @@ export default function NotificationsScreen() {
       } else if (targetType === 'profile') {
         navigation.navigate('Drawer', { screen: 'Tabs', params: { screen: 'Profile', params: { scrollToComments: true } } });
       }
+    } else if (notification.type === 'application') {
+      const data = typeof notification.data === 'string' ? JSON.parse(notification.data) : (notification.data || {});
+      const applicationId = data.targetId;
+      const artistId = data.artistId;
+      if (applicationId && artistId) {
+        navigation.navigate('ArtistProfileScreen', { id: artistId, applicationId });
+      }
     }
   };
 

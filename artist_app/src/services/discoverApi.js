@@ -43,6 +43,10 @@ export const discoverApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, id) => [{ type: 'Audition', id }],
     }),
+    getBanners: builder.query({
+      query: () => 'banners',
+      providesTags: ['Banner'],
+    }),
   }),
 });
 
@@ -54,4 +58,5 @@ export const {
   useGetSavedAuditionsQuery,
   useToggleBookmarkMutation,
   useCheckInMutation,
+  useGetBannersQuery,
 } = discoverApi;

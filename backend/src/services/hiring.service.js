@@ -64,7 +64,7 @@ class HiringService {
   async getProfile(userId) {
     const { data, error } = await supabase
       .from('hiring_profiles')
-      .select('*, verification_documents(*), users(username)')
+      .select('*, verification_documents(*), users(username, email, mobile)')
       .eq('user_id', userId)
       .single();
 

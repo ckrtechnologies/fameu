@@ -9,7 +9,7 @@ import Typography from '../../components/core/Typography';
 import ImageWithFallback from '../../components/core/ImageWithFallback';
 import AuditionCard from '../../components/artist/AuditionCard';
 import AuditionPeekModal from '../../components/artist/AuditionPeekModal';
-import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery } from '../../services/discoverApi';
+import { useGetFeedQuery, useGetMyApplicationsQuery, useGetSavedAuditionsQuery, useGetBannersQuery } from '../../services/discoverApi';
 import { useGetProfileQuery } from '../../services/profileApi';
 import { useGetNotificationsQuery } from '../../services/notificationsApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
@@ -17,6 +17,7 @@ import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
 import { LineChart } from 'react-native-chart-kit';
 import { Search, MessageCircle, Briefcase, Users, Bell, Bookmark, TrendingUp, Compass, Star, ChevronRight, Video, Calendar, ShieldCheck } from 'lucide-react-native';
+import { Linking } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -74,6 +75,10 @@ export default function ArtistDashboardScreen() {
   useRefetchOnFocus(refetchNotifs);
   const hasUnreadNotifications = notificationsData?.data?.some(n => !n.is_read);
 
+  const { data: bannersData, refetch: refetchBanners } = useGetBannersQuery();
+  useRefetchOnFocus(refetchBanners);
+  const banners = bannersData || [];
+
   const [refreshing, setRefreshing] = useState(false);
   
   // Peek Modal State
@@ -86,7 +91,7 @@ export default function ArtistDashboardScreen() {
     try {
       await Promise.all([
         refetchFeed(), refetchAll(), refetchLive(), refetchTrending(),
-        refetchProfile(), refetchApps(), refetchSaved(), refetchNotifs()
+        refetchProfile(), refetchApps(), refetchSaved(), refetchNotifs(), refetchBanners()
       ]);
     } finally {
       setRefreshing(false);
@@ -175,6 +180,33 @@ export default function ArtistDashboardScreen() {
       </View>
     </View>
   );
+
+  const renderBannerCarousel = () => {
+    if (!banners || banners.length === 0) return null;
+    return (
+      <View style={{ marginTop: 16, marginBottom: 8 }}>
+        <FlatList
+          data={banners}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => item.id}
+          snapToInterval={width - spacing.l * 2 + 16} // width of item + margin
+          decelerationRate="fast"
+          contentContainerStyle={{ paddingHorizontal: spacing.l }}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              activeOpacity={0.9} 
+              onPress={() => item.target_link && Linking.openURL(item.target_link).catch(() => {})}
+              style={{ width: width - spacing.l * 2, height: (width - spacing.l * 2) * 0.45, marginRight: 16, borderRadius: 12, overflow: 'hidden' }}
+            >
+              <Image source={{ uri: item.image_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    );
+  };
 
   const renderProfileBanner = () => {
     if (profileCompletePct >= 100) return null;
@@ -562,9 +594,11 @@ export default function ArtistDashboardScreen() {
       <ScrollView 
         style={styles.container} 
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
         {renderWelcomeHeader()}
+        {renderBannerCarousel()}
         {renderProfileBanner()}
         {renderOverviewStats()}
         {renderQuickActions()}

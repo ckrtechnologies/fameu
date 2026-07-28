@@ -38,6 +38,6 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Audition', 'Profile', 'Chat', 'ChatMessages', 'Connections', 'Notifications', 'Comment', 'ProfileVisitors'],
+  tagTypes: ['User', 'Audition', 'Profile', 'Chat', 'ChatMessages', 'Connections', 'Notifications', 'Comment', 'ProfileVisitors', 'Banner'],
   endpoints: (builder) => ({}),
 });

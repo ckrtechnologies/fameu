@@ -209,6 +209,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   content: {
     padding: spacing.xs,
+    flex: 1,
+    justifyContent: 'space-between',
   },
   roleTitle: {
     ...typography.h3,

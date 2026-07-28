@@ -29,6 +29,7 @@ import SavedAuditionsScreen from '../screens/artist/SavedAuditionsScreen';
 import ProfileVisitorsScreen from '../screens/artist/ProfileVisitorsScreen';
 import LegalScreen from '../screens/artist/LegalScreen';
 import FaqScreen from '../screens/artist/FaqScreen';
+import ContactUsScreen from '../screens/artist/ContactUsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -62,9 +63,10 @@ export default function MainNavigator() {
       <Stack.Screen name="ConnectionList" component={ConnectionListScreen} />
       <Stack.Screen name="SavedAuditions" component={SavedAuditionsScreen} />
       <Stack.Screen name="ProfileVisitors" component={ProfileVisitorsScreen} />
+      <Stack.Screen name="Tutorial" component={TutorialScreen} />
       <Stack.Screen name="Legal" component={LegalScreen} />
       <Stack.Screen name="Faq" component={FaqScreen} />
-      <Stack.Screen name="Tutorial" component={TutorialScreen} />
+      <Stack.Screen name="ContactUs" component={ContactUsScreen} />
     </Stack.Navigator>
   );
 }

@@ -248,7 +248,7 @@ class ConnectionService {
     const { data: user, error } = await supabase
       .from('users')
       .select(`
-        id, username, display_name, avatar_url, followers_count, following_count, role,
+        id, username, display_name, email, mobile, avatar_url, followers_count, following_count, role,
         artist_profiles (*),
         hiring_profiles (*)
       `)
@@ -303,6 +303,8 @@ class ConnectionService {
       visit_count: profile?.visit_count || 0,
       is_following: isFollowing,
       role: user.role,
+      email: user.email,
+      mobile: user.mobile,
       profile: profile
     };
   }

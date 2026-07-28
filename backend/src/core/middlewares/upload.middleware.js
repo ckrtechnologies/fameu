@@ -83,3 +83,4 @@ const createUploader = (folderName) => {
 
 export const uploadArtistMedia = createUploader('artist');
 export const uploadHiringDocs = createUploader('hiring');
+export const uploadBanners = createUploader('banners');

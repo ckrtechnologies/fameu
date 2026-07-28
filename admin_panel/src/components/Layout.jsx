@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileCheck, LogOut, Clapperboard, ShieldAlert, Ban, CreditCard, Settings, FileText, Database, Bell, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, LogOut, Clapperboard, ShieldAlert, Ban, CreditCard, Settings, FileText, Database, Bell, MessageSquare, LifeBuoy, Image as ImageIcon } from 'lucide-react';
 
 import { Briefcase } from 'lucide-react';
 
@@ -34,6 +34,8 @@ export default function Layout() {
         { name: 'Applications', path: '/applications', icon: <FileText size={20} /> },
         { name: 'Fraud Reports', path: '/fraud-reports', icon: <ShieldAlert size={20} /> },
         { name: 'Blacklist', path: '/blacklist', icon: <Ban size={20} /> },
+        { name: 'Support', path: '/support', icon: <LifeBuoy size={20} /> },
+        { name: 'Banners', path: '/banners', icon: <ImageIcon size={20} /> }
       ]
     },
     {

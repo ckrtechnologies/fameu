@@ -20,6 +20,7 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import Toast from 'react-native-toast-message';
 import ErrorBoundary from './src/components/core/ErrorBoundary';
 import GlobalAlertProvider, { GlobalAlertRef } from './src/components/core/GlobalAlert';
+import KeyboardHidingView from './src/components/core/KeyboardHidingView';
 
 export type RootStackParamList = {
   [key: string]: any;
@@ -371,10 +372,12 @@ function App(): React.JSX.Element {
     <Provider store={store}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <GlobalStatusBar />
-          <RootNavigation />
-          <Toast config={toastConfig} />
-          <GlobalAlertProvider ref={GlobalAlertRef} />
+          <KeyboardHidingView>
+            <GlobalStatusBar />
+            <RootNavigation />
+            <Toast config={toastConfig} />
+            <GlobalAlertProvider ref={GlobalAlertRef} />
+          </KeyboardHidingView>
         </ThemeProvider>
       </SafeAreaProvider>
     </Provider>  

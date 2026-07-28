@@ -8,6 +8,8 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import CustomButton from '../../components/forms/CustomButton';
+import { useSubmitSupportTicketMutation } from '../../services/hiringApi';
+import { useSelector } from 'react-redux';
 
 export default function ContactUsScreen() {
   const { colors } = useTheme();
@@ -15,22 +17,30 @@ export default function ContactUsScreen() {
   const navigation = useNavigation();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [submitTicket, { isLoading: isSubmitting }] = useSubmitSupportTicketMutation();
+  const { user } = useSelector((state) => state.auth);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!subject.trim() || !message.trim()) {
       GlobalAlert.show('Error', 'Please fill out both the subject and the message.');
       return;
     }
-    
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await submitTicket({
+        user_id: user?.id,
+        user_type: 'hiring',
+        subject: subject.trim(),
+        message: message.trim()
+      }).unwrap();
+      
       GlobalAlert.show('Success', 'Your message has been sent to the Fameu support team. We will get back to you shortly.');
       setSubject('');
       setMessage('');
       navigation.goBack();
-    }, 1500);
+    } catch (error) {
+      GlobalAlert.show('Error', 'Failed to send message. Please try again later.');
+    }
   };
 
   return (

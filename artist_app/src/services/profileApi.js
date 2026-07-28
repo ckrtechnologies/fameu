@@ -79,6 +79,13 @@ export const profileApi = apiSlice.injectEndpoints({
     checkUsername: builder.query({
       query: (username) => `/artist_app/profile/check-username/${username}`,
     }),
+    submitSupportTicket: builder.mutation({
+      query: (ticketData) => ({
+        url: '/support/contact',
+        method: 'POST',
+        body: ticketData,
+      }),
+    }),
   }),
   overrideExisting: true,
 });
@@ -91,5 +98,6 @@ export const {
   useUpdateCategoryMutation,
   useUploadMediaMutation,
   useUploadGenericFileMutation,
+  useSubmitSupportTicketMutation,
   useLazyCheckUsernameQuery,
 } = profileApi;

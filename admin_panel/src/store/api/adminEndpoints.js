@@ -158,6 +158,56 @@ export const adminApi = apiSlice.injectEndpoints({
       query: (id) => `/admin_panel/conversations/${id}/messages`,
       providesTags: (result, error, id) => [{ type: 'Message', id }],
     }),
+
+    // Support Tickets
+    getSupportTickets: builder.query({
+      query: () => '/support/tickets',
+      providesTags: ['Support'],
+    }),
+    updateSupportTicketStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `/support/tickets/${id}/status`,
+        method: 'PUT',
+        body: { status },
+      }),
+      invalidatesTags: ['Support'],
+    }),
+
+    // Banners
+    getBanners: builder.query({
+      query: () => 'banners?all=true',
+      providesTags: ['Banner'],
+    }),
+    createBanner: builder.mutation({
+      query: (data) => ({
+        url: 'banners',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Banner'],
+    }),
+    updateBanner: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `banners/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Banner'],
+    }),
+    deleteBanner: builder.mutation({
+      query: (id) => ({
+        url: `banners/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Banner'],
+    }),
+    uploadBannerImage: builder.mutation({
+      query: (formData) => ({
+        url: 'banners/upload',
+        method: 'POST',
+        body: formData,
+      }),
+    }),
   }),
 });
 
@@ -186,4 +236,11 @@ export const {
   useSendNotificationMutation,
   useGetConversationsQuery,
   useGetConversationMessagesQuery,
+  useGetSupportTicketsQuery,
+  useUpdateSupportTicketStatusMutation,
+  useGetBannersQuery,
+  useCreateBannerMutation,
+  useUpdateBannerMutation,
+  useDeleteBannerMutation,
+  useUploadBannerImageMutation,
 } = adminApi;

@@ -82,9 +82,15 @@ const artistsController = {
         return res.status(403).json({ success: false, error: 'Not authorized to invite for this audition' });
       }
 
+      // Get artist's user_id from artist_profiles
+      const { data: artistProfile } = await supabase.from('artist_profiles').select('user_id').eq('id', artistId).single();
+      if (!artistProfile) {
+        return res.status(404).json({ success: false, error: 'Artist not found' });
+      }
+
       // Send chat message (this automatically sends a chat push notification)
       const content = `I would like to invite you to audition for: ${audition.title}.${message ? `\n\nMessage: ${message}` : ''}\n\n[AUDITION_INVITE:${audition_id}|${audition.title}|${audition.thumbnail_url || ''}]`;
-      const conversation = await chatService.getOrCreateConversation(req.user.id, artistId);
+      const conversation = await chatService.getOrCreateConversation(req.user.id, artistProfile.user_id);
       await chatService.saveMessage(conversation.id, req.user.id, content);
 
       res.status(200).json({ success: true, message: 'Invitation sent' });
@@ -100,8 +106,14 @@ const artistsController = {
       const { reason } = req.body;
       const hiringId = req.user.id;
 
+      // Get artist's user_id from artist_profiles
+      const { data: artistProfile } = await supabase.from('artist_profiles').select('user_id').eq('id', artistId).single();
+      if (!artistProfile) {
+        return res.status(404).json({ success: false, error: 'Artist not found' });
+      }
+
       const { error } = await supabase.from('blacklist').insert([{
-        user_id: artistId,
+        user_id: artistProfile.user_id,
         reason: reason || 'Blocked by hiring company',
         added_by: hiringId
       }]);
@@ -120,9 +132,15 @@ const artistsController = {
       const { reason, description } = req.body;
       const hiringId = req.user.id;
 
+      // Get artist's user_id from artist_profiles
+      const { data: artistProfile } = await supabase.from('artist_profiles').select('user_id').eq('id', artistId).single();
+      if (!artistProfile) {
+        return res.status(404).json({ success: false, error: 'Artist not found' });
+      }
+
       const { error } = await supabase.from('fraud_reports').insert([{
         reported_by: hiringId,
-        reported_user_id: artistId,
+        reported_user_id: artistProfile.user_id,
         reason,
         description
       }]);
