@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Safety() {
+export default function Safety({ onNavigate }) {
   return (
     <>
       {/* BREADCRUMB / HERO BANNER */}
@@ -11,6 +11,40 @@ export default function Safety() {
           <p className="subtitle" style={{ marginBottom: '0' }}>
             We enforce rigorous verification parameters for casting teams to protect our talent database from fraudulent agents.
           </p>
+        </div>
+      </section>
+
+      {/* CHILD SAFETY & PROTECTION STANDARDS CALLOUT */}
+      <section className="section" style={{ paddingTop: '0', paddingBottom: '3rem' }}>
+        <div className="container">
+          <div 
+            className="glass-card" 
+            style={{ 
+              padding: '2.5rem', 
+              background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.08) 0%, rgba(124, 58, 237, 0.05) 100%)',
+              border: '1px solid rgba(225, 29, 72, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <span className="badge badge-primary" style={{ marginBottom: '0.5rem' }}>Google Play & Legal Compliance</span>
+                <h3 style={{ fontSize: '1.75rem', color: 'var(--text-primary)', margin: 0 }}>Fameu Child Safety Standards (Zero Tolerance)</h3>
+              </div>
+              <a 
+                href="#/child-safety" 
+                className="btn btn-primary" 
+                onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('child-safety'); else window.location.hash = '#/child-safety'; }}
+              >
+                View Child Safety Policy &rarr;
+              </a>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>
+              Fameu, operated by ArgosMob Tech & AI, maintains zero tolerance for Child Sexual Abuse and Exploitation (CSAE) and Child Sexual Abuse Material (CSAM). We enforce strict guardian oversight for minor performers and report violations to legal authorities.
+            </p>
+          </div>
         </div>
       </section>
 

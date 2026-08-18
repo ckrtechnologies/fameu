@@ -65,7 +65,8 @@ export default function Footer({ onNavigate }) {
           <div className="footer-legal">
             <a href="#/safety" onClick={(e) => handleLinkClick(e, 'safety')}>Terms & Conditions</a>
             <a href="#/privacy" onClick={(e) => handleLinkClick(e, 'privacy')}>Privacy Policy</a>
-            <a href="#/safety" onClick={(e) => handleLinkClick(e, 'safety')}>Anti-Scam guidelines</a>
+            <a href="#/child-safety" onClick={(e) => handleLinkClick(e, 'child-safety')}>Child Safety Standards</a>
+            <a href="#/safety" onClick={(e) => handleLinkClick(e, 'safety')}>Anti-Scam Guidelines</a>
           </div>
         </div>
       </div>

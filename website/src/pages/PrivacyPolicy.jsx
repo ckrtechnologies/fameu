@@ -72,14 +72,22 @@ export default function PrivacyPolicy() {
           </section>
 
           <section style={{ marginBottom: '2rem' }}>
-            <h2>8. Contact Us</h2>
+            <h2>8. Protection of Children & Minors</h2>
+            <p>
+              We take the safety and privacy of young artists and minors seriously. Accounts for individuals under the age of 18 must be supervised by a parent or legal guardian. For our complete zero-tolerance policy against Child Sexual Abuse and Exploitation (CSAE) and Child Sexual Abuse Material (CSAM), please review our dedicated <a href="#/child-safety" style={{ color: 'var(--accent-crimson)', fontWeight: 600 }}>Child Safety Standards</a>.
+            </p>
+          </section>
+
+          <section style={{ marginBottom: '2rem' }}>
+            <h2>9. Contact Us</h2>
             <p>
               If you have questions or comments about this policy, you may contact us at:
             </p>
             <p style={{ marginTop: '0.5rem' }}>
-              <strong>FAMEU</strong><br />
+              <strong>FAMEU (ArgosMob Tech & AI Pvt Ltd)</strong><br />
               Email: privacy@fameu.in<br />
-              Website: <a href="#/contact" style={{ color: 'var(--primary)' }}>Contact Form</a>
+              Child Safety Point of Contact: <a href="mailto:childsafety@fameu.in" style={{ color: 'var(--accent-crimson)' }}>childsafety@fameu.in</a><br />
+              Website: <a href="#/contact" style={{ color: 'var(--accent-purple)' }}>Contact Form</a>
             </p>
           </section>
         </div>

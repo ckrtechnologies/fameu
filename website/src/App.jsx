@@ -11,6 +11,7 @@ import Auditions from './pages/Auditions';
 import Safety from './pages/Safety';
 import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import ChildSafety from './pages/ChildSafety';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -21,7 +22,7 @@ export default function App() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#/', '') || 'home';
-      const validPages = ['home', 'artists', 'casting', 'auditions', 'safety', 'contact', 'privacy'];
+      const validPages = ['home', 'artists', 'casting', 'auditions', 'safety', 'contact', 'privacy', 'child-safety', 'childsafety', 'child_safety'];
       if (validPages.includes(hash)) {
         setCurrentPage(hash);
       } else {
@@ -56,11 +57,15 @@ export default function App() {
       case 'auditions':
         return <Auditions onOpenModal={openModal} />;
       case 'safety':
-        return <Safety />;
+        return <Safety onNavigate={navigateTo} />;
       case 'contact':
         return <Contact />;
       case 'privacy':
-        return <PrivacyPolicy />;
+        return <PrivacyPolicy onNavigate={navigateTo} />;
+      case 'child-safety':
+      case 'childsafety':
+      case 'child_safety':
+        return <ChildSafety />;
       default:
         return <Home onNavigate={navigateTo} onOpenModal={openModal} />;
     }
