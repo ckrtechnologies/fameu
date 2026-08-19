@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - Payments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-textPrimary flex min-h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border gap-2">
+            <i data-lucide="shield" class="w-6 h-6 text-primary"></i>
+            <span class="font-bold text-white text-lg tracking-tight">Fameu Admin</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+            <a href="./AD-2-AdminDashboard.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Content & Operations</div>
+            <a href="./AD-8-AuditionModeration.html" class="flex items-center justify-between px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="file-search" class="w-5 h-5"></i> Audition Moderation
+                </div>
+            </a>
+            <a href="./AD-10-PaymentMonitoring.html" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-md font-semibold transition-colors">
+                <i data-lucide="credit-card" class="w-5 h-5"></i> Payments
+            </a>
+            <a href="./AD-11-AnalyticsReports.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i> Analytics
+            </a>
+            <a href="./AD-12-ContentManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="type" class="w-5 h-5"></i> Content / App
+            </a>
+            <a href="./AD-13-AdminSettings.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="settings" class="w-5 h-5"></i> Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-background">
+        
+        <header class="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
+            <h2 class="text-xl font-semibold text-white">Payment Monitoring</h2>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <div class="bg-surface border border-border rounded-xl p-5">
+                    <p class="text-sm font-semibold text-textSecondary mb-2">Total Revenue (Month)</p>
+                    <h4 class="text-3xl font-bold text-white">₹1,240,000</h4>
+                </div>
+                <div class="bg-surface border border-border rounded-xl p-5">
+                    <p class="text-sm font-semibold text-textSecondary mb-2">Active Subscriptions</p>
+                    <h4 class="text-3xl font-bold text-white">842</h4>
+                </div>
+                <div class="bg-surface border border-border rounded-xl p-5">
+                    <p class="text-sm font-semibold text-textSecondary mb-2">Failed Payments</p>
+                    <h4 class="text-3xl font-bold text-error">12</h4>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-surface border border-border rounded-xl overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surfaceAlt border-b border-border">
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Transaction ID</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">User/Company</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Plan / Item</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Amount</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6 text-sm text-textSecondary font-mono">TXN-0091823</td>
+                            <td class="py-4 px-6 text-sm font-semibold text-white">Red Chillies Ent.</td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Pro Studio (Monthly)</td>
+                            <td class="py-4 px-6 text-sm font-bold text-white">₹4,999</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-success/10 text-success rounded text-xs font-bold">Successful</span>
+                            </td>
+                        </tr>
+
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6 text-sm text-textSecondary font-mono">TXN-0091824</td>
+                            <td class="py-4 px-6 text-sm font-semibold text-white">Independent Casting</td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Pro Studio (Monthly)</td>
+                            <td class="py-4 px-6 text-sm font-bold text-white">₹4,999</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-errorBg/20 text-error rounded text-xs font-bold">Failed</span>
+                            </td>
+                        </tr>
+
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6 text-sm text-textSecondary font-mono">TXN-0091825</td>
+                            <td class="py-4 px-6 text-sm font-semibold text-white">Rahul Sharma</td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Profile Boost (1 week)</td>
+                            <td class="py-4 px-6 text-sm font-bold text-white">₹499</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-success/10 text-success rounded text-xs font-bold">Successful</span>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

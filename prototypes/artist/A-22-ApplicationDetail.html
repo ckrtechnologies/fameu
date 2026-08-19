@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Application Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./A-21-MyApplications.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Application Status</h3>
+            <div class="w-11"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 flex flex-col hide-scrollbar gap-6 mt-6 pb-8">
+            
+            <!-- Audition Header -->
+            <div class="bg-surfaceAlt border border-border rounded-md p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-bodyBold text-white leading-tight pr-4">Lead Role - Prime Series</h3>
+                    <div class="w-12 h-12 bg-surface border border-border rounded overflow-hidden shrink-0">
+                        <img src="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=100&h=100" class="w-full h-full object-cover">
+                    </div>
+                </div>
+                <p class="text-caption text-textSecondary mb-2">Dharma Productions</p>
+                <div class="flex gap-2 text-[10px] text-textSecondary font-semibold uppercase tracking-wider">
+                    <span>Applied Oct 12</span>
+                    <span>•</span>
+                    <span class="text-primary cursor-pointer hover:underline">View Audition Post</span>
+                </div>
+            </div>
+
+            <!-- Status Tracker -->
+            <div class="bg-surface border border-border rounded-md p-6">
+                <h4 class="text-bodyBold text-white mb-6">Status Timeline</h4>
+                
+                <div class="flex flex-col gap-0 relative">
+                    <!-- Line connecting nodes -->
+                    <div class="absolute left-[11px] top-2 bottom-6 w-0.5 bg-border z-0"></div>
+                    
+                    <!-- Step 1 -->
+                    <div class="flex gap-4 items-start relative z-10 pb-6">
+                        <div class="w-6 h-6 rounded-full bg-success flex items-center justify-center shrink-0">
+                            <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-bodyBold text-white leading-tight">Application Submitted</h4>
+                            <p class="text-[11px] text-textSecondary">Oct 12, 10:30 AM</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex gap-4 items-start relative z-10 pb-6">
+                        <div class="w-6 h-6 rounded-full bg-success flex items-center justify-center shrink-0">
+                            <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-bodyBold text-white leading-tight">Under Review</h4>
+                            <p class="text-[11px] text-textSecondary">Oct 13, 09:15 AM</p>
+                            <p class="text-caption text-textSecondary mt-1">Casting director viewed your profile.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 (Current) -->
+                    <div class="flex gap-4 items-start relative z-10 pb-6">
+                        <div class="w-6 h-6 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shrink-0 animate-pulse">
+                            <div class="w-2 h-2 bg-primary rounded-full"></div>
+                        </div>
+                        <div>
+                            <h4 class="text-bodyBold text-primary leading-tight">Shortlisted!</h4>
+                            <p class="text-[11px] text-textSecondary">Oct 14, 02:40 PM</p>
+                            <div class="bg-surfaceAlt border border-border p-3 rounded mt-2">
+                                <p class="text-caption text-white mb-2">Congratulations, you have been shortlisted for the next round. The casting director has opened a chat with you.</p>
+                                <button onclick="window.location.href='./A-26-ChatList.html'" class="px-4 py-1.5 bg-primary text-textOnPrimary rounded text-[11px] font-bold">Go to Chat</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 (Future) -->
+                    <div class="flex gap-4 items-start relative z-10 opacity-50">
+                        <div class="w-6 h-6 rounded-full bg-surfaceAlt border border-border flex items-center justify-center shrink-0">
+                        </div>
+                        <div>
+                            <h4 class="text-bodyBold text-white leading-tight">Final Decision</h4>
+                            <p class="text-[11px] text-textSecondary">Pending</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <!-- What You Submitted -->
+            <div>
+                <h4 class="text-bodyBold text-white mb-3">Your Submission</h4>
+                <div class="bg-surface border border-border rounded-md p-4">
+                    <p class="text-caption text-white italic mb-4">"Hi, I have 3 years of experience in theatre and have worked on similar thriller roles. Attached my latest reel."</p>
+                    
+                    <div class="flex items-center justify-between border-t border-border pt-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="video" class="w-4 h-4 text-textSecondary"></i>
+                            <span class="text-caption text-textSecondary">Intro Reel Attached</span>
+                        </div>
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-success"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

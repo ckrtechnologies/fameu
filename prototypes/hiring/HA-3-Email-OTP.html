@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Email OTP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Hide arrows on number input */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="h-[56px] mt-12 px-2 flex items-center shrink-0">
+            <button onclick="window.location.href='./HA-2-Register.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto px-4 pb-8 flex flex-col">
+            
+            <div class="mt-4 mb-8">
+                <h1 class="text-h1 font-semibold text-white mb-2">Check your email</h1>
+                <p class="text-body text-textSecondary">We've sent a 6-digit code to <span class="text-textPrimary font-semibold">you@example.com</span>. Enter it below.</p>
+            </div>
+
+            <!-- Form -->
+            <div class="flex flex-col gap-6 mb-8">
+                <!-- OTP Inputs -->
+                <div class="flex justify-between gap-2" id="otp-container">
+                    <input type="number" maxlength="1" class="w-[52px] h-[52px] bg-surface border border-border rounded-sm text-h2 text-textPrimary text-center focus:outline-none focus:border-primary transition-colors otp-input" autofocus>
+                    <input type="number" maxlength="1" class="w-[52px] h-[52px] bg-surface border border-border rounded-sm text-h2 text-textPrimary text-center focus:outline-none focus:border-primary transition-colors otp-input">
+                    <input type="number" maxlength="1" class="w-[52px] h-[52px] bg-surface border border-border rounded-sm text-h2 text-textPrimary text-center focus:outline-none focus:border-primary transition-colors otp-input">
+                    <input type="number" maxlength="1" class="w-[52px] h-[52px] bg-surface border border-border rounded-sm text-h2 text-textPrimary text-center focus:outline-none focus:border-primary transition-colors otp-input">
+                    <input type="number" maxlength="1" class="w-[52px] h-[52px] bg-surface border border-border rounded-sm text-h2 text-textPrimary text-center focus:outline-none focus:border-primary transition-colors otp-input">
+                    <input type="number" maxlength="1" class="w-[52px] h-[52px] bg-surface border border-border rounded-sm text-h2 text-textPrimary text-center focus:outline-none focus:border-primary transition-colors otp-input">
+                </div>
+
+                <div class="text-center">
+                    <p class="text-body text-textSecondary">
+                        Didn't receive code? <button class="text-primary font-semibold disabled:text-textDisabled" id="resend-btn" disabled>Resend in <span id="timer">30</span>s</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Primary Action -->
+            <button onclick="window.location.href='./H-1-CompanyRegistration.html'" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold flex items-center justify-center shadow-lg active:bg-primaryPressed transition-colors mt-auto">
+                Verify
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // OTP Auto-advance
+        const inputs = document.querySelectorAll('.otp-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (input.value.length > 1) {
+                    input.value = input.value.slice(0,1);
+                }
+                if (input.value !== '' && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value === '' && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+            
+            // Handle Paste
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                let idx = 0;
+                while (idx < pastedData.length && idx < inputs.length) {
+                    inputs[idx].value = pastedData[idx];
+                    idx++;
+                }
+                if (idx < inputs.length) {
+                    inputs[idx].focus();
+                } else {
+                    inputs[inputs.length - 1].focus();
+                }
+            });
+        });
+
+        // Timer
+        let timeLeft = 30;
+        const timerSpan = document.getElementById('timer');
+        const resendBtn = document.getElementById('resend-btn');
+        
+        const timerInterval = setInterval(() => {
+            timeLeft--;
+            timerSpan.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerSpan.parentElement.innerHTML = 'Resend now';
+                resendBtn.disabled = false;
+            }
+        }, 1000);
+
+    </script>
+</body>
+</html>

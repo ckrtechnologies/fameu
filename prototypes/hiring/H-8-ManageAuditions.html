@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Manage Auditions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="h-[72px] mt-8 px-4 flex items-center justify-between shrink-0 bg-background z-10 border-b border-border">
+            <h1 class="text-h1 font-semibold text-white">My Auditions</h1>
+            <button onclick="window.location.href='./H-7-PostNewAudition.html'" class="px-3 py-1.5 bg-primary text-textOnPrimary rounded text-caption font-bold shadow-md active:bg-primaryPressed transition-colors flex items-center gap-1">
+                <i data-lucide="plus" class="w-4 h-4"></i> Post New
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto pb-24 flex flex-col bg-background relative hide-scrollbar p-4 gap-4">
+            
+            <!-- Tabs -->
+            <div class="flex gap-4 border-b border-border mb-2">
+                <button class="pb-2 text-primary border-b-2 border-primary font-semibold text-caption px-1">Active (2)</button>
+                <button class="pb-2 text-textSecondary font-semibold text-caption px-1">Closed (12)</button>
+                <button class="pb-2 text-textSecondary font-semibold text-caption px-1">Drafts (1)</button>
+            </div>
+
+            <!-- Active Audition Card 1 -->
+            <div class="bg-surfaceAlt border border-border rounded-md p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-bodyBold text-white leading-tight">Lead Actor - Prime Series</h3>
+                        <p class="text-[11px] text-textSecondary mt-0.5">Posted: Oct 12 • Exp: Nov 15</p>
+                    </div>
+                    <div class="px-2 py-1 bg-success/20 text-success rounded text-[10px] font-bold">Active</div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="flex gap-4 py-2 border-y border-border">
+                    <div class="flex flex-col cursor-pointer hover:text-primary transition-colors" onclick="window.location.href='./H-10-AuditionApplications.html'">
+                        <span class="text-h3 font-bold text-white">128</span>
+                        <span class="text-[10px] text-textSecondary uppercase tracking-wider">Applied</span>
+                    </div>
+                    <div class="w-[1px] h-8 bg-border"></div>
+                    <div class="flex flex-col cursor-pointer hover:text-primary transition-colors" onclick="window.location.href='./H-12-ShortlistedCandidates.html'">
+                        <span class="text-h3 font-bold text-white">12</span>
+                        <span class="text-[10px] text-textSecondary uppercase tracking-wider">Shortlisted</span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 mt-1">
+                    <button onclick="window.location.href='./H-10-AuditionApplications.html'" class="flex-1 py-2 bg-primary/10 text-primary rounded text-caption font-bold border border-primary/20 hover:bg-primary/20 transition-colors">
+                        View Applicants
+                    </button>
+                    <button onclick="window.location.href='./H-9-EditAudition.html'" class="w-10 h-10 bg-surface border border-border rounded flex items-center justify-center text-textSecondary active:bg-surfaceAlt">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                    <button class="w-10 h-10 bg-surface border border-border rounded flex items-center justify-center text-error active:bg-surfaceAlt">
+                        <i data-lucide="power" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Audition Card 2 -->
+            <div class="bg-surfaceAlt border border-border rounded-md p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-bodyBold text-white leading-tight">Female Lead - Ad Shoot</h3>
+                        <p class="text-[11px] text-textSecondary mt-0.5">Posted: Oct 14 • Walk-in: Oct 20</p>
+                    </div>
+                    <div class="px-2 py-1 bg-success/20 text-success rounded text-[10px] font-bold">Active</div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="flex gap-4 py-2 border-y border-border">
+                    <div class="flex flex-col cursor-pointer hover:text-primary transition-colors" onclick="window.location.href='./H-10-AuditionApplications.html'">
+                        <span class="text-h3 font-bold text-white">45</span>
+                        <span class="text-[10px] text-textSecondary uppercase tracking-wider">Applied</span>
+                    </div>
+                    <div class="w-[1px] h-8 bg-border"></div>
+                    <div class="flex flex-col cursor-pointer hover:text-primary transition-colors" onclick="window.location.href='./H-12-ShortlistedCandidates.html'">
+                        <span class="text-h3 font-bold text-white">0</span>
+                        <span class="text-[10px] text-textSecondary uppercase tracking-wider">Shortlisted</span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 mt-1">
+                    <button onclick="window.location.href='./H-10-AuditionApplications.html'" class="flex-1 py-2 bg-primary/10 text-primary rounded text-caption font-bold border border-primary/20 hover:bg-primary/20 transition-colors">
+                        View Applicants
+                    </button>
+                    <button onclick="window.location.href='./H-9-EditAudition.html'" class="w-10 h-10 bg-surface border border-border rounded flex items-center justify-center text-textSecondary active:bg-surfaceAlt">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                    <button class="w-10 h-10 bg-surface border border-border rounded flex items-center justify-center text-error active:bg-surfaceAlt">
+                        <i data-lucide="power" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Tabs -->
+        <div class="h-[80px] bg-surface border-t border-border px-6 flex justify-between items-center absolute bottom-0 w-full pb-4 pt-2">
+            
+            <button onclick="window.location.href='./H-6-HiringDashboard.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Dashboard</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-primary relative">
+                <i data-lucide="briefcase" class="w-6 h-6 fill-primary/20"></i>
+                <span class="text-[10px] font-semibold">Auditions</span>
+            </button>
+
+            <button onclick="window.location.href='./H-14-ArtistSearch.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="users" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Talent</span>
+            </button>
+
+            <button onclick="window.location.href='./H-22-ChatList.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Chat</span>
+            </button>
+
+            <button onclick="window.location.href='./H-4-CompanyProfile.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="user" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Profile</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

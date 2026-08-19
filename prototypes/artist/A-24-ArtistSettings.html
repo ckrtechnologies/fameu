@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./A-8-ArtistProfile.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Settings</h3>
+            <div class="w-11"></div> <!-- spacer -->
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 flex flex-col hide-scrollbar mt-4 pb-8">
+            
+            <h4 class="text-caption font-bold text-textSecondary uppercase tracking-wider mb-2 px-2">Account</h4>
+            <div class="bg-surface border border-border rounded-md overflow-hidden mb-6">
+                <button class="w-full p-4 flex justify-between items-center bg-surface active:bg-surfaceAlt border-b border-border">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="user" class="w-5 h-5 text-textSecondary"></i>
+                        <span class="text-body text-white">Personal Information</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-textSecondary"></i>
+                </button>
+                <button class="w-full p-4 flex justify-between items-center bg-surface active:bg-surfaceAlt border-b border-border">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="lock" class="w-5 h-5 text-textSecondary"></i>
+                        <span class="text-body text-white">Security & Password</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-textSecondary"></i>
+                </button>
+                <button class="w-full p-4 flex justify-between items-center bg-surface active:bg-surfaceAlt">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="bell" class="w-5 h-5 text-textSecondary"></i>
+                        <span class="text-body text-white">Notification Preferences</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-textSecondary"></i>
+                </button>
+            </div>
+
+            <h4 class="text-caption font-bold text-textSecondary uppercase tracking-wider mb-2 px-2">App Settings</h4>
+            <div class="bg-surface border border-border rounded-md overflow-hidden mb-6">
+                <div class="w-full p-4 flex justify-between items-center bg-surface border-b border-border">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="moon" class="w-5 h-5 text-textSecondary"></i>
+                        <span class="text-body text-white">Dark Mode</span>
+                    </div>
+                    <!-- Toggle -->
+                    <div class="w-11 h-6 bg-primary rounded-full relative cursor-pointer">
+                        <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
+                    </div>
+                </div>
+                <button class="w-full p-4 flex justify-between items-center bg-surface active:bg-surfaceAlt">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="globe" class="w-5 h-5 text-textSecondary"></i>
+                        <span class="text-body text-white">Language</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-caption text-textSecondary">English</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-textSecondary"></i>
+                    </div>
+                </button>
+            </div>
+
+            <h4 class="text-caption font-bold text-textSecondary uppercase tracking-wider mb-2 px-2">Support</h4>
+            <div class="bg-surface border border-border rounded-md overflow-hidden mb-6">
+                <button class="w-full p-4 flex justify-between items-center bg-surface active:bg-surfaceAlt border-b border-border">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="help-circle" class="w-5 h-5 text-textSecondary"></i>
+                        <span class="text-body text-white">Help Center</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-textSecondary"></i>
+                </button>
+                <button class="w-full p-4 flex justify-between items-center bg-surface active:bg-surfaceAlt">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="file-text" class="w-5 h-5 text-textSecondary"></i>
+                        <span class="text-body text-white">Terms of Service</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-textSecondary"></i>
+                </button>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="flex flex-col gap-3 px-2 mt-4">
+                <button onclick="window.location.href='./AA-0-Splash.html'" class="text-bodyBold text-error text-left">Log Out</button>
+                <button onclick="window.location.href='./A-25-DeleteAccount.html'" class="text-body text-textSecondary text-left mt-2">Delete Account</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

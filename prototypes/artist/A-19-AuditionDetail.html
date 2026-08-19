@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Audition Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header (Transparent overlapping image) -->
+        <div class="h-[72px] mt-8 px-2 flex items-center justify-between shrink-0 absolute top-0 w-full z-10">
+            <button onclick="window.location.href='./A-7-HomeDashboard.html'" class="w-11 h-11 flex items-center justify-center bg-black/40 backdrop-blur-md rounded-full text-white active:opacity-50 ml-2">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <button class="w-11 h-11 flex items-center justify-center bg-black/40 backdrop-blur-md rounded-full text-white active:opacity-50 mr-2">
+                <i data-lucide="bookmark" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto pb-24 flex flex-col hide-scrollbar">
+            
+            <!-- Hero Image -->
+            <div class="h-[280px] w-full relative">
+                <img src="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=390&h=280" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="px-4 -mt-12 relative z-10">
+                <!-- Badges -->
+                <div class="flex gap-2 mb-3">
+                    <div class="bg-surfaceAlt px-2 py-1 rounded-full border border-border">
+                        <span class="text-[10px] font-bold text-white uppercase tracking-wider">Scheduled</span>
+                    </div>
+                    <div class="bg-primary/20 px-2 py-1 rounded-full border border-primary/30">
+                        <span class="text-[10px] font-bold text-primary uppercase tracking-wider">Actor</span>
+                    </div>
+                </div>
+
+                <h1 class="text-h1 font-bold text-white mb-2">Lead Role - Amazon Prime Web Series</h1>
+                
+                <!-- Company Info -->
+                <div class="flex items-center gap-3 mb-6 bg-surfaceAlt border border-border p-3 rounded-md">
+                    <div class="w-10 h-10 bg-surface rounded-full flex items-center justify-center font-bold text-primary">DP</div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-1">
+                            <h3 class="text-bodyBold text-white">Dharma Productions</h3>
+                            <i data-lucide="badge-check" class="w-4 h-4 text-success fill-successBg"></i>
+                        </div>
+                        <p class="text-caption text-textSecondary">Production House</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-textSecondary"></i>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-caption text-textSecondary">Role / Character</span>
+                        <span class="text-bodyBold text-white">Rohan (Lead)</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-caption text-textSecondary">Age / Gender</span>
+                        <span class="text-bodyBold text-white">25-30 • Male</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-caption text-textSecondary">Language</span>
+                        <span class="text-bodyBold text-white">Hindi, English</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-caption text-textSecondary">Compensation</span>
+                        <span class="text-bodyBold text-white">Industry Standard</span>
+                    </div>
+                </div>
+
+                <!-- Date & Location -->
+                <div class="bg-surface border border-border rounded-md p-4 mb-8 flex flex-col gap-4">
+                    <div class="flex gap-3 items-start">
+                        <div class="mt-0.5"><i data-lucide="calendar" class="w-5 h-5 text-primary"></i></div>
+                        <div>
+                            <p class="text-bodyBold text-white">15 Aug 2026</p>
+                            <p class="text-caption text-textSecondary">Deadline to apply</p>
+                        </div>
+                    </div>
+                    <div class="h-[1px] w-full bg-border"></div>
+                    <div class="flex gap-3 items-start">
+                        <div class="mt-0.5"><i data-lucide="map-pin" class="w-5 h-5 text-primary"></i></div>
+                        <div class="flex-1">
+                            <p class="text-bodyBold text-white">Mumbai, Maharashtra</p>
+                            <p class="text-caption text-textSecondary mt-1">Shoot location. Travel and stay will be provided by production.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-8">
+                    <h2 class="text-h2 font-semibold text-white mb-3">Description</h2>
+                    <p class="text-body text-textSecondary leading-relaxed">
+                        Looking for a charismatic male actor to play the lead role in our upcoming thriller web series. The character 'Rohan' is a brilliant but troubled detective. Must have strong screen presence and intense dialogue delivery.<br><br>
+                        Previous experience in long-format shows is a plus. Please ensure your portfolio contains at least two dramatic monologues.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Sticky Footer CTA -->
+        <div class="absolute bottom-0 w-full bg-surface border-t border-border p-4 pb-8 flex items-center justify-between">
+            <div class="flex flex-col">
+                <span class="text-bodyBold text-white">Free to Apply</span>
+                <span class="text-caption text-textSecondary">Ends in 24 days</span>
+            </div>
+            <button class="w-[180px] h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold shadow-lg active:bg-primaryPressed transition-colors">
+                Apply Now
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

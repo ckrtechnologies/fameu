@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Notifications</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[72px] mt-8 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <div class="flex items-center">
+                <button onclick="window.location.href='./A-7-HomeDashboard.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </button>
+                <div class="flex items-center gap-2 ml-1">
+                    <h1 class="text-h2 font-semibold text-white">Notifications</h1>
+                </div>
+            </div>
+            <button class="w-11 h-11 flex items-center justify-center text-textSecondary">
+                <i data-lucide="check-check" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto flex flex-col hide-scrollbar">
+            
+            <!-- Notif Group: Today -->
+            <div class="px-4 py-3 bg-surfaceAlt border-b border-border sticky top-0 z-10 backdrop-blur-md bg-opacity-90">
+                <h4 class="text-[11px] font-bold text-textSecondary uppercase tracking-wider">Today</h4>
+            </div>
+            
+            <!-- Item 1 (Unread) -->
+            <div class="p-4 border-b border-border flex gap-3 bg-primary/5 cursor-pointer hover:bg-surfaceAlt">
+                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 relative">
+                    <i data-lucide="star" class="w-5 h-5 fill-primary/20"></i>
+                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"></div>
+                </div>
+                <div class="flex-1">
+                    <p class="text-body text-white leading-snug"><span class="font-bold">Dharma Productions</span> shortlisted you for <span class="font-bold">Lead Role</span>.</p>
+                    <span class="text-caption text-textSecondary mt-1 block">2 hours ago</span>
+                </div>
+            </div>
+
+            <!-- Item 2 (Unread) -->
+            <div class="p-4 border-b border-border flex gap-3 bg-primary/5 cursor-pointer hover:bg-surfaceAlt">
+                <div class="w-10 h-10 rounded-full bg-infoBg flex items-center justify-center text-info shrink-0 relative">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"></div>
+                </div>
+                <div class="flex-1">
+                    <p class="text-body text-white leading-snug">New message from <span class="font-bold">Red Chillies Casting</span>.</p>
+                    <span class="text-caption text-textSecondary mt-1 block">5 hours ago</span>
+                </div>
+            </div>
+
+            <!-- Notif Group: Earlier -->
+            <div class="px-4 py-3 bg-surfaceAlt border-b border-border sticky top-0 z-10 backdrop-blur-md bg-opacity-90">
+                <h4 class="text-[11px] font-bold text-textSecondary uppercase tracking-wider">Yesterday</h4>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="p-4 border-b border-border flex gap-3 bg-background cursor-pointer hover:bg-surfaceAlt">
+                <div class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center text-textSecondary shrink-0">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-body text-textSecondary leading-snug"><span class="font-bold text-white">Profile Verified!</span> You now have the verified badge.</p>
+                    <span class="text-caption text-textSecondary/60 mt-1 block">Yesterday</span>
+                </div>
+            </div>
+
+            <!-- Item 4 -->
+            <div class="p-4 border-b border-border flex gap-3 bg-background cursor-pointer hover:bg-surfaceAlt">
+                <div class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center text-textSecondary shrink-0">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-body text-textSecondary leading-snug">5 new <span class="font-bold text-white">Actor</span> auditions posted in <span class="font-bold text-white">Mumbai</span>.</p>
+                    <span class="text-caption text-textSecondary/60 mt-1 block">Yesterday</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

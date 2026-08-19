@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Apply Modal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mock Background of the Detail page -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80')] bg-cover opacity-30"></div>
+        
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex flex-col justify-end">
+            
+            <!-- Bottom Sheet Modal -->
+            <div class="w-full bg-surface rounded-t-[24px] border-t border-border flex flex-col pt-2 pb-8 px-4 animate-[slideUp_0.3s_ease-out]">
+                
+                <style>
+                    @keyframes slideUp {
+                        from { transform: translateY(100%); }
+                        to { transform: translateY(0); }
+                    }
+                </style>
+
+                <!-- Handle -->
+                <div class="w-12 h-1.5 bg-border rounded-full mx-auto mb-6"></div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-h2 font-semibold text-white">Apply for Role</h3>
+                    <button onclick="window.location.href='./A-19-AuditionDetail.html'" class="w-8 h-8 flex items-center justify-center bg-surfaceAlt rounded-full text-textSecondary active:bg-border">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-5">
+                    
+                    <!-- Cover Note -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-caption text-textSecondary font-semibold">Cover Note (Optional)</label>
+                        <textarea placeholder="Tell the casting director why you're perfect for this role..." class="w-full h-24 bg-surfaceAlt border border-border rounded-sm text-body text-textPrimary p-4 focus:outline-none focus:border-primary transition-colors resize-none"></textarea>
+                    </div>
+
+                    <!-- Intro Video Attach -->
+                    <div class="flex items-center justify-between p-3 bg-surfaceAlt border border-border rounded-md">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary/20 rounded flex items-center justify-center text-primary">
+                                <i data-lucide="video" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-bodyBold text-white">Attach Intro Video</h4>
+                                <p class="text-[10px] text-textSecondary">Use default from profile</p>
+                            </div>
+                        </div>
+                        <input type="checkbox" checked class="w-5 h-5 accent-primary border-border bg-surface rounded focus:ring-primary focus:ring-offset-surface">
+                    </div>
+
+                    <!-- Resume Attach -->
+                    <div class="flex items-center justify-between p-3 bg-surfaceAlt border border-border rounded-md">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary/20 rounded flex items-center justify-center text-primary">
+                                <i data-lucide="file-text" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-bodyBold text-white">Attach Resume</h4>
+                                <p class="text-[10px] text-textSecondary">John_Doe_Acting_CV.pdf</p>
+                            </div>
+                        </div>
+                        <input type="checkbox" checked class="w-5 h-5 accent-primary border-border bg-surface rounded focus:ring-primary focus:ring-offset-surface">
+                    </div>
+
+                    <!-- Required Fields Alert -->
+                    <div class="bg-infoBg/50 border border-info/30 p-3 rounded flex gap-2 items-start mt-2">
+                        <i data-lucide="info" class="w-4 h-4 text-info shrink-0 mt-0.5"></i>
+                        <p class="text-[11px] text-info/90">Your complete profile (photos, physical attributes) will automatically be shared with the casting director.</p>
+                    </div>
+
+                    <!-- Submit -->
+                    <button onclick="alert('Application Submitted!'); window.location.href='./A-21-MyApplications.html';" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold shadow-lg active:bg-primaryPressed transition-colors mt-2 flex items-center justify-center gap-2">
+                        Submit Application <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

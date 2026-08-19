@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - Artist Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-textPrimary flex min-h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border gap-2">
+            <i data-lucide="shield" class="w-6 h-6 text-primary"></i>
+            <span class="font-bold text-white text-lg tracking-tight">Fameu Admin</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+            <a href="./AD-2-AdminDashboard.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Users & Profiles</div>
+            <a href="./AD-3-UserManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="users" class="w-5 h-5"></i> All Users
+            </a>
+            <a href="./AD-4-ArtistManagement.html" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-md font-semibold transition-colors">
+                <i data-lucide="mic" class="w-5 h-5"></i> Artists
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Hiring & Verification</div>
+            <a href="./AD-5-CompanyVerificationQueue.html" class="flex items-center justify-between px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i> Verification Queue
+                </div>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-background">
+        
+        <header class="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
+            <h2 class="text-xl font-semibold text-white">Artist Profiles</h2>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <!-- Filters -->
+            <div class="flex gap-4 mb-6">
+                <div class="relative flex-1 max-w-md">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-textSecondary"></i>
+                    <input type="text" placeholder="Search by name, skills, location..." class="w-full h-10 bg-surface border border-border rounded-md text-sm text-white pl-10 pr-4 focus:outline-none focus:border-primary">
+                </div>
+                
+                <select class="h-10 bg-surface border border-border rounded-md text-sm text-white px-4 focus:outline-none focus:border-primary outline-none">
+                    <option>All Categories</option>
+                    <option>Actors</option>
+                    <option>Models</option>
+                    <option>Dancers</option>
+                    <option>Singers</option>
+                </select>
+
+                <select class="h-10 bg-surface border border-border rounded-md text-sm text-white px-4 focus:outline-none focus:border-primary outline-none">
+                    <option>All Verification Status</option>
+                    <option>Verified Badge</option>
+                    <option>Unverified</option>
+                </select>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-surface border border-border rounded-xl overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surfaceAlt border-b border-border">
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Artist</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Category</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Location</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Profile Status</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Completeness</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        
+                        <!-- Row 1 -->
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150" class="w-10 h-10 rounded-full object-cover border border-border">
+                                    <div>
+                                        <div class="flex items-center gap-1">
+                                            <p class="text-sm font-semibold text-white">Rahul Sharma</p>
+                                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-success fill-successBg"></i>
+                                        </div>
+                                        <p class="text-xs text-textSecondary">@rahul_acts</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-surfaceAlt border border-border rounded text-xs font-semibold text-white">Actor</span>
+                            </td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Mumbai, MH</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-success/10 text-success rounded text-xs font-bold w-max">
+                                    Public
+                                </span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-1.5 bg-surface border border-border rounded-full overflow-hidden w-24">
+                                        <div class="h-full bg-success w-full"></div>
+                                    </div>
+                                    <span class="text-xs text-textSecondary">100%</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="p-1.5 text-primary hover:text-white transition-colors" title="View Full Profile"><i data-lucide="external-link" class="w-4 h-4"></i></button>
+                                <button class="p-1.5 text-textSecondary hover:text-error transition-colors" title="Revoke Verification"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 2 -->
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-surface border border-border text-textSecondary flex items-center justify-center font-bold">AV</div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">Aditya Verma</p>
+                                        <p class="text-xs text-textSecondary">@adi_v</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-surfaceAlt border border-border rounded text-xs font-semibold text-white">Model</span>
+                            </td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Delhi, DL</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-surface border border-border text-textSecondary rounded text-xs font-bold w-max">
+                                    Incomplete
+                                </span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-1.5 bg-surface border border-border rounded-full overflow-hidden w-24">
+                                        <div class="h-full bg-primary w-[45%]"></div>
+                                    </div>
+                                    <span class="text-xs text-textSecondary">45%</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="p-1.5 text-primary hover:text-white transition-colors" title="View Full Profile"><i data-lucide="external-link" class="w-4 h-4"></i></button>
+                                <button class="p-1.5 text-textSecondary hover:text-white transition-colors opacity-50" title="Grant Verification (Disabled)"><i data-lucide="shield-check" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

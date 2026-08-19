@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Onboarding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header (Skip) -->
+        <div class="pt-[60px] px-4 flex justify-end absolute w-full z-10">
+            <button onclick="finishOnboarding()" class="text-primary text-bodyBold bg-transparent border-0 px-4 py-2">
+                Skip
+            </button>
+        </div>
+
+        <!-- Slides Container -->
+        <div class="flex-1 flex flex-col items-center justify-center pt-20 px-6 text-center" id="slide-container">
+            <!-- Content changes via JS -->
+            <div id="slide-icon" class="w-[200px] h-[200px] bg-surfaceAlt rounded-full flex items-center justify-center mb-12 shadow-lg">
+                <i data-lucide="star" class="text-primary w-24 h-24"></i>
+            </div>
+            
+            <h1 id="slide-title" class="text-display font-bold text-white mb-4">Shine Bright</h1>
+            <p id="slide-desc" class="text-body text-textSecondary px-2">Discover premium acting, singing, and modeling auditions curated just for you.</p>
+        </div>
+
+        <!-- Footer / Controls -->
+        <div class="pb-12 px-6">
+            <!-- Pagination Dots -->
+            <div class="flex justify-center gap-2 mb-8" id="dots-container">
+                <div class="w-8 h-2 bg-primary rounded-full transition-all"></div>
+                <div class="w-2 h-2 bg-surfaceAlt rounded-full transition-all"></div>
+                <div class="w-2 h-2 bg-surfaceAlt rounded-full transition-all"></div>
+            </div>
+
+            <!-- Primary Button -->
+            <button onclick="nextSlide()" id="next-btn" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold flex items-center justify-center shadow-lg active:bg-primaryPressed transition-colors">
+                Next
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        const slides = [
+            { icon: 'star', title: 'Shine Bright', desc: 'Discover premium acting, singing, and modeling auditions curated just for you.' },
+            { icon: 'camera', title: 'Showcase Talent', desc: 'Upload your portfolio, intro videos, and performance clips to stand out.' },
+            { icon: 'message-circle', title: 'Direct Access', desc: 'Chat directly with top production houses and casting directors.' }
+        ];
+
+        let currentSlide = 0;
+
+        function renderSlide() {
+            document.getElementById('slide-title').innerText = slides[currentSlide].title;
+            document.getElementById('slide-desc').innerText = slides[currentSlide].desc;
+            
+            const iconContainer = document.getElementById('slide-icon');
+            iconContainer.innerHTML = `<i data-lucide="${slides[currentSlide].icon}" class="text-primary w-24 h-24"></i>`;
+            lucide.createIcons();
+
+            const dots = document.getElementById('dots-container').children;
+            for(let i=0; i<dots.length; i++) {
+                if (i === currentSlide) {
+                    dots[i].className = "w-8 h-2 bg-primary rounded-full transition-all";
+                } else {
+                    dots[i].className = "w-2 h-2 bg-surfaceAlt rounded-full transition-all";
+                }
+            }
+
+            const nextBtn = document.getElementById('next-btn');
+            if (currentSlide === slides.length - 1) {
+                nextBtn.innerText = "Get Started";
+            } else {
+                nextBtn.innerText = "Next";
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                renderSlide();
+            } else {
+                finishOnboarding();
+            }
+        }
+
+        function finishOnboarding() {
+            window.location.href = './HA-2-Register.html';
+        }
+    </script>
+</body>
+</html>

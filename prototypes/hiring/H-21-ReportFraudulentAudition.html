@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Report Issue</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./H-20-HiringSettings.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Report Issue</h3>
+            <div class="w-11"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 pb-8 flex flex-col hide-scrollbar gap-6 mt-6">
+            
+            <div class="bg-errorBg/30 border border-error/50 p-4 rounded flex gap-3 items-start mb-2">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-error shrink-0 mt-0.5"></i>
+                <p class="text-[12px] text-error/90 leading-snug">Fameu takes platform safety very seriously. False reports may result in account suspension.</p>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="text-caption text-textSecondary font-semibold">What are you reporting?</label>
+                <div class="relative">
+                    <select class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 appearance-none focus:outline-none focus:border-error transition-colors">
+                        <option>Fake Artist Profile</option>
+                        <option>Inappropriate Behavior</option>
+                        <option>Spam or Scam</option>
+                        <option>Platform Bug / Error</option>
+                        <option>Other</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-textSecondary pointer-events-none"></i>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="text-caption text-textSecondary font-semibold">Link to Profile/Chat (Optional)</label>
+                <input type="text" placeholder="Paste URL here..." class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-error transition-colors">
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="text-caption text-textSecondary font-semibold">Description of the issue</label>
+                <textarea placeholder="Please provide details..." class="w-full h-32 bg-surface border border-border rounded-sm text-body text-textPrimary p-4 focus:outline-none focus:border-error transition-colors resize-none"></textarea>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="text-caption text-textSecondary font-semibold">Attach Evidence (Screenshot)</label>
+                <div class="w-full h-[120px] bg-surface border border-border border-dashed rounded-md flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-surfaceAlt">
+                    <i data-lucide="image-plus" class="w-6 h-6 text-textSecondary"></i>
+                    <span class="text-caption text-textSecondary text-center">Tap to upload image</span>
+                </div>
+            </div>
+
+            <!-- Primary Action -->
+            <button onclick="window.location.href='./H-20-HiringSettings.html'; alert('Report Submitted.');" class="w-full h-[52px] bg-error text-white rounded-md text-bodyBold flex items-center justify-center shadow-lg active:opacity-80 transition-opacity mt-4 gap-2">
+                Submit Report <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

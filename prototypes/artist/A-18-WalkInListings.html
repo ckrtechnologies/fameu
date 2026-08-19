@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Walk-ins</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[72px] mt-8 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <div class="flex items-center">
+                <button onclick="window.location.href='./A-14-AuditionDiscovery.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </button>
+                <div class="flex items-center gap-2 ml-1">
+                    <h1 class="text-h2 font-semibold text-white">Walk-in Auditions</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 pb-8 flex flex-col hide-scrollbar gap-4 mt-4">
+            
+            <p class="text-caption text-textSecondary mb-2">Happening today near you (Mumbai)</p>
+
+            <!-- Walk-in Card 1 -->
+            <div class="bg-surface border border-border rounded-md overflow-hidden relative">
+                <div class="absolute top-0 right-0 bg-error px-3 py-1 rounded-bl-md">
+                    <span class="text-[10px] font-bold text-white flex items-center gap-1 uppercase tracking-wide"><i data-lucide="clock" class="w-3 h-3"></i> Ends in 2h</span>
+                </div>
+                <div class="p-4 pt-5">
+                    <h3 class="text-bodyBold text-white mb-1 pr-20">Background Actors for Web Series</h3>
+                    <p class="text-caption text-textSecondary mb-4">Balaji Telefilms</p>
+                    
+                    <div class="bg-surfaceAlt p-3 rounded border border-border mb-4">
+                        <div class="flex items-start gap-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-primary mt-0.5 shrink-0"></i>
+                            <div>
+                                <p class="text-caption font-semibold text-white mb-0.5">SJP Studios</p>
+                                <p class="text-[11px] text-textSecondary">Plot 45, Andheri West. Gate 2 entry.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="w-full h-[40px] bg-surfaceAlt border border-border text-white rounded text-caption font-semibold active:bg-border flex items-center justify-center gap-2">
+                        <i data-lucide="navigation" class="w-4 h-4"></i> Get Directions
+                    </button>
+                </div>
+            </div>
+
+            <!-- Walk-in Card 2 -->
+            <div class="bg-surface border border-border rounded-md overflow-hidden relative">
+                <div class="absolute top-0 right-0 bg-surfaceAlt border-b border-l border-border px-3 py-1 rounded-bl-md">
+                    <span class="text-[10px] font-bold text-textSecondary uppercase tracking-wide">Tomorrow 10 AM</span>
+                </div>
+                <div class="p-4 pt-5">
+                    <h3 class="text-bodyBold text-white mb-1 pr-24">Print Shoot (Ethnic Wear)</h3>
+                    <p class="text-caption text-textSecondary mb-4">FabIndia Casting</p>
+                    
+                    <div class="bg-surfaceAlt p-3 rounded border border-border mb-4">
+                        <div class="flex items-start gap-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-primary mt-0.5 shrink-0"></i>
+                            <div>
+                                <p class="text-caption font-semibold text-white mb-0.5">Dadar East Studio 5</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

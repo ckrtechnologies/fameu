@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Artist Profile View</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header Overlay -->
+        <div class="absolute top-0 w-full h-[100px] bg-gradient-to-b from-black/80 to-transparent z-10 flex items-center justify-between px-4 pt-8">
+            <button onclick="window.location.href='./H-14-ArtistSearch.html'" class="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white active:bg-black/80">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <button class="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white active:bg-black/80">
+                <i data-lucide="bookmark" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto pb-24 flex flex-col hide-scrollbar relative">
+            
+            <!-- Hero Video/Image -->
+            <div class="w-full h-[450px] relative shrink-0 bg-surface">
+                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400&h=500" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+                
+                <div class="absolute bottom-4 left-4 right-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <h1 class="text-h1 font-bold text-white leading-tight">Rahul Sharma, 28</h1>
+                        <i data-lucide="shield-check" class="w-5 h-5 text-success fill-successBg"></i>
+                    </div>
+                    <p class="text-body text-textSecondary font-semibold">Actor • Mumbai, MH</p>
+                </div>
+            </div>
+
+            <div class="px-4 py-4 flex flex-col gap-6">
+                
+                <!-- Quick Attributes -->
+                <div class="grid grid-cols-4 gap-2">
+                    <div class="bg-surfaceAlt border border-border rounded p-2 text-center">
+                        <span class="block text-[10px] text-textSecondary uppercase">Height</span>
+                        <span class="block text-caption font-bold text-white mt-0.5">5'10"</span>
+                    </div>
+                    <div class="bg-surfaceAlt border border-border rounded p-2 text-center">
+                        <span class="block text-[10px] text-textSecondary uppercase">Weight</span>
+                        <span class="block text-caption font-bold text-white mt-0.5">72 kg</span>
+                    </div>
+                    <div class="bg-surfaceAlt border border-border rounded p-2 text-center">
+                        <span class="block text-[10px] text-textSecondary uppercase">Hair</span>
+                        <span class="block text-caption font-bold text-white mt-0.5">Black</span>
+                    </div>
+                    <div class="bg-surfaceAlt border border-border rounded p-2 text-center">
+                        <span class="block text-[10px] text-textSecondary uppercase">Eyes</span>
+                        <span class="block text-caption font-bold text-white mt-0.5">Brown</span>
+                    </div>
+                </div>
+
+                <!-- Bio -->
+                <div>
+                    <h3 class="text-bodyBold text-white mb-2">About</h3>
+                    <p class="text-caption text-textSecondary leading-relaxed">
+                        Versatile theatre actor with 3 years of experience. Trained at NSD. Looking for challenging roles in indie films and web series. Specialized in method acting and action sequences.
+                    </p>
+                </div>
+
+                <!-- Portfolio Links -->
+                <div>
+                    <h3 class="text-bodyBold text-white mb-3">Portfolio</h3>
+                    <div class="flex flex-col gap-2">
+                        <button class="w-full flex items-center justify-between p-3 bg-surface border border-border rounded-md active:bg-surfaceAlt">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="film" class="w-5 h-5 text-primary"></i>
+                                <span class="text-caption font-semibold text-white">Showreel Video</span>
+                            </div>
+                            <i data-lucide="play-circle" class="w-5 h-5 text-textSecondary"></i>
+                        </button>
+                        <button class="w-full flex items-center justify-between p-3 bg-surface border border-border rounded-md active:bg-surfaceAlt">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="image" class="w-5 h-5 text-primary"></i>
+                                <span class="text-caption font-semibold text-white">12 Photos in Gallery</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-textSecondary"></i>
+                        </button>
+                        <button class="w-full flex items-center justify-between p-3 bg-surface border border-border rounded-md active:bg-surfaceAlt">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="file-text" class="w-5 h-5 text-primary"></i>
+                                <span class="text-caption font-semibold text-white">Download Resume (PDF)</span>
+                            </div>
+                            <i data-lucide="download" class="w-5 h-5 text-textSecondary"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Sticky Action Bar -->
+        <div class="h-[80px] bg-surface/90 backdrop-blur-md border-t border-border px-4 flex items-center justify-between absolute bottom-0 w-full gap-3 z-10 pb-4 pt-2">
+            
+            <button onclick="window.location.href='./H-16-SendCommunicationRequest.html'" class="flex-1 h-[48px] bg-primary text-textOnPrimary rounded-md text-bodyBold shadow-lg active:bg-primaryPressed transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="message-circle" class="w-5 h-5"></i> Request Contact
+            </button>
+            <button class="w-[48px] h-[48px] bg-surfaceAlt border border-border rounded-md flex items-center justify-center text-textSecondary active:bg-border transition-colors">
+                <i data-lucide="share-2" class="w-5 h-5"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

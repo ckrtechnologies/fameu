@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-textPrimary flex min-h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border gap-2">
+            <i data-lucide="shield" class="w-6 h-6 text-primary"></i>
+            <span class="font-bold text-white text-lg tracking-tight">Fameu Admin</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+            <a href="./AD-2-AdminDashboard.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Content & Operations</div>
+            <a href="./AD-10-PaymentMonitoring.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="credit-card" class="w-5 h-5"></i> Payments
+            </a>
+            <a href="./AD-12-ContentManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="type" class="w-5 h-5"></i> Content / App
+            </a>
+            <a href="./AD-13-AdminSettings.html" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-md font-semibold transition-colors">
+                <i data-lucide="settings" class="w-5 h-5"></i> Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-background">
+        
+        <header class="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
+            <h2 class="text-xl font-semibold text-white">System Settings</h2>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <div class="max-w-3xl">
+                
+                <h3 class="text-lg font-bold text-white mb-4">Admin Account</h3>
+                <div class="bg-surface border border-border rounded-xl p-6 mb-8 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xl border border-primary/30">JD</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white">John Doe</h4>
+                            <p class="text-sm text-textSecondary">Superadmin • admin@fameu.com</p>
+                        </div>
+                    </div>
+                    <button class="px-4 py-2 bg-surfaceAlt border border-border text-white rounded font-semibold text-sm hover:bg-background transition-colors">
+                        Change Password
+                    </button>
+                </div>
+
+                <h3 class="text-lg font-bold text-white mb-4">Platform Configuration</h3>
+                <div class="bg-surface border border-border rounded-xl p-6 flex flex-col gap-6">
+                    
+                    <div class="flex justify-between items-center pb-6 border-b border-border">
+                        <div>
+                            <h4 class="text-bodyBold text-white">Auto-Moderation AI</h4>
+                            <p class="text-sm text-textSecondary">Automatically flags suspicious audition posts.</p>
+                        </div>
+                        <div class="w-12 h-6 bg-primary rounded-full relative cursor-pointer">
+                            <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center pb-6 border-b border-border">
+                        <div>
+                            <h4 class="text-bodyBold text-white">Maintenance Mode</h4>
+                            <p class="text-sm text-textSecondary">Disables access to the app for all non-admin users.</p>
+                        </div>
+                        <div class="w-12 h-6 bg-surfaceAlt border border-border rounded-full relative cursor-pointer">
+                            <div class="w-5 h-5 bg-textSecondary rounded-full absolute top-0.5 left-0.5 shadow-sm"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="text-bodyBold text-white">Database Backup</h4>
+                            <p class="text-sm text-textSecondary">Last backup: 2 hours ago</p>
+                        </div>
+                        <button class="px-4 py-2 bg-primary text-textOnPrimary rounded font-semibold text-sm hover:bg-primaryPressed transition-colors">
+                            Run Backup Now
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

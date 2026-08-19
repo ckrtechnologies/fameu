@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - Verified Companies</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-textPrimary flex min-h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border gap-2">
+            <i data-lucide="shield" class="w-6 h-6 text-primary"></i>
+            <span class="font-bold text-white text-lg tracking-tight">Fameu Admin</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+            <a href="./AD-2-AdminDashboard.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Hiring & Verification</div>
+            <a href="./AD-5-CompanyVerificationQueue.html" class="flex items-center justify-between px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i> Verification Queue
+                </div>
+            </a>
+            <a href="./AD-6-VerifiedCompanies.html" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-md font-semibold transition-colors">
+                <i data-lucide="building" class="w-5 h-5"></i> Verified Companies
+            </a>
+            <a href="./AD-7-BlacklistManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i> Blacklisted
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-background">
+        
+        <header class="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
+            <h2 class="text-xl font-semibold text-white">Verified Companies</h2>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <div class="flex gap-4 mb-6">
+                <div class="relative flex-1 max-w-md">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-textSecondary"></i>
+                    <input type="text" placeholder="Search companies..." class="w-full h-10 bg-surface border border-border rounded-md text-sm text-white pl-10 pr-4 focus:outline-none focus:border-primary">
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-surface border border-border rounded-xl overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surfaceAlt border-b border-border">
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Company</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Type</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Location</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Verified On</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Status</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        
+                        <!-- Row 1 -->
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded bg-background border border-border text-white flex items-center justify-center font-bold">DP</div>
+                                    <div>
+                                        <div class="flex items-center gap-1">
+                                            <p class="text-sm font-semibold text-white">Dharma Productions</p>
+                                            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-success"></i>
+                                        </div>
+                                        <p class="text-xs text-textSecondary font-mono mt-0.5">CIN: U92120MH1979PTC021319</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-surfaceAlt border border-border rounded text-xs font-semibold text-textSecondary">Production House</span>
+                            </td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Mumbai, MH</td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Jan 12, 2026</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-success/10 text-success rounded text-xs font-bold w-max border border-success/20">
+                                    Active Verified
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="p-1.5 text-primary hover:text-white transition-colors" title="View Profile"><i data-lucide="external-link" class="w-4 h-4"></i></button>
+                                <button class="p-1.5 text-textSecondary hover:text-error transition-colors" title="Revoke Verification"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

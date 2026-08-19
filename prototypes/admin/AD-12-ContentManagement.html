@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - Content Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-textPrimary flex min-h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border gap-2">
+            <i data-lucide="shield" class="w-6 h-6 text-primary"></i>
+            <span class="font-bold text-white text-lg tracking-tight">Fameu Admin</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+            <a href="./AD-2-AdminDashboard.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Content & Operations</div>
+            <a href="./AD-10-PaymentMonitoring.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="credit-card" class="w-5 h-5"></i> Payments
+            </a>
+            <a href="./AD-11-AnalyticsReports.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i> Analytics
+            </a>
+            <a href="./AD-12-ContentManagement.html" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-md font-semibold transition-colors">
+                <i data-lucide="type" class="w-5 h-5"></i> Content / App
+            </a>
+            <a href="./AD-13-AdminSettings.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="settings" class="w-5 h-5"></i> Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-background">
+        
+        <header class="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
+            <h2 class="text-xl font-semibold text-white">App Content Management (CMS)</h2>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <div class="grid grid-cols-2 gap-8">
+                
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-4">Edit Static Pages</h3>
+                    <div class="bg-surface border border-border rounded-xl p-4 flex flex-col gap-2">
+                        <div class="p-3 bg-surfaceAlt border border-border rounded flex justify-between items-center cursor-pointer hover:bg-background">
+                            <span class="text-sm font-semibold text-white">Terms of Service</span>
+                            <i data-lucide="edit-2" class="w-4 h-4 text-textSecondary"></i>
+                        </div>
+                        <div class="p-3 bg-surfaceAlt border border-border rounded flex justify-between items-center cursor-pointer hover:bg-background">
+                            <span class="text-sm font-semibold text-white">Privacy Policy</span>
+                            <i data-lucide="edit-2" class="w-4 h-4 text-textSecondary"></i>
+                        </div>
+                        <div class="p-3 bg-surfaceAlt border border-border rounded flex justify-between items-center cursor-pointer hover:bg-background">
+                            <span class="text-sm font-semibold text-white">Help Center Articles</span>
+                            <i data-lucide="edit-2" class="w-4 h-4 text-textSecondary"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-4">System Notifications</h3>
+                    <div class="bg-surface border border-border rounded-xl p-6">
+                        <label class="text-xs font-bold text-textSecondary uppercase tracking-wider mb-2 block">Send Global Push Notification</label>
+                        <input type="text" placeholder="Title" class="w-full h-10 bg-background border border-border rounded-md text-sm text-white px-3 focus:outline-none focus:border-primary mb-3">
+                        <textarea placeholder="Message body..." class="w-full h-24 bg-background border border-border rounded-md text-sm text-white p-3 focus:outline-none focus:border-primary mb-4 resize-none"></textarea>
+                        
+                        <div class="flex justify-between items-center">
+                            <select class="h-10 bg-background border border-border rounded-md text-sm text-white px-3 focus:outline-none">
+                                <option>All Users</option>
+                                <option>Artists Only</option>
+                                <option>Hiring Only</option>
+                            </select>
+                            <button class="px-6 py-2 bg-primary text-textOnPrimary rounded font-bold shadow-lg hover:bg-primaryPressed transition-colors">
+                                Send Push
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

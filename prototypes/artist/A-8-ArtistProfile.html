@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Artist Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="h-[72px] mt-8 px-4 flex items-center justify-between shrink-0">
+            <h1 class="text-h1 font-semibold text-white">Profile</h1>
+            <button class="w-10 h-10 bg-surface border border-border rounded-full flex items-center justify-center active:bg-surfaceAlt">
+                <i data-lucide="settings" class="w-5 h-5 text-textPrimary"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto pb-24 flex flex-col hide-scrollbar">
+            
+            <!-- Profile Info -->
+            <div class="px-4 flex flex-col items-center mt-2 mb-6">
+                <div class="w-24 h-24 rounded-full border-2 border-primary p-1 mb-3">
+                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200&h=200" class="w-full h-full rounded-full object-cover">
+                </div>
+                <div class="flex items-center gap-1 mb-1">
+                    <h2 class="text-h2 font-bold text-white">John Doe</h2>
+                    <i data-lucide="badge-check" class="w-5 h-5 text-success fill-successBg"></i>
+                </div>
+                <p class="text-caption text-primary uppercase tracking-widest font-semibold mb-1">Actor</p>
+                <p class="text-caption text-textSecondary">Mumbai, Maharashtra • 25 yrs</p>
+                
+                <div class="flex gap-3 mt-4">
+                    <button class="px-6 h-10 bg-surfaceAlt border border-border rounded-full text-bodyBold text-white flex items-center gap-2 active:bg-surface">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        Edit
+                    </button>
+                    <button class="w-10 h-10 bg-surfaceAlt border border-border rounded-full flex items-center justify-center active:bg-surface">
+                        <i data-lucide="share" class="w-4 h-4 text-white"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex justify-evenly border-y border-border py-4 mb-6 bg-surface/30">
+                <div class="flex flex-col items-center">
+                    <span class="text-h2 font-bold text-white">12</span>
+                    <span class="text-caption text-textSecondary">Applied</span>
+                </div>
+                <div class="w-[1px] h-full bg-border"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-h2 font-bold text-white">3</span>
+                    <span class="text-caption text-textSecondary">Shortlisted</span>
+                </div>
+                <div class="w-[1px] h-full bg-border"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-h2 font-bold text-white">85%</span>
+                    <span class="text-caption text-textSecondary">Profile</span>
+                </div>
+            </div>
+
+            <!-- Portfolio Media -->
+            <div class="px-4 mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-h3 font-semibold text-white">Portfolio</h3>
+                    <button class="text-primary text-caption font-semibold">View All</button>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="aspect-square bg-surfaceAlt rounded-md overflow-hidden relative border border-border cursor-pointer">
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200&h=200" class="w-full h-full object-cover">
+                    </div>
+                    <div class="aspect-square bg-surfaceAlt rounded-md overflow-hidden relative border border-border cursor-pointer">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200" class="w-full h-full object-cover">
+                    </div>
+                    <div class="aspect-square bg-surface border-border border-dashed border-2 rounded-md flex flex-col items-center justify-center gap-1 text-textSecondary cursor-pointer active:bg-surfaceAlt">
+                        <i data-lucide="plus" class="w-6 h-6"></i>
+                        <span class="text-[10px] font-semibold uppercase">Add</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Intro Video -->
+            <div class="px-4 mb-6">
+                <h3 class="text-h3 font-semibold text-white mb-3">Intro Video</h3>
+                <div class="w-full aspect-video bg-surfaceAlt rounded-md border border-border overflow-hidden relative flex items-center justify-center cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1518151240476-8f20b30be347?auto=format&fit=crop&q=80&w=400&h=225" class="w-full h-full object-cover opacity-60">
+                    <div class="absolute w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center pl-1 backdrop-blur-sm shadow-lg">
+                        <i data-lucide="play" class="w-6 h-6 text-textOnPrimary fill-textOnPrimary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Attributes -->
+            <div class="px-4 mb-6">
+                <h3 class="text-h3 font-semibold text-white mb-3">Attributes</h3>
+                <div class="bg-surface border border-border rounded-md p-4 grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <span class="text-caption text-textSecondary">Height</span>
+                        <span class="text-bodyBold text-white">175 cm</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-caption text-textSecondary">Weight</span>
+                        <span class="text-bodyBold text-white">70 kg</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-caption text-textSecondary">Hair Color</span>
+                        <span class="text-bodyBold text-white">Black</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-caption text-textSecondary">Eye Color</span>
+                        <span class="text-bodyBold text-white">Brown</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Tabs -->
+        <div class="h-[80px] bg-surface border-t border-border px-6 flex justify-between items-center absolute bottom-0 w-full pb-4 pt-2">
+            
+            <button onclick="window.location.href='./A-7-HomeDashboard.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="home" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Home</span>
+            </button>
+
+            <button onclick="window.location.href='./A-14-AuditionDiscovery.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="search" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Search</span>
+            </button>
+
+            <button onclick="window.location.href='./A-21-MyApplications.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Applied</span>
+            </button>
+
+            <button onclick="window.location.href='./A-26-ChatList.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors relative">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Chat</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-primary">
+                <i data-lucide="user" class="w-6 h-6 fill-primary/20"></i>
+                <span class="text-[10px] font-semibold">Profile</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

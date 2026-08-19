@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - User Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-textPrimary flex min-h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation (Same as Dashboard) -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border gap-2">
+            <i data-lucide="shield" class="w-6 h-6 text-primary"></i>
+            <span class="font-bold text-white text-lg tracking-tight">Fameu Admin</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+            <a href="./AD-2-AdminDashboard.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Users & Profiles</div>
+            <a href="./AD-3-UserManagement.html" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-md font-semibold transition-colors">
+                <i data-lucide="users" class="w-5 h-5"></i> All Users
+            </a>
+            <a href="./AD-4-ArtistManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="mic" class="w-5 h-5"></i> Artists
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Hiring & Verification</div>
+            <a href="./AD-5-CompanyVerificationQueue.html" class="flex items-center justify-between px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i> Verification Queue
+                </div>
+            </a>
+            <a href="./AD-6-VerifiedCompanies.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="building" class="w-5 h-5"></i> Verified Companies
+            </a>
+            <a href="./AD-7-BlacklistManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i> Blacklisted
+            </a>
+
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Content & Operations</div>
+            <a href="./AD-8-AuditionModeration.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="file-search" class="w-5 h-5"></i> Audition Moderation
+            </a>
+            <a href="./AD-9-FraudReports.html" class="flex items-center justify-between px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="flag" class="w-5 h-5"></i> Fraud Reports
+                </div>
+            </a>
+            <a href="./AD-10-PaymentMonitoring.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="credit-card" class="w-5 h-5"></i> Payments
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-background">
+        
+        <header class="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
+            <h2 class="text-xl font-semibold text-white">All Users Database</h2>
+            <button class="px-4 py-2 bg-primary text-textOnPrimary rounded font-semibold text-sm hover:bg-primaryPressed transition-colors flex items-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i> Export CSV
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <!-- Filters -->
+            <div class="flex gap-4 mb-6">
+                <div class="relative flex-1 max-w-md">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-textSecondary"></i>
+                    <input type="text" placeholder="Search by name, email, or ID..." class="w-full h-10 bg-surface border border-border rounded-md text-sm text-white pl-10 pr-4 focus:outline-none focus:border-primary">
+                </div>
+                
+                <select class="h-10 bg-surface border border-border rounded-md text-sm text-white px-4 focus:outline-none focus:border-primary outline-none">
+                    <option>All Roles</option>
+                    <option>Artists</option>
+                    <option>Hiring Accounts</option>
+                    <option>Admins</option>
+                </select>
+
+                <select class="h-10 bg-surface border border-border rounded-md text-sm text-white px-4 focus:outline-none focus:border-primary outline-none">
+                    <option>All Statuses</option>
+                    <option>Active</option>
+                    <option>Banned</option>
+                    <option>Suspended</option>
+                </select>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-surface border border-border rounded-xl overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surfaceAlt border-b border-border">
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">User ID</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Name / Email</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Role</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Joined Date</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider">Status</th>
+                            <th class="py-3 px-6 text-xs font-bold text-textSecondary uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        
+                        <!-- Row 1 -->
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6 text-sm text-textSecondary font-mono">USR-8921</td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">RS</div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">Rahul Sharma</p>
+                                        <p class="text-xs text-textSecondary">rahul@example.com</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-surfaceAlt border border-border rounded text-xs font-semibold text-textSecondary">Artist</span>
+                            </td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Oct 12, 2026</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-success/10 text-success rounded text-xs font-bold flex items-center gap-1 w-max">
+                                    <div class="w-1.5 h-1.5 bg-success rounded-full"></div> Active
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="p-1.5 text-textSecondary hover:text-white transition-colors" title="View Details"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                                <button class="p-1.5 text-textSecondary hover:text-error transition-colors" title="Ban User"><i data-lucide="ban" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 2 -->
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors">
+                            <td class="py-4 px-6 text-sm text-textSecondary font-mono">USR-8922</td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-surfaceAlt border border-border text-textSecondary flex items-center justify-center font-bold text-xs">DP</div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">Dharma Productions</p>
+                                        <p class="text-xs text-textSecondary">casting@dharma.com</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-primary/10 text-primary border border-primary/20 rounded text-xs font-semibold">Hiring</span>
+                            </td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Oct 10, 2026</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-success/10 text-success rounded text-xs font-bold flex items-center gap-1 w-max">
+                                    <div class="w-1.5 h-1.5 bg-success rounded-full"></div> Active
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="p-1.5 text-textSecondary hover:text-white transition-colors" title="View Details"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                                <button class="p-1.5 text-textSecondary hover:text-error transition-colors" title="Ban User"><i data-lucide="ban" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 3 -->
+                        <tr class="hover:bg-surfaceAlt/50 transition-colors opacity-60">
+                            <td class="py-4 px-6 text-sm text-textSecondary font-mono">USR-8890</td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-surfaceAlt border border-border text-textSecondary flex items-center justify-center font-bold text-xs">SM</div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white line-through">Scam Maker</p>
+                                        <p class="text-xs text-textSecondary">scammer@fake.com</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-primary/10 text-primary border border-primary/20 rounded text-xs font-semibold">Hiring</span>
+                            </td>
+                            <td class="py-4 px-6 text-sm text-textSecondary">Sep 28, 2026</td>
+                            <td class="py-4 px-6">
+                                <span class="px-2 py-1 bg-errorBg/20 text-error rounded text-xs font-bold flex items-center gap-1 w-max border border-error/30">
+                                    <div class="w-1.5 h-1.5 bg-error rounded-full"></div> Banned
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="p-1.5 text-textSecondary hover:text-white transition-colors" title="View Details"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                                <button class="p-1.5 text-textSecondary hover:text-success transition-colors" title="Unban User"><i data-lucide="check-circle" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+                
+                <!-- Pagination -->
+                <div class="p-4 border-t border-border flex items-center justify-between">
+                    <p class="text-sm text-textSecondary">Showing 1 to 10 of 24,592 entries</p>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 bg-surface border border-border rounded text-sm text-textSecondary disabled:opacity-50" disabled>Previous</button>
+                        <button class="px-3 py-1 bg-surface border border-border rounded text-sm text-white hover:bg-surfaceAlt transition-colors">Next</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Social Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mock Background of the Login page -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="p-8 mt-12 opacity-50 blur-sm pointer-events-none">
+            <h1 class="text-h1 font-bold text-white mb-2">Welcome Back</h1>
+            <div class="h-[52px] bg-surface border border-border rounded-sm mt-8"></div>
+            <div class="h-[52px] bg-surface border border-border rounded-sm mt-4"></div>
+            <div class="h-[52px] bg-primary rounded-md mt-6"></div>
+        </div>
+        
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex flex-col justify-end">
+            
+            <!-- Bottom Sheet Modal (Google/Apple Auth mock) -->
+            <div class="w-full bg-surface rounded-t-[24px] border-t border-border flex flex-col pt-2 pb-12 px-4 animate-[slideUp_0.3s_ease-out]">
+                
+                <style>
+                    @keyframes slideUp {
+                        from { transform: translateY(100%); }
+                        to { transform: translateY(0); }
+                    }
+                </style>
+
+                <!-- Handle -->
+                <div class="w-12 h-1.5 bg-border rounded-full mx-auto mb-8"></div>
+
+                <div class="flex flex-col items-center mb-8">
+                    <!-- Google Logo Mock -->
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 p-2.5">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    </div>
+                    <h3 class="text-h2 font-semibold text-white mb-2">Sign in with Google</h3>
+                    <p class="text-caption text-textSecondary text-center">Fameu will receive your name, email address, and profile picture.</p>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <!-- Account 1 -->
+                    <button onclick="window.location.href='./A-1-CategorySelection.html'" class="w-full p-4 bg-surfaceAlt border border-border rounded-md flex items-center gap-4 active:bg-border transition-colors text-left">
+                        <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary font-bold">J</div>
+                        <div class="flex-1">
+                            <h4 class="text-bodyBold text-white">John Doe</h4>
+                            <p class="text-[11px] text-textSecondary">johndoe@gmail.com</p>
+                        </div>
+                    </button>
+                    
+                    <!-- Account 2 -->
+                    <button onclick="window.location.href='./A-1-CategorySelection.html'" class="w-full p-4 bg-surfaceAlt border border-border rounded-md flex items-center gap-4 active:bg-border transition-colors text-left">
+                        <div class="w-10 h-10 bg-surface border border-border rounded-full flex items-center justify-center text-textSecondary">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-bodyBold text-white">Use another account</h4>
+                        </div>
+                    </button>
+                </div>
+                
+                <button onclick="window.location.href='./AA-5-Login.html'" class="mt-6 text-bodyBold text-textSecondary active:text-white">Cancel</button>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

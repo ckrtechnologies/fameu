@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-textPrimary flex min-h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-surface border-r border-border flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border gap-2">
+            <i data-lucide="shield" class="w-6 h-6 text-primary"></i>
+            <span class="font-bold text-white text-lg tracking-tight">Fameu Admin</span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+            <a href="./AD-2-AdminDashboard.html" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-md font-semibold">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Users & Profiles</div>
+            <a href="./AD-3-UserManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="users" class="w-5 h-5"></i> All Users
+            </a>
+            <a href="./AD-4-ArtistManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="mic" class="w-5 h-5"></i> Artists
+            </a>
+            
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Hiring & Verification</div>
+            <a href="./AD-5-CompanyVerificationQueue.html" class="flex items-center justify-between px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i> Verification Queue
+                </div>
+                <span class="bg-primary text-textOnPrimary text-[10px] font-bold px-1.5 py-0.5 rounded">12</span>
+            </a>
+            <a href="./AD-6-VerifiedCompanies.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="building" class="w-5 h-5"></i> Verified Companies
+            </a>
+            <a href="./AD-7-BlacklistManagement.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i> Blacklisted
+            </a>
+
+            <div class="text-[11px] font-bold text-textSecondary uppercase tracking-wider mt-4 mb-2 px-3">Content & Operations</div>
+            <a href="./AD-8-AuditionModeration.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="file-search" class="w-5 h-5"></i> Audition Moderation
+            </a>
+            <a href="./AD-9-FraudReports.html" class="flex items-center justify-between px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="flag" class="w-5 h-5"></i> Fraud Reports
+                </div>
+                <span class="bg-error text-white text-[10px] font-bold px-1.5 py-0.5 rounded">3</span>
+            </a>
+            <a href="./AD-10-PaymentMonitoring.html" class="flex items-center gap-3 px-3 py-2 text-textSecondary hover:bg-surfaceAlt hover:text-white rounded-md transition-colors">
+                <i data-lucide="credit-card" class="w-5 h-5"></i> Payments
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-border">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">JD</div>
+                <div class="flex-1 truncate">
+                    <p class="text-caption font-bold text-white truncate">John Doe</p>
+                    <p class="text-[10px] text-textSecondary truncate">Superadmin</p>
+                </div>
+                <a href="./AD-1-AdminLogin.html" class="text-textSecondary hover:text-error transition-colors">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-background">
+        
+        <!-- Top Header -->
+        <header class="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
+            <h2 class="text-xl font-semibold text-white">Dashboard Overview</h2>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-textSecondary"></i>
+                    <input type="text" placeholder="Search globally..." class="w-64 h-9 bg-surfaceAlt border border-border rounded-full text-caption text-white pl-9 pr-4 focus:outline-none focus:border-primary transition-colors">
+                </div>
+                <button class="w-9 h-9 flex items-center justify-center text-textSecondary hover:text-white transition-colors relative">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <div class="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></div>
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-white">Welcome back, John</h3>
+                    <p class="text-textSecondary text-sm">Here's what's happening on Fameu today.</p>
+                </div>
+                <div class="flex items-center gap-2 bg-surfaceAlt border border-border p-1 rounded-md">
+                    <button class="px-3 py-1 bg-surface rounded text-sm text-white shadow-sm font-semibold">Today</button>
+                    <button class="px-3 py-1 text-sm text-textSecondary hover:text-white font-semibold transition-colors">7D</button>
+                    <button class="px-3 py-1 text-sm text-textSecondary hover:text-white font-semibold transition-colors">30D</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <!-- Stat Card -->
+                <div class="bg-surface border border-border rounded-xl p-5">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-sm font-semibold text-textSecondary">Total Users</p>
+                        <i data-lucide="users" class="w-5 h-5 text-textSecondary"></i>
+                    </div>
+                    <h4 class="text-3xl font-bold text-white mb-2">24,592</h4>
+                    <div class="flex items-center gap-1 text-sm text-success font-semibold">
+                        <i data-lucide="trending-up" class="w-4 h-4"></i> +12% this week
+                    </div>
+                </div>
+
+                <!-- Stat Card -->
+                <div class="bg-surface border border-border rounded-xl p-5">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-sm font-semibold text-textSecondary">Active Auditions</p>
+                        <i data-lucide="briefcase" class="w-5 h-5 text-primary"></i>
+                    </div>
+                    <h4 class="text-3xl font-bold text-white mb-2">1,204</h4>
+                    <div class="flex items-center gap-1 text-sm text-success font-semibold">
+                        <i data-lucide="trending-up" class="w-4 h-4"></i> +5% this week
+                    </div>
+                </div>
+
+                <!-- Stat Card -->
+                <div class="bg-surface border border-border rounded-xl p-5">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-sm font-semibold text-textSecondary">Pending Verifications</p>
+                        <i data-lucide="clipboard-list" class="w-5 h-5 text-info"></i>
+                    </div>
+                    <h4 class="text-3xl font-bold text-white mb-2">12</h4>
+                    <div class="flex items-center gap-1 text-sm text-textSecondary font-semibold">
+                        Needs attention
+                    </div>
+                </div>
+
+                <!-- Stat Card -->
+                <div class="bg-surface border border-border rounded-xl p-5">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-sm font-semibold text-textSecondary">Revenue (MRR)</p>
+                        <i data-lucide="indian-rupee" class="w-5 h-5 text-success"></i>
+                    </div>
+                    <h4 class="text-3xl font-bold text-white mb-2">₹1.2M</h4>
+                    <div class="flex items-center gap-1 text-sm text-success font-semibold">
+                        <i data-lucide="trending-up" class="w-4 h-4"></i> +18% this month
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Split -->
+            <div class="grid grid-cols-3 gap-6">
+                
+                <!-- Chart Area (Mock) -->
+                <div class="col-span-2 bg-surface border border-border rounded-xl p-6 flex flex-col h-96">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-white">Platform Growth</h3>
+                        <button class="text-sm text-textSecondary hover:text-white flex items-center gap-1"><i data-lucide="download" class="w-4 h-4"></i> Export</button>
+                    </div>
+                    <div class="flex-1 flex items-end gap-2 px-4 pb-2 border-b border-l border-border relative">
+                        <!-- Mock Bars -->
+                        <div class="flex-1 bg-primary/20 rounded-t-md hover:bg-primary/40 transition-colors relative group h-[30%]"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surfaceAlt px-2 py-1 rounded text-xs hidden group-hover:block border border-border">Oct 1</div></div>
+                        <div class="flex-1 bg-primary/40 rounded-t-md hover:bg-primary/60 transition-colors relative group h-[45%]"></div>
+                        <div class="flex-1 bg-primary/60 rounded-t-md hover:bg-primary/80 transition-colors relative group h-[35%]"></div>
+                        <div class="flex-1 bg-primary/80 rounded-t-md hover:bg-primary transition-colors relative group h-[60%]"></div>
+                        <div class="flex-1 bg-primary rounded-t-md hover:bg-primaryPressed transition-colors relative group h-[85%]"></div>
+                        <div class="flex-1 bg-primary rounded-t-md hover:bg-primaryPressed transition-colors relative group h-[70%]"></div>
+                        <div class="flex-1 bg-primary rounded-t-md hover:bg-primaryPressed transition-colors relative group h-[95%]"></div>
+                    </div>
+                    <div class="flex justify-between mt-2 text-xs text-textSecondary px-4">
+                        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                    </div>
+                </div>
+
+                <!-- Action Items -->
+                <div class="col-span-1 flex flex-col gap-6">
+                    
+                    <!-- Fraud Reports -->
+                    <div class="bg-surface border border-border rounded-xl p-6 flex-1">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="alert-circle" class="w-5 h-5 text-error"></i> Urgent Reports</h3>
+                            <a href="./AD-9-FraudReports.html" class="text-sm text-primary hover:underline">View All</a>
+                        </div>
+                        
+                        <div class="flex flex-col gap-3">
+                            <div class="p-3 bg-errorBg/10 border border-error/20 rounded-md">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h4 class="text-sm font-semibold text-white">Fake Audition Post</h4>
+                                    <span class="text-xs text-textSecondary">10m ago</span>
+                                </div>
+                                <p class="text-xs text-textSecondary truncate">Reported by 4 artists. Check "Lead..."</p>
+                            </div>
+                            
+                            <div class="p-3 bg-surfaceAlt border border-border rounded-md">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h4 class="text-sm font-semibold text-white">Spam Messages</h4>
+                                    <span class="text-xs text-textSecondary">1h ago</span>
+                                </div>
+                                <p class="text-xs text-textSecondary truncate">User @karan_actor sending bulk...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verifications -->
+                    <div class="bg-surface border border-border rounded-xl p-6 flex-1">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="clipboard-check" class="w-5 h-5 text-info"></i> KYC Pending</h3>
+                            <a href="./AD-5-CompanyVerificationQueue.html" class="text-sm text-primary hover:underline">Process (12)</a>
+                        </div>
+                        
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-surfaceAlt border border-border rounded flex items-center justify-center text-xs font-bold text-white">YD</div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">Yash Raj Films</p>
+                                        <p class="text-xs text-textSecondary">CIN provided</p>
+                                    </div>
+                                </div>
+                                <button class="px-3 py-1 bg-primary/20 text-primary hover:bg-primary/30 rounded text-xs font-bold transition-colors">Review</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

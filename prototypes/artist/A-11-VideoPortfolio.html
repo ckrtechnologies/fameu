@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Video Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./A-8-ArtistProfile.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Video Portfolio</h3>
+            <button class="w-11 h-11 flex items-center justify-center text-primary active:opacity-50">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 flex flex-col hide-scrollbar gap-4">
+            
+            <!-- Reel 1 (Intro) -->
+            <div class="w-full bg-surface border border-border rounded-md overflow-hidden">
+                <div class="aspect-video bg-surfaceAlt relative cursor-pointer group">
+                    <img src="https://images.unsplash.com/photo-1518151240476-8f20b30be347?auto=format&fit=crop&q=80&w=400&h=225" class="w-full h-full object-cover opacity-70">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center pl-1 backdrop-blur-sm shadow-lg">
+                            <i data-lucide="play" class="w-6 h-6 text-textOnPrimary fill-textOnPrimary"></i>
+                        </div>
+                    </div>
+                    <div class="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-[10px] text-white font-semibold flex items-center gap-1">
+                        <i data-lucide="star" class="w-3 h-3 text-primary fill-primary"></i> Intro Reel
+                    </div>
+                </div>
+                <div class="p-3 flex justify-between items-center">
+                    <div>
+                        <h4 class="text-bodyBold text-white">Self Introduction</h4>
+                        <p class="text-[11px] text-textSecondary">Uploaded 2 months ago</p>
+                    </div>
+                    <button class="w-8 h-8 flex items-center justify-center text-textSecondary active:text-white">
+                        <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reel 2 -->
+            <div class="w-full bg-surface border border-border rounded-md overflow-hidden">
+                <div class="aspect-video bg-surfaceAlt relative cursor-pointer group">
+                    <img src="https://images.unsplash.com/photo-1505322747495-6afdd3b70760?auto=format&fit=crop&q=80&w=400&h=225" class="w-full h-full object-cover opacity-70">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-12 h-12 bg-background/50 border border-border rounded-full flex items-center justify-center pl-1 backdrop-blur-sm">
+                            <i data-lucide="play" class="w-6 h-6 text-white fill-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-3 flex justify-between items-center">
+                    <div>
+                        <h4 class="text-bodyBold text-white">Dramatic Monologue</h4>
+                        <p class="text-[11px] text-textSecondary">Hindi • 1:45s</p>
+                    </div>
+                    <button class="w-8 h-8 flex items-center justify-center text-textSecondary active:text-white">
+                        <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

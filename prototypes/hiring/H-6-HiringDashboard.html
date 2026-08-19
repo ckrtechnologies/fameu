@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="h-[72px] mt-8 px-4 flex items-center justify-between shrink-0">
+            <div>
+                <h1 class="text-h1 font-semibold text-white">Dashboard</h1>
+            </div>
+            <button class="w-10 h-10 bg-surface border border-border rounded-full flex items-center justify-center relative active:bg-surfaceAlt">
+                <i data-lucide="bell" class="w-5 h-5 text-textPrimary"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto px-4 pb-24 flex flex-col hide-scrollbar gap-6">
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-surfaceAlt border border-border rounded-md p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-caption text-textSecondary">Active Posts</span>
+                        <i data-lucide="activity" class="w-4 h-4 text-primary"></i>
+                    </div>
+                    <span class="text-display font-bold text-white">3</span>
+                </div>
+                <div class="bg-surfaceAlt border border-border rounded-md p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-caption text-textSecondary">New Applicants</span>
+                        <div class="w-2 h-2 bg-error rounded-full"></div>
+                    </div>
+                    <span class="text-display font-bold text-white">128</span>
+                </div>
+            </div>
+
+            <!-- Primary CTA -->
+            <button onclick="window.location.href='./H-7-PostAudition.html'" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold flex items-center justify-center gap-2 shadow-lg active:bg-primaryPressed transition-colors">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+                Post New Audition
+            </button>
+
+            <!-- Active Auditions List -->
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-h2 font-semibold text-white">Your Auditions</h2>
+                    <button class="text-caption font-semibold text-primary">View All</button>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    
+                    <!-- Audition Card 1 -->
+                    <div class="bg-surface border border-border rounded-md overflow-hidden">
+                        <div class="p-4 flex gap-3 cursor-pointer active:bg-surfaceAlt transition-colors">
+                            <div class="w-16 h-16 bg-surfaceAlt border border-border rounded overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=100&h=100" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h3 class="text-bodyBold text-white leading-tight truncate">Lead Role - Series</h3>
+                                    <span class="text-[10px] font-bold text-success bg-successBg px-2 py-0.5 rounded border border-success/30 uppercase tracking-wider shrink-0">Active</span>
+                                </div>
+                                <div class="flex gap-2 text-caption text-textSecondary mb-2">
+                                    <span>Actor</span>
+                                    <span>•</span>
+                                    <span>Mumbai</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-surfaceAlt px-4 py-3 border-t border-border flex justify-between items-center">
+                            <div class="flex gap-4">
+                                <div class="flex flex-col">
+                                    <span class="text-h3 font-bold text-white">45</span>
+                                    <span class="text-[10px] text-textSecondary uppercase tracking-wider">Applied</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-h3 font-bold text-white">4</span>
+                                    <span class="text-[10px] text-textSecondary uppercase tracking-wider">Shortlisted</span>
+                                </div>
+                            </div>
+                            <button onclick="window.location.href='./H-11-ApplicantDetail.html'" class="px-4 py-1.5 bg-surface border border-border rounded text-caption font-semibold text-white active:bg-background">View Applicants</button>
+                        </div>
+                    </div>
+
+                    <!-- Audition Card 2 -->
+                    <div class="bg-surface border border-border rounded-md overflow-hidden opacity-75">
+                        <div class="p-4 flex gap-3 cursor-pointer active:bg-surfaceAlt transition-colors">
+                            <div class="w-16 h-16 bg-surfaceAlt border border-border rounded overflow-hidden flex items-center justify-center">
+                                <i data-lucide="image" class="w-6 h-6 text-textSecondary"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h3 class="text-bodyBold text-white leading-tight truncate">FMCG TVC Extra</h3>
+                                    <span class="text-[10px] font-bold text-textSecondary bg-surfaceAlt px-2 py-0.5 rounded border border-border uppercase tracking-wider shrink-0">Draft</span>
+                                </div>
+                                <div class="flex gap-2 text-caption text-textSecondary mb-2">
+                                    <span>Model</span>
+                                    <span>•</span>
+                                    <span>Delhi</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-surfaceAlt px-4 py-3 border-t border-border flex justify-between items-center">
+                            <span class="text-caption text-error font-semibold flex items-center gap-1">
+                                <i data-lucide="alert-circle" class="w-4 h-4"></i> Payment Pending
+                            </span>
+                            <button class="px-4 py-1.5 bg-primary rounded text-caption font-semibold text-textOnPrimary active:bg-primaryPressed">Pay ₹10</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Bottom Tabs -->
+        <div class="h-[80px] bg-surface border-t border-border px-6 flex justify-between items-center absolute bottom-0 w-full pb-4 pt-2">
+            
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-primary">
+                <i data-lucide="layout-dashboard" class="w-6 h-6 fill-primary/20"></i>
+                <span class="text-[10px] font-semibold">Dashboard</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Auditions</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="users" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Talent</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors relative">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Chat</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="user" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Profile</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

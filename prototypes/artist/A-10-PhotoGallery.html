@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Photo Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./A-8-ArtistProfile.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Photo Gallery</h3>
+            <div class="w-11"></div> <!-- spacer -->
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 flex flex-col hide-scrollbar">
+            
+            <div class="grid grid-cols-2 gap-2">
+                <!-- Upload New -->
+                <div class="aspect-[4/5] bg-surface border border-border border-dashed rounded-md flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-surfaceAlt">
+                    <i data-lucide="plus-circle" class="w-6 h-6 text-primary"></i>
+                    <span class="text-caption text-primary font-semibold">Add Photo</span>
+                </div>
+                
+                <!-- Existing Photo 1 -->
+                <div class="aspect-[4/5] bg-surfaceAlt rounded-md overflow-hidden relative group">
+                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=300&h=400" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center gap-4">
+                        <button class="w-8 h-8 rounded-full bg-errorBg flex items-center justify-center text-error"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                        <button class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-white"><i data-lucide="star" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+
+                <!-- Existing Photo 2 -->
+                <div class="aspect-[4/5] bg-surfaceAlt rounded-md overflow-hidden relative group">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300&h=400" class="w-full h-full object-cover">
+                </div>
+
+                <!-- Existing Photo 3 -->
+                <div class="aspect-[4/5] bg-surfaceAlt rounded-md overflow-hidden relative group">
+                    <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300&h=400" class="w-full h-full object-cover">
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

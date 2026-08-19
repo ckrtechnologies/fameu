@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Chats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="h-[72px] mt-8 px-4 flex items-center justify-between shrink-0 border-b border-border bg-background z-10">
+            <h1 class="text-h1 font-semibold text-white">Chats</h1>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto pb-24 flex flex-col bg-background relative">
+            
+            <!-- Important Notice Banner -->
+            <div class="bg-infoBg px-4 py-2 border-b border-info/20 flex gap-2 items-start">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-info mt-0.5 shrink-0"></i>
+                <p class="text-[11px] text-info/90">For your safety, please communicate exclusively through this app. Avoid sharing personal phone numbers.</p>
+            </div>
+
+            <!-- List -->
+            <div class="flex flex-col">
+                
+                <!-- Chat Row 1 (Unread) -->
+                <div class="px-4 py-3 border-b border-border flex items-center gap-3 cursor-pointer active:bg-surfaceAlt bg-surface/10 transition-colors">
+                    <div class="w-12 h-12 bg-surfaceAlt rounded-full border border-border flex items-center justify-center text-primary font-bold shrink-0 relative">
+                        RC
+                        <div class="absolute bottom-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-background"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <h3 class="text-bodyBold text-white truncate">Red Chillies Casting</h3>
+                            <span class="text-[10px] text-primary font-semibold">10:42 AM</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-caption text-white truncate font-semibold">We'd love to schedule you for tomorrow.</p>
+                            <div class="w-2 h-2 bg-primary rounded-full shrink-0 ml-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Row 2 -->
+                <div class="px-4 py-3 border-b border-border flex items-center gap-3 cursor-pointer active:bg-surfaceAlt transition-colors">
+                    <div class="w-12 h-12 bg-surfaceAlt rounded-full border border-border flex items-center justify-center text-textSecondary font-bold shrink-0 relative">
+                        DP
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <h3 class="text-bodyBold text-textPrimary truncate">Dharma Productions</h3>
+                            <span class="text-[10px] text-textSecondary">Yesterday</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="check-check" class="w-3 h-3 text-primary shrink-0"></i>
+                            <p class="text-caption text-textSecondary truncate">Thank you for confirming your availability.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Row 3 -->
+                <div class="px-4 py-3 border-b border-border flex items-center gap-3 cursor-pointer active:bg-surfaceAlt transition-colors">
+                    <div class="w-12 h-12 bg-surfaceAlt rounded-full border border-border flex items-center justify-center text-textSecondary font-bold shrink-0 relative">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <h3 class="text-bodyBold text-textPrimary truncate">Neha (Independent)</h3>
+                            <span class="text-[10px] text-textSecondary">Tue</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="check" class="w-3 h-3 text-textSecondary shrink-0"></i>
+                            <p class="text-caption text-textSecondary truncate">Could you send one more monologue?</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Bottom Tabs -->
+        <div class="h-[80px] bg-surface border-t border-border px-6 flex justify-between items-center absolute bottom-0 w-full pb-4 pt-2">
+            
+            <button onclick="window.location.href='./A-7-HomeDashboard.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="home" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Home</span>
+            </button>
+
+            <button onclick="window.location.href='./A-14-AuditionDiscovery.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="search" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Search</span>
+            </button>
+
+            <button onclick="window.location.href='./A-21-MyApplications.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Applied</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-primary relative">
+                <i data-lucide="message-square" class="w-6 h-6 fill-primary/20"></i>
+                <span class="text-[10px] font-semibold">Chat</span>
+            </button>
+
+            <button onclick="window.location.href='./A-8-ArtistProfile.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="user" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Profile</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

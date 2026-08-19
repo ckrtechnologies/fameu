@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Artist - Home Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="h-[72px] mt-8 px-4 flex items-center justify-between shrink-0">
+            <div>
+                <h1 class="text-h1 font-semibold text-white">Home</h1>
+            </div>
+            <button class="w-10 h-10 bg-surface border border-border rounded-full flex items-center justify-center relative active:bg-surfaceAlt">
+                <i data-lucide="bell" class="w-5 h-5 text-textPrimary"></i>
+                <div class="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-surface"></div>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto px-4 pb-20 flex flex-col hide-scrollbar gap-6">
+            
+            <!-- Profile Completion Banner -->
+            <div onclick="window.location.href='./A-9-EditProfile.html'" class="bg-surfaceAlt rounded-md p-4 border border-border flex items-center gap-4 cursor-pointer active:opacity-70 transition-opacity">
+                <div class="relative w-12 h-12">
+                    <!-- circular progress mock -->
+                    <svg class="w-12 h-12 transform -rotate-90">
+                        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="4" fill="transparent" class="text-border" />
+                        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="4" fill="transparent" stroke-dasharray="125" stroke-dashoffset="40" class="text-primary" />
+                    </svg>
+                    <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">70%</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-bodyBold text-white">Complete your profile</h3>
+                    <p class="text-caption text-textSecondary">Add a performance video to boost visibility.</p>
+                </div>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-textSecondary"></i>
+            </div>
+
+            <!-- Trending Section -->
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-h2 font-semibold text-white">Trending Auditions</h2>
+                    <button class="text-caption font-semibold text-primary">See All</button>
+                </div>
+
+                <!-- Horizontal scroll cards -->
+                <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4">
+                    
+                    <!-- Card 1 -->
+                    <div onclick="window.location.href='./A-19-AuditionDetail.html'" class="w-[280px] shrink-0 bg-surface rounded-md border border-border overflow-hidden cursor-pointer active:bg-surfaceAlt transition-colors">
+                        <div class="h-[157px] bg-surfaceAlt relative">
+                            <!-- Image Placeholder -->
+                            <img src="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=280&h=157" class="w-full h-full object-cover" alt="Audition poster">
+                            <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full border border-white/10">
+                                <span class="text-[10px] font-bold text-white uppercase tracking-wider">Scheduled</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-h3 font-semibold text-white mb-1 truncate">Lead Role - Amazon Prime Web Series</h3>
+                            <div class="flex items-center gap-1 mb-3">
+                                <span class="text-caption text-textSecondary">Dharma Productions</span>
+                                <i data-lucide="badge-check" class="w-4 h-4 text-success fill-successBg"></i>
+                            </div>
+                            <div class="flex gap-2 text-caption text-textSecondary">
+                                <div class="flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4"></i> Mumbai</div>
+                                <span>•</span>
+                                <div class="flex items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> Male, 25-30</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="w-[280px] shrink-0 bg-surface rounded-md border border-border overflow-hidden cursor-pointer active:bg-surfaceAlt transition-colors">
+                        <div class="h-[157px] bg-surfaceAlt relative">
+                            <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=280&h=157" class="w-full h-full object-cover" alt="Audition poster">
+                            <div class="absolute top-2 left-2 bg-primary/90 px-2 py-1 rounded-full border border-white/10">
+                                <span class="text-[10px] font-bold text-textOnPrimary uppercase tracking-wider">Walk-in</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-h3 font-semibold text-white mb-1 truncate">TVC for Major FMCG Brand</h3>
+                            <div class="flex items-center gap-1 mb-3">
+                                <span class="text-caption text-textSecondary">Red Chillies</span>
+                                <i data-lucide="badge-check" class="w-4 h-4 text-success fill-successBg"></i>
+                            </div>
+                            <div class="flex gap-2 text-caption text-textSecondary">
+                                <div class="flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4"></i> Delhi</div>
+                                <span>•</span>
+                                <div class="flex items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> Female, 18-24</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upcoming Section -->
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-h2 font-semibold text-white">Upcoming for You</h2>
+                </div>
+                
+                <!-- Empty State -->
+                <div class="bg-surface border border-border border-dashed rounded-md p-6 flex flex-col items-center justify-center text-center">
+                    <div class="w-12 h-12 bg-surfaceAlt rounded-full flex items-center justify-center mb-3">
+                        <i data-lucide="calendar" class="w-6 h-6 text-textSecondary"></i>
+                    </div>
+                    <h3 class="text-bodyBold text-white mb-1">No upcoming auditions</h3>
+                    <p class="text-caption text-textSecondary mb-4">Apply to auditions and your schedule will appear here.</p>
+                    <button class="px-4 py-2 bg-surfaceAlt text-primary border border-border rounded-full text-bodyBold active:opacity-80">
+                        Find Auditions
+                    </button>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Bottom Tabs -->
+        <div class="h-[80px] bg-surface border-t border-border px-6 flex justify-between items-center absolute bottom-0 w-full pb-4 pt-2">
+            
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-primary">
+                <i data-lucide="home" class="w-6 h-6 fill-primary/20"></i>
+                <span class="text-[10px] font-semibold">Home</span>
+            </button>
+
+            <button onclick="window.location.href='./A-14-AuditionDiscovery.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="search" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Search</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Applied</span>
+            </button>
+
+            <button class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors relative">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
+                <div class="absolute top-0 right-3 w-2 h-2 bg-primary rounded-full"></div>
+                <span class="text-[10px] font-semibold">Chat</span>
+            </button>
+
+            <button onclick="window.location.href='./A-8-ArtistProfile.html'" class="flex flex-col items-center gap-1 min-w-[56px] text-textSecondary active:text-primary transition-colors">
+                <i data-lucide="user" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Profile</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

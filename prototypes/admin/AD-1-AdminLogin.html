@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Admin - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-background p-4">
+
+    <div class="w-full max-w-md bg-surface border border-border rounded-xl p-8 shadow-2xl relative overflow-hidden">
+        
+        <!-- Glow Effect -->
+        <div class="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-[60px]"></div>
+
+        <div class="flex items-center justify-center gap-2 mb-8 relative z-10">
+            <i data-lucide="shield" class="w-8 h-8 text-primary"></i>
+            <h1 class="text-h1 font-bold text-white tracking-tight">Fameu <span class="text-primary">Admin</span></h1>
+        </div>
+
+        <div class="flex flex-col gap-6 relative z-10">
+            
+            <div class="flex flex-col gap-1.5">
+                <label class="text-caption font-semibold text-textSecondary uppercase tracking-wider">Work Email</label>
+                <div class="relative">
+                    <i data-lucide="mail" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSecondary"></i>
+                    <input type="email" placeholder="admin@fameu.com" class="w-full h-[52px] bg-background border border-border rounded-md text-body text-white pl-12 pr-4 focus:outline-none focus:border-primary transition-colors">
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <label class="text-caption font-semibold text-textSecondary uppercase tracking-wider">Password</label>
+                <div class="relative">
+                    <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSecondary"></i>
+                    <input type="password" placeholder="••••••••" class="w-full h-[52px] bg-background border border-border rounded-md text-body text-white pl-12 pr-12 focus:outline-none focus:border-primary transition-colors">
+                    <button class="absolute right-4 top-1/2 -translate-y-1/2 text-textSecondary hover:text-white transition-colors">
+                        <i data-lucide="eye" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 accent-primary bg-background border-border rounded">
+                    <span class="text-caption text-textSecondary">Remember me</span>
+                </label>
+                <a href="#" class="text-caption text-primary hover:underline font-semibold">Lost access?</a>
+            </div>
+
+            <button onclick="window.location.href='./AD-2-AdminDashboard.html'" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold shadow-lg hover:bg-primaryPressed active:scale-[0.98] transition-all mt-4 flex items-center justify-center gap-2">
+                Secure Login <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+
+        </div>
+
+        <p class="text-[11px] text-textSecondary text-center mt-8 relative z-10">
+            Unauthorized access to this panel is strictly prohibited.
+        </p>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

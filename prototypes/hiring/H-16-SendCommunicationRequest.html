@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Send Request</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mock Background of the Detail page -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80')] bg-cover opacity-30"></div>
+        
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex flex-col justify-end">
+            
+            <!-- Bottom Sheet Modal -->
+            <div class="w-full bg-surface rounded-t-[24px] border-t border-border flex flex-col pt-2 pb-8 px-4 animate-[slideUp_0.3s_ease-out]">
+                
+                <style>
+                    @keyframes slideUp {
+                        from { transform: translateY(100%); }
+                        to { transform: translateY(0); }
+                    }
+                </style>
+
+                <!-- Handle -->
+                <div class="w-12 h-1.5 bg-border rounded-full mx-auto mb-6"></div>
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-h2 font-semibold text-white">Contact Request</h3>
+                    <button onclick="window.location.href='./H-15-ArtistProfileView.html'" class="w-8 h-8 flex items-center justify-center bg-surfaceAlt rounded-full text-textSecondary active:bg-border">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <p class="text-caption text-textSecondary mb-6">Fameu protects artist privacy. The artist must accept your request before you can chat with them.</p>
+
+                <div class="flex flex-col gap-5">
+                    
+                    <!-- Role Dropdown -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-caption text-textSecondary font-semibold">Link to an Audition (Optional)</label>
+                        <div class="relative">
+                            <select class="w-full h-[52px] bg-surfaceAlt border border-border rounded-sm text-body text-textPrimary px-4 appearance-none focus:outline-none focus:border-primary transition-colors">
+                                <option>None (Direct Inquiry)</option>
+                                <option>Lead Actor - Prime Series</option>
+                                <option>Female Lead - Ad Shoot</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-textSecondary pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Note -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-caption text-textSecondary font-semibold">Introductory Message</label>
+                        <textarea placeholder="Hi, we loved your profile and would like to..." class="w-full h-24 bg-surfaceAlt border border-border rounded-sm text-body text-textPrimary p-4 focus:outline-none focus:border-primary transition-colors resize-none"></textarea>
+                    </div>
+
+                    <!-- Submit -->
+                    <button onclick="alert('Request sent!'); window.location.href='./H-15-ArtistProfileView.html';" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold shadow-lg active:bg-primaryPressed transition-colors mt-4 flex items-center justify-center gap-2">
+                        Send Request <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

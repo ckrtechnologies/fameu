@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Post Audition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <!-- Header (Modal style) -->
+        <div class="h-[56px] mt-12 px-4 flex items-center justify-between shrink-0 border-b border-border">
+            <h3 class="text-h3 font-semibold text-white">New Post</h3>
+            <button onclick="window.location.href='./H-6-HiringDashboard.html'" class="w-8 h-8 flex items-center justify-center bg-surfaceAlt rounded-full text-textSecondary active:bg-surface">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto px-4 pb-8 flex flex-col hide-scrollbar">
+            
+            <div class="mt-4 mb-6">
+                <p class="text-body text-textSecondary">Reach thousands of verified artists. Every post costs ₹10.</p>
+            </div>
+
+            <!-- Form -->
+            <div class="flex flex-col gap-5 mb-8">
+                
+                <!-- Poster Upload -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Audition Poster (Optional)</label>
+                    <div class="w-full aspect-[16/9] bg-surface border border-border border-dashed rounded-md flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-surfaceAlt transition-colors">
+                        <i data-lucide="image-plus" class="w-6 h-6 text-textSecondary"></i>
+                        <span class="text-caption text-textSecondary font-semibold uppercase tracking-wider">Upload Image (16:9)</span>
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Project Title <span class="text-error">*</span></label>
+                    <input type="text" placeholder="e.g. Lead Role for Web Series" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors">
+                </div>
+
+                <!-- Category -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Talent Category <span class="text-error">*</span></label>
+                    <div class="relative">
+                        <select class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 appearance-none focus:outline-none focus:border-primary transition-colors">
+                            <option>Actor</option>
+                            <option>Singer</option>
+                            <option>Model</option>
+                            <option>Dancer</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-textSecondary pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Type -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-caption text-textSecondary font-semibold">Audition Type <span class="text-error">*</span></label>
+                    <div class="flex gap-2">
+                        <label class="flex-1 h-[52px] bg-surfaceAlt border border-primary rounded-sm flex items-center justify-center gap-2 cursor-pointer">
+                            <input type="radio" name="type" class="hidden" checked>
+                            <div class="w-4 h-4 rounded-full border border-primary flex items-center justify-center">
+                                <div class="w-2 h-2 rounded-full bg-primary"></div>
+                            </div>
+                            <span class="text-bodyBold text-white">Scheduled</span>
+                        </label>
+                        <label class="flex-1 h-[52px] bg-surface border border-border rounded-sm flex items-center justify-center gap-2 cursor-pointer">
+                            <input type="radio" name="type" class="hidden">
+                            <div class="w-4 h-4 rounded-full border border-border"></div>
+                            <span class="text-bodyBold text-textSecondary">Walk-in</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Date & City -->
+                <div class="flex gap-4">
+                    <div class="flex flex-col gap-1 flex-1">
+                        <label class="text-caption text-textSecondary font-semibold">Deadline <span class="text-error">*</span></label>
+                        <input type="date" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors">
+                    </div>
+                    <div class="flex flex-col gap-1 flex-1">
+                        <label class="text-caption text-textSecondary font-semibold">City <span class="text-error">*</span></label>
+                        <input type="text" placeholder="Mumbai" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors">
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Description & Requirements <span class="text-error">*</span></label>
+                    <textarea placeholder="Describe the role, character requirements, and any specific instructions..." class="w-full h-32 bg-surface border border-border rounded-sm text-body text-textPrimary p-4 focus:outline-none focus:border-primary transition-colors resize-none"></textarea>
+                </div>
+
+            </div>
+        </div>
+        
+        <!-- Sticky Footer CTA -->
+        <div class="h-[80px] bg-surface border-t border-border px-4 py-3 shrink-0 flex items-center justify-between">
+            <div class="flex flex-col">
+                <span class="text-caption text-textSecondary">Total Payable</span>
+                <span class="text-bodyBold text-white">₹10.00</span>
+            </div>
+            <button onclick="alert('Payment Gateway Mockup'); window.location.href='./H-6-HiringDashboard.html';" class="w-[180px] h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold shadow-lg active:bg-primaryPressed transition-colors">
+                Pay & Post
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

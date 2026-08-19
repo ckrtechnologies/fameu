@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Edit Audition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./H-8-ManageAuditions.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Edit Audition</h3>
+            <button onclick="window.location.href='./H-8-ManageAuditions.html'" class="px-3 py-1 text-primary text-bodyBold active:opacity-50">Save</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 pb-8 flex flex-col hide-scrollbar gap-6 mt-6">
+            
+            <!-- Warning -->
+            <div class="bg-infoBg/50 border border-info/30 p-3 rounded flex gap-2 items-start mb-2">
+                <i data-lucide="info" class="w-4 h-4 text-info shrink-0 mt-0.5"></i>
+                <p class="text-[11px] text-info/90">Editing major details will notify all currently shortlisted candidates.</p>
+            </div>
+
+            <!-- Title -->
+            <div class="flex flex-col gap-1">
+                <label class="text-caption text-textSecondary font-semibold">Role Title <span class="text-error">*</span></label>
+                <input type="text" value="Lead Actor - Prime Series" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors">
+            </div>
+
+            <!-- Description -->
+            <div class="flex flex-col gap-1">
+                <label class="text-caption text-textSecondary font-semibold">Description <span class="text-error">*</span></label>
+                <textarea class="w-full h-32 bg-surface border border-border rounded-sm text-body text-textPrimary p-4 focus:outline-none focus:border-primary transition-colors resize-none">Looking for a male lead between 25-35 for an upcoming crime thriller series. Must have previous experience in intense roles. Acting reel is mandatory.</textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Location -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Location</label>
+                    <input type="text" value="Mumbai" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors">
+                </div>
+
+                <!-- Exp Date -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Deadline</label>
+                    <input type="date" value="2026-11-15" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors style-color-scheme-dark">
+                </div>
+            </div>
+
+            <style>
+                input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+            </style>
+
+            <div class="w-full h-[1px] bg-border my-2"></div>
+
+            <button class="w-full py-4 text-error border border-error/30 rounded-md bg-errorBg/20 text-bodyBold active:bg-errorBg transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Close Audition Early
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

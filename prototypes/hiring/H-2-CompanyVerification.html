@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Company Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./H-1-CompanyRegistration.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Verification</h3>
+            <div class="w-11"></div> <!-- Spacer -->
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 pb-8 flex flex-col hide-scrollbar">
+            
+            <div class="mt-6 mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-caption text-textSecondary">Step 2 of 2: Legal Verification</span>
+                    <span class="text-caption font-semibold text-primary">100%</span>
+                </div>
+                <div class="w-full h-1 bg-surface rounded-full overflow-hidden">
+                    <div class="w-full h-full bg-primary"></div>
+                </div>
+            </div>
+
+            <div class="bg-infoBg/50 border border-info/30 p-4 rounded-md flex gap-3 items-start mb-8">
+                <i data-lucide="shield" class="w-5 h-5 text-info shrink-0 mt-0.5"></i>
+                <div>
+                    <h4 class="text-[13px] font-bold text-white mb-1">Why do we need this?</h4>
+                    <p class="text-[11px] text-info/90">To ensure the safety of our artists, all production houses must be legally verified before posting auditions on Fameu.</p>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="flex flex-col gap-6 mb-8">
+                
+                <!-- GST / CIN Number -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">GSTIN / CIN / Registration Number <span class="text-error">*</span></label>
+                    <input type="text" placeholder="27XXXXX1234X1ZX" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary uppercase transition-colors">
+                </div>
+
+                <!-- Registration Document Upload -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Registration Certificate (PDF/Image) <span class="text-error">*</span></label>
+                    <div class="w-full h-[120px] bg-surface border border-border border-dashed rounded-md flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-surfaceAlt transition-colors">
+                        <i data-lucide="file-check" class="w-6 h-6 text-textSecondary"></i>
+                        <span class="text-caption text-textSecondary font-semibold text-center">Tap to upload document<br><span class="font-normal">(Max 5MB)</span></span>
+                    </div>
+                </div>
+
+                <!-- POC Name -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Authorized Contact Person (POC) <span class="text-error">*</span></label>
+                    <input type="text" placeholder="Jane Doe" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors">
+                </div>
+                
+                <!-- POC Designation -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-caption text-textSecondary font-semibold">Designation</label>
+                    <input type="text" placeholder="Casting Director" class="w-full h-[52px] bg-surface border border-border rounded-sm text-body text-textPrimary px-4 focus:outline-none focus:border-primary transition-colors">
+                </div>
+
+            </div>
+
+            <!-- Primary Action -->
+            <button onclick="window.location.href='./H-3-VerificationPending.html'" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold flex items-center justify-center shadow-lg active:bg-primaryPressed transition-colors mt-auto mb-6">
+                Submit for Verification
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Verification Pending</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="flex-1 px-6 flex flex-col justify-center items-center relative z-10 text-center">
+            
+            <!-- Animated Icon -->
+            <div class="w-24 h-24 bg-surfaceAlt rounded-full flex items-center justify-center mb-8 relative">
+                <i data-lucide="shield" class="w-10 h-10 text-primary"></i>
+                <!-- Pulse effect -->
+                <div class="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-20"></div>
+                
+                <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-surface rounded-full flex items-center justify-center border-2 border-background">
+                    <i data-lucide="clock" class="w-4 h-4 text-textSecondary"></i>
+                </div>
+            </div>
+
+            <h1 class="text-h1 font-bold text-white mb-4">Under Review</h1>
+            <p class="text-body text-textSecondary mb-8 leading-relaxed">
+                Thank you for submitting your documents. Our moderation team is verifying your company details. This usually takes <span class="text-white font-semibold">24 to 48 hours</span>.
+            </p>
+
+            <div class="bg-surface border border-border p-4 rounded-md w-full mb-12">
+                <p class="text-caption text-white font-semibold mb-1">What happens next?</p>
+                <p class="text-[11px] text-textSecondary">You will receive an email once your account is verified, unlocking your ability to post auditions and chat with artists.</p>
+            </div>
+            
+            <button onclick="window.location.href='./H-6-HiringDashboard.html'" class="w-full h-[52px] bg-primary text-textOnPrimary rounded-md text-bodyBold shadow-lg active:bg-primaryPressed transition-colors">
+                Go to Dashboard
+            </button>
+
+            <button onclick="window.location.href='./HA-0-Splash.html'" class="mt-4 text-bodyBold text-textSecondary active:text-white">
+                Log Out
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black/90">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fameu Hiring - Transaction History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../tailwind-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Mobile Frame -->
+    <div class="max-w-[390px] w-full h-[844px] bg-background text-textPrimary relative overflow-hidden ring-1 ring-border sm:rounded-[40px] flex flex-col">
+        
+        <div class="h-[56px] mt-12 px-2 flex items-center justify-between shrink-0 border-b border-border">
+            <button onclick="window.location.href='./H-18-PaymentSubscription.html'" class="w-11 h-11 flex items-center justify-center text-textPrimary active:opacity-50">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-h3 font-semibold text-white">Transactions</h3>
+            <button class="w-11 h-11 flex items-center justify-center text-textSecondary">
+                <i data-lucide="download" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto flex flex-col hide-scrollbar bg-background">
+            
+            <div class="px-4 py-3 bg-surfaceAlt border-b border-border sticky top-0 z-10">
+                <h4 class="text-[11px] font-bold text-textSecondary uppercase tracking-wider">2026</h4>
+            </div>
+
+            <!-- Transaction 1 -->
+            <div class="p-4 border-b border-border flex items-center justify-between bg-background">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center text-primary shrink-0">
+                        <i data-lucide="credit-card" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-bodyBold text-white">Pro Studio - Monthly</h4>
+                        <p class="text-[11px] text-textSecondary">Nov 01 • Visa ending in 4242</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <h4 class="text-bodyBold text-white">₹4,999</h4>
+                    <span class="text-[10px] text-success font-semibold">Successful</span>
+                </div>
+            </div>
+
+            <!-- Transaction 2 -->
+            <div class="p-4 border-b border-border flex items-center justify-between bg-background">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center text-primary shrink-0">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-bodyBold text-white">Audition Boost (3 Days)</h4>
+                        <p class="text-[11px] text-textSecondary">Oct 15 • Visa ending in 4242</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <h4 class="text-bodyBold text-white">₹999</h4>
+                    <span class="text-[10px] text-success font-semibold">Successful</span>
+                </div>
+            </div>
+
+            <!-- Transaction 3 -->
+            <div class="p-4 border-b border-border flex items-center justify-between bg-background">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center text-primary shrink-0">
+                        <i data-lucide="credit-card" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-bodyBold text-white">Pro Studio - Monthly</h4>
+                        <p class="text-[11px] text-textSecondary">Oct 01 • Visa ending in 4242</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <h4 class="text-bodyBold text-white">₹4,999</h4>
+                    <span class="text-[10px] text-success font-semibold">Successful</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
