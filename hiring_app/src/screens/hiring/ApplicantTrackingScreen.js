@@ -2,8 +2,9 @@ import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image, Alert, TextInput, ScrollView, Modal, Linking , RefreshControl } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AppIcon, { Icon } from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetApplicantsQuery, useUpdateApplicationStatusMutation } from '../../services/auditionApi';
@@ -161,15 +162,11 @@ export default function ApplicantTrackingScreen() {
 
   return (
     <View style={globalStyles.container}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Applicant Tracking</Text>
-          <Text style={styles.headerSubtitle}>{auditionTitle}</Text>
-        </View>
-      </View>
+      <ShrinkableHeader
+        title="Applicant Tracking"
+        subtitle={auditionTitle}
+        showBack={true}
+      />
 
       <View style={styles.tabsContainer}>
         {tabs.map(tab => (
@@ -221,7 +218,7 @@ export default function ApplicantTrackingScreen() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={() => (
             <View style={styles.emptyContainer}>
-              <Icon name="folder-open-outline" size={48} color={colors.borderLight} />
+              <AppIcon name="folder-open-outline" size={48} color={colors.borderLight} />
               <Text style={styles.emptyText}>No applicants in this stage.</Text>
             </View>
           )}
@@ -240,7 +237,7 @@ export default function ApplicantTrackingScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Application Details</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Icon name="close" size={24} color={colors.textMainLight} />
+                <AppIcon name="close" size={24} color={colors.textMainLight} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody}>
@@ -295,7 +292,7 @@ const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.l,
     paddingBottom: spacing.m,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
@@ -509,7 +506,7 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: spacing.xl,
+    padding: spacing.l,
     maxHeight: '80%',
   },
   modalHeader: {

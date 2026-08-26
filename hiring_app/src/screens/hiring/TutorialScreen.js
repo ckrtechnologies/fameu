@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import AppIcon, { Icon } from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
 import { useNavigation } from '@react-navigation/native';
 import Typography from '../../components/core/Typography';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -42,14 +42,8 @@ export default function TutorialScreen() {
   const navigation = useNavigation();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Typography variant="h2" style={styles.title}>How it Works</Typography>
-        <View style={{ width: 24 }} />
-      </View>
+    <View style={styles.container}>
+      <ShrinkableHeader title="How it Works" showBack={true} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Typography variant="body" style={styles.description}>
@@ -74,7 +68,7 @@ export default function TutorialScreen() {
           <Typography variant="h3" style={styles.actionBtnText}>Get Started</Typography>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

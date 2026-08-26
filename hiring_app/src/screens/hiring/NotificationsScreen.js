@@ -1,8 +1,9 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useCallback } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, Animated, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { ArrowLeft, MessageCircle, Bell, BellOff } from 'lucide-react-native';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -19,6 +20,7 @@ export default function NotificationsScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
+  const { scrollY, onScroll, headerTitleSize, subtitleHeight, subtitleOpacity, headerElevation } = useShrinkableHeader();
   const { data: response, isLoading, isFetching, refetch } = useGetNotificationsQuery(undefined, {
     pollingInterval: 10000,
     skip: false,
@@ -104,23 +106,28 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <SafeAreaView style={globalStyles.container} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Typography variant="h2" style={styles.headerTitle}>Notifications</Typography>
-        <TouchableOpacity style={styles.markAllButton} onPress={handleMarkAllRead}>
-          <Typography variant="body" style={styles.markAllText}>Mark all as read</Typography>
-        </TouchableOpacity>
-      </View>
+    <View style={globalStyles.container}>
+      <ShrinkableHeader
+        title="Notifications"
+        showBack={true}
+        scrollY={scrollY}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        rightActions={
+          <TouchableOpacity onPress={handleMarkAllRead} style={{ padding: 4 }}>
+            <Typography variant="body" style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>All read</Typography>
+          </TouchableOpacity>
+        }
+      />
 
       {isLoading && !isFetching ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <FlatList
+        <Animated.FlatList
           data={notifications}
           keyExtractor={(item) => item.id}
           renderItem={renderNotification}
@@ -128,6 +135,8 @@ export default function NotificationsScreen() {
           refreshControl={
             <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
           }
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <BellOff size={64} color={colors.textMutedLight} />
@@ -136,7 +145,7 @@ export default function NotificationsScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

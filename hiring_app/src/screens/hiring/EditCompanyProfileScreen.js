@@ -1,26 +1,24 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, RefreshControl, Modal, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Modal, FlatList, PermissionsAndroid, Platform } from 'react-native';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { useSelector } from 'react-redux';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { Eye, Users, Briefcase, UserCheck } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import Typography from '../../components/core/Typography';
-import AnimatedBorderCard from '../../components/AnimatedBorderCard';
+import AppIcon, { Icon } from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import { Building2, User, Briefcase, Phone, Mail, FileText, Camera, Check, CheckCircle, ChevronDown, AtSign } from 'lucide-react-native';
 import ProgressBar from '../../components/core/ProgressBar';
 import { uploadFileWithProgress } from '../../utils/uploadUtils';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
-import { useGetCompanyProfileQuery, useUpsertCompanyProfileMutation, useUploadLogoMutation } from '../../services/hiringApi';
+import { useGetCompanyProfileQuery, useUpsertCompanyProfileMutation } from '../../services/hiringApi';
 import { useLazyCheckUsernameQuery } from '../../services/profileApi';
 import CommentsSection from '../../components/CommentsSection';
-import CustomDropdown from '../../components/forms/CustomDropdown';
 import { useTheme } from '../../theme/ThemeProvider';
+
 export default function EditCompanyProfileScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -160,12 +158,55 @@ export default function EditCompanyProfileScreen() {
   };
 
   const handleSelectLogo = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, (res) => {
-      if (res.didCancel || !res.assets || res.assets.length === 0) return;
+    const onImageResult = (res) => {
+      if (res.didCancel) return;
+      if (res.errorCode) {
+        showError('', res.errorMessage || 'Failed to capture image');
+        return;
+      }
+      if (!res.assets?.length) return;
       const asset = res.assets[0];
       setLogoUri(asset.uri);
       setSelectedLogo(asset);
-    });
+    };
+
+    GlobalAlert.show('Upload Logo', 'Choose how to upload your company logo', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Take Photo',
+        onPress: async () => {
+          if (Platform.OS === 'android') {
+            try {
+              const hasPermission = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
+              if (hasPermission) {
+                launchCamera({ mediaType: 'photo', quality: 0.8, maxWidth: 1080, maxHeight: 1080, saveToPhotos: false }, onImageResult);
+                return;
+              }
+              const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA, {
+                title: 'Camera Permission',
+                message: 'This app needs access to your camera to capture your company logo photo.',
+                buttonNeutral: 'Ask Me Later',
+                buttonNegative: 'Cancel',
+                buttonPositive: 'OK',
+              });
+              if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                launchCamera({ mediaType: 'photo', quality: 0.8, maxWidth: 1080, maxHeight: 1080, saveToPhotos: false }, onImageResult);
+              } else {
+                showError('', 'Camera permission is required to take a photo.');
+              }
+            } catch (err) {
+              showError('', err?.message || 'Failed to request camera permission');
+            }
+          } else {
+            launchCamera({ mediaType: 'photo', quality: 0.8, maxWidth: 1080, maxHeight: 1080, saveToPhotos: false }, onImageResult);
+          }
+        },
+      },
+      {
+        text: 'Choose from Gallery',
+        onPress: () => launchImageLibrary({ mediaType: 'photo', quality: 0.8, maxWidth: 1080, maxHeight: 1080 }, onImageResult),
+      },
+    ]);
   };
 
   if (isLoading) {
@@ -179,198 +220,232 @@ export default function EditCompanyProfileScreen() {
   const currentLogo = logoUri || profile?.logo_url;
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-    <KeyboardAwareScrollView 
-      ref={scrollViewRef} 
-      contentContainerStyle={styles.scrollContent} 
-      enableOnAndroid={true}
-      extraScrollHeight={100}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.backgroundLight }}>
+      <ShrinkableHeader title="Edit Company Profile" showBack={true} />
       
-      <View style={styles.logoSection}>
-        <TouchableOpacity style={styles.logoContainer} onPress={handleSelectLogo} disabled={isUploading}>
-          {currentLogo ? (
-            <Image source={{ uri: currentLogo }} style={styles.logoImage} />
-          ) : (
-            <View style={styles.logoPlaceholder}>
-              <Icon name="business-outline" size={40} color={colors.textMutedLight} />
-              <Text style={styles.logoText}>Upload Logo</Text>
+      <KeyboardAwareScrollView 
+        ref={scrollViewRef} 
+        contentContainerStyle={styles.scrollContent} 
+        enableOnAndroid={true}
+        extraScrollHeight={80}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
+      >
+        {/* Compact Logo Uploader Header */}
+        <View style={styles.logoSection}>
+          <TouchableOpacity style={styles.logoContainer} onPress={handleSelectLogo} disabled={isUploading} activeOpacity={0.8}>
+            {currentLogo ? (
+              <Image source={{ uri: currentLogo }} style={styles.logoImage} />
+            ) : (
+              <View style={styles.logoPlaceholder}>
+                <Building2 size={28} color={colors.primary} />
+              </View>
+            )}
+            <View style={styles.cameraBadge}>
+              <Camera size={12} color="#FFFFFF" />
             </View>
-          )}
-          {isUploading && (
-            <View style={styles.uploadOverlay}>
-              <ActivityIndicator color="#fff" />
-            </View>
-          )}
-        </TouchableOpacity>
-        <Text style={styles.helperText}>Recommended size: 500x500px</Text>
+            {isUploading && (
+              <View style={styles.uploadOverlay}>
+                <ActivityIndicator color="#fff" size="small" />
+              </View>
+            )}
+          </TouchableOpacity>
+          <View style={styles.logoMeta}>
+            <Text style={styles.logoHeading}>Company Logo</Text>
+            <Text style={styles.logoSubtext}>Tap icon to change (500x500px)</Text>
+          </View>
+        </View>
+
         {isUploading && (
-          <View style={{ width: '60%', marginTop: 8 }}>
+          <View style={{ marginBottom: 10 }}>
             <ProgressBar progress={logoProgress} />
           </View>
         )}
-      </View>
 
-
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Username *</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TextInput
-            style={[styles.input, { flex: 1, marginBottom: 0 }]}
-            placeholder="e.g. dharmaproductions"
-            placeholderTextColor={colors.textMutedLight}
-            value={form.username}
-            onChangeText={(text) => handleChange('username', text.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-            autoCapitalize="none"
-          />
-          <TouchableOpacity 
-            style={{ marginLeft: 8, backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, justifyContent: 'center' }}
-            onPress={handleVerifyUsername}
-            disabled={isCheckingUsername}
-          >
-            {isCheckingUsername ? (
-              <ActivityIndicator size="small" color="#FFF" />
-            ) : (
-              <UserCheck size={20} color="#FFF" />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Company Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Dharma Productions"
-          placeholderTextColor={colors.textMutedLight}
-          value={form.company_name}
-          onChangeText={(text) => handleChange('company_name', text)}
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Company Type *</Text>
-        <TouchableOpacity 
-          style={styles.customSelectInput}
-          onPress={() => setShowCompanyTypeModal(true)}
-        >
-          <Text style={[styles.customSelectText, !form.company_type && { color: colors.textMutedLight }]}>
-            {form.company_type || 'Select Company Type'}
-          </Text>
-          <Icon name="chevron-down" size={20} color={colors.textMutedLight} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Alternate Phone</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. +91 9876543210"
-          placeholderTextColor={colors.textMutedLight}
-          value={form.alternate_phone || ''}
-          onChangeText={(text) => handleChange('alternate_phone', text)}
-          keyboardType="phone-pad"
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Alternate Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. contact@dharma.com"
-          placeholderTextColor={colors.textMutedLight}
-          value={form.alternate_email || ''}
-          onChangeText={(text) => handleChange('alternate_email', text)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Tell us about your company and the work you do..."
-          placeholderTextColor={colors.textMutedLight}
-          value={form.description}
-          onChangeText={(text) => handleChange('description', text)}
-          multiline
-          numberOfLines={5}
-          textAlignVertical="top"
-        />
-      </View>
-
-      <TouchableOpacity 
-        style={[globalStyles.primaryButton, { marginTop: spacing.xl }]} 
-        onPress={handleSave}
-        disabled={isUpdating || isUploading}
-      >
-        {(isUpdating || isUploading) ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={globalStyles.primaryButtonText}>Save Profile</Text>
-        )}
-      </TouchableOpacity>
-
-      {profile?.id && (
-        <CommentsSection targetType="profile" targetId={profile.id} disableComment={true} />
-      )}
-
-    </KeyboardAwareScrollView>
-
-    <Modal
-      visible={showCompanyTypeModal}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setShowCompanyTypeModal(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Company Type</Text>
-            <TouchableOpacity onPress={() => setShowCompanyTypeModal(false)} style={styles.modalCloseButton}>
-              <Icon name="close" size={24} color={colors.textMainLight} />
+        {/* Username */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Username *</Text>
+          <View style={styles.inputWithIcon}>
+            <AtSign size={16} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
+            <TextInput
+              style={styles.innerInput}
+              placeholder="e.g. dharmaproductions"
+              placeholderTextColor={colors.textMutedLight}
+              value={form.username}
+              onChangeText={(text) => handleChange('username', text.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity 
+              style={styles.verifyButton}
+              onPress={handleVerifyUsername}
+              disabled={isCheckingUsername}
+              activeOpacity={0.8}
+            >
+              {isCheckingUsername ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <Check size={14} color="#FFF" />
+              )}
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={COMPANY_TYPE_OPTIONS}
-            keyExtractor={(item) => item.value}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.modalList}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.companyTypeOption,
-                  form.company_type === item.value && { backgroundColor: item.color + '15', borderColor: item.color }
-                ]}
-                onPress={() => {
-                  handleChange('company_type', item.value);
-                  setShowCompanyTypeModal(false);
-                }}
-              >
-                <View style={[styles.companyTypeIconWrapper, { backgroundColor: item.color + '20' }]}>
-                  <Icon name={item.icon} size={20} color={item.color} />
-                </View>
-                <Text style={[
-                  styles.companyTypeText,
-                  form.company_type === item.value && { color: item.color, fontWeight: '700' }
-                ]}>
-                  {item.label}
-                </Text>
-                {form.company_type === item.value && (
-                  <Icon name="checkmark-circle" size={24} color={item.color} style={{ marginLeft: 'auto' }} />
-                )}
-              </TouchableOpacity>
-            )}
-          />
         </View>
-      </View>
-    </Modal>
 
-    </SafeAreaView>
+        {/* Company Name */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Company Name *</Text>
+          <View style={styles.inputWithIcon}>
+            <Building2 size={16} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
+            <TextInput
+              style={styles.innerInput}
+              placeholder="e.g. Dharma Productions"
+              placeholderTextColor={colors.textMutedLight}
+              value={form.company_name}
+              onChangeText={(text) => handleChange('company_name', text)}
+            />
+          </View>
+        </View>
+
+        {/* Company Type Dropdown */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Company Type *</Text>
+          <TouchableOpacity 
+            style={styles.inputWithIcon}
+            onPress={() => setShowCompanyTypeModal(true)}
+            activeOpacity={0.7}
+          >
+            <Briefcase size={16} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
+            <Text style={[styles.innerInputText, !form.company_type && { color: colors.textMutedLight }]}>
+              {form.company_type || 'Select Company Type'}
+            </Text>
+            <ChevronDown size={16} color={colors.textMutedLight} style={{ marginRight: 10 }} />
+          </TouchableOpacity>
+        </View>
+
+        {/* 2-Column Contact Row */}
+        <View style={styles.twoColRow}>
+          <View style={[styles.formGroup, { flex: 1, marginRight: 6 }]}>
+            <Text style={styles.label}>Alt. Phone</Text>
+            <View style={styles.inputWithIcon}>
+              <Phone size={14} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
+              <TextInput
+                style={styles.innerInput}
+                placeholder="+91 98765..."
+                placeholderTextColor={colors.textMutedLight}
+                value={form.alternate_phone || ''}
+                onChangeText={(text) => handleChange('alternate_phone', text)}
+                keyboardType="phone-pad"
+              />
+            </View>
+          </View>
+
+          <View style={[styles.formGroup, { flex: 1, marginLeft: 6 }]}>
+            <Text style={styles.label}>Alt. Email</Text>
+            <View style={styles.inputWithIcon}>
+              <Mail size={14} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
+              <TextInput
+                style={styles.innerInput}
+                placeholder="contact@..."
+                placeholderTextColor={colors.textMutedLight}
+                value={form.alternate_email || ''}
+                onChangeText={(text) => handleChange('alternate_email', text)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Description */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>About / Bio</Text>
+          <View style={[styles.inputWithIcon, styles.textAreaContainer]}>
+            <FileText size={16} color={colors.textMutedLight} style={[styles.fieldLeadingIcon, { marginTop: 10 }]} />
+            <TextInput
+              style={[styles.innerInput, styles.textAreaInput]}
+              placeholder="Tell us about your company and the work you do..."
+              placeholderTextColor={colors.textMutedLight}
+              value={form.description}
+              onChangeText={(text) => handleChange('description', text)}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity 
+          style={[globalStyles.primaryButton, styles.saveButton]} 
+          onPress={handleSave}
+          disabled={isUpdating || isUploading}
+          activeOpacity={0.85}
+        >
+          {(isUpdating || isUploading) ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <CheckCircle size={18} color="#FFF" />
+              <Text style={globalStyles.primaryButtonText}>Save Company Profile</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {profile?.id && (
+          <CommentsSection targetType="profile" targetId={profile.id} disableComment={true} />
+        )}
+      </KeyboardAwareScrollView>
+
+      {/* Company Type Modal */}
+      <Modal
+        visible={showCompanyTypeModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCompanyTypeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Company Type</Text>
+              <TouchableOpacity onPress={() => setShowCompanyTypeModal(false)} style={styles.modalCloseButton}>
+                <Icon name="close" size={24} color={colors.textMainLight} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={COMPANY_TYPE_OPTIONS}
+              keyExtractor={(item) => item.value}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.companyTypeOption,
+                    form.company_type === item.value && { backgroundColor: item.color + '15', borderColor: item.color }
+                  ]}
+                  onPress={() => {
+                    handleChange('company_type', item.value);
+                    setShowCompanyTypeModal(false);
+                  }}
+                >
+                  <View style={[styles.companyTypeIconWrapper, { backgroundColor: item.color + '20' }]}>
+                    <Icon name={item.icon} size={20} color={item.color} />
+                  </View>
+                  <Text style={[
+                    styles.companyTypeText,
+                    form.company_type === item.value && { color: item.color, fontWeight: '700' }
+                  ]}>
+                    {item.label}
+                  </Text>
+                  {form.company_type === item.value && (
+                    <Icon name="checkmark-circle" size={24} color={item.color} style={{ marginLeft: 'auto' }} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -380,145 +455,134 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    padding: spacing.xl,
-    paddingBottom: 100,
+    paddingHorizontal: spacing.l,
+    paddingTop: spacing.s,
+    paddingBottom: 30,
   },
   logoSection: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xxl,
-  },
-  logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.borderLight,
+    borderRadius: 14,
+    padding: spacing.s,
+    marginBottom: spacing.s,
+    gap: 12,
+  },
+  logoContainer: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: colors.primary + '15',
+    borderWidth: 1.5,
+    borderColor: colors.primary + '30',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
-    marginBottom: spacing.m,
+    position: 'relative',
   },
   logoImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 29,
     resizeMode: 'cover',
   },
   logoPlaceholder: {
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  logoText: {
-    ...typography.body2,
+  cameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: colors.primary,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.surfaceLight,
+  },
+  logoMeta: {
+    flex: 1,
+  },
+  logoHeading: {
+    ...typography.body1,
+    fontWeight: '700',
+    color: colors.textMainLight,
+  },
+  logoSubtext: {
+    fontSize: 11,
     color: colors.textMutedLight,
-    marginTop: 8,
+    marginTop: 2,
   },
   uploadOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 29,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  helperText: {
-    ...typography.body2,
-    color: colors.textMutedLight,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  metricCardWrapper: {
-    width: '48%',
-    marginBottom: spacing.md,
-  },
-  metricIconBg: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.textDark,
-    marginBottom: spacing.xs,
-  },
-  metricLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
   },
   formGroup: {
-    marginBottom: spacing.xl,
+    marginBottom: 8,
+  },
+  twoColRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   label: {
-    ...typography.body1,
+    fontSize: 12,
     color: colors.textMainLight,
     fontWeight: '600',
-    marginBottom: spacing.s,
+    marginBottom: 3,
   },
-  input: {
-    backgroundColor: colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: 8,
-    paddingHorizontal: spacing.l,
-    paddingVertical: 14,
-    ...typography.body1,
-    color: colors.textMainLight,
-  },
-  textArea: {
-    minHeight: 120,
-  },
-  kycSection: {
-    backgroundColor: colors.surfaceLight,
-    padding: spacing.l,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    marginBottom: spacing.xl,
-  },
-  kycHeader: {
+  inputWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.m,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    height: 42,
   },
-  kycTitle: {
-    ...typography.body1,
+  fieldLeadingIcon: {
+    marginRight: 8,
+  },
+  innerInput: {
+    flex: 1,
+    height: '100%',
     color: colors.textMainLight,
-    fontWeight: 'bold',
-    marginLeft: spacing.s,
+    fontSize: 13,
+    paddingVertical: 0,
   },
-  kycButton: {
-    backgroundColor: colors.primary + '15', // light primary
+  innerInputText: {
+    flex: 1,
+    color: colors.textMainLight,
+    fontSize: 13,
+  },
+  verifyButton: {
+    backgroundColor: colors.primary,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textAreaContainer: {
+    height: 60,
+    alignItems: 'flex-start',
+    paddingVertical: 4,
+  },
+  textAreaInput: {
+    height: '100%',
+    textAlignVertical: 'top',
+  },
+  saveButton: {
+    marginTop: 6,
     paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  kycButtonText: {
-    ...typography.body1,
-    color: colors.primary,
-    fontWeight: 'bold',
-  },
-  customSelectInput: {
-    backgroundColor: colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: 8,
-    paddingHorizontal: spacing.l,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  customSelectText: {
-    ...typography.body1,
-    color: colors.textMainLight,
+    borderRadius: 10,
   },
   modalOverlay: {
     flex: 1,
@@ -527,19 +591,19 @@ const getStyles = (colors) => StyleSheet.create({
   },
   modalContent: {
     backgroundColor: colors.backgroundLight,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '90%',
-    padding: spacing.xl,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+    padding: spacing.l,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.l,
+    marginBottom: spacing.m,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-    paddingBottom: spacing.m,
+    paddingBottom: spacing.s,
   },
   modalTitle: {
     ...typography.h3,
@@ -547,32 +611,31 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '700',
   },
   modalCloseButton: {
-    padding: spacing.s,
+    padding: 4,
   },
   modalList: {
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
   },
   companyTypeOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.l,
-    marginBottom: spacing.l,
-    borderRadius: 16,
-    borderWidth: 1.5,
+    padding: spacing.m,
+    borderRadius: 12,
+    borderWidth: 1,
     borderColor: colors.borderLight,
-    backgroundColor: colors.surfaceLight,
+    marginBottom: spacing.s,
   },
   companyTypeIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.l,
+    marginRight: spacing.m,
   },
   companyTypeText: {
-    ...typography.h3,
+    ...typography.body1,
     color: colors.textMainLight,
-    flex: 1,
-  }
+  },
 });
+

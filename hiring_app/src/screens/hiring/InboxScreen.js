@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, Animated, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-
-import Icon from 'react-native-vector-icons/Ionicons';
+import AppIcon from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { format } from 'date-fns';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
@@ -18,6 +18,7 @@ export default function InboxScreen() {
   const styles = getStyles(colors);
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const { scrollY, onScroll, headerTitleSize, subtitleHeight, subtitleOpacity, headerElevation } = useShrinkableHeader();
   const { data: response, isLoading, isFetching, refetch } = useGetInboxQuery();
   useRefetchOnFocus(refetch);
   const { user } = useSelector((state) => state.auth);
@@ -104,26 +105,39 @@ export default function InboxScreen() {
     );
   }
 
+  const searchBar = (
+    <View style={styles.searchContainer}>
+      <AppIcon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search chats..."
+        placeholderTextColor={colors.textMutedLight}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      {searchQuery.length > 0 && (
+        <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+          <AppIcon name="close-circle" size={20} color={colors.textMutedLight} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
   return (
-    <SafeAreaView style={[globalStyles.container, { backgroundColor: colors.backgroundLight }]} edges={['bottom', 'left', 'right']}>
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search chats..."
-          placeholderTextColor={colors.textMutedLight}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-            <Icon name="close-circle" size={20} color={colors.textMutedLight} />
-          </TouchableOpacity>
-        )}
-      </View>
-      <FlatList
+    <View style={[globalStyles.container, { backgroundColor: colors.backgroundLight }]}>
+      <ShrinkableHeader
+        title="Messages"
+        showMenu={true}
+        scrollY={scrollY}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        bottomComponent={searchBar}
+      />
+      <Animated.FlatList
         data={filteredConversations}
         keyExtractor={(item) => item.id}
         renderItem={renderConversationItem}
@@ -131,15 +145,17 @@ export default function InboxScreen() {
         refreshControl={
           <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
         }
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
-            <Icon name={searchQuery ? "search-outline" : "chatbubbles-outline"} size={48} color={colors.borderLight} />
+            <AppIcon name={searchQuery ? "search-outline" : "chatbubbles-outline"} size={48} color={colors.borderLight} />
             <Typography variant="h3" style={styles.emptyTitle}>{searchQuery ? "No Results" : "No Messages"}</Typography>
             <Typography variant="body" style={styles.emptyText}>{searchQuery ? "No chats match your search." : "You haven't started any conversations yet."}</Typography>
           </View>
         )}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

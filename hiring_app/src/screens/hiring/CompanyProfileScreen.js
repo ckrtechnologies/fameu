@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Dimensions, FlatList, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, ActivityIndicator, Image, Dimensions, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import Icon from 'react-native-vector-icons/Ionicons';
+import AppIcon, { Icon } from '../../components/icons';
 import { useNavigation } from '@react-navigation/native';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
@@ -11,11 +11,13 @@ import { useGetMyAuditionsQuery } from '../../services/auditionApi';
 import Typography from '../../components/core/Typography';
 import CommentsSection from '../../components/CommentsSection';
 import ImageWithFallback from '../../components/core/ImageWithFallback';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useTheme } from '../../theme/ThemeProvider';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
-const IMAGE_SIZE = (width - spacing.xl * 2 - (COLUMN_COUNT - 1) * spacing.xs) / COLUMN_COUNT;
+const IMAGE_SIZE = (width - spacing.l * 2 - (COLUMN_COUNT - 1) * spacing.xs) / COLUMN_COUNT;
 
 export default function CompanyProfileScreen() {
   const { colors } = useTheme();
@@ -34,6 +36,21 @@ export default function CompanyProfileScreen() {
   const stats = profile?.stats || {};
 
   const [refreshing, setRefreshing] = useState(false);
+
+  const {
+    scrollY,
+    onScroll,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+    avatarSize,
+    avatarRadius,
+  } = useShrinkableHeader();
+
+  const logoUrl = profile?.logo_url || null;
+  const companyName = profile?.company_name || user?.display_name || 'Company';
+  const avatarText = companyName.charAt(0).toUpperCase();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -202,15 +219,39 @@ export default function CompanyProfileScreen() {
   const renderFooter = () => {
     if (!profile?.id) return null;
     return (
-      <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: spacing.l }}>
-        <CommentsSection targetType="profile" targetId={profile.id} />
+      <View style={{ marginHorizontal: spacing.l, marginBottom: 24, marginTop: spacing.l }}>
+        {/* Company Profile Comments */}
+        <CommentsSection targetType="company_profile" targetId={profile.id} />
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <FlatList
+    <View style={styles.container}>
+      <ShrinkableHeader
+        title={companyName}
+        subtitle="Company Profile"
+        showMenu={true}
+        avatarUrl={logoUrl}
+        avatarText={avatarText}
+        avatarSize={avatarSize}
+        avatarRadius={avatarRadius}
+        scrollY={scrollY}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        rightActions={
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditCompanyProfile')}
+            style={{ padding: 6 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <AppIcon name="options-outline" size={22} color={colors.textMainLight} />
+          </TouchableOpacity>
+        }
+      />
+      <Animated.FlatList
         data={categoriesData}
         keyExtractor={(item) => item.category}
         ListHeaderComponent={renderHeader}
@@ -221,14 +262,16 @@ export default function CompanyProfileScreen() {
         renderItem={renderCategory}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ListEmptyComponent={!isAuditionsLoading ? (
           <View style={styles.emptyContainer}>
-            <Icon name="camera-outline" size={48} color={colors.borderLight} />
+            <AppIcon name="camera-outline" size={48} color={colors.borderLight} />
             <Typography variant="body2" style={styles.emptyText}>No posts yet</Typography>
           </View>
         ) : <ActivityIndicator style={{ marginTop: spacing.xl }} />}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -242,8 +285,8 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.l,
+    paddingTop: spacing.m,
     paddingBottom: 100,
   },
   headerContainer: {

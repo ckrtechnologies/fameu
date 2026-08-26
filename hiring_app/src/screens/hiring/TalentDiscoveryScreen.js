@@ -91,7 +91,7 @@ export default function TalentDiscoveryScreen() {
   ];
 
   const renderTalentCard = ({ item }) => {
-    const mainImage = item.avatar_url || ((item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : null);
+    const mainImage = item.avatar_url || item.profile_image_url || ((item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : null) || item.users?.avatar_url;
     
     return (
       <TouchableOpacity 

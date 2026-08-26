@@ -4,7 +4,30 @@ import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, Touchabl
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import AppIcon, {
+  Icon,
+  BasicInfoSectionIcon,
+  PreferencesSectionIcon,
+  AgeProfileIcon,
+  GenderProfileIcon,
+  HeightProfileIcon,
+  WeightProfileIcon,
+  PhoneProfileIcon,
+  LanguagesProfileIcon,
+  NearbySpotlightIcon,
+  VideoSectionIcon,
+  MediaGallerySectionIcon,
+  AssignmentsSectionIcon,
+  CintaaGoldBadgeIcon,
+  ShareProfileIcon,
+  ReportFlagShieldIcon,
+  BioQuoteIcon,
+  ArtistRoleBadgeIcon,
+  InstagramIcon,
+  YouTubeIcon,
+  FacebookIcon,
+  SnapchatIcon,
+} from '../../components/icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { typography, spacing } from '../../theme/theme';
@@ -22,6 +45,7 @@ import { useStartConversationMutation } from '../../services/chatApi';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useGetFeedQuery } from '../../services/discoverApi';
 import CommentsSection from '../../components/CommentsSection';
+import InAppMediaModal from '../../components/core/InAppMediaModal';
 
 const CustomAudioPlayerItem = ({ uri, label }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -193,6 +217,11 @@ export default function PublicProfileScreen() {
       return () => clearTimeout(timer);
     }
   }, [profileData?.id]);
+  const [isMediaModalVisible, setIsMediaModalVisible] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [mediaType, setMediaType] = useState('photo'); // 'photo' or 'video'
+  const [mediaModalUrl, setMediaModalUrl] = useState(null);
+  const [mediaModalTitle, setMediaModalTitle] = useState('');
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -255,49 +284,76 @@ export default function PublicProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackBtn}>
           <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
-        <Typography variant="body" style={styles.headerTitle}>@{profileData.username}</Typography>
-        <View style={{ width: 40 }} />
+        <Text style={styles.headerTitle}>{profileData.name || `@${profileData.username}`}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <TouchableOpacity onPress={handleShare} style={styles.headerActionBtn}>
+            <ShareProfileIcon size={18} />
+          </TouchableOpacity>
+          {!isSelf && (
+            <TouchableOpacity onPress={() => setIsReportModalVisible(true)} style={styles.headerReportBtn}>
+              <ReportFlagShieldIcon size={18} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}>
-        {/* Cover Photo / Header Area */}
-        <View style={styles.headerProfile}>
-          {profileData.avatar_url ? (
-            <ImageWithFallback source={{ uri: profileData.avatar_url }} style={styles.profileImage} />
-          ) : (
-            <View style={[styles.profileImage, styles.placeholderImage]}>
-              <Icon name="person" size={40} color={colors.primary} />
-            </View>
-          )}
+        {/* Avatar & Stats Header Area */}
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarWrapper}>
+            {profileData.avatar_url ? (
+              <ImageWithFallback source={{ uri: profileData.avatar_url }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+                <Text style={{ fontSize: 32, fontWeight: '800', color: '#FFFFFF' }}>
+                  {(profileData.name || profileData.username || 'A').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+          </View>
           
-          <View style={styles.statsRow}>
+          <View style={styles.statsContainer}>
             <TouchableOpacity 
-              style={styles.statItem}
+              style={styles.statCapsule}
               onPress={() => profileData?.id && navigation.navigate('ConnectionList', { type: 'followers', userId: profileData.id })}
+              activeOpacity={0.75}
             >
-              <Typography variant="h3" style={styles.statValue}>{profileData.followers_count || 0}</Typography>
-              <Typography variant="body" style={styles.statLabel}>Followers</Typography>
+              <Text style={styles.statValue}>{profileData.followers_count || 0}</Text>
+              <Text style={styles.statLabel}>Followers</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.statItem}
+              style={styles.statCapsule}
               onPress={() => profileData?.id && navigation.navigate('ConnectionList', { type: 'following', userId: profileData.id })}
+              activeOpacity={0.75}
             >
-              <Typography variant="h3" style={styles.statValue}>{profileData.following_count || 0}</Typography>
-              <Typography variant="body" style={styles.statLabel}>Following</Typography>
+              <Text style={styles.statValue}>{profileData.following_count || 0}</Text>
+              <Text style={styles.statLabel}>Following</Text>
             </TouchableOpacity>
-            <View style={styles.statItem}>
-              <Typography variant="h3" style={styles.statValue}>{profileData.visit_count || 0}</Typography>
-              <Typography variant="body" style={styles.statLabel}>Visits</Typography>
+            <View style={styles.statCapsule}>
+              <Text style={styles.statValue}>{profileData.visit_count || 0}</Text>
+              <Text style={styles.statLabel}>Visits</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.bioSection}>
-          <Typography variant="h2" style={styles.name}>{profileData.name}</Typography>
-          <Typography variant="body" style={styles.category}>{profileData.role === 'artist' ? 'Artist' : ((Array.isArray(profileData.profile) ? profileData.profile[0]?.company_type : profileData.profile?.company_type) || 'Recruiter')}</Typography>
+          <Text style={styles.nameText}>{profileData.name}</Text>
+          
+          {/* Role Badge with Icon */}
+          <View style={styles.roleBadge}>
+            <ArtistRoleBadgeIcon size={14} style={{ marginRight: 6 }} />
+            <Text style={styles.roleBadgeText}>
+              {profileData.role === 'artist' 
+                ? (Array.isArray(profileData.profile?.categories) && profileData.profile.categories.length > 0 
+                    ? profileData.profile.categories.join(' • ') 
+                    : 'Verified Artist') 
+                : ((Array.isArray(profileData.profile) ? profileData.profile[0]?.company_type : profileData.profile?.company_type) || 'Casting Recruiter')}
+            </Text>
+          </View>
+          
           {/* Contact Info (Only for Recruiters/Agencies) */}
           {profileData.role !== 'artist' && (
             <View style={{ 
@@ -354,34 +410,107 @@ export default function PublicProfileScreen() {
               })()}
             </View>
           )}
-          {profileData.profile?.bio && (
-            <Typography variant="body" style={styles.bioText}>{profileData.profile.bio}</Typography>
+
+          {/* Bio Text Card with Quote Icon */}
+          {(profileData.profile?.bio || profileData.profile?.description) && (
+            <View style={styles.bioCard}>
+              <BioQuoteIcon size={16} style={{ marginBottom: 6 }} />
+              <Text style={styles.bioCardText}>
+                {profileData.profile?.bio || profileData.profile?.description}
+              </Text>
+            </View>
           )}
-          {profileData.profile?.description && (
-            <Typography variant="body" style={styles.bioText}>{profileData.profile.description}</Typography>
+
+          {/* Social Links Row */}
+          {profileData.profile?.social_links && (() => {
+            const links = typeof profileData.profile.social_links === 'string' 
+              ? JSON.parse(profileData.profile.social_links || '{}') 
+              : profileData.profile.social_links;
+            const hasSocials = links && (links.instagram || links.youtube || links.facebook || links.snapchat);
+            if (!hasSocials) return null;
+            return (
+              <View style={styles.socialRow}>
+                {links.instagram ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(links.instagram).catch(() => {})} style={styles.socialBtn} activeOpacity={0.8}>
+                    <InstagramIcon size={34} />
+                  </TouchableOpacity>
+                ) : null}
+                {links.youtube ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(links.youtube).catch(() => {})} style={styles.socialBtn} activeOpacity={0.8}>
+                    <YouTubeIcon size={34} />
+                  </TouchableOpacity>
+                ) : null}
+                {links.facebook ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(links.facebook).catch(() => {})} style={styles.socialBtn} activeOpacity={0.8}>
+                    <FacebookIcon size={34} />
+                  </TouchableOpacity>
+                ) : null}
+                {links.snapchat ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(links.snapchat).catch(() => {})} style={styles.socialBtn} activeOpacity={0.8}>
+                    <SnapchatIcon size={34} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            );
+          })()}
+
+          {/* CINTAA Top Bio Badge */}
+          {profileData.profile?.is_cintaa_member && (
+            <View style={styles.cintaaTopBadge}>
+              <CintaaGoldBadgeIcon size={18} />
+              <Text style={styles.cintaaTopBadgeText}>
+                Verified CINTAA Member ({profileData.profile.cintaa_reg_number})
+              </Text>
+            </View>
           )}
         </View>
 
-        {!isSelf && (
-          <View style={[styles.actionSection, { flexDirection: 'row', gap: 12 }]}>
-            <View style={{ flex: 1 }}>
-              <CustomButton
-                title={profileData.is_following ? 'Unfollow' : 'Follow'}
-                variant={profileData.is_following ? 'outline' : 'primary'}
+        {/* Action Buttons Row */}
+        <View style={styles.actionSection}>
+          {!isSelf ? (
+            <>
+              <TouchableOpacity 
+                style={[styles.primaryActionBtn, profileData.is_following && styles.primaryActionBtnOutline]}
                 onPress={handleFollowToggle}
-                loading={isFollowingLoad || isUnfollowingLoad}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <CustomButton
-                title="Message"
-                variant="outline"
+                disabled={isFollowingLoad || isUnfollowingLoad}
+                activeOpacity={0.85}
+              >
+                {isFollowingLoad || isUnfollowingLoad ? (
+                  <ActivityIndicator size="small" color={profileData.is_following ? colors.primary : '#FFFFFF'} />
+                ) : (
+                  <Text style={[styles.primaryActionBtnText, profileData.is_following && { color: colors.primary }]}>
+                    {profileData.is_following ? 'Unfollow' : '+ Follow'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.secondaryActionBtn} 
                 onPress={handleMessage}
-                loading={isStartingChat}
-              />
-            </View>
-          </View>
-        )}
+                disabled={isStartingChat}
+                activeOpacity={0.85}
+              >
+                {isStartingChat ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Icon name="chatbubble-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                    <Text style={styles.secondaryActionBtnText}>Message</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : null}
+
+          <TouchableOpacity
+            style={[styles.shareProfileBtn, { flex: isSelf ? 1 : undefined }]}
+            activeOpacity={0.8}
+            onPress={handleShare}
+          >
+            <ShareProfileIcon size={18} style={{ marginRight: 6 }} />
+            <Text style={styles.shareProfileBtnText}>Share</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Extended details */}
         {profileData.role === 'artist' && profileData.profile ? (
@@ -413,8 +542,8 @@ export default function PublicProfileScreen() {
 
               return (
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12, paddingHorizontal: spacing.xl }}>Profile Videos</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12, paddingHorizontal: spacing.l }}>Profile Videos</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.l }}>
                     {profileVideos.map((video, index) => (
                           <View key={index} style={{ marginRight: spacing.m, width: 140 }}>
                             <TouchableOpacity 
@@ -466,13 +595,13 @@ export default function PublicProfileScreen() {
             {/* Video Portfolio Grid */}
             {typeof profileData.profile.video_url === 'string' && profileData.profile.video_url.trim().length > 0 && (
               <View style={{ marginBottom: 24 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.l, marginBottom: 12 }}>
                   <Text style={{ ...typography.h3, color: colors.primary }}>Video Portfolio</Text>
                   <TouchableOpacity onPress={() => navigation.navigate('VideoPortfolio', { isOwner: true })}>
                     <Text style={{ color: colors.primary, fontWeight: 'bold' }}>See All</Text>
                   </TouchableOpacity>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.l }}>
                   {profileData.profile.video_url.split(',').filter(Boolean).map((vUrl, idx) => {
                     const info = getVideoInfo(vUrl);
                     return (
@@ -513,137 +642,153 @@ export default function PublicProfileScreen() {
               </View>
             )}
 
-            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+            {/* Basic Info Section */}
+            <View style={{ marginBottom: 24, marginHorizontal: spacing.l }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
-                  <Icon name="information-circle-outline" size={24} color={colors.primary} />
+                <View style={{ backgroundColor: colors.primary + '15', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                  <BasicInfoSectionIcon size={24} />
                 </View>
-                <Text style={{ ...typography.h3, color: colors.primary }}>Basic Info</Text>
+                <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Basic Info</Text>
               </View>
 
+              {/* Symmetrical 2-Column Side-by-Side Grid */}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                {['age', 'gender', 'height', 'weight', 'city', 'languages', 'skills', 'availability_type', 'available_dates'].map((k) => {
-                  const v = profileData.profile[k];
-                  if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                  
-                  const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                  const value = Array.isArray(v) ? v.join(', ') : String(v);
-                  
-                  const icons = {
-                    age: 'calendar-outline',
-                    gender: 'male-female-outline',
-                    height: 'resize-outline',
-                    weight: 'barbell-outline',
-                    city: 'location-outline',
-                    languages: 'language-outline',
-                    skills: 'star-outline',
-                    availability_type: 'time-outline',
-                    available_dates: 'calendar-number-outline'
-                  };
+                {(() => {
+                  const p = profileData.profile;
+                  const standardInfoItems = [
+                    p.age ? { key: 'age', label: 'Age', value: `${p.age} yrs`, IconComp: AgeProfileIcon, bg: '#FFF7ED' } : null,
+                    p.gender ? { key: 'gender', label: 'Gender', value: p.gender, IconComp: GenderProfileIcon, bg: '#FDF2F8' } : null,
+                    p.height ? { key: 'height', label: 'Height', value: p.height, IconComp: HeightProfileIcon, bg: '#ECFDF5' } : null,
+                    p.weight ? { key: 'weight', label: 'Weight', value: `${p.weight} kg`, IconComp: WeightProfileIcon, bg: '#EFF6FF' } : null,
+                    (p.alt_number || p.alternate_phone) ? { key: 'alt_phone', label: 'Alt. Number', value: p.alt_number || p.alternate_phone, IconComp: PhoneProfileIcon, bg: '#ECFDF5' } : null,
+                    (Array.isArray(p.languages) && p.languages.length > 0) ? { key: 'languages', label: 'Languages', value: p.languages.join(', '), IconComp: LanguagesProfileIcon, bg: '#EFF6FF' } : null,
+                    p.city ? { key: 'city', label: 'Base City', value: p.city, IconComp: NearbySpotlightIcon, bg: '#F0FDF4' } : null,
+                    p.availability_type ? { key: 'availability', label: 'Availability', value: p.availability_type, IconComp: null, iconName: 'availability_type', bg: '#FFFBEB' } : null,
+                    p.available_dates ? { key: 'dates', label: 'Dates', value: p.available_dates, IconComp: null, iconName: 'available_dates', bg: '#EEF2FF' } : null,
+                  ].filter(Boolean);
 
-                  return (
-                    <View key={k} style={{ width: '48%', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }}>
-                      <Icon name={icons[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
-                      <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 4 }}>{label}</Text>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '600' }} numberOfLines={2}>{value}</Text>
-                    </View>
-                  );
-                })}
-
-                {/* CINTAA Info */}
-                {profileData.profile.is_cintaa_member && (
-                  <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginBottom: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                      <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
-                      <View>
-                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Text>
-                        <Text style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({profileData.profile.cintaa_reg_number})</Text>
+                  return standardInfoItems.map((item) => {
+                    const CustomIcon = item.IconComp;
+                    return (
+                      <View key={item.key} style={styles.basicInfoGridCard}>
+                        <View style={[styles.basicInfoIconBadge, { backgroundColor: item.bg }]}>
+                          {CustomIcon ? <CustomIcon size={26} /> : <AppIcon name={item.iconName} size={24} />}
+                        </View>
+                        <Text style={styles.basicInfoLabel}>{item.label}</Text>
+                        <Text style={styles.basicInfoValue} numberOfLines={1}>{item.value}</Text>
                       </View>
-                    </View>
-                  </View>
-                )}
+                    );
+                  });
+                })()}
               </View>
-            </Animated.View>
+
+              {/* Special Skills */}
+              {Array.isArray(profileData.profile.skills) && profileData.profile.skills.length > 0 && (
+                <View style={styles.basicInfoFullCard}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#FEF3C7' }]}>
+                      <AppIcon name="skills" size={20} />
+                    </View>
+                    <Text style={styles.basicInfoSectionTitle}>Special Skills</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {profileData.profile.skills.map((sk, idx) => (
+                      <View key={idx} style={[styles.languageChip, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+                        <Text style={[styles.languageChipText, { color: '#B45309' }]}>{sk}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
 
             {/* Tags / Preferences Section */}
             {(profileData.profile.work_preference?.length > 0 || profileData.profile.preferred_cities?.length > 0 || profileData.profile.look_alike?.length > 0 || profileData.profile.hashtags?.length > 0) && (
-              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+              <View style={{ marginBottom: 24, marginHorizontal: spacing.l }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                  <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
-                    <Icon name="options-outline" size={24} color={colors.primary} />
+                  <View style={{ backgroundColor: '#D1FAE5', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                    <PreferencesSectionIcon size={24} />
                   </View>
-                  <Text style={{ ...typography.h3, color: colors.primary }}>Preferences & Tags</Text>
+                  <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Preferences & Tags</Text>
                 </View>
                 
                 {profileData.profile.work_preference?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                      <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
-                        <Icon name="briefcase" size={16} color="#f97316" />
+                  <View style={styles.basicInfoFullCard}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                      <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#FFEDD5' }]}>
+                        <AppIcon name="briefcase" size={18} />
                       </View>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Work Preference</Text>
+                      <Text style={styles.basicInfoSectionTitle}>Work Preference</Text>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {parseArray(profileData.profile.work_preference).map((t, i) => (
-                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(249, 115, 22, 0.15)' }]}><Text style={[styles.chipText, { color: '#f97316' }]}>{t}</Text></View>
+                        <View key={i} style={[styles.languageChip, { backgroundColor: '#FFF7ED', borderColor: '#FFEDD5' }]}>
+                          <Text style={[styles.languageChipText, { color: '#C2410C' }]}>{t}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
                 )}
                 
                 {profileData.profile.preferred_cities?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                      <View style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
-                        <Icon name="location" size={16} color="#14b8a6" />
+                  <View style={styles.basicInfoFullCard}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                      <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#CCFBF1' }]}>
+                        <AppIcon name="location" size={18} />
                       </View>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Preferred Locations</Text>
+                      <Text style={styles.basicInfoSectionTitle}>Preferred Locations</Text>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {parseArray(profileData.profile.preferred_cities).map((t, i) => (
-                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}><Text style={[styles.chipText, { color: '#14b8a6' }]}>{t}</Text></View>
+                        <View key={i} style={[styles.languageChip, { backgroundColor: '#F0FDFA', borderColor: '#CCFBF1' }]}>
+                          <Text style={[styles.languageChipText, { color: '#0F766E' }]}>{t}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
                 )}
 
                 {profileData.profile.look_alike?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                      <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
-                        <Icon name="people" size={16} color="#a855f7" />
+                  <View style={styles.basicInfoFullCard}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                      <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#F3E8FF' }]}>
+                        <AppIcon name="people" size={18} />
                       </View>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Look Alikes</Text>
+                      <Text style={styles.basicInfoSectionTitle}>Look Alikes</Text>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {parseArray(profileData.profile.look_alike).map((t, i) => (
-                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}><Text style={[styles.chipText, { color: '#a855f7' }]}>{t}</Text></View>
+                        <View key={i} style={[styles.languageChip, { backgroundColor: '#FAF5FF', borderColor: '#F3E8FF' }]}>
+                          <Text style={[styles.languageChipText, { color: '#7E22CE' }]}>{t}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
                 )}
 
                 {profileData.profile.hashtags?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                      <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
-                        <Icon name="pricetag" size={16} color="#ec4899" />
+                  <View style={styles.basicInfoFullCard}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                      <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#FCE7F3' }]}>
+                        <AppIcon name="pricetag" size={18} />
                       </View>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Hashtags</Text>
+                      <Text style={styles.basicInfoSectionTitle}>Hashtags</Text>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {parseArray(profileData.profile.hashtags).map((t, i) => (
-                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}><Text style={[styles.chipText, { color: '#ec4899' }]}>#{t}</Text></View>
+                        <View key={i} style={[styles.languageChip, { backgroundColor: '#FDF2F8', borderColor: '#FCE7F3' }]}>
+                          <Text style={[styles.languageChipText, { color: '#BE185D' }]}>#{t}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
                 )}
-              </Animated.View>
+              </View>
             )}
 
             {/* Recent Assignments Section */}
             {profileData.profile.recent_assignments?.length > 0 && (
-              <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+              <View style={{ marginBottom: 24, paddingHorizontal: spacing.l }}>
                 <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Text>
                 {parseArray(profileData.profile.recent_assignments).map((assignment, idx) => (
                   <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
@@ -659,7 +804,10 @@ export default function PublicProfileScreen() {
                             style={{ 
                               width: '100%', height: 160, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceDark, justifyContent: 'center', alignItems: 'center', position: 'relative'
                             }}
-                            onPress={() => import('react-native').then(({ Linking }) => Linking.openURL(linkStr).catch(() => {}))}
+                            onPress={() => {
+                              setMediaModalTitle(assignment.title || 'Assignment Video');
+                              setMediaModalUrl(linkStr);
+                            }}
                           >
                             {info?.thumbnail && info.thumbnail !== 'INSTAGRAM' && info.thumbnail !== 'LINK' ? (
                               <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />
@@ -677,7 +825,7 @@ export default function PublicProfileScreen() {
               </View>
             )}
 
-            <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
+            <View style={{ marginBottom: 24, paddingHorizontal: spacing.l }}>
               <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Text>
               
               {(!profileData.profile.photo_urls || profileData.profile.photo_urls.length === 0) && !profileData.profile.video_url ? (
@@ -695,14 +843,9 @@ export default function PublicProfileScreen() {
                         <TouchableOpacity 
                           key={index} 
                           onPress={() => {
-                            const info = getVideoInfo(profileData.profile.video_url.split(',').filter(Boolean)[index]);
-                            if (info?.type !== 'direct') {
-                              import('react-native').then(({ Linking }) => {
-                                Linking.openURL(profileData.profile.video_url.split(',').filter(Boolean)[index]).catch(() => {});
-                              });
-                            } else {
-                              navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: index });
-                            }
+                            const selectedUrl = profileData.profile.video_url.split(',').filter(Boolean)[index];
+                            setMediaModalTitle(profileData.user?.display_name ? `${profileData.user.display_name}'s Video` : 'Video');
+                            setMediaModalUrl(selectedUrl);
                           }}
                           style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s, overflow: 'hidden' }]}
                         >
@@ -744,7 +887,7 @@ export default function PublicProfileScreen() {
             </View>
           </View>
             ) : (
-              <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
+              <View style={{ paddingHorizontal: spacing.l, marginTop: spacing.l }}>
                 {(() => {
                   const details = profileData.profile.category_details?.[activeTab] || profileData.profile.category_details?.[activeTab.toLowerCase()];
                   if (!details) {
@@ -878,7 +1021,7 @@ export default function PublicProfileScreen() {
             
             {/* Artist Profile Comments */}
             {profileData.profile && profileData.profile.id && (
-              <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
+              <View style={{ marginHorizontal: spacing.l, marginBottom: 24, marginTop: 12 }}>
                 {showComments && <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />}
               </View>
             )}
@@ -987,6 +1130,12 @@ export default function PublicProfileScreen() {
           )}
         </View>
       </Modal>
+      <InAppMediaModal
+        visible={Boolean(mediaModalUrl)}
+        url={mediaModalUrl}
+        title={mediaModalTitle}
+        onClose={() => setMediaModalUrl(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -1004,18 +1153,37 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.l,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
+    backgroundColor: colors.backgroundLight,
   },
-  backButton: {
-    padding: spacing.xs,
+  headerBackBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceLight,
   },
   headerTitle: {
     ...typography.h3,
     fontWeight: '700',
     color: colors.textMainLight,
+  },
+  headerActionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerReportBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEF2F2',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   centerContainer: {
     flex: 1,
@@ -1028,102 +1196,244 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.error,
   },
   scrollContent: {
-    padding: spacing.m,
+    paddingBottom: 40,
   },
-  headerProfile: {
+  profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.l,
-    paddingHorizontal: spacing.xl,
+    marginTop: spacing.m,
+    marginBottom: 18,
+    paddingHorizontal: spacing.l,
   },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  avatarWrapper: {
+    position: 'relative',
+    padding: 3,
+    borderRadius: 44,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: '#EFF6FF',
   },
-  placeholderImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(0, 51, 255, 0.05)',
+  avatar: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+  },
+  avatarPlaceholder: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  name: {
-    ...typography.h3,
-    fontWeight: '600',
-    color: colors.textMainLight,
-  },
-  category: {
-    ...typography.body,
-    color: colors.primary,
-    marginBottom: spacing.xs,
-    textTransform: 'capitalize',
-  },
-  statsRow: {
+  statsContainer: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginLeft: spacing.l,
+    justifyContent: 'space-between',
+    marginLeft: 16,
+    gap: 6,
   },
-  statItem: {
+  statCapsule: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   statValue: {
-    ...typography.h3,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.textMainLight,
   },
   statLabel: {
-    ...typography.caption,
-    color: colors.textSecondaryLight,
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: colors.textMutedLight,
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   bioSection: {
-    marginBottom: spacing.l,
-    paddingHorizontal: spacing.xl,
+    marginBottom: 16,
+    paddingHorizontal: spacing.l,
   },
-  bioText: {
-    ...typography.body,
+  nameText: {
+    fontSize: 21,
+    fontWeight: '800',
     color: colors.textMainLight,
-    marginTop: 2,
+    letterSpacing: -0.2,
+  },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginTop: 6,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  roleBadgeText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#1D4ED8',
+    textTransform: 'capitalize',
+  },
+  bioCard: {
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  bioCardText: {
+    fontSize: 13.5,
+    color: colors.textMainLight,
+    lineHeight: 20,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  socialBtn: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cintaaTopBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  cintaaTopBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#B45309',
+    marginLeft: 7,
   },
   actionSection: {
-    paddingHorizontal: spacing.m,
-    marginTop: spacing.m,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    paddingHorizontal: spacing.l,
+    marginTop: 4,
+    marginBottom: spacing.m,
+  },
+  primaryActionBtn: {
+    flex: 1,
+    height: 44,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  primaryActionBtnOutline: {
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  primaryActionBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  secondaryActionBtn: {
+    flex: 1,
+    height: 44,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  secondaryActionBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  shareProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  shareProfileBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.primary,
   },
   detailsSection: {
-    paddingHorizontal: spacing.m,
     marginTop: spacing.m,
   },
   tabsContainer: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.borderLight,
-    marginBottom: 8,
-    paddingTop: 8,
+    marginBottom: 12,
+    backgroundColor: colors.backgroundLight,
   },
   tabsScroll: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
   },
   tab: {
-    paddingVertical: 8,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    marginRight: 12,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceLight,
+    marginRight: 8,
+    borderBottomWidth: 2.5,
+    borderBottomColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabActive: {
-    backgroundColor: colors.primary,
+    borderBottomColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   tabText: {
-    ...typography.body,
+    fontSize: 14.5,
     fontWeight: '600',
     color: colors.textMutedLight,
   },
   tabTextActive: {
-    color: colors.backgroundLight,
+    color: colors.primary,
+    fontWeight: '800',
   },
   portfolioSection: {
     marginTop: spacing.m,
@@ -1133,24 +1443,97 @@ const getStyles = (colors) => StyleSheet.create({
     flexWrap: 'wrap',
   },
   galleryItem: {
-    width: (width - 48) / 3 - 2, // 3 columns, accounting for paddingHorizontal: spacing.xl (24 * 2)
+    width: (width - 48) / 3 - 2,
     aspectRatio: 1,
     marginBottom: 4,
     marginRight: 4,
     borderRadius: 8,
     backgroundColor: colors.surfaceLight,
   },
-  emptyPortfolio: {
-    padding: spacing.xl,
+  basicInfoGridCard: {
+    width: '48%',
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
+    height: 124,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  basicInfoIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 8,
   },
+  basicInfoLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMutedLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  basicInfoValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.textMainLight,
+    marginTop: 3,
+    textAlign: 'center',
+  },
+  basicInfoFullCard: {
+    width: '100%',
+    backgroundColor: colors.surfaceLight,
+    padding: 16,
+    borderRadius: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  basicInfoIconBadgeSmall: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  basicInfoSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textMainLight,
+  },
+  languageChip: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  languageChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.m },
+  modalContent: { width: '100%', backgroundColor: colors.surfaceLight, borderRadius: 12, padding: spacing.l },
+  auditionSelectBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: colors.borderLight, borderRadius: 8, marginBottom: 8 },
   closeModalBtn: {
     position: 'absolute',
     top: 50,
@@ -1161,5 +1544,22 @@ const getStyles = (colors) => StyleSheet.create({
   fullScreenImage: {
     width: '100%',
     height: '80%',
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  linkText: {
+    ...typography.body1,
+    color: colors.textMainLight,
+    marginLeft: spacing.m,
+  },
+  footer: {
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.m,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    backgroundColor: colors.backgroundLight,
   },
 });

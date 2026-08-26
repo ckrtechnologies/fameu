@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, FlatList, StatusBar, Modal, Text } from 'react-native';
+import { View, StyleSheet, Animated, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, FlatList, StatusBar, Modal, Text } from 'react-native';
 import { ShieldCheck, Clock, AlertCircle, Video, Star, Users, PlusCircle, Bell, Search, MessageCircle, MapPin, ChevronRight, Briefcase, TrendingUp, Lock } from 'lucide-react-native';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import ReAnimated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { PieChart, LineChart } from 'react-native-chart-kit';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import ImageWithFallback from '../../components/core/ImageWithFallback';
@@ -15,6 +15,8 @@ import { logout } from '../../store/slices/authSlice';
 import { useDispatch } from 'react-redux';
 import AnimatedBorderCard from '../../components/AnimatedBorderCard';
 import { getAuditionLiveStatus } from '../../utils/dateUtils';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useTheme } from '../../theme/ThemeProvider';
 
 const { width } = Dimensions.get('window');
@@ -43,7 +45,7 @@ export default function HiringDashboardScreen({ navigation }) {
   const [acceptDisclaimer, { isLoading: isAccepting }] = useAcceptDisclaimerMutation();
   const { data: dashboardResponse, isLoading, isFetching, refetch: refetchDashboard } = useGetDashboardDataQuery();
   const { refetch: refetchNotifications } = useGetNotificationsQuery();
-  const { refetch: refetchProfile } = useGetCompanyProfileQuery(user?.id, { skip: !user?.id });
+  const { data: profileResponse, refetch: refetchProfile } = useGetCompanyProfileQuery(user?.id, { skip: !user?.id });
 
   useFocusEffect(
     useCallback(() => {
@@ -54,7 +56,23 @@ export default function HiringDashboardScreen({ navigation }) {
   );
 
   const data = dashboardResponse?.data;
+  const companyProfile = profileResponse?.data || data?.profile;
   const insets = useSafeAreaInsets();
+  const logoUrl = companyProfile?.logo_url || user?.avatar_url || null;
+  const companyName = companyProfile?.company_name || user?.display_name || 'Company';
+  const avatarText = companyName.charAt(0).toUpperCase();
+
+  const {
+    scrollY,
+    onScroll,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+    avatarSize,
+    avatarRadius,
+  } = useShrinkableHeader();
+
 
   const handleRefresh = useCallback(() => {
     refetchDashboard();
@@ -70,7 +88,8 @@ export default function HiringDashboardScreen({ navigation }) {
     );
   }
 
-  const { profile, stats, activeAuditions, draftAuditions, recentApplicants, recommendedTalent, upcomingInterviews, unreadMessagesCount, allApplicants } = data || {};
+  const { profile: dashboardProfile, stats, activeAuditions, draftAuditions, recentApplicants, recommendedTalent, upcomingInterviews, unreadMessagesCount, allApplicants } = data || {};
+  const profile = companyProfile || dashboardProfile;
   const isVerified = profile?.is_verified;
   const verificationStatus = profile?.verification_status || 'unverified';
 
@@ -83,16 +102,45 @@ export default function HiringDashboardScreen({ navigation }) {
     }
   };
 
+  // 1. Profile Completeness & KYC Banner
+  let profileCompleteness = 0;
+  if (profile?.company_name) profileCompleteness += 25;
+  if (profile?.company_type) profileCompleteness += 25;
+  if (profile?.description) profileCompleteness += 25;
+  if (profile?.logo_url) profileCompleteness += 25;
+  const isProfileFullyComplete = profileCompleteness === 100;
+
   const renderVerificationBanner = () => {
     if (isVerified) return null;
-    let bannerProps = { bg: colors.primary + '15', border: colors.primary, icon: 'shield-checkmark-outline', color: colors.primary, title: 'Get Verified', desc: 'Verify your company to start posting auditions.', btn: 'Complete KYC' };
+    let bannerProps = {
+      bg: colors.primary + '15',
+      border: colors.primary,
+      icon: 'shield-checkmark-outline',
+      color: colors.primary,
+      title: isProfileFullyComplete ? 'Get Verified' : 'Complete Profile First',
+      desc: isProfileFullyComplete 
+        ? 'Verify your company to start posting auditions.' 
+        : `Your profile is ${profileCompleteness}% complete. Complete all details (100%) to unlock KYC verification.`,
+      btn: isProfileFullyComplete ? 'Complete KYC' : 'Complete Profile (100%)',
+      target: isProfileFullyComplete ? 'CompanyKyc' : 'EditCompanyProfile'
+    };
+
     if (verificationStatus === 'pending') {
-      bannerProps = { bg: colors.warning + '15', border: colors.warning, icon: 'time-outline', color: colors.warning, title: 'KYC Pending Review', desc: 'Your documents are being reviewed (24-48 hrs).', btn: null };
+      bannerProps = { bg: colors.warning + '15', border: colors.warning, icon: 'time-outline', color: colors.warning, title: 'KYC Pending Review', desc: 'Your documents are being reviewed (24-48 hrs).', btn: null, target: null };
     } else if (verificationStatus === 'rejected') {
-      bannerProps = { bg: colors.error + '15', border: colors.error, icon: 'alert-circle-outline', color: colors.error, title: 'KYC Rejected', desc: 'Documents rejected. Please re-submit.', btn: 'Re-Submit KYC' };
+      bannerProps = {
+        bg: colors.error + '15',
+        border: colors.error,
+        icon: 'alert-circle-outline',
+        color: colors.error,
+        title: 'KYC Rejected',
+        desc: 'Documents rejected. Please re-submit.',
+        btn: isProfileFullyComplete ? 'Re-Submit KYC' : 'Complete Profile First',
+        target: isProfileFullyComplete ? 'CompanyKyc' : 'EditCompanyProfile'
+      };
     }
     return (
-      <Animated.View entering={FadeInDown.duration(400)} style={[styles.banner, { backgroundColor: bannerProps.bg, borderColor: bannerProps.border }]}>
+      <ReAnimated.View entering={FadeInDown.duration(400)} style={[styles.banner, { backgroundColor: bannerProps.bg, borderColor: bannerProps.border }]}>
         {bannerProps.icon === "shield-checkmark-outline" && <ShieldCheck size={26} color={bannerProps.color} style={styles.bannerIcon} />}
         {bannerProps.icon === "time-outline" && <Clock size={26} color={bannerProps.color} style={styles.bannerIcon} />}
         {bannerProps.icon === "alert-circle-outline" && <AlertCircle size={26} color={bannerProps.color} style={styles.bannerIcon} />}
@@ -100,26 +148,24 @@ export default function HiringDashboardScreen({ navigation }) {
           <Typography variant="body" style={[styles.bannerTitle, { color: bannerProps.color }]}>{bannerProps.title}</Typography>
           <Typography variant="caption" style={styles.bannerDesc}>{bannerProps.desc}</Typography>
           {bannerProps.btn && (
-            <TouchableOpacity style={[styles.bannerButton, { backgroundColor: bannerProps.color }]} onPress={() => navigation.navigate('CompanyKyc')}>
+            <TouchableOpacity 
+              style={[styles.bannerButton, { backgroundColor: bannerProps.color }]} 
+              onPress={() => navigation.navigate(bannerProps.target)}
+            >
               <Typography variant="caption" style={styles.bannerButtonText}>{bannerProps.btn}</Typography>
             </TouchableOpacity>
           )}
         </View>
-      </Animated.View>
+      </ReAnimated.View>
     );
   };
 
   // 2. Profile Completeness Progress
   const renderProfileCompleteness = () => {
-    let score = 0;
-    if (profile?.company_name) score += 25;
-    if (profile?.company_type) score += 25;
-    if (profile?.description) score += 25;
-    if (profile?.logo_url) score += 25;
-
+    const score = profileCompleteness;
     if (score === 100) return null;
     return (
-      <Animated.View entering={FadeInDown.delay(50).duration(400)} style={styles.completenessCard}>
+      <ReAnimated.View entering={FadeInDown.delay(50).duration(400)} style={styles.completenessCard}>
         <View style={styles.completenessHeader}>
           <Typography variant="h4" style={styles.completenessTitle}>Profile {score}% Complete</Typography>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
@@ -129,14 +175,14 @@ export default function HiringDashboardScreen({ navigation }) {
         <View style={styles.progressBarBg}>
           <View style={[styles.progressBarFill, { width: `${score}%` }]} />
         </View>
-      </Animated.View>
+      </ReAnimated.View>
     );
   };
 
   // 3. Quick Metrics Grid
   const renderMetricsGrid = () => (
     <View style={styles.metricsGrid}>
-      <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.metricCardWrapper}>
+      <ReAnimated.View entering={FadeInDown.delay(100).duration(400)} style={styles.metricCardWrapper}>
         <AnimatedBorderCard color={colors.primary} delay={0} onPress={() => navigation.navigate('MyAuditions', { initialStatus: 'All' })}>
           <View style={[styles.metricIconBg, { backgroundColor: colors.primary + '15' }]}>
             <Video size={24} color={colors.primary} />
@@ -144,8 +190,8 @@ export default function HiringDashboardScreen({ navigation }) {
           <Typography variant="h2" style={styles.metricValue}>{activeAuditions?.length || 0}</Typography>
           <Typography variant="body" style={styles.metricLabel}>Active Auditions</Typography>
         </AnimatedBorderCard>
-      </Animated.View>
-      <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.metricCardWrapper}>
+      </ReAnimated.View>
+      <ReAnimated.View entering={FadeInDown.delay(200).duration(400)} style={styles.metricCardWrapper}>
         <AnimatedBorderCard color={colors.warning} delay={200} onPress={() => handleRestrictedNavigation('Applicants', { initialTab: 'pending' })}>
           <View style={[styles.metricIconBg, { backgroundColor: colors.warning + '15' }]}>
             <Clock size={24} color={colors.warning} />
@@ -153,8 +199,8 @@ export default function HiringDashboardScreen({ navigation }) {
           <Typography variant="h2" style={styles.metricValue}>{stats?.pending || 0}</Typography>
           <Typography variant="body" style={styles.metricLabel}>Pending Review</Typography>
         </AnimatedBorderCard>
-      </Animated.View>
-      <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.metricCardWrapper}>
+      </ReAnimated.View>
+      <ReAnimated.View entering={FadeInDown.delay(300).duration(400)} style={styles.metricCardWrapper}>
         <AnimatedBorderCard color="#3b82f6" delay={400} onPress={() => handleRestrictedNavigation('Applicants', { initialTab: 'shortlisted' })}>
           <View style={[styles.metricIconBg, { backgroundColor: '#3b82f615' }]}>
             <Star size={24} color="#3b82f6" />
@@ -162,8 +208,8 @@ export default function HiringDashboardScreen({ navigation }) {
           <Typography variant="h2" style={styles.metricValue}>{stats?.shortlisted || 0}</Typography>
           <Typography variant="body" style={styles.metricLabel}>Shortlisted</Typography>
         </AnimatedBorderCard>
-      </Animated.View>
-      <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.metricCardWrapper}>
+      </ReAnimated.View>
+      <ReAnimated.View entering={FadeInDown.delay(400).duration(400)} style={styles.metricCardWrapper}>
         <AnimatedBorderCard color={colors.success} delay={600} onPress={() => handleRestrictedNavigation('Applicants', { initialTab: 'all' })}>
           <View style={[styles.metricIconBg, { backgroundColor: colors.success + '15' }]}>
             <Users size={24} color={colors.success} />
@@ -171,13 +217,13 @@ export default function HiringDashboardScreen({ navigation }) {
           <Typography variant="h2" style={styles.metricValue}>{stats?.totalApplicants || 0}</Typography>
           <Typography variant="body" style={styles.metricLabel}>Total Applicants</Typography>
         </AnimatedBorderCard>
-      </Animated.View>
+      </ReAnimated.View>
     </View>
   );
 
   // 4. Quick Actions Row
   const renderQuickActions = () => (
-    <Animated.View entering={FadeInRight.delay(200).duration(400)} style={styles.quickActionsContainer}>
+    <ReAnimated.View entering={FadeInRight.delay(200).duration(400)} style={styles.quickActionsContainer}>
       <TouchableOpacity style={styles.actionBtn} onPress={() => handleRestrictedNavigation('CreateAudition')}>
         <View style={[styles.actionBtnIcon, { backgroundColor: colors.primary }]}>
           <PlusCircle size={28} color="#fff" />
@@ -205,7 +251,7 @@ export default function HiringDashboardScreen({ navigation }) {
         </View>
         <Typography variant="body" style={styles.actionBtnText}>Messaging</Typography>
       </TouchableOpacity>
-    </Animated.View>
+    </ReAnimated.View>
   );
 
   // 5. Recent Applicants
@@ -501,7 +547,30 @@ export default function HiringDashboardScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={[globalStyles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+    <View style={[globalStyles.container, { backgroundColor: colors.background }]}>
+      <ShrinkableHeader
+        title={companyName}
+        subtitle="Dashboard"
+        showMenu={true}
+        avatarUrl={logoUrl}
+        avatarText={avatarText}
+        avatarSize={avatarSize}
+        avatarRadius={avatarRadius}
+        scrollY={scrollY}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        rightActions={
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Notifications')}
+            style={{ padding: 8 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Bell size={22} color={colors.textMainLight} />
+          </TouchableOpacity>
+        }
+      />
       <Modal
         visible={user && !user.disclaimer_accepted}
         transparent={true}
@@ -543,10 +612,12 @@ export default function HiringDashboardScreen({ navigation }) {
         </View>
       </Modal>
 
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: spacing.m }]}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={handleRefresh} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         {renderVerificationBanner()}
         {renderProfileCompleteness()}
@@ -561,8 +632,8 @@ export default function HiringDashboardScreen({ navigation }) {
         {renderCharts()}
 
         <View style={{ height: 60 }} />
-      </ScrollView>
-    </SafeAreaView>
+      </Animated.ScrollView>
+    </View>
   );
 }
 

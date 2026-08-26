@@ -15,9 +15,11 @@ const artistsController = {
         .select(`
           *,
           users!inner (
+            id,
             display_name,
             email,
-            username
+            username,
+            avatar_url
           )
         `)
         .eq('users.is_blacklisted', false);
@@ -54,7 +56,12 @@ const artistsController = {
 
       if (error) throw error;
 
-      let results = data || [];
+      let results = (data || []).map(item => ({
+        ...item,
+        avatar_url: item.users?.avatar_url || item.profile_image_url || (Array.isArray(item.photo_urls) && item.photo_urls[0]) || item.avatar_url || null,
+        full_name: item.full_name || item.users?.display_name || 'Artist'
+      }));
+
       if (q && q.trim()) {
         const queryTerm = q.trim().toLowerCase();
         results = results.filter(item => {

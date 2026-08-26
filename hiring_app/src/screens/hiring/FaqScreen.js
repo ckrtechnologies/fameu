@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 
@@ -23,16 +23,10 @@ export default function FaqScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]} edges={['top', 'left', 'right']}>
-      <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ChevronLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textMainLight }]}>FAQ</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <View style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]}>
+      <ShrinkableHeader title="FAQ" showBack={true} />
 
-      <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.xl }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingHorizontal: spacing.l, paddingVertical: spacing.m }}>
         {faqs.map((faq, index) => (
           <TouchableOpacity 
             key={index} 
@@ -53,7 +47,7 @@ export default function FaqScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

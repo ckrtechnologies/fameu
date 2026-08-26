@@ -6,7 +6,7 @@ import { View, Keyboard, StyleSheet, Platform } from 'react-native';
  * It uses the gesture responder system to catch unhandled taps (like tapping the background)
  * without interfering with buttons, inputs, or scroll views.
  */
-export default function KeyboardHidingView({ children, style }) {
+export default function KeyboardHidingView({ children, style = undefined }) {
   return (
     <View 
       style={[styles.container, style]} 

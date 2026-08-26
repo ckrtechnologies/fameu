@@ -55,7 +55,7 @@ export default function ContactUsScreen() {
 
       <KeyboardAwareScrollView 
         style={styles.container} 
-        contentContainerStyle={{ padding: spacing.xl }}
+        contentContainerStyle={{ paddingHorizontal: spacing.l, paddingVertical: spacing.m }}
         enableOnAndroid={true}
         extraScrollHeight={100}
         keyboardShouldPersistTaps="handled"

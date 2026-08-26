@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, Modal, TextInput, ScrollView, Dimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { ArrowLeft, User, Filter, X } from 'lucide-react-native';
+import AppIcon from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import { User, Filter } from 'lucide-react-native';
 
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
@@ -94,7 +95,7 @@ export default function FindTalentScreen() {
   ];
 
   const renderTalentCard = ({ item }) => {
-    const mainImage = item.avatar_url || ((item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : null);
+    const mainImage = item.avatar_url || item.profile_image_url || ((item.photo_urls && item.photo_urls.length > 0) ? item.photo_urls[0] : null) || item.users?.avatar_url;
     
     return (
       <TouchableOpacity 
@@ -131,24 +132,29 @@ export default function FindTalentScreen() {
     );
   };
 
+  const searchBarComponent = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: spacing.m, paddingBottom: 6 }}>
+      <TouchableOpacity 
+        style={[styles.searchContainer, { flex: 1, marginHorizontal: 0 }]} 
+        onPress={() => navigation.navigate('Search')}
+        activeOpacity={0.8}
+      >
+        <AppIcon name="search-outline" size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
+        <Typography variant="body" style={styles.searchPlaceholder}>Search username/handle...</Typography>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.filterButton}>
+        <Filter size={20} color={colors.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.searchContainer} 
-          onPress={() => navigation.navigate('Search')}
-          activeOpacity={0.8}
-        >
-          <Icon name="search-outline" size={20} color={colors.textSecondaryLight} style={styles.searchIcon} />
-          <Typography variant="body" style={styles.searchPlaceholder}>Search username/handle...</Typography>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.filterButton}>
-          <Filter size={20} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      <ShrinkableHeader
+        title="Find Talent"
+        showBack={true}
+        bottomComponent={searchBarComponent}
+      />
 
       {isFetching && !artists.length ? (
         <View style={styles.centerContainer}>
@@ -184,7 +190,7 @@ export default function FindTalentScreen() {
         defaultFilters={{ category: 'All', gender: 'All', location: 'All Locations', language: 'All Languages' }}
       />
 
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -215,7 +221,7 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textSecondaryLight,
   },
   filterButton: { padding: spacing.xs },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.l },
   listContainer: {
     padding: spacing.s,
     paddingBottom: 100,

@@ -106,13 +106,18 @@ const getStyles = (colors) => StyleSheet.create({
   backButton: {
     padding: spacing.xs,
   },
+  scrollContent: {
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.m,
+  },
   headerTitle: {
     fontWeight: 'bold',
     color: colors.textMainLight,
   },
   contentContainer: {
     flex: 1,
-    padding: spacing.xl,
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.m,
   },
   sectionTitle: {
     fontWeight: 'bold',

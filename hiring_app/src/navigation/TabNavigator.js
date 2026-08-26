@@ -1,10 +1,15 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { TouchableOpacity, StyleSheet, View, Text, Image } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { Bell, Search } from 'lucide-react-native';
-import { useGetCompanyProfileQuery, useGetNotificationsQuery } from '../services/hiringApi';
+import {
+  HomeTabIcon,
+  MyAuditionsTabIcon,
+  MessagesTabIcon,
+  ApplicantsTabIcon,
+  CompanyTabIcon,
+} from '../components/icons';
+import { useGetNotificationsQuery } from '../services/hiringApi';
 import { useGetInboxQuery } from '../services/chatApi';
 
 import HiringDashboardScreen from '../screens/hiring/HiringDashboardScreen';
@@ -26,7 +31,6 @@ export default function TabNavigator() {
   const { user } = useSelector((state) => state.auth);
 
   // Global Prefetching
-  const { data: profileResponse } = useGetCompanyProfileQuery(undefined, { skip: !user });
   useGetInboxQuery(undefined, { skip: !user });
   const { data: notificationsResponse } = useGetNotificationsQuery(undefined, { 
     skip: !user,
@@ -35,90 +39,40 @@ export default function TabNavigator() {
 
   const hasUnreadNotifications = notificationsResponse?.data?.some(n => !n.is_read) || false;
 
-  const profile = profileResponse?.data;
-  const logoUrl = profile?.logo_url || user?.avatar_url || null;
-  const companyName = profile?.company_name || user?.display_name || 'Company';
-
   return (
     <Tab.Navigator
-      screenOptions={({ route, navigation }) => ({
-        headerShown: true,
-        header: ({ navigation, route, options }) => (
-          <View style={{
-            paddingTop: insets.top + spacing.m,
-            paddingHorizontal: spacing.xl,
-            paddingBottom: spacing.m,
-            backgroundColor: colors.surfaceLight,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.05,
-            shadowRadius: 12,
-            elevation: 5,
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-            zIndex: 10,
-          }}>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                {logoUrl ? (
-                  <Image
-                    source={{ uri: logoUrl }}
-                    style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, borderWidth: 2, borderColor: colors.primary + '30' }}
-                  />
-                ) : (
-                  <View style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: colors.primary + '30' }}>
-                    <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>{companyName.charAt(0).toUpperCase()}</Text>
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          const iconSize = size || 26;
+          if (route.name === 'Dashboard') {
+            return <HomeTabIcon size={iconSize} focused={focused} />;
+          } else if (route.name === 'MyAuditions') {
+            return <MyAuditionsTabIcon size={iconSize} focused={focused} />;
+          } else if (route.name === 'Inbox') {
+            return (
+              <View>
+                <MessagesTabIcon size={iconSize} focused={focused} />
+                {totalUnreadCount > 0 && (
+                  <View style={{
+                    position: 'absolute', top: -3, right: -6,
+                    minWidth: 16, height: 16, borderRadius: 8,
+                    backgroundColor: colors.error,
+                    justifyContent: 'center', alignItems: 'center',
+                    paddingHorizontal: 3,
+                    borderWidth: 1.5, borderColor: colors.surfaceLight,
+                  }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.error }} />
                   </View>
                 )}
-              </TouchableOpacity>
-              <View style={{ flex: 1 }}>
-                <Text style={{ ...typography.body, color: colors.textSecondaryLight, marginBottom: 2 }}>Welcome back,</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: '800', flexShrink: 1 }}>{companyName}</Text>
-                  {profile?.is_verified && (
-                    <Icon name="checkmark-circle" size={18} color="#3b82f6" style={{ marginLeft: 6 }} />
-                  )}
-                </View>
               </View>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('TalentDiscovery')}
-                style={{ padding: 10, backgroundColor: colors.surfaceLight, borderRadius: 20, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8, marginRight: 12 }}
-              >
-                <Search size={28} color={colors.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Notifications')}
-                style={{ padding: 10, backgroundColor: colors.surfaceLight, borderRadius: 20, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8 }}
-              >
-                <Bell size={28} color={colors.primary} />
-                {hasUnreadNotifications && (
-                  <View style={{ position: 'absolute', top: 12, right: 12, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.error, borderWidth: 2, borderColor: colors.surfaceLight }} />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        ),
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'Dashboard') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'MyAuditions') {
-            iconName = focused ? 'videocam' : 'videocam-outline';
-          } else if (route.name === 'Inbox') {
-            iconName = focused ? 'chatbubble' : 'chatbubble-outline';
+            );
           } else if (route.name === 'Applicants') {
-            iconName = focused ? 'people' : 'people-outline';
+            return <ApplicantsTabIcon size={iconSize} focused={focused} />;
           } else if (route.name === 'Profile') {
-            iconName = focused ? 'business' : 'business-outline';
+            return <CompanyTabIcon size={iconSize} focused={focused} />;
           }
-
-          return <Icon name={iconName} size={size} color={color} />;
+          return null;
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMutedLight,

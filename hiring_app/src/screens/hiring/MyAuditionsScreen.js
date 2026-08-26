@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, Animated, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView, TextInput, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import AppIcon, { Icon } from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { format } from 'date-fns';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
@@ -28,6 +30,8 @@ export default function MyAuditionsScreen() {
   const { data: profileResponse } = useGetCompanyProfileQuery();
   const { data: professionsResponse } = useGetProfessionsQuery();
   
+  const { scrollY, onScroll, headerTitleSize, subtitleHeight, subtitleOpacity, headerElevation } = useShrinkableHeader();
+
   const statuses = ['All', 'Active', 'Closed'];
   const [filterStatus, setFilterStatus] = React.useState(statuses.includes(route.params?.initialStatus) ? route.params.initialStatus : 'All');
   const [filters, setFilters] = React.useState({
@@ -166,7 +170,27 @@ export default function MyAuditionsScreen() {
   }
 
   return (
-    <SafeAreaView style={globalStyles.container} edges={['bottom', 'left', 'right']}>
+    <View style={globalStyles.container}>
+      <ShrinkableHeader
+        title="My Auditions"
+        subtitle={`${filteredAuditions.length} audition${filteredAuditions.length !== 1 ? 's' : ''}`}
+        showBack={false}
+        showMenu={true}
+        scrollY={scrollY}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        rightActions={
+          <TouchableOpacity
+            onPress={() => isVerified ? navigation.navigate('CreateAudition') : navigation.navigate('VerificationRequired')}
+            style={{ padding: 6 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <AppIcon name="add-circle-outline" size={26} color={colors.primary} />
+          </TouchableOpacity>
+        }
+      />
       
       {/* Filter Section */}
       <View style={styles.filterSection}>
@@ -187,7 +211,7 @@ export default function MyAuditionsScreen() {
           style={[styles.filterChip, {flexDirection: 'row', alignItems: 'center'}]}
           onPress={() => setShowFilterModal(true)}
         >
-          <Icon name="options-outline" size={16} color={colors.textMainLight} style={{marginRight: 4}} />
+          <AppIcon name="options-outline" size={16} color={colors.textMainLight} style={{marginRight: 4}} />
           <Text style={styles.filterChipText}>Advanced Filters</Text>
         </TouchableOpacity>
 
@@ -204,7 +228,7 @@ export default function MyAuditionsScreen() {
 
 
 
-      <FlatList
+      <Animated.FlatList
         data={filteredAuditions}
         keyExtractor={(item) => item.id}
         renderItem={renderAuditionCard}
@@ -212,22 +236,17 @@ export default function MyAuditionsScreen() {
         refreshControl={
           <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
         }
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
-            <Icon name="videocam-off-outline" size={48} color={colors.borderLight} />
+            <AppIcon name="videocam-off-outline" size={48} color={colors.borderLight} />
             <Text style={styles.emptyTitle}>No Auditions Yet</Text>
             <Text style={styles.emptyText}>You haven't posted any auditions. Click the + button to create your first casting call.</Text>
           </View>
         )}
       />
-
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={() => isVerified ? navigation.navigate('CreateAudition') : navigation.navigate('VerificationRequired')}
-      >
-        <Icon name="add" size={32} color="#FFF" />
-      </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 }
 

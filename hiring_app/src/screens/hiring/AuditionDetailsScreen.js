@@ -311,8 +311,9 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    padding: spacing.xl,
+    paddingHorizontal: spacing.l,
     paddingTop: 32,
+    paddingBottom: 40,
     minHeight: 500,
   },
   headerSection: {

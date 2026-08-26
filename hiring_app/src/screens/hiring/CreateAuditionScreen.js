@@ -729,7 +729,7 @@ const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.l,
     paddingBottom: spacing.m,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
@@ -743,7 +743,8 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMainLight,
   },
   scrollContent: {
-    padding: spacing.xl,
+    paddingHorizontal: spacing.l,
+    paddingTop: spacing.m,
     paddingBottom: 40,
   },
   formGroup: {

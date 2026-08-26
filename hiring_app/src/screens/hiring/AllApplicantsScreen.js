@@ -1,10 +1,12 @@
 import { showError, showSuccess } from '../../utils/toast';
 import messaging from '@react-native-firebase/messaging';
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image, Alert, TextInput, ScrollView, Modal, Linking , RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Animated, FlatList, TouchableOpacity, ActivityIndicator, Image, Alert, TextInput, ScrollView, Modal, Linking , RefreshControl } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AppIcon, { Icon } from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
@@ -16,13 +18,14 @@ export default function AllApplicantsScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
+  const route = useRoute();
+  const { scrollY, onScroll, headerTitleSize, subtitleHeight, subtitleOpacity, headerElevation } = useShrinkableHeader();
   const insets = useSafeAreaInsets();
 
   const { data: applicantsResponse, isLoading, refetch , isFetching} = useGetAllApplicantsQuery()
   const [updateStatus, { isLoading: isUpdating }] = useUpdateApplicationStatusMutation();
   const [startConversation, { isLoading: isStartingChat }] = useStartConversationMutation();
 
-  const route = useRoute();
   const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'pending');
 
   useEffect(() => {
@@ -261,14 +264,19 @@ export default function AllApplicantsScreen() {
       </View>
     );
   };
+
   return (
     <View style={globalStyles.container}>
-      <View style={[styles.header, { paddingTop: 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>All Applicants</Text>
-      </View>
+      <ShrinkableHeader
+        title="All Applicants"
+        subtitle={`${filteredApplicants.length} applicant${filteredApplicants.length !== 1 ? 's' : ''}`}
+        showBack={true}
+        scrollY={scrollY}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
       <View style={styles.tabsContainer}>
         {tabs.map(tab => (
           <TouchableOpacity 
@@ -288,7 +296,7 @@ export default function AllApplicantsScreen() {
           style={[styles.filterBtn, {flexDirection: 'row', alignItems: 'center'}]}
           onPress={() => setFilterModalVisible(true)}
         >
-          <Icon name="options-outline" size={16} color={colors.textMainLight} style={{marginRight: 4}} />
+          <AppIcon name="options-outline" size={16} color={colors.textMainLight} style={{marginRight: 4}} />
           <Text style={styles.filterBtnText}>Advanced Filters</Text>
         </TouchableOpacity>
       </View>
@@ -306,7 +314,7 @@ export default function AllApplicantsScreen() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={() => (
             <View style={styles.emptyContainer}>
-              <Icon name="folder-open-outline" size={48} color={colors.borderLight} />
+              <AppIcon name="folder-open-outline" size={48} color={colors.borderLight} />
               <Text style={styles.emptyText}>No applicants in this stage.</Text>
             </View>
           )}
@@ -335,7 +343,7 @@ export default function AllApplicantsScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Application Details</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Icon name="close" size={24} color={colors.textMainLight} />
+                <AppIcon name="close" size={24} color={colors.textMainLight} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody}>
@@ -393,7 +401,7 @@ const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.l,
     paddingBottom: spacing.m,
     backgroundColor: colors.backgroundLight,
   },
@@ -446,7 +454,7 @@ const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.l,
     paddingBottom: spacing.m,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
@@ -644,7 +652,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   clearFiltersBtn: {
     paddingVertical: spacing.m,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.l,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderLight,
@@ -657,7 +665,7 @@ const getStyles = (colors) => StyleSheet.create({
   applyFiltersBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.m,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.l,
     borderRadius: 8,
   },
   applyFiltersText: {
@@ -690,7 +698,7 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: spacing.xl,
+    padding: spacing.l,
     maxHeight: '80%',
   },
   modalHeader: {
