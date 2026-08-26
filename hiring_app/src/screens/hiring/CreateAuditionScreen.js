@@ -50,6 +50,12 @@ export default function CreateAuditionScreen({ route }) {
     specific_end_date: editAudition?.specific_end_date || '',
     gender_req: editAudition?.gender_req || 'Any',
     budget: editAudition?.budget || '',
+    compensation_frequency: editAudition?.compensation_frequency || 'One Time',
+    languages: editAudition?.languages ? (Array.isArray(editAudition.languages) ? editAudition.languages : String(editAudition.languages).split(', ')) : ['Hindi', 'English'],
+    skills: editAudition?.skills ? (Array.isArray(editAudition.skills) ? editAudition.skills : String(editAudition.skills).split(', ')) : ['Acting'],
+    vacancies: editAudition?.vacancies ? String(editAudition.vacancies) : '1',
+    is_audition_required: editAudition?.is_audition_required !== undefined ? (editAudition.is_audition_required ? 'Yes (Audition Required)' : 'No (Direct Selection)') : 'Yes (Audition Required)',
+    tags: editAudition?.tags ? (Array.isArray(editAudition.tags) ? editAudition.tags.join(', ') : String(editAudition.tags)) : '',
     age_min: editAudition?.age_min ? String(editAudition.age_min) : '18',
     age_max: editAudition?.age_max ? String(editAudition.age_max) : '35',
     mode: editAudition?.mode || 'Offline',
@@ -74,6 +80,10 @@ export default function CreateAuditionScreen({ route }) {
   const CITIES = INDIAN_CITIES;
   const DURATION_TYPES = ['Full-time', 'Part-time', 'Date Specific'];
   const GENDERS = ['Male', 'Female', 'Other', 'Any'];
+  const LANGUAGES = ['Hindi', 'English', 'Marathi', 'Bengali', 'Telugu', 'Tamil', 'Kannada', 'Malayalam', 'Gujarati', 'Punjabi', 'Urdu', 'Bhojpuri', 'Other'];
+  const SKILLS = ['Acting', 'Dancing', 'Singing', 'Anchoring', 'Modeling', 'Voice Over', 'Martial Arts / Action', 'Instrumentalist', 'Stand-up Comedy', 'Direction', 'Writing'];
+  const AUDITION_REQUIRED_OPTIONS = ['Yes (Audition Required)', 'No (Direct Selection)'];
+  const COMPENSATION_FREQUENCIES = ['Per Day', 'Per Week', 'Per Month', 'One Time', 'Unpaid / TFP'];
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -240,6 +250,12 @@ export default function CreateAuditionScreen({ route }) {
         specific_end_date: form.duration_type === 'Date Specific' ? form.specific_end_date : null,
         gender_req: form.gender_req,
         budget: form.budget,
+        compensation_frequency: form.compensation_frequency,
+        languages: form.languages,
+        skills: form.skills,
+        vacancies: parseInt(form.vacancies) || 1,
+        is_audition_required: form.is_audition_required.startsWith('Yes'),
+        tags: form.tags,
         age_min: parseInt(form.age_min) || 0,
         age_max: parseInt(form.age_max) || 75,
         mode: form.mode,
@@ -403,6 +419,26 @@ export default function CreateAuditionScreen({ route }) {
         </View>
 
         <View style={styles.formGroup}>
+          <Text style={styles.label}>Required Skills & Expertise</Text>
+          <AnimatedTileGrid 
+            options={SKILLS} 
+            selectedValue={form.skills} 
+            onSelect={(val) => handleChange('skills', val)} 
+            isMulti
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Preferred Languages</Text>
+          <AnimatedTileGrid 
+            options={LANGUAGES} 
+            selectedValue={form.languages} 
+            onSelect={(val) => handleChange('languages', val)} 
+            isMulti
+          />
+        </View>
+
+        <View style={styles.formGroup}>
           <Text style={styles.label}>Detailed Description PDF (Optional)</Text>
           <TouchableOpacity style={[styles.input, { justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }]} onPress={handlePdfUpload} disabled={isUploadingPdf}>
             {isUploadingPdf ? (
@@ -430,6 +466,26 @@ export default function CreateAuditionScreen({ route }) {
             </Text>
           </TouchableOpacity>
           {isUploadingThumbnail && <ProgressBar progress={thumbnailProgress} />}
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Tags / Search Keywords (Optional)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Lead, TVC, Hindi, Mumbai, Urgent"
+            placeholderTextColor={colors.textMutedLight}
+            value={form.tags}
+            onChangeText={(text) => handleChange('tags', text)}
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Audition Required? *</Text>
+          <AnimatedTileGrid 
+            options={AUDITION_REQUIRED_OPTIONS} 
+            selectedValue={form.is_audition_required} 
+            onSelect={(val) => handleChange('is_audition_required', val)} 
+          />
         </View>
 
         <View style={styles.formGroup}>
@@ -467,6 +523,18 @@ export default function CreateAuditionScreen({ route }) {
         </View>
 
         <View style={styles.formGroup}>
+          <Text style={styles.label}>Number of Vacancies</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 1, 2, 5"
+            placeholderTextColor={colors.textMutedLight}
+            value={form.vacancies}
+            onChangeText={(text) => handleChange('vacancies', text)}
+            keyboardType="number-pad"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
           <Text style={styles.label}>Budget/Compensation *</Text>
           <TextInput
             style={styles.input}
@@ -474,6 +542,15 @@ export default function CreateAuditionScreen({ route }) {
             placeholderTextColor={colors.textMutedLight}
             value={form.budget}
             onChangeText={(text) => handleChange('budget', text)}
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Compensation Frequency</Text>
+          <AnimatedTileGrid 
+            options={COMPENSATION_FREQUENCIES} 
+            selectedValue={form.compensation_frequency} 
+            onSelect={(val) => handleChange('compensation_frequency', val)} 
           />
         </View>
 
@@ -798,7 +875,6 @@ const getStyles = (colors) => StyleSheet.create({
     padding: spacing.m,
     color: colors.textMainLight,
     marginBottom: spacing.m,
-    color: colors.textMainLight,
     ...typography.body,
   },
   modalItem: {

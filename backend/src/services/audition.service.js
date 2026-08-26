@@ -18,7 +18,12 @@ class AuditionService {
     // if (profile.credits <= 0) throw new Error('Insufficient credits to post an audition');
 
     // 2. Insert Audition
-    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, mode, video_link, ...restData } = auditionData;
+    const { 
+      project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, 
+      gender_req, specific_start_date, specific_end_date, mode, video_link,
+      languages, skills, vacancies, is_audition_required, compensation_frequency, tags,
+      ...restData 
+    } = auditionData;
     
     // Validate city if present
     if (city && !INDIAN_CITIES.includes(city)) {
@@ -26,7 +31,9 @@ class AuditionService {
     }
 
     const extraMeta = JSON.stringify({
-      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, video_link
+      project_type, duration_type, city, description_pdf_url, budget, gender_req, 
+      specific_start_date, specific_end_date, video_link,
+      languages, skills, vacancies, is_audition_required, compensation_frequency, tags
     });
 
     const payload = {
@@ -58,9 +65,17 @@ class AuditionService {
    * Update an existing audition
    */
   async updateAudition(hiringId, auditionId, auditionData) {
-    const { project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, gender_req, specific_start_date, specific_end_date, mode, video_link, ...restData } = auditionData;
+    const { 
+      project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, 
+      gender_req, specific_start_date, specific_end_date, mode, video_link,
+      languages, skills, vacancies, is_audition_required, compensation_frequency, tags,
+      ...restData 
+    } = auditionData;
+
     const extraMeta = JSON.stringify({
-      project_type, duration_type, city, description_pdf_url, budget, gender_req, specific_start_date, specific_end_date, video_link
+      project_type, duration_type, city, description_pdf_url, budget, gender_req, 
+      specific_start_date, specific_end_date, video_link,
+      languages, skills, vacancies, is_audition_required, compensation_frequency, tags
     });
     
     const payload = {
