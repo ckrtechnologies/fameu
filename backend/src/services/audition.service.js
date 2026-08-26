@@ -140,6 +140,9 @@ class AuditionService {
    * Supports filtering by category, gender, project_type, duration_type, budget, mode, city, and sorting
    */
   async discoverAuditions(filters = {}, userId = null) {
+    // Normalization helper
+    const normalize = (str) => (str ? String(str).toLowerCase().replace(/[-_\s]/g, '') : '');
+
     let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username, is_blacklisted))');
     
     if (filters.status) {
@@ -213,9 +216,6 @@ class AuditionService {
 
     const { data, error } = await query;
     if (error) throw new Error(`Failed to fetch discover feed: ${error.message}`);
-    
-    // Normalization helper
-    const normalize = (str) => (str ? String(str).toLowerCase().replace(/[-_\s]/g, '') : '');
 
     let results = data.map(item => {
       let extraMeta = {};
