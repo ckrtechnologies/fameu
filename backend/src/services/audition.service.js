@@ -169,12 +169,6 @@ class AuditionService {
       }
     }
 
-    // Search query
-    if (filters.search) {
-      const cleanSearch = filters.search.trim();
-      query = query.or(`title.ilike.%${cleanSearch}%,role_description.ilike.%${cleanSearch}%`);
-    }
-
     // Category Filter (Case-insensitive & Tokenized)
     if (filters.category && filters.category !== 'All' && filters.category !== 'Any') {
       let catArray = [];
@@ -231,6 +225,33 @@ class AuditionService {
       } catch(e) {}
       return { ...item, ...extraMeta };
     });
+
+    // 0. Comprehensive Universal Keyword Search (Role, City, Project Type, Company Name, Description)
+    if (filters.search && filters.search.trim()) {
+      const searchTerms = filters.search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      results = results.filter(i => {
+        const searchableCorpus = [
+          i.title,
+          i.role_description,
+          i.category,
+          i.project_type,
+          i.city,
+          i.venue_address,
+          i.mode,
+          i.audition_type,
+          i.compensation,
+          i.budget,
+          i.gender_req,
+          i.gender,
+          i.hiring_profiles?.company_name,
+          i.hiring_profiles?.users?.username,
+          typeof i.instructions === 'string' ? i.instructions : JSON.stringify(i.instructions || {})
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        // Every search term must match somewhere in the corpus (supports "actor mumbai", "lead feature", etc.)
+        return searchTerms.every(term => searchableCorpus.includes(term));
+      });
+    }
 
     // 1. Filter out blacklisted hiring agencies
     results = results.filter(i => !i.hiring_profiles?.users?.is_blacklisted);
