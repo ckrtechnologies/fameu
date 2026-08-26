@@ -16,7 +16,7 @@ import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
 import { LineChart, BarChart } from 'react-native-chart-kit';
-import { Search, MessageCircle, Briefcase, Users, Bell, Bookmark, TrendingUp, Compass, Star, ChevronRight, Video, Calendar, ShieldCheck } from 'lucide-react-native';
+import { Search, MessageCircle, Briefcase, Users, Bell, Bookmark, TrendingUp, Compass, Star, ChevronRight, Video, Calendar, ShieldCheck, CheckCircle2, Clock, Sparkles, XCircle } from 'lucide-react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Linking } from 'react-native';
 import AppIcon, {
@@ -735,36 +735,76 @@ export default function ArtistDashboardScreen() {
         <View style={styles.sectionHeader}>
           <Typography variant="h3" style={styles.sectionTitle}>Recent Applications</Typography>
           <TouchableOpacity onPress={() => navigation.navigate('Applications')}>
-            <Typography variant="bodySmall" style={styles.seeAll}>See All</Typography>
+            <Typography variant="bodySmall" style={styles.seeAllText}>See All</Typography>
           </TouchableOpacity>
         </View>
 
         {recent.map(app => {
           const s = String(app.status || 'pending').toLowerCase().trim();
-          const isPositive = s === 'shortlisted' || s === 'accepted' || s === 'hired';
-          const isRejected = s === 'rejected';
+          let bg = '#FEF3C7';
+          let borderColor = '#FDE68A';
+          let textColor = '#B45309';
+          let label = 'In Review';
+          let IconComponent = Clock;
+
+          if (s === 'hired') {
+            bg = '#DCFCE7';
+            borderColor = '#BBF7D0';
+            textColor = '#15803D';
+            label = 'Hired';
+            IconComponent = CheckCircle2;
+          } else if (s === 'shortlisted' || s === 'accepted') {
+            bg = '#DBEAFE';
+            borderColor = '#BFDBFE';
+            textColor = '#1D4ED8';
+            label = 'Shortlisted';
+            IconComponent = Sparkles;
+          } else if (s === 'interview_scheduled') {
+            bg = '#E0E7FF';
+            borderColor = '#C7D2FE';
+            textColor = '#4338CA';
+            label = 'Interview';
+            IconComponent = Calendar;
+          } else if (s === 'rejected') {
+            bg = '#FEE2E2';
+            borderColor = '#FECACA';
+            textColor = '#B91C1C';
+            label = 'Not Selected';
+            IconComponent = XCircle;
+          }
+
+          const photoUrl = app.auditions?.thumbnail_url || app.auditions?.banner_url || app.auditions?.image_url || app.auditions?.hiring_profiles?.logo_url;
 
           return (
             <TouchableOpacity 
               key={app.id} 
-              style={styles.appCard}
+              style={styles.applicationCard}
               onPress={() => navigation.navigate('ApplicationDetail', { application: app })}
+              activeOpacity={0.8}
             >
-              <View style={{ flex: 1 }}>
-                <Typography variant="body" style={styles.appTitle} numberOfLines={1}>{app.auditions?.title}</Typography>
-                <Typography variant="caption" style={styles.appDate}>Applied {timeAgo(app.created_at)}</Typography>
+              {photoUrl ? (
+                <ImageWithFallback 
+                  source={{ uri: photoUrl }} 
+                  fallbackSource={{ uri: app.auditions?.hiring_profiles?.logo_url }}
+                  style={{ width: 44, height: 44, borderRadius: 12, marginRight: 12 }} 
+                />
+              ) : (
+                <View style={styles.appIconBg}>
+                  <Briefcase size={20} color={colors.primary} />
+                </View>
+              )}
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Typography variant="body" style={styles.appTitle} numberOfLines={1}>
+                  {app.auditions?.title || 'Audition'}
+                </Typography>
+                <Typography variant="caption" style={styles.appDate}>
+                  Applied {timeAgo(app.created_at)}
+                </Typography>
               </View>
-              <View style={[styles.statusBadge, 
-                isPositive ? { backgroundColor: colors.success + '20' } : 
-                isRejected ? { backgroundColor: colors.error + '20' } : 
-                { backgroundColor: colors.warning + '20' }
-              ]}>
-                <Typography variant="caption" style={[styles.statusText,
-                  isPositive ? { color: colors.success } : 
-                  isRejected ? { color: colors.error } : 
-                  { color: colors.warning }
-                ]}>
-                  {s === 'accepted' ? 'Shortlisted' : (app.status || 'Pending')}
+              <View style={[styles.statusBadge, { backgroundColor: bg, borderColor, borderWidth: 1 }]}>
+                <IconComponent size={12} color={textColor} strokeWidth={2.5} style={{ marginRight: 4 }} />
+                <Typography variant="caption" style={[styles.statusText, { color: textColor }]}>
+                  {label}
                 </Typography>
               </View>
             </TouchableOpacity>
@@ -885,42 +925,93 @@ export default function ArtistDashboardScreen() {
   };
 
   const renderUpcomingSchedule = () => {
-    const upcoming = myApplications.filter(a => a.status === 'shortlisted' || a.status === 'hired');
+    const upcoming = myApplications.filter(a => {
+      const s = String(a.status || '').toLowerCase().trim();
+      return s === 'shortlisted' || s === 'accepted' || s === 'hired';
+    });
     if (upcoming.length === 0) return null;
 
     return (
       <View style={styles.sectionContainer}>
-        <Typography variant="h3" style={styles.sectionTitle}>Upcoming Schedule</Typography>
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>Upcoming Schedule</Typography>
+          <TouchableOpacity onPress={() => navigation.navigate('Applications', { initialTab: 'Shortlisted' })}>
+            <Typography variant="bodySmall" style={styles.seeAllText}>View All</Typography>
+          </TouchableOpacity>
+        </View>
         {upcoming.map((app, idx) => {
-          let dateStr = app.auditions?.date || app.auditions?.created_at;
+          const s = String(app.status || '').toLowerCase().trim();
+          const isHired = s === 'hired';
+          const targetDateStr = app.auditions?.audition_date || app.auditions?.date || app.auditions?.specific_start_date || app.auditions?.start_date || app.auditions?.created_at || app.created_at;
+          
           let month = '';
           let day = '';
-          if (dateStr) {
-            const d = new Date(dateStr);
-            month = d.toLocaleString('default', { month: 'short' }).toUpperCase();
-            day = d.getDate().toString().padStart(2, '0');
+          if (targetDateStr) {
+            try {
+              const d = new Date(targetDateStr);
+              if (!isNaN(d.getTime())) {
+                month = d.toLocaleString('default', { month: 'short' }).toUpperCase();
+                day = d.getDate().toString().padStart(2, '0');
+              }
+            } catch(e) {}
           }
           
-          let location = 'TBA';
-          try {
-            if (app.auditions?.instructions) {
-              const inst = JSON.parse(app.auditions.instructions);
-              if (inst.city) location = inst.city;
-            }
-          } catch(e) {}
+          const venue = app.auditions?.venue_address || app.auditions?.city || app.auditions?.hiring_profiles?.company_name || 'TBA';
+
+          const photoUrl = app.auditions?.thumbnail_url || app.auditions?.banner_url || app.auditions?.image_url || app.auditions?.hiring_profiles?.logo_url;
 
           return (
-          <View key={app.id || idx} style={styles.scheduleCard}>
-             <View style={styles.dateBlock}>
-                <Typography variant="caption" style={styles.dateMonth}>{month}</Typography>
-                <Typography variant="h3" style={styles.dateDay}>{day}</Typography>
-             </View>
-             <View style={styles.scheduleInfo}>
-                <Typography variant="body" style={styles.scheduleTitle}>{app.auditions?.title}</Typography>
-                <Typography variant="caption" style={styles.scheduleSub}>{location}</Typography>
-             </View>
-             <ChevronRight size={20} color={colors.textMutedLight} />
-          </View>
+            <TouchableOpacity 
+              key={app.id || idx} 
+              style={styles.scheduleCard}
+              onPress={() => navigation.navigate('ApplicationDetail', { application: app })}
+              activeOpacity={0.8}
+            >
+              {photoUrl ? (
+                <ImageWithFallback 
+                  source={{ uri: photoUrl }} 
+                  fallbackSource={{ uri: app.auditions?.hiring_profiles?.logo_url }}
+                  style={{ width: 48, height: 48, borderRadius: 10, marginRight: 12 }} 
+                />
+              ) : (
+                <View style={styles.dateBlock}>
+                  {month && day ? (
+                    <>
+                      <Typography variant="caption" style={styles.dateMonth}>{month}</Typography>
+                      <Typography variant="h3" style={styles.dateDay}>{day}</Typography>
+                    </>
+                  ) : (
+                    <Calendar size={22} color={colors.primary} />
+                  )}
+                </View>
+              )}
+              <View style={styles.scheduleInfo}>
+                <Typography variant="body" style={styles.scheduleTitle} numberOfLines={1}>
+                  {app.auditions?.title || 'Audition'}
+                </Typography>
+                <Typography variant="caption" style={styles.scheduleSub} numberOfLines={1}>
+                  📍 {venue}
+                </Typography>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={[styles.statusBadge, { 
+                  backgroundColor: isHired ? '#DCFCE7' : '#DBEAFE', 
+                  borderColor: isHired ? '#BBF7D0' : '#BFDBFE', 
+                  borderWidth: 1, 
+                  marginRight: 8 
+                }]}>
+                  {isHired ? (
+                    <CheckCircle2 size={11} color="#15803D" strokeWidth={2.5} style={{ marginRight: 3 }} />
+                  ) : (
+                    <Sparkles size={11} color="#1D4ED8" strokeWidth={2.5} style={{ marginRight: 3 }} />
+                  )}
+                  <Typography variant="caption" style={[styles.statusText, { color: isHired ? '#15803D' : '#1D4ED8', fontSize: 11 }]}>
+                    {isHired ? 'Hired' : 'Shortlisted'}
+                  </Typography>
+                </View>
+                <ChevronRight size={18} color={colors.textMutedLight} />
+              </View>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -1274,8 +1365,8 @@ const getStyles = (colors) => StyleSheet.create({
   appIconBg: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   appTitle: { fontWeight: '600', color: colors.textMainLight, marginBottom: 4 },
   appDate: { color: colors.textMutedLight },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  statusText: { fontWeight: 'bold', fontSize: 11 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4.5, borderRadius: 12 },
+  statusText: { fontWeight: '700', fontSize: 11.5, letterSpacing: 0.2 },
 
   // 9. Saved Auditions
   savedCard: { width: 100, marginRight: 16, alignItems: 'center' },
