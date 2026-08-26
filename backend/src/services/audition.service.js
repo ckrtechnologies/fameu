@@ -161,16 +161,17 @@ class AuditionService {
       query = query.order('view_count', { ascending: false });
     }
 
+    let relevantCategories = [];
     if (filters.filter === 'relevant' && userId) {
-      // Fetch artist profile to match category
       const { data: profile } = await supabase.from('artist_profiles').select('categories').eq('user_id', userId).single();
       if (profile && Array.isArray(profile.categories) && profile.categories.length > 0) {
-        filters.category = profile.categories.join(',');
+        relevantCategories = profile.categories.map(c => normalize(c)).filter(Boolean);
       }
     }
 
-    // Category Filter (Case-insensitive & Tokenized)
-    if (filters.category && filters.category !== 'All' && filters.category !== 'Any') {
+    // Explicit Category Filter (Case-insensitive & Tokenized)
+    const hasExplicitCategory = filters.category && filters.category !== 'All' && filters.category !== 'Any' && filters.filter !== 'relevant';
+    if (hasExplicitCategory) {
       let catArray = [];
       filters.category.split(',').forEach(c => {
         c.split('/').forEach(subC => {
@@ -257,7 +258,7 @@ class AuditionService {
     results = results.filter(i => !i.hiring_profiles?.users?.is_blacklisted);
 
     // 2. Category Filter (Case-insensitive & Tokenized)
-    if (filters.category && filters.category !== 'All' && filters.category !== 'Any') {
+    if (hasExplicitCategory) {
       const selectedCats = filters.category.split(',').map(c => normalize(c)).filter(Boolean);
       if (selectedCats.length > 0) {
         results = results.filter(i => {
@@ -265,6 +266,14 @@ class AuditionService {
           return selectedCats.some(sc => itemCat.includes(sc) || sc.includes(itemCat));
         });
       }
+    } else if (filters.filter === 'relevant' && relevantCategories.length > 0) {
+      results.sort((a, b) => {
+        const aCat = normalize(a.category || a.role || a.title);
+        const bCat = normalize(b.category || b.role || b.title);
+        const aMatch = relevantCategories.some(rc => aCat.includes(rc) || rc.includes(aCat)) ? 1 : 0;
+        const bMatch = relevantCategories.some(rc => bCat.includes(rc) || rc.includes(bCat)) ? 1 : 0;
+        return bMatch - aMatch;
+      });
     }
 
     // 3. Project Type (Case-insensitive & format-resilient)
