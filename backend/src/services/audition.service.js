@@ -256,34 +256,54 @@ class AuditionService {
     // 1. Filter out blacklisted hiring agencies
     results = results.filter(i => !i.hiring_profiles?.users?.is_blacklisted);
 
-    // 2. Project Type (Case-insensitive & format-resilient)
+    // 2. Category Filter (Case-insensitive & Tokenized)
+    if (filters.category && filters.category !== 'All' && filters.category !== 'Any') {
+      const selectedCats = filters.category.split(',').map(c => normalize(c)).filter(Boolean);
+      if (selectedCats.length > 0) {
+        results = results.filter(i => {
+          const itemCat = normalize(i.category || i.role || i.title);
+          return selectedCats.some(sc => itemCat.includes(sc) || sc.includes(itemCat));
+        });
+      }
+    }
+
+    // 3. Project Type (Case-insensitive & format-resilient)
     if (filters.project_type && filters.project_type !== 'All') {
       const targetProj = normalize(filters.project_type);
       results = results.filter(i => {
-        const itemProj = normalize(i.project_type);
+        const itemProj = normalize(i.project_type || i.title);
         return itemProj === targetProj || itemProj.includes(targetProj) || targetProj.includes(itemProj);
       });
     }
 
-    // 3. Mode / Audition Type (Online vs Offline / In-Person vs Walk-in)
+    // 4. Mode / Audition Type (Online vs Offline / In-Person vs Walk-in)
     if (filters.mode && filters.mode !== 'All') {
       const targetMode = normalize(filters.mode);
       results = results.filter(i => {
-        const itemMode = normalize(i.mode || i.audition_type || i.project_type);
-        if (targetMode === 'online') return itemMode.includes('online') || itemMode.includes('selftape') || itemMode.includes('remote');
-        if (targetMode === 'offline' || targetMode === 'inperson') return itemMode.includes('offline') || itemMode.includes('inperson') || itemMode.includes('venue') || itemMode.includes('walkin');
-        if (targetMode === 'walkin') return itemMode.includes('walkin');
-        return itemMode === targetMode;
+        const itemMode = normalize(i.mode || i.audition_type || i.project_type || '');
+        if (targetMode.includes('online') || targetMode.includes('selftape') || targetMode.includes('remote')) {
+          return itemMode.includes('online') || itemMode.includes('selftape') || itemMode.includes('remote');
+        }
+        if (targetMode.includes('offline') || targetMode.includes('inperson') || targetMode.includes('studio') || targetMode.includes('venue')) {
+          return itemMode.includes('offline') || itemMode.includes('inperson') || itemMode.includes('studio') || itemMode.includes('venue') || itemMode.includes('walkin') || !itemMode;
+        }
+        if (targetMode.includes('walkin')) {
+          return itemMode.includes('walkin') || itemMode.includes('walk');
+        }
+        return itemMode === targetMode || itemMode.includes(targetMode) || targetMode.includes(itemMode);
       });
     }
 
-    // 4. City / Location (Checks both city field and venue address)
+    // 5. City / Location (Checks city field, venue address, and instructions)
     if (filters.city && filters.city !== 'All') {
-      const targetCity = filters.city.toLowerCase().trim();
+      const rawTarget = filters.city.toLowerCase().trim();
+      const targetKeywords = rawTarget.split(/[\s\-_/]+/).filter(kw => kw && kw !== 'all' && kw !== 'ncr');
       results = results.filter(i => {
         const itemCity = (i.city || '').toLowerCase();
         const itemVenue = (i.venue_address || '').toLowerCase();
-        return itemCity.includes(targetCity) || itemVenue.includes(targetCity) || targetCity.includes(itemCity);
+        const itemInst = typeof i.instructions === 'string' ? i.instructions.toLowerCase() : '';
+        const corpus = `${itemCity} ${itemVenue} ${itemInst}`;
+        return targetKeywords.some(kw => corpus.includes(kw));
       });
     }
 
