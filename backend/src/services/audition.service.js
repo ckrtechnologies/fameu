@@ -135,63 +135,65 @@ class AuditionService {
    * Discover Feed (Artist App)
    * Supports filtering by category, gender, and geographic bounding box (for map)
    */
+  /**
+   * Discover Feed (Artist App)
+   * Supports filtering by category, gender, project_type, duration_type, budget, mode, city, and sorting
+   */
   async discoverAuditions(filters = {}, userId = null) {
-    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username, is_blacklisted))').eq('status', 'active');
+    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username, is_blacklisted))');
+    
+    if (filters.status) {
+      if (filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+    } else if (!filters.hiring_id) {
+      query = query.eq('status', 'active');
+    }
 
     // Home Screen specific filters
-    if (filters.filter === 'live') {
+    if (filters.filter === 'live' || filters.is_live === 'true' || filters.is_live === true) {
       // Use IST timezone to match user's local time accurately
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       query = query.eq('audition_date', today);
     }
 
-    if (filters.filter === 'trending') {
+    if (filters.filter === 'trending' || filters.sort_by === 'popular') {
       query = query.order('view_count', { ascending: false });
     }
 
     if (filters.filter === 'relevant' && userId) {
       // Fetch artist profile to match category
       const { data: profile } = await supabase.from('artist_profiles').select('categories').eq('user_id', userId).single();
-      if (profile && profile.categories && profile.categories.length > 0) {
-        // Just matching the first category for simplicity, or we can fetch all and filter in JS.
-        // Supabase string array overlaps might be complex if category is string, but category is TEXT.
-        filters.category = profile.categories[0];
+      if (profile && Array.isArray(profile.categories) && profile.categories.length > 0) {
+        filters.category = profile.categories.join(',');
       }
     }
 
-    // Existing Filters
+    // Search query
     if (filters.search) {
-      query = query.or(`title.ilike.%${filters.search}%,role_description.ilike.%${filters.search}%`);
+      const cleanSearch = filters.search.trim();
+      query = query.or(`title.ilike.%${cleanSearch}%,role_description.ilike.%${cleanSearch}%`);
     }
-    if (filters.category) {
-      // category can be comma separated.
-      // Furthermore, a single category might be like "Actor / theatre actor".
-      // To match older auditions, we split by both comma and slash to get keywords.
+
+    // Category Filter (Case-insensitive & Tokenized)
+    if (filters.category && filters.category !== 'All' && filters.category !== 'Any') {
       let catArray = [];
       filters.category.split(',').forEach(c => {
         c.split('/').forEach(subC => {
-          const trimmed = subC.trim();
-          if (trimmed) catArray.push(trimmed);
+          const trimmed = subC.trim().replace(/^#/, '');
+          if (trimmed && trimmed.toLowerCase() !== 'all' && trimmed.toLowerCase() !== 'any') {
+            catArray.push(trimmed);
+          }
         });
       });
       
       if (catArray.length > 0) {
-        // Need to wrap the or conditions in a parenthesis-like structure using filter strings so it doesn't break other AND conditions
         const orQuery = catArray.map(c => `category.ilike.%${c}%`).join(',');
         query = query.or(orQuery);
       }
     }
-    if (filters.audition_type) query = query.eq('audition_type', filters.audition_type);
+
     if (filters.hiring_id) query = query.eq('hiring_id', filters.hiring_id);
-    if (filters.is_live === 'true' || filters.is_live === true) {
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-      query = query.eq('audition_date', today);
-    }
-    
-    // Note: project_type, city, duration_type, budget are stored in JSON inside instructions
-    // Note: project_type, city, duration_type, budget, gender_req are stored in JSON inside instructions
-    // we will filter them in JS below.
-    // age_min and age_max are sometimes inside instructions too, so we do it all in JS.
 
     // Simple Bounding Box approach for Google Maps
     if (filters.minLat && filters.maxLat && filters.minLng && filters.maxLng) {
@@ -203,43 +205,110 @@ class AuditionService {
     }
 
     // Sorting
-    if (filters.sort_by === 'Popular' || filters.filter === 'trending') {
+    const sort = (filters.sort_by || '').toLowerCase();
+    if (sort === 'popular' || sort === 'trending') {
       query = query.order('view_count', { ascending: false });
-    } else if (filters.sort_by === 'Recent') {
-      query = query.order('created_at', { ascending: false });
+    } else if (sort === 'expiring_soon') {
+      query = query.order('audition_date', { ascending: true, nullsFirst: false });
     } else {
-      // 'Relevant' or default
       query = query.order('created_at', { ascending: false });
     }
 
-    query = query.limit(200); // fetch more to filter locally
+    query = query.limit(200); // Fetch candidate pool for local enrichment & flexible filtering
 
     const { data, error } = await query;
     if (error) throw new Error(`Failed to fetch discover feed: ${error.message}`);
     
+    // Normalization helper
+    const normalize = (str) => (str ? String(str).toLowerCase().replace(/[-_\s]/g, '') : '');
+
     let results = data.map(item => {
       let extraMeta = {};
-      try { if (item.instructions && item.instructions.startsWith('{')) extraMeta = JSON.parse(item.instructions); } catch(e) {}
+      try { 
+        if (item.instructions && typeof item.instructions === 'string' && item.instructions.startsWith('{')) {
+          extraMeta = JSON.parse(item.instructions);
+        } 
+      } catch(e) {}
       return { ...item, ...extraMeta };
     });
 
-    if (filters.project_type) results = results.filter(i => i.project_type === filters.project_type);
-    // Filter out blacklisted companies
+    // 1. Filter out blacklisted hiring agencies
     results = results.filter(i => !i.hiring_profiles?.users?.is_blacklisted);
-    if (filters.city) results = results.filter(i => i.city && i.city.toLowerCase() === filters.city.toLowerCase());
-    if (filters.duration_type) results = results.filter(i => i.duration_type === filters.duration_type);
-    if (filters.budget) results = results.filter(i => i.budget === filters.budget || i.compensation === filters.budget);
-    
-    // Gender Filter
-    if (filters.gender_req) {
-      results = results.filter(i => 
-        (i.gender_req && i.gender_req.toLowerCase() === filters.gender_req.toLowerCase()) || 
-        (i.gender && i.gender.toLowerCase() === filters.gender_req.toLowerCase()) || 
-        i.gender_req === 'Any' || !i.gender_req
-      );
+
+    // 2. Project Type (Case-insensitive & format-resilient)
+    if (filters.project_type && filters.project_type !== 'All') {
+      const targetProj = normalize(filters.project_type);
+      results = results.filter(i => {
+        const itemProj = normalize(i.project_type);
+        return itemProj === targetProj || itemProj.includes(targetProj) || targetProj.includes(itemProj);
+      });
     }
 
-    // Age Filter (overlap logic: actor's min-max should overlap with audition's min-max)
+    // 3. Mode / Audition Type (Online vs Offline / In-Person vs Walk-in)
+    if (filters.mode && filters.mode !== 'All') {
+      const targetMode = normalize(filters.mode);
+      results = results.filter(i => {
+        const itemMode = normalize(i.mode || i.audition_type || i.project_type);
+        if (targetMode === 'online') return itemMode.includes('online') || itemMode.includes('selftape') || itemMode.includes('remote');
+        if (targetMode === 'offline' || targetMode === 'inperson') return itemMode.includes('offline') || itemMode.includes('inperson') || itemMode.includes('venue') || itemMode.includes('walkin');
+        if (targetMode === 'walkin') return itemMode.includes('walkin');
+        return itemMode === targetMode;
+      });
+    }
+
+    // 4. City / Location (Checks both city field and venue address)
+    if (filters.city && filters.city !== 'All') {
+      const targetCity = filters.city.toLowerCase().trim();
+      results = results.filter(i => {
+        const itemCity = (i.city || '').toLowerCase();
+        const itemVenue = (i.venue_address || '').toLowerCase();
+        return itemCity.includes(targetCity) || itemVenue.includes(targetCity) || targetCity.includes(itemCity);
+      });
+    }
+
+    // 5. Duration Type (Full-time, Part-time, Date Specific)
+    if (filters.duration_type && filters.duration_type !== 'All') {
+      const targetDuration = normalize(filters.duration_type);
+      results = results.filter(i => normalize(i.duration_type) === targetDuration);
+    }
+
+    // 6. Compensation / Paid Filtering
+    if (filters.is_paid === true || filters.is_paid === 'true' || filters.is_paid === 'paid' || filters.min_budget) {
+      results = results.filter(i => {
+        const comp = (i.compensation || i.budget || '').toLowerCase().trim();
+        if (!comp || comp === '0' || comp.includes('unpaid') || comp.includes('tfp') || comp.includes('expenses only')) {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    if (filters.min_budget) {
+      const cleanMin = String(filters.min_budget).replace(/[^\d]/g, '');
+      const minVal = parseInt(cleanMin, 10);
+      if (!isNaN(minVal) && minVal > 0) {
+        results = results.filter(i => {
+          const compStr = String(i.compensation || i.budget || '');
+          const numericMatch = compStr.replace(/[^\d]/g, '');
+          if (numericMatch) {
+            const parsedNum = parseInt(numericMatch, 10);
+            return parsedNum >= minVal;
+          }
+          return false;
+        });
+      }
+    }
+
+    // 7. Gender Filter
+    if (filters.gender_req && filters.gender_req !== 'All' && filters.gender_req !== 'Any') {
+      const targetGender = filters.gender_req.toLowerCase().trim();
+      results = results.filter(i => {
+        const itemReq = (i.gender_req || i.gender || '').toLowerCase().trim();
+        return !itemReq || itemReq === 'any' || itemReq === 'all' || itemReq === targetGender;
+      });
+    }
+
+    // 8. Age Range Filter
     if (filters.age_min) {
       const actorMin = parseInt(filters.age_min, 10) || 0;
       results = results.filter(i => {
@@ -252,6 +321,17 @@ class AuditionService {
       results = results.filter(i => {
         const audMin = parseInt(i.age_min, 10) || 0;
         return audMin <= actorMax;
+      });
+    }
+
+    // Secondary local sorting if needed
+    if (sort === 'budget_high') {
+      results.sort((a, b) => {
+        const getBudgetNum = (item) => {
+          const m = String(item.compensation || item.budget || '').match(/\d[\d,]*/);
+          return m ? parseInt(m[0].replace(/,/g, ''), 10) : 0;
+        };
+        return getBudgetNum(b) - getBudgetNum(a);
       });
     }
     
