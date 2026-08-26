@@ -6,6 +6,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetSavedAuditionsQuery } from '../../services/discoverApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
@@ -13,6 +15,16 @@ export default function SavedAuditionsScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const { data: savedResponse, isLoading, isError, refetch, isFetching } = useGetSavedAuditionsQuery();
   useRefetchOnFocus(refetch);
@@ -31,15 +43,18 @@ export default function SavedAuditionsScreen() {
   const auditions = savedResponse?.data || [];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>Saved Auditions</Text>
-        <View style={styles.iconButton} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Saved Auditions"
+        subtitle={`${auditions.length} bookmarked roles`}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
       <View style={styles.container}>
         {isLoading ? (
@@ -66,6 +81,8 @@ export default function SavedAuditionsScreen() {
             )}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmptyState}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
             }

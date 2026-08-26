@@ -1,7 +1,7 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -194,8 +194,12 @@ export default function ArtistFormScreen() {
     );
   }
 
-  const currentProfession = professionsList.find(p => p.name === activeTab);
-  const fields = currentProfession?.profession_fields || [];
+  const currentProfession = professionsList.find(p => 
+    (p.name && p.name.toLowerCase().trim() === activeTab?.toLowerCase().trim()) ||
+    (p.slug && p.slug.toLowerCase().trim() === activeTab?.toLowerCase().trim()) ||
+    (p.name && p.name.toLowerCase().replace(/[^a-z0-9]/g, '') === activeTab?.toLowerCase().replace(/[^a-z0-9]/g, ''))
+  );
+  const fields = currentProfession?.profession_fields || currentProfession?.fields || currentProfession?.custom_fields || [];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -207,7 +211,6 @@ export default function ArtistFormScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Tabs */}
       <View style={styles.tabsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
           {categories.map((cat) => {
@@ -218,7 +221,9 @@ export default function ArtistFormScreen() {
                 style={[styles.tabButton, isActive && styles.tabButtonActive]}
                 onPress={() => setActiveTab(cat)}
               >
-                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{cat}</Text>
+                <Text style={[styles.tabButtonText, isActive && styles.tabButtonTextActive]}>
+                  {cat}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -226,93 +231,136 @@ export default function ArtistFormScreen() {
       </View>
 
       <KeyboardAwareScrollView 
-        style={styles.container} 
-        contentContainerStyle={styles.content} 
+        contentContainerStyle={styles.formContainer}
         enableOnAndroid={true}
-        extraScrollHeight={100}
+        extraScrollHeight={Platform.OS === 'ios' ? 50 : 100}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={isFetching || isLoadingProfessions || false} onRefresh={refetch} tintColor={colors.primary} />}
       >
-        <Text style={styles.subtitle}>Fill in your {activeTab.toLowerCase()} specific details to stand out.</Text>
+        <Text style={styles.sectionTitle}>
+          {activeTab} Details
+        </Text>
+        <Text style={styles.subtitle}>
+          Provide specific details for your role as {activeTab}.
+        </Text>
 
         {isLoadingProfessions ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
         ) : fields.length === 0 ? (
-          <Text style={styles.noFieldsText}>No custom fields required for this profession.</Text>
-        ) : fields.map((field) => (
-          <View key={field.field_name} style={styles.inputGroup}>
-            <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''} ({field.field_type})</Text>
-
-            {(field.field_type === 'text' || field.field_type === 'number' || field.field_type === 'url') && (
-              <TextInput
-                style={styles.input}
-                placeholder={`Enter ${field.field_label.toLowerCase()}`}
-                placeholderTextColor={colors.textMutedLight}
-                keyboardType={field.field_type === 'number' ? 'numeric' : field.field_type === 'url' ? 'url' : 'default'}
-                autoCapitalize={field.field_type === 'url' ? 'none' : 'sentences'}
-                autoCorrect={field.field_type !== 'url'}
-                value={formData[activeTab]?.[field.field_name] || ''}
-                onChangeText={(text) => handleTextChange(activeTab, field.field_name, text)}
-              />
-            )}
-
-            {(field.field_type === 'select' || field.field_type === 'multiselect') && field.options && (
-              <View style={styles.optionsContainer}>
-                {field.options.map(option => {
-                  const isSelected = (formData[activeTab]?.[field.field_name] || []).includes(option);
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      style={[styles.optionPill, isSelected && styles.optionPillSelected]}
-                      onPress={() => handleSelectToggle(activeTab, field.field_name, option, field.field_type === 'multiselect')}
-                    >
-                      <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-
-            {field.field_type === 'file' && (
-              <>
-                {formData[activeTab]?.[field.field_name] ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: colors.borderLight }}>
-                    <Icon name="document-attach-outline" size={24} color={colors.primary} />
-                    <Text style={{ flex: 1, marginLeft: 12, color: colors.textMainLight, fontSize: 13 }} numberOfLines={1}>
-                      {String(formData[activeTab][field.field_name]).split('/').pop() || 'Uploaded File'}
-                    </Text>
-                    <TouchableOpacity onPress={() => handleFileUpload(activeTab, field.field_name)} style={{ padding: 4 }}>
-                      <Icon name="pencil-outline" size={20} color={colors.primary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteFile(activeTab, field.field_name)} style={{ padding: 4, marginLeft: 8 }} disabled={isUploadingFile}>
-                      <Icon name="trash-outline" size={20} color={isUploadingFile ? "#ccc" : "#ef4444"} />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.fileButton}
-                    onPress={() => handleFileUpload(activeTab, field.field_name)}
-                    disabled={isUploadingFile}
-                  >
-                    {isUploadingFile ? (
-                      <ActivityIndicator size="small" color={colors.primary} />
-                    ) : (
-                      <>
-                        <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
-                        <Text style={styles.fileButtonText}>Upload File</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                )}
-                {isUploadingFile && (
-                  <View style={{ marginTop: 8 }}>
-                    <ProgressBar progress={uploadProgress} />
-                  </View>
-                )}
-              </>
-            )}
+          <View style={{ backgroundColor: colors.surfaceLight, padding: 18, borderRadius: 14, borderWidth: 1, borderColor: colors.borderLight, marginTop: 12, alignItems: 'center' }}>
+            <Icon name="information-circle-outline" size={24} color={colors.textMutedLight} style={{ marginBottom: 6 }} />
+            <Text style={{ color: colors.textMutedLight, fontSize: 13 }}>No custom fields required for {activeTab}.</Text>
           </View>
-        ))}
+        ) : fields.map((field) => {
+          const fieldName = field.field_name || field.name;
+          const fieldLabel = field.field_label || field.label || fieldName;
+          const fieldType = (field.field_type || field.type || 'text').toLowerCase();
+          const isRequired = !!field.is_required;
+
+          let parsedOptions = [];
+          if (field.options) {
+            if (Array.isArray(field.options)) {
+              parsedOptions = field.options;
+            } else if (typeof field.options === 'string') {
+              if (field.options.startsWith('[')) {
+                try { parsedOptions = JSON.parse(field.options); } catch (e) { parsedOptions = field.options.split(',').map(s => s.trim()); }
+              } else {
+                parsedOptions = field.options.split(',').map(s => s.trim()).filter(Boolean);
+              }
+            }
+          }
+
+          const currentVal = formData[activeTab]?.[fieldName] ?? 
+                             formData[activeTab?.toLowerCase()]?.[fieldName] ?? '';
+
+          return (
+            <View key={fieldName} style={styles.inputGroup}>
+              <Text style={styles.label}>{fieldLabel} {isRequired ? '*' : ''}</Text>
+
+              {(fieldType === 'text' || fieldType === 'number' || fieldType === 'url' || fieldType === 'date') && (
+                <TextInput
+                  style={styles.input}
+                  placeholder={`Enter ${fieldLabel.toLowerCase()}`}
+                  placeholderTextColor={colors.textMutedLight}
+                  keyboardType={fieldType === 'number' ? 'numeric' : fieldType === 'url' ? 'url' : 'default'}
+                  autoCapitalize={fieldType === 'url' ? 'none' : 'sentences'}
+                  autoCorrect={fieldType !== 'url'}
+                  value={typeof currentVal === 'string' || typeof currentVal === 'number' ? String(currentVal) : ''}
+                  onChangeText={(text) => handleTextChange(activeTab, fieldName, text)}
+                />
+              )}
+
+              {(fieldType === 'textarea' || fieldType === 'long_text' || fieldType === 'paragraph') && (
+                <TextInput
+                  style={[styles.input, { minHeight: 80, textAlignVertical: 'top', paddingTop: 10 }]}
+                  placeholder={`Enter ${fieldLabel.toLowerCase()}`}
+                  placeholderTextColor={colors.textMutedLight}
+                  multiline={true}
+                  numberOfLines={3}
+                  value={typeof currentVal === 'string' ? currentVal : ''}
+                  onChangeText={(text) => handleTextChange(activeTab, fieldName, text)}
+                />
+              )}
+
+              {(fieldType === 'select' || fieldType === 'multiselect') && parsedOptions.length > 0 && (
+                <View style={styles.optionsContainer}>
+                  {parsedOptions.map(option => {
+                    const isSelected = Array.isArray(currentVal)
+                      ? currentVal.includes(option)
+                      : (typeof currentVal === 'string' && currentVal.split(',').map(s => s.trim()).includes(option));
+                    return (
+                      <TouchableOpacity
+                        key={option}
+                        style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                        onPress={() => handleSelectToggle(activeTab, fieldName, option, fieldType === 'multiselect')}
+                      >
+                        <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+
+              {fieldType === 'file' && (
+                <>
+                  {currentVal ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: colors.borderLight }}>
+                      <Icon name="document-attach-outline" size={24} color={colors.primary} />
+                      <Text style={{ flex: 1, marginLeft: 12, color: colors.textMainLight, fontSize: 13 }} numberOfLines={1}>
+                        {String(currentVal).split('/').pop() || 'Uploaded File'}
+                      </Text>
+                      <TouchableOpacity onPress={() => handleFileUpload(activeTab, fieldName)} style={{ padding: 4 }}>
+                        <Icon name="pencil-outline" size={20} color={colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteFile(activeTab, fieldName)} style={{ padding: 4, marginLeft: 8 }} disabled={isUploadingFile}>
+                        <Icon name="trash-outline" size={20} color={isUploadingFile ? "#ccc" : "#ef4444"} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.fileButton}
+                      onPress={() => handleFileUpload(activeTab, fieldName)}
+                      disabled={isUploadingFile}
+                    >
+                      {isUploadingFile ? (
+                        <ActivityIndicator size="small" color={colors.primary} />
+                      ) : (
+                        <>
+                          <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
+                          <Text style={styles.fileButtonText}>Upload File</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                  {isUploadingFile && (
+                    <View style={{ marginTop: 8 }}>
+                      <ProgressBar progress={uploadProgress} />
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          );
+        })}
 
       </KeyboardAwareScrollView>
 

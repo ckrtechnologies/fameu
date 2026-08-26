@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Layers, Clock, Sparkles, CheckCircle2, XCircle } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetMyApplicationsQuery } from '../../services/discoverApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
-const TABS = ['All', 'Pending', 'Accepted', 'Rejected'];
+const TABS = [
+  { key: 'All', label: 'All', Icon: Layers },
+  { key: 'Pending', label: 'In Review', Icon: Clock },
+  { key: 'Shortlisted', label: 'Shortlisted', Icon: Sparkles },
+  { key: 'Hired', label: 'Hired', Icon: CheckCircle2 },
+  { key: 'Rejected', label: 'Not Selected', Icon: XCircle },
+];
 
 export default function MyApplicationsScreen() {
   const { colors } = useTheme();
@@ -16,6 +25,16 @@ export default function MyApplicationsScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'All');
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   React.useEffect(() => {
     if (route.params?.initialTab) {
@@ -40,45 +59,76 @@ export default function MyApplicationsScreen() {
     navigation.navigate('ApplicationDetail', { application: item });
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyEmoji}>📋</Text>
-      <Text style={styles.emptyText}>No {activeTab.toLowerCase()} applications</Text>
-    </View>
-  );
+  const renderEmptyState = () => {
+    const currentTabObj = TABS.find(t => t.key === activeTab);
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyEmoji}>📋</Text>
+        <Text style={styles.emptyText}>No {currentTabObj?.label.toLowerCase() || 'matching'} applications</Text>
+      </View>
+    );
+  };
 
   // Filter applications based on active tab
   const appsList = applications?.data || applications || [];
   const filteredApps = Array.isArray(appsList) 
     ? appsList.filter(app => {
-        const status = (app.status || 'pending').toLowerCase();
+        const rawStatus = String(app.status || 'pending').toLowerCase().trim();
         if (activeTab === 'All') return true;
-        if (activeTab === 'Pending') return status === 'pending';
-        if (activeTab === 'Rejected') return status === 'rejected';
-        if (activeTab === 'Accepted') return ['shortlisted', 'interview_scheduled', 'hired'].includes(status);
+        if (activeTab === 'Pending') return rawStatus === 'pending';
+        if (activeTab === 'Shortlisted') return rawStatus === 'shortlisted' || rawStatus === 'accepted' || rawStatus === 'interview_scheduled';
+        if (activeTab === 'Hired') return rawStatus === 'hired';
+        if (activeTab === 'Rejected') return rawStatus === 'rejected';
         return false;
       })
     : [];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-      <View style={styles.container}>
-
-        {/* Custom Tab Selector */}
-        <View style={styles.tabContainer}>
-          {TABS.map((tab) => (
-            <TouchableOpacity 
-              key={tab} 
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
+      <ShrinkableHeader 
+        title="Applications"
+        subtitle={`${filteredApps.length} tracked submissions`}
+        onAvatarPress={() => navigation.openDrawer()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        bottomComponent={
+          <View style={styles.tabWrapper}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tabScrollContainer}
             >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.key;
+                const IconComp = tab.Icon;
+                return (
+                  <TouchableOpacity 
+                    key={tab.key} 
+                    style={[styles.tabChip, isActive && styles.activeTabChip]}
+                    onPress={() => setActiveTab(tab.key)}
+                    activeOpacity={0.8}
+                  >
+                    <IconComp 
+                      size={13} 
+                      color={isActive ? '#FFFFFF' : colors.textMutedLight} 
+                      strokeWidth={2.4}
+                      style={{ marginRight: 6 }} 
+                    />
+                    <Text style={[styles.tabChipText, isActive && styles.activeTabChipText]}>
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        }
+      />
 
+      <View style={styles.container}>
         {isLoading ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -96,6 +146,8 @@ export default function MyApplicationsScreen() {
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
             }
@@ -103,8 +155,11 @@ export default function MyApplicationsScreen() {
             renderItem={({ item }) => (
               <View style={styles.cardWrapper}>
                 <AuditionCard 
-                  // Pass the nested audition data if present, else fallback to item
-                  audition={item.auditions || item.audition || item} 
+                  // Pass the nested audition data along with application status
+                  audition={{
+                    ...(item.auditions || item.audition || item),
+                    status: item.status || 'pending'
+                  }} 
                   onPress={() => handleAuditionPress(item)} 
                   style={styles.fullWidthCard}
                 />
@@ -139,38 +194,49 @@ const getStyles = (colors) => StyleSheet.create({
     ...typography.body,
     color: colors.textMutedLight,
   },
-  tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.xl,
-    marginBottom: spacing.l,
+  tabWrapper: {
+    paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: colors.textMutedLight + '30',
+    borderBottomColor: colors.borderLight || '#E2E8F0',
   },
-  tab: {
-    flex: 1,
-    paddingVertical: spacing.m,
+  tabScrollContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    gap: 8,
   },
-  activeTab: {
-    borderBottomColor: colors.primary,
+  tabChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceLight || '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.borderLight || '#E2E8F0',
   },
-  tabText: {
-    ...typography.body,
-    color: colors.textMutedLight,
+  activeTabChip: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  tabChipText: {
+    fontSize: 12.5,
     fontWeight: '600',
+    color: colors.textMutedLight || '#64748B',
   },
-  activeTabText: {
-    color: colors.primary,
+  activeTabChipText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   listContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: 16,
+    paddingTop: 14,
     paddingBottom: spacing.xxl,
     flexGrow: 1,
   },
   cardWrapper: {
-    marginBottom: spacing.l,
+    marginBottom: 14,
     alignItems: 'center',
   },
   fullWidthCard: {

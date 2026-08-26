@@ -15,6 +15,8 @@ export default function MediaOrLinkInput({ value, onChangeText, placeholder, pla
     const options = {
       mediaType: 'mixed', // allows photo or video
       quality: 0.8,
+      maxWidth: 1440,
+      maxHeight: 1440,
     };
     
     try {

@@ -23,6 +23,9 @@ import { INDIAN_CITIES } from '../../constants/cities';
 import { useSelector } from 'react-redux';
 import { uploadFileWithProgress } from '../../utils/uploadUtils';
 import ProgressBar from '../../components/core/ProgressBar';
+import { ProfessionCategoryIcon } from '../../components/icons';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 const AVAILABLE_LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati', 'Odia', 'Bhojpuri', 'Urdu', 'Assamese'];
 
@@ -111,6 +114,7 @@ export default function EditProfileScreen() {
     intro_video_url: '',
     left_profile_url: '',
     right_profile_url: '',
+    alt_number: '',
     recent_assignments: [],
     social_links: {
       facebook: '',
@@ -205,13 +209,21 @@ export default function EditProfileScreen() {
         cintaa_reg_number: p.cintaa_reg_number || '',
         preferred_cities: parseArray(p.preferred_cities),
         availability_type: p.availability_type || '',
-        work_preference: parseArray(p.work_preference),
+        work_preference: (() => {
+          const wp = parseArray(p.work_preference);
+          const cities = parseArray(p.preferred_cities);
+          if (cities.length > 0 && !wp.includes('Specific Cities')) {
+            return [...wp, 'Specific Cities'];
+          }
+          return wp;
+        })(),
         available_dates: p.available_dates || '',
         look_alike: parseArray(p.look_alike),
         hashtags: parseArray(p.hashtags),
         intro_video_url: p.intro_video_url || '',
         left_profile_url: p.left_profile_url || '',
         right_profile_url: p.right_profile_url || '',
+        alt_number: p.alt_number || p.alternate_phone || '',
         recent_assignments: p.recent_assignments || [],
         social_links: (typeof p.social_links === 'string' ? JSON.parse(p.social_links || '{}') : p.social_links) || {
           facebook: '',
@@ -232,7 +244,7 @@ export default function EditProfileScreen() {
         setCategoryFormData(catData);
       }
     }
-  }, [profileResponse]);
+  }, [profileResponse, route.params?.categories, route.params?.updatedCategories]);
 
   const handleVerifyUsername = async () => {
     if (!formData.username) return showError('', 'Please enter a username to verify.');
@@ -426,7 +438,9 @@ export default function EditProfileScreen() {
         is_cintaa_member: !!formData.is_cintaa_member,
         cintaa_reg_number: formData.is_cintaa_member ? formData.cintaa_reg_number : null,
         languages: parseArray(formData.languages),
-        preferred_cities: parseArray(formData.preferred_cities),
+        preferred_cities: (Array.isArray(formData.work_preference) ? formData.work_preference.includes('Specific Cities') : formData.work_preference === 'Specific Cities')
+          ? parseArray(formData.preferred_cities)
+          : [],
         look_alike: parseArray(formData.look_alike),
         hashtags: parseArray(formData.hashtags),
         work_preference: parseArray(formData.work_preference),
@@ -474,6 +488,16 @@ export default function EditProfileScreen() {
     }
   };
 
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
+
   const isLoading = isSaving || isUpdating;
 
   if (isFetching) {
@@ -485,28 +509,33 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} disabled={isLoading || isUploadingMedia || isUploadingFile || uploadingField !== null}>
-          <Icon name="arrow-back" size={24} color={(isLoading || isUploadingMedia || isUploadingFile || uploadingField !== null) ? "#ccc" : colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{route.params?.isOnboarding ? 'Complete Profile' : 'Edit Profile'}</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
-          {tabs.map(tab => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.tabActive]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ShrinkableHeader 
+        title={route.params?.isOnboarding ? 'Complete Profile' : 'Edit Profile'}
+        subtitle="Personal Details & Specialties"
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        bottomComponent={
+          <View style={[styles.tabsContainer, { marginHorizontal: 0, marginTop: 4, marginBottom: 0 }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
+              {tabs.map(tab => (
+                <TouchableOpacity
+                  key={tab}
+                  style={[styles.tab, activeTab === tab && styles.tabActive]}
+                  onPress={() => setActiveTab(tab)}
+                >
+                  <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        }
+      />
 
       <Modal
         visible={genderModalVisible}
@@ -607,14 +636,14 @@ export default function EditProfileScreen() {
                               showError('Error', err?.message || 'Failed to request camera permission');
                             }
                           } else {
-                            launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8 }, handleImageUpload);
+                            launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8, maxWidth: 1080, maxHeight: 1080 }, handleImageUpload);
                           }
                         }
                       },
                       {
                         text: 'Choose from Gallery',
                         onPress: () => {
-                          launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8 }, handleImageUpload);
+                          launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8, maxWidth: 1080, maxHeight: 1080 }, handleImageUpload);
                         }
                       }
                     ]
@@ -689,6 +718,18 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
+              <Text style={styles.label}>Alternate Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="+91 XXXXXXXXXX"
+                placeholderTextColor={colors.textMutedLight}
+                value={formData.alt_number}
+                onChangeText={(t) => setFormData(p => ({ ...p, alt_number: t }))}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>Username (Handle) *</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TextInput
@@ -746,7 +787,6 @@ export default function EditProfileScreen() {
                   options={HEIGHT_OPTIONS}
                   value={formData.height}
                   onSelect={(t) => setFormData(p => ({ ...p, height: t }))}
-                  style={[styles.input, { paddingVertical: 14 }]}
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
@@ -806,23 +846,10 @@ export default function EditProfileScreen() {
         ) : activeTab === 'Advanced Info' ? (
           <>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Preferred Cities</Text>
-              <BottomSheetSelect
-                placeholder="Select Cities"
-                options={INDIAN_CITIES}
-                value={formData.preferred_cities}
-                onSelect={(val) => setFormData(p => ({ ...p, preferred_cities: val }))}
-                style={styles.input}
-                multiSelect={true}
-                searchable={true}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
               <Text style={styles.label}>Availability Type</Text>
               <BottomSheetSelect
                 value={formData.availability_type}
-                options={['Full Time', 'Part Time', 'Freelance']}
+                options={['Full Time', 'Part Time', 'Weekends', 'Short Term', 'Long Term', 'Freelance']}
                 onSelect={(t) => setFormData(p => ({ ...p, availability_type: t }))}
                 placeholder="Select Availability"
               />
@@ -843,11 +870,32 @@ export default function EditProfileScreen() {
                 placeholder="Select Preference"
                 options={['Available in India', 'Outside India', 'Specific Cities']}
                 value={formData.work_preference}
-                onSelect={(val) => setFormData(p => ({ ...p, work_preference: val }))}
+                onSelect={(val) => {
+                  const hasSpecific = Array.isArray(val) ? val.includes('Specific Cities') : val === 'Specific Cities';
+                  setFormData(p => ({
+                    ...p,
+                    work_preference: val,
+                    preferred_cities: hasSpecific ? p.preferred_cities : [],
+                  }));
+                }}
                 style={styles.selectInput}
                 multiSelect={true}
               />
             </View>
+
+            {(Array.isArray(formData.work_preference) ? formData.work_preference.includes('Specific Cities') : formData.work_preference === 'Specific Cities') && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Select Specific Cities</Text>
+                <BottomSheetSelect
+                  placeholder="Select Cities"
+                  options={INDIAN_CITIES}
+                  value={formData.preferred_cities}
+                  onSelect={(val) => setFormData(p => ({ ...p, preferred_cities: val }))}
+                  multiSelect={true}
+                  searchable={true}
+                />
+              </View>
+            )}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Look Alike</Text>
@@ -868,20 +916,21 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Intro Video URL</Text>
-              <MediaOrLinkInput
-                placeholder="YouTube, Insta or Upload"
+              <Text style={styles.label}>Intro Video (30 sec)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Paste YouTube or Instagram URL"
+                placeholderTextColor={colors?.textMuted || '#888'}
                 value={formData.intro_video_url}
                 onChangeText={(t) => setFormData(p => ({ ...p, intro_video_url: t }))}
-                platform="any"
-                onFileSelect={(file) => handleMediaFieldSelect('intro_video_url', file)}
-                isUploading={uploadingField === 'intro_video_url'}
+                keyboardType="url"
+                autoCapitalize="none"
+                autoCorrect={false}
               />
-              {uploadingField === 'intro_video_url' && (
-                <View style={{ marginTop: 8 }}><ProgressBar progress={uploadProgress} /></View>
-              )}
             </View>
 
+            {/* Left Profile Video & Right Profile Video removed per request */}
+            {/*
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Left Profile Video</Text>
               <MediaOrLinkInput
@@ -911,6 +960,7 @@ export default function EditProfileScreen() {
                 <View style={{ marginTop: 8 }}><ProgressBar progress={uploadProgress} /></View>
               )}
             </View>
+            */}
 
             {/* Social Media Links Section */}
             <View style={styles.sectionHeader}>
@@ -1014,119 +1064,177 @@ export default function EditProfileScreen() {
           </>
         ) : (
           <>
-            <Text style={styles.subtitle}>Fill in your {activeTab.toLowerCase()} specific details to stand out.</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 14, borderRadius: 16, marginBottom: 18, borderWidth: 1, borderColor: colors.borderLight }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: '#DBEAFE' }}>
+                <ProfessionCategoryIcon categoryName={activeTab} size={26} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMainLight, textTransform: 'capitalize' }}>
+                  {activeTab} Specialization
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textMutedLight, marginTop: 2 }}>
+                  Fill in your verified attributes & skills for {activeTab.toLowerCase()}
+                </Text>
+              </View>
+            </View>
             {isLoadingProfessions ? (
               <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
             ) : (() => {
-              const currentProfession = professionsList.find(p => p.name === activeTab);
-              const fields = currentProfession?.profession_fields || [];
+              const currentProfession = professionsList.find(p => 
+                (p.name && p.name.toLowerCase().trim() === activeTab.toLowerCase().trim()) ||
+                (p.slug && p.slug.toLowerCase().trim() === activeTab.toLowerCase().trim()) ||
+                (p.name && p.name.toLowerCase().replace(/[^a-z0-9]/g, '') === activeTab.toLowerCase().replace(/[^a-z0-9]/g, ''))
+              );
+              const fields = currentProfession?.profession_fields || currentProfession?.fields || currentProfession?.custom_fields || [];
               if (fields.length === 0) {
-                return <Text style={{ color: colors.textMutedLight, marginTop: 16 }}>No custom fields required for this profession.</Text>;
+                return (
+                  <View style={{ backgroundColor: colors.surfaceLight, padding: 18, borderRadius: 14, borderWidth: 1, borderColor: colors.borderLight, marginTop: 12, alignItems: 'center' }}>
+                    <Icon name="information-circle-outline" size={24} color={colors.textMutedLight} style={{ marginBottom: 6 }} />
+                    <Text style={{ color: colors.textMutedLight, fontSize: 13 }}>No custom fields required for {activeTab}.</Text>
+                  </View>
+                );
               }
-              return fields.map((field) => (
-                <View key={field.field_name} style={styles.inputGroup}>
-                  <Text style={styles.label}>{field.field_label} {field.is_required ? '*' : ''}</Text>
+              return fields.map((field) => {
+                const fieldName = field.field_name || field.name;
+                const fieldLabel = field.field_label || field.label || fieldName;
+                const fieldType = (field.field_type || field.type || 'text').toLowerCase();
+                const isRequired = !!field.is_required;
 
-                  {(field.field_type === 'text' || field.field_type === 'number' || field.field_type === 'url') && (
-                    <TextInput
-                      style={styles.input}
-                      placeholder={`Enter ${field.field_label.toLowerCase()}`}
-                      placeholderTextColor={colors.textMutedLight}
-                      keyboardType={field.field_type === 'number' ? 'numeric' : field.field_type === 'url' ? 'url' : 'default'}
-                      autoCapitalize={field.field_type === 'url' ? 'none' : 'sentences'}
-                      autoCorrect={field.field_type !== 'url'}
-                      value={categoryFormData[activeTab]?.[field.field_name] || ''}
-                      onChangeText={(text) => handleTextChange(activeTab, field.field_name, text)}
-                    />
-                  )}
+                let parsedOptions = [];
+                if (field.options) {
+                  if (Array.isArray(field.options)) {
+                    parsedOptions = field.options;
+                  } else if (typeof field.options === 'string') {
+                    if (field.options.startsWith('[')) {
+                      try { parsedOptions = JSON.parse(field.options); } catch (e) { parsedOptions = field.options.split(',').map(s => s.trim()); }
+                    } else {
+                      parsedOptions = field.options.split(',').map(s => s.trim()).filter(Boolean);
+                    }
+                  }
+                }
 
-                  {(field.field_type === 'select' || field.field_type === 'multiselect') && field.options && (
-                    <View style={styles.optionsContainer}>
-                      {field.options.map(option => {
-                        const isSelected = (categoryFormData[activeTab]?.[field.field_name] || []).includes(option);
-                        return (
-                          <TouchableOpacity
-                            key={option}
-                            style={[styles.optionPill, isSelected && styles.optionPillSelected]}
-                            onPress={() => handleSelectToggle(activeTab, field.field_name, option, field.field_type === 'multiselect')}
-                          >
-                            <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  )}
+                const currentVal = categoryFormData[activeTab]?.[fieldName] ?? 
+                                   categoryFormData[activeTab.toLowerCase()]?.[fieldName] ?? '';
 
-                  {field.field_type === 'file' && (
-                    <View style={{ marginTop: 8 }}>
-                      {(() => {
-                        const existingVal = categoryFormData[activeTab]?.[field.field_name];
-                        const files = Array.isArray(existingVal) ? existingVal : (existingVal ? [existingVal] : []);
+                return (
+                  <View key={fieldName} style={styles.inputGroup}>
+                    <Text style={styles.label}>{fieldLabel} {isRequired ? '*' : ''}</Text>
 
-                        return (
-                          <>
-                            {files.map((fileUrl, index) => {
-                              const isVideo = typeof fileUrl === 'string' && fileUrl.match(/\.(mp4|mov)$/i);
-                              const isAudio = typeof fileUrl === 'string' && fileUrl.match(/\.(mp3|wav|aac|ogg|webm)$/i);
-                              const isImage = typeof fileUrl === 'string' && fileUrl.match(/\.(jpg|jpeg|png|webp)$/i);
+                    {(fieldType === 'text' || fieldType === 'number' || fieldType === 'url' || fieldType === 'date') && (
+                      <TextInput
+                        style={styles.input}
+                        placeholder={`Enter ${fieldLabel.toLowerCase()}`}
+                        placeholderTextColor={colors.textMutedLight}
+                        keyboardType={fieldType === 'number' ? 'numeric' : fieldType === 'url' ? 'url' : 'default'}
+                        autoCapitalize={fieldType === 'url' ? 'none' : 'sentences'}
+                        autoCorrect={fieldType !== 'url'}
+                        value={typeof currentVal === 'string' || typeof currentVal === 'number' ? String(currentVal) : ''}
+                        onChangeText={(text) => handleTextChange(activeTab, fieldName, text)}
+                      />
+                    )}
 
-                              return (
-                                <View key={index} style={{ marginBottom: 12, backgroundColor: colors.surfaceLight, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}>
-                                  {(isVideo || isAudio) ? (
-                                    <Video
-                                      source={{ uri: fileUrl }}
-                                      style={{ width: '100%', height: isVideo ? 200 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }}
-                                      controls={true}
-                                      resizeMode={isVideo ? "cover" : "contain"}
-                                      paused={true}
-                                    />
-                                  ) : isImage ? (
-                                    <Image source={{ uri: fileUrl }} style={{ width: '100%', height: 200, borderRadius: 8, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
-                                  ) : (
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                      <Icon name="document-attach-outline" size={24} color={colors.primary} />
-                                      <Text style={{ flex: 1, marginLeft: 12, color: colors.textMainLight, fontSize: 13 }} numberOfLines={1}>
-                                        {String(fileUrl).split('/').pop()}
-                                      </Text>
-                                    </View>
-                                  )}
+                    {(fieldType === 'textarea' || fieldType === 'long_text' || fieldType === 'paragraph') && (
+                      <TextInput
+                        style={[styles.input, { minHeight: 80, textAlignVertical: 'top', paddingTop: 10 }]}
+                        placeholder={`Enter ${fieldLabel.toLowerCase()}`}
+                        placeholderTextColor={colors.textMutedLight}
+                        multiline={true}
+                        numberOfLines={3}
+                        value={typeof currentVal === 'string' ? currentVal : ''}
+                        onChangeText={(text) => handleTextChange(activeTab, fieldName, text)}
+                      />
+                    )}
 
-                                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                                    <TouchableOpacity onPress={() => handleDeleteFile(activeTab, field.field_name, fileUrl)} style={{ padding: 4, flexDirection: 'row', alignItems: 'center' }}>
-                                      <Icon name="trash-outline" size={16} color="#ef4444" />
-                                      <Text style={{ color: '#ef4444', fontSize: 12, marginLeft: 4 }}>Remove</Text>
-                                    </TouchableOpacity>
-                                  </View>
-                                </View>
-                              );
-                            })}
-
+                    {(fieldType === 'select' || fieldType === 'multiselect') && parsedOptions.length > 0 && (
+                      <View style={styles.optionsContainer}>
+                        {parsedOptions.map(option => {
+                          const isSelected = Array.isArray(currentVal)
+                            ? currentVal.includes(option)
+                            : (typeof currentVal === 'string' && currentVal.split(',').map(s => s.trim()).includes(option));
+                          return (
                             <TouchableOpacity
-                              style={[styles.fileButton, { marginTop: files.length > 0 ? 4 : 0 }]}
-                              onPress={() => handleFileUpload(activeTab, field.field_name)}
-                              disabled={isUploadingFile}
+                              key={option}
+                              style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                              onPress={() => handleSelectToggle(activeTab, fieldName, option, fieldType === 'multiselect')}
                             >
-                              {isUploadingFile ? (
-                                <ActivityIndicator size="small" color={colors.primary} />
-                              ) : (
-                                <>
-                                  <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
-                                  <Text style={styles.fileButtonText}>{files.length > 0 ? "Add Another File" : "Upload File"}</Text>
-                                </>
-                              )}
+                              <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option}</Text>
                             </TouchableOpacity>
-                            {isUploadingFile && (
-                              <View style={{ marginTop: 8 }}>
-                                <ProgressBar progress={uploadProgress} />
-                              </View>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </View>
-                  )}
-                </View>
-              ));
+                          );
+                        })}
+                      </View>
+                    )}
+
+                    {fieldType === 'file' && (
+                      <View style={{ marginTop: 8 }}>
+                        {(() => {
+                          const existingVal = currentVal;
+                          const files = Array.isArray(existingVal) ? existingVal : (existingVal ? [existingVal] : []);
+
+                          return (
+                            <>
+                              {files.map((fileUrl, index) => {
+                                const isVideo = typeof fileUrl === 'string' && fileUrl.match(/\.(mp4|mov)$/i);
+                                const isAudio = typeof fileUrl === 'string' && fileUrl.match(/\.(mp3|wav|aac|ogg|webm)$/i);
+                                const isImage = typeof fileUrl === 'string' && fileUrl.match(/\.(jpg|jpeg|png|webp)$/i);
+
+                                return (
+                                  <View key={index} style={{ marginBottom: 12, backgroundColor: colors.surfaceLight, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}>
+                                    {(isVideo || isAudio) ? (
+                                      <Video
+                                        source={{ uri: fileUrl }}
+                                        style={{ width: '100%', height: isVideo ? 200 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }}
+                                        controls={true}
+                                        resizeMode={isVideo ? "cover" : "contain"}
+                                        paused={true}
+                                      />
+                                    ) : isImage ? (
+                                      <Image source={{ uri: fileUrl }} style={{ width: '100%', height: 200, borderRadius: 8, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
+                                    ) : (
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                                        <Icon name="document-attach-outline" size={24} color={colors.primary} />
+                                        <Text style={{ flex: 1, marginLeft: 12, color: colors.textMainLight, fontSize: 13 }} numberOfLines={1}>
+                                          {String(fileUrl).split('/').pop()}
+                                        </Text>
+                                      </View>
+                                    )}
+
+                                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                                      <TouchableOpacity onPress={() => handleDeleteFile(activeTab, fieldName, fileUrl)} style={{ padding: 4, flexDirection: 'row', alignItems: 'center' }}>
+                                        <Icon name="trash-outline" size={16} color="#ef4444" />
+                                        <Text style={{ color: '#ef4444', fontSize: 12, marginLeft: 4 }}>Remove</Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  </View>
+                                );
+                              })}
+
+                              <TouchableOpacity
+                                style={[styles.fileButton, { marginTop: files.length > 0 ? 4 : 0 }]}
+                                onPress={() => handleFileUpload(activeTab, fieldName)}
+                                disabled={isUploadingFile}
+                              >
+                                {isUploadingFile ? (
+                                  <ActivityIndicator size="small" color={colors.primary} />
+                                ) : (
+                                  <>
+                                    <Icon name="cloud-upload-outline" size={20} color={colors.primary} />
+                                    <Text style={styles.fileButtonText}>{files.length > 0 ? "Add Another File" : "Upload File"}</Text>
+                                  </>
+                                )}
+                              </TouchableOpacity>
+                              {isUploadingFile && (
+                                <View style={{ marginTop: 8 }}>
+                                  <ProgressBar progress={uploadProgress} />
+                                </View>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </View>
+                    )}
+                  </View>
+                );
+              });
             })()}
           </>
         )}
@@ -1172,29 +1280,33 @@ const getStyles = (colors) => StyleSheet.create({
   tabsContainer: {
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-    marginBottom: 8,
+    marginBottom: 12,
+    backgroundColor: colors.backgroundLight,
   },
   tabsScroll: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
   },
   tab: {
-    paddingVertical: 8,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    marginRight: 12,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceLight,
+    marginRight: 8,
+    borderBottomWidth: 2.5,
+    borderBottomColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabActive: {
-    backgroundColor: colors.primary,
+    borderBottomColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   tabText: {
-    ...typography.body,
+    fontSize: 14.5,
     fontWeight: '600',
     color: colors.textMutedLight,
   },
   tabTextActive: {
-    color: colors.backgroundLight,
+    color: colors.primary,
+    fontWeight: '800',
   },
   container: {
     flex: 1,
@@ -1237,12 +1349,16 @@ const getStyles = (colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
     borderRadius: 12,
-    padding: 14,
+    paddingHorizontal: 14,
+    height: 50,
+    justifyContent: 'center',
     ...typography.body,
     color: colors.textMainLight,
   },
   inputMultiline: {
+    minHeight: 100,
     height: 100,
+    paddingTop: 14,
     textAlignVertical: 'top',
   },
   optionsContainer: {

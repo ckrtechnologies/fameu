@@ -45,52 +45,57 @@ const OtpScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
-      {/* Top Half - Dark */}
-      <View style={styles.topHalf}>
-        <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
-          <View style={styles.logoWrapper}>
-            <View style={styles.logoContainer}>
-              <Image 
-                source={require('../../assets/images/logo.jpeg')} 
-                style={styles.logoImage}
-              />
-            </View>
-          </View>
-        </SafeAreaView>
-      </View>
-
-      {/* Bottom Half - Light */}
       <KeyboardAwareScrollView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.bottomHalf}
+        contentContainerStyle={{ flexGrow: 1 }}
+        enableOnAndroid={true}
+        extraScrollHeight={50}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
-        <Typography variant="h1" style={styles.title}>Verify OTP</Typography>
-        <Typography variant="body" style={styles.subtitle}>
-          Enter the 4-digit code sent to your phone
-        </Typography>
-        
-        <CustomOtpInput 
-          length={4} 
-          initialCode={autoFillOtp} 
-          onComplete={(code) => setOtpCode(code)} 
-        />
-
-        <View style={styles.buttonContainer}>
-          {isLoading ? (
-            <ActivityIndicator size="large" color={colors.primary} />
-          ) : (
-            <CustomButton 
-              title="Verify & Login" 
-              onPress={handleVerify} 
-              variant="primary"
-            />
-          )}
+        {/* Top Half - Dark */}
+        <View style={styles.topHalf}>
+          <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
+            <View style={styles.logoWrapper}>
+              <View style={styles.logoContainer}>
+                <Image 
+                  source={require('../../assets/images/logo.jpeg')} 
+                  style={styles.logoImage}
+                />
+              </View>
+            </View>
+          </SafeAreaView>
         </View>
 
-        <View style={styles.footer}>
-          <Typography variant="caption" style={styles.resendText}>
-            Resend Code in 00:54
+        {/* Bottom Half - Light */}
+        <View style={styles.bottomHalf}>
+          <Typography variant="h1" style={styles.title}>Verify OTP</Typography>
+          <Typography variant="body" style={styles.subtitle}>
+            Enter the 4-digit code sent to your phone
           </Typography>
+          
+          <CustomOtpInput 
+            length={4} 
+            initialCode={autoFillOtp} 
+            onComplete={(code) => setOtpCode(code)} 
+          />
+
+          <View style={styles.buttonContainer}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color={colors.primary} />
+            ) : (
+              <CustomButton 
+                title="Verify & Login" 
+                onPress={handleVerify} 
+                variant="primary"
+              />
+            )}
+          </View>
+
+          <View style={styles.footer}>
+            <Typography variant="caption" style={styles.resendText}>
+              Resend Code in 00:54
+            </Typography>
+          </View>
         </View>
       </KeyboardAwareScrollView>
     </View>
@@ -104,13 +109,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   topHalf: {
     backgroundColor: '#0F172A', 
-    height: '35%',
+    minHeight: 240,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     justifyContent: 'center',
+    paddingVertical: spacing.xl,
   },
   safeAreaTop: {
-    flex: 1,
     justifyContent: 'center',
   },
   logoWrapper: {
@@ -139,6 +144,8 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.l,
     paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
+    justifyContent: 'center',
   },
   title: {
     textAlign: 'center',

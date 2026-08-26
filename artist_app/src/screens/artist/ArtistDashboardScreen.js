@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Image, Dimensions, Modal, Text } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Image, Dimensions, Modal, Text, Animated, Easing, Platform, StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
@@ -15,11 +15,177 @@ import { useGetNotificationsQuery } from '../../services/notificationsApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
-import { LineChart } from 'react-native-chart-kit';
+import { LineChart, BarChart } from 'react-native-chart-kit';
 import { Search, MessageCircle, Briefcase, Users, Bell, Bookmark, TrendingUp, Compass, Star, ChevronRight, Video, Calendar, ShieldCheck } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { Linking } from 'react-native';
+import AppIcon, {
+  LiveRadarIcon,
+  ClapperRoleIcon,
+  NearbySpotlightIcon,
+  VerifiedTrustShieldIcon,
+  ProTalentStarIcon,
+  ProfileViewsStatIcon,
+  ApplicationsStatIcon,
+  ShortlistedStatIcon,
+  ProfileRocketIcon,
+} from '../../components/icons';
 
 const { width } = Dimensions.get('window');
+
+function LiveFeatureTicker({ items, onPress, colors }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const translateY = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!items || items.length <= 1) return;
+    const interval = setInterval(() => {
+      // 1. Slide up & fade out
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: -16,
+          duration: 260,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease),
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 0.95,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setCurrentIndex((prev) => (prev + 1) % items.length);
+        translateY.setValue(16);
+        scale.setValue(0.95);
+        Animated.parallel([
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 320,
+            useNativeDriver: true,
+            easing: Easing.out(Easing.back(1.4)),
+          }),
+          Animated.timing(opacity, {
+            toValue: 1,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    }, 3400);
+
+    return () => clearInterval(interval);
+  }, [items, translateY, opacity, scale]);
+
+  const currentItem = items[currentIndex] || items[0];
+  const IconComp = currentItem.IconComponent;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      style={[
+        stylesTicker.tickerContainer,
+        {
+          backgroundColor: colors.surfaceLight,
+          borderColor: currentItem.themeColor + '30',
+        },
+      ]}
+    >
+      <View style={stylesTicker.tickerContent}>
+        <Animated.View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            transform: [{ translateY }, { scale }],
+            opacity,
+          }}
+        >
+          {/* Custom Vibrant Icon Container */}
+          <View style={[stylesTicker.iconBadge, { backgroundColor: currentItem.badgeBg || (currentItem.themeColor + '15') }]}>
+            {IconComp ? <IconComp size={18} /> : null}
+          </View>
+
+          {/* Headline Text */}
+          <View style={{ flex: 1, marginLeft: 8, marginRight: 6 }}>
+            <Text
+              style={[stylesTicker.tickerText, { color: colors.textMainLight }]}
+              numberOfLines={1}
+            >
+              <Text style={{ fontWeight: '800', color: currentItem.themeColor }}>{currentItem.countHighlight} </Text>
+              {currentItem.text}
+            </Text>
+          </View>
+
+          {/* Right Highlight Badge */}
+          {currentItem.highlight && (
+            <View style={[stylesTicker.tickerHighlightBadge, { backgroundColor: currentItem.themeColor + '18' }]}>
+              <Text style={[stylesTicker.tickerHighlightText, { color: currentItem.themeColor }]}>{currentItem.highlight}</Text>
+            </View>
+          )}
+        </Animated.View>
+      </View>
+      <ChevronRight size={14} color={currentItem.themeColor} />
+    </TouchableOpacity>
+  );
+}
+
+const stylesTicker = StyleSheet.create({
+  tickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 22,
+    borderWidth: 1.2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tickerContent: {
+    flex: 1,
+    overflow: 'hidden',
+    height: 24,
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  iconBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tickerText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tickerHighlightBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  tickerHighlightText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+});
 
 const timeAgo = (dateStr) => {
   if (!dateStr) return '';
@@ -86,6 +252,33 @@ export default function ArtistDashboardScreen() {
   const [peekAuditions, setPeekAuditions] = useState([]);
   const [peekIndex, setPeekIndex] = useState(0);
 
+  // Profile Checklist Modal State
+  const [isChecklistVisible, setIsChecklistVisible] = useState(false);
+  const [activeTipIndex, setActiveTipIndex] = useState(0);
+  
+  const scrollYRef = useRef(null);
+  if (!scrollYRef.current) {
+    scrollYRef.current = new Animated.Value(0);
+  }
+  const scrollY = scrollYRef.current;
+
+  const getProfileChecklist = (p) => {
+    const data = p || {};
+    return [
+      { id: 'full_name', title: 'Full Name', hint: 'Professional screen / legal name', iconName: 'person', completed: !!(data.full_name || user?.full_name), weight: '+15%' },
+      { id: 'categories', title: 'Artistic Categories', hint: 'Select Actor, Model, Singer, etc.', iconName: 'briefcase', completed: Array.isArray(data.categories) && data.categories.length > 0, weight: '+20%' },
+      { id: 'photos', title: 'Headshots & Photos', hint: 'Upload portfolio photos', iconName: 'camera', completed: (Array.isArray(data.photo_urls) && data.photo_urls.length > 0) || !!data.avatar_url || !!user?.avatar_url, weight: '+20%' },
+      { id: 'bio', title: 'About / Bio', hint: 'Introduce yourself to recruiters', iconName: 'document-attach-outline', completed: !!data.bio && data.bio.trim().length > 0, weight: '+15%' },
+      { id: 'city', title: 'Base City', hint: 'City where you are currently located', iconName: 'city', completed: !!data.city, weight: '+10%' },
+      { id: 'age_gender', title: 'Age & Gender', hint: 'Required for casting filters', iconName: 'gender', completed: !!data.age && !!data.gender, weight: '+10%' },
+      { id: 'languages', title: 'Languages Known', hint: 'Select languages you speak', iconName: 'languages', completed: Array.isArray(data.languages) && data.languages.length > 0, weight: '+5%' },
+      { id: 'height_weight', title: 'Physical Stats', hint: 'Height & Weight for screen tests', iconName: 'height', completed: !!data.height || !!data.weight, weight: '+5%' },
+      { id: 'availability', title: 'Availability & Dates', hint: 'Full-time, Part-time, Dates', iconName: 'availability_type', completed: !!data.availability_type || !!data.available_dates, weight: 'Bonus' },
+      { id: 'skills', title: 'Special Skills', hint: 'Voiceover, Martial Arts, Dancing', iconName: 'skills', completed: Array.isArray(data.skills) && data.skills.length > 0, weight: 'Bonus' },
+      { id: 'social_links', title: 'Social Media Profiles', hint: 'Instagram, YouTube links', iconName: 'logo-instagram', completed: !!data.social_links && Object.values(typeof data.social_links === 'string' ? JSON.parse(data.social_links || '{}') : data.social_links).some(Boolean), weight: 'Bonus' },
+    ];
+  };
+
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
@@ -96,7 +289,7 @@ export default function ArtistDashboardScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [refetchFeed, refetchAll, refetchLive, refetchTrending, refetchProfile, refetchApps, refetchSaved, refetchNotifs]);
+  }, [refetchFeed, refetchAll, refetchLive, refetchTrending, refetchProfile, refetchApps, refetchSaved, refetchNotifs, refetchBanners]);
 
   const handleViewAuditionDetails = useCallback((auditionOrId) => {
     const id = typeof auditionOrId === 'object' && auditionOrId !== null ? auditionOrId.id : auditionOrId;
@@ -150,35 +343,173 @@ export default function ArtistDashboardScreen() {
   };
   const profileCompletePct = Math.max(profile?.profile_complete_pct || 0, calculateProfileCompletion(profile));
 
+  // Header Shrinking Interpolations
+  const headerPaddingVertical = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [10, 4],
+    extrapolate: 'clamp',
+  });
+
+  const avatarSize = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [40, 32],
+    extrapolate: 'clamp',
+  });
+
+  const avatarRadius = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [20, 16],
+    extrapolate: 'clamp',
+  });
+
+  const nameFontSize = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [17, 14],
+    extrapolate: 'clamp',
+  });
+
+  const greetingHeight = scrollY.interpolate({
+    inputRange: [0, 30],
+    outputRange: [16, 0],
+    extrapolate: 'clamp',
+  });
+
+  const greetingOpacity = scrollY.interpolate({
+    inputRange: [0, 25],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const tickerHeight = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [38, 0],
+    extrapolate: 'clamp',
+  });
+
+  const tickerOpacity = scrollY.interpolate({
+    inputRange: [0, 35],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const headerBorderOpacity = scrollY.interpolate({
+    inputRange: [0, 25],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const tickerItems = [
+    {
+      id: 'live',
+      IconComponent: LiveRadarIcon,
+      themeColor: '#EF4444',
+      badgeBg: '#FEE2E2',
+      countHighlight: `${liveData?.data?.length || 8} Live`,
+      text: 'Auditions happening right now',
+      highlight: 'Live Now',
+    },
+    {
+      id: 'foryou',
+      IconComponent: ClapperRoleIcon,
+      themeColor: '#2563EB',
+      badgeBg: '#DBEAFE',
+      countHighlight: `${feedData?.data?.length || 14} Roles`,
+      text: `matching ${(categories[0]) || 'Actor'} profile`,
+      highlight: 'For You',
+    },
+    {
+      id: 'nearby',
+      IconComponent: NearbySpotlightIcon,
+      themeColor: '#059669',
+      badgeBg: '#D1FAE5',
+      countHighlight: 'Casting Calls',
+      text: `open in ${(profile?.city) || 'Mumbai / Delhi'}`,
+      highlight: 'Nearby',
+    },
+    {
+      id: 'verified',
+      IconComponent: VerifiedTrustShieldIcon,
+      themeColor: '#6366F1',
+      badgeBg: '#EEF2FF',
+      countHighlight: '100% Verified',
+      text: 'Production calls • Zero scams',
+      highlight: 'Trust',
+    },
+    {
+      id: 'pro',
+      IconComponent: ProTalentStarIcon,
+      themeColor: '#D97706',
+      badgeBg: '#FEF3C7',
+      countHighlight: 'Pro Tip:',
+      text: 'Add showreel to get 50% more calls',
+      highlight: 'Pro',
+    },
+  ];
+
   const renderWelcomeHeader = () => (
-    <View style={styles.headerContainer}>
-      <View style={styles.headerTextContainer}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginRight: 12 }}>
-            {profile?.avatar_url || user?.avatar_url ? (
-              <ImageWithFallback source={{ uri: profile?.avatar_url }} fallbackSource={{ uri: user?.avatar_url }} style={{ width: 40, height: 40, borderRadius: 20 }} />
-            ) : (
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                <Typography variant="body" style={{ color: 'white', fontWeight: 'bold' }}>{name.charAt(0).toUpperCase()}</Typography>
-              </View>
-            )}
+    <Animated.View
+      style={[
+        styles.stickyHeader,
+        {
+          backgroundColor: colors.backgroundLight,
+          borderBottomColor: colors.borderLight,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          paddingVertical: 8,
+        },
+      ]}
+    >
+      <View style={styles.headerTopRow}>
+        <View style={styles.headerLeftGroup}>
+          <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginRight: 10 }}>
+            <Animated.View style={{ width: avatarSize, height: avatarSize, borderRadius: avatarRadius, overflow: 'hidden' }}>
+              {profile?.avatar_url || user?.avatar_url ? (
+                <ImageWithFallback source={{ uri: profile?.avatar_url }} fallbackSource={{ uri: user?.avatar_url }} style={{ width: '100%', height: '100%' }} />
+              ) : (
+                <View style={{ width: '100%', height: '100%', backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                  <Typography variant="body" style={{ color: 'white', fontWeight: 'bold' }}>{name.charAt(0).toUpperCase()}</Typography>
+                </View>
+              )}
+            </Animated.View>
           </TouchableOpacity>
-          <View>
-            <Typography variant="caption" style={styles.greetingText}>Good Morning,</Typography>
-            <Typography variant="h2" style={styles.nameText} numberOfLines={1}>{name} <ShieldCheck size={20} color={colors.primary} /></Typography>
+          <View style={{ flex: 1 }}>
+            <Animated.View style={{ height: greetingHeight, opacity: greetingOpacity, overflow: 'hidden' }}>
+              <Typography variant="caption" style={styles.greetingText}>Good Morning,</Typography>
+            </Animated.View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Animated.Text style={[styles.nameText, { color: colors.textMainLight, fontSize: nameFontSize }]} numberOfLines={1}>
+                {name}
+              </Animated.Text>
+              <ShieldCheck size={16} color={colors.primary} style={{ marginLeft: 4 }} />
+            </View>
           </View>
         </View>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('ArtistDiscovery')}>
+            <Search size={22} color={colors.textMainLight} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
+            <Bell size={22} color={colors.textMainLight} />
+            {hasUnreadNotifications && <View style={styles.notificationBadge} />}
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.headerIcons}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('ArtistDiscovery')}>
-          <Search size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
-          <Bell size={24} color={colors.textMainLight} />
-          {hasUnreadNotifications && <View style={styles.notificationBadge} />}
-        </TouchableOpacity>
-      </View>
-    </View>
+
+      {/* Zomato-style Animated Feature Ticker */}
+      <Animated.View
+        style={{
+          height: tickerHeight,
+          opacity: tickerOpacity,
+          overflow: 'hidden',
+          marginTop: 6,
+        }}
+      >
+        <LiveFeatureTicker
+          items={tickerItems}
+          colors={colors}
+          onPress={() => navigation.navigate('Auditions')}
+        />
+      </Animated.View>
+    </Animated.View>
   );
 
   const renderBannerCarousel = () => {
@@ -211,18 +542,123 @@ export default function ArtistDashboardScreen() {
   const renderProfileBanner = () => {
     if (profileCompletePct >= 100) return null;
     return (
-      <TouchableOpacity style={styles.profileBanner} activeOpacity={0.8} onPress={() => navigation.navigate('EditProfile')}>
-        <View style={styles.profileBannerContent}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="body" style={styles.profileBannerTitle}>Profile Setup</Typography>
-            <Typography variant="caption" style={{ color: colors.primary, fontWeight: 'bold' }}>{profileCompletePct}%</Typography>
+      <>
+        <TouchableOpacity style={styles.profileBanner} activeOpacity={0.85} onPress={() => setIsChecklistVisible(true)}>
+          <View style={styles.profileBannerTopRow}>
+            <View style={styles.profileRocketBadge}>
+              <ProfileRocketIcon size={38} />
+            </View>
+            <View style={{ marginLeft: 12, flex: 1 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={styles.profileBannerTitle}>Profile Strength</Text>
+                <View style={[styles.profileStrengthBadge, { backgroundColor: colors.primary + '18' }]}>
+                  <Text style={[styles.profileStrengthText, { color: colors.primary }]}>
+                    ⚡ {profileCompletePct}%
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.profileBannerSub} numberOfLines={1}>
+                Complete setup to get 2x more recruiter callbacks
+              </Text>
+            </View>
           </View>
-          <Typography variant="body" style={styles.profileBannerText}>Finish setting up to get 2x more matches!</Typography>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
+
+          <View style={styles.profileBannerProgressRow}>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: `${profileCompletePct}%`, backgroundColor: colors.primary }]} />
+            </View>
+            <View style={styles.viewChecklistPill}>
+              <Text style={[styles.viewChecklistText, { color: colors.primary }]}>Checklist →</Text>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* Profile Checklist Modal */}
+        <Modal
+          visible={isChecklistVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsChecklistVisible(false)}
+        >
+          <View style={styles.checklistModalOverlay}>
+            <View style={[styles.checklistModalContainer, { backgroundColor: colors.surfaceLight }]}>
+              <View style={styles.checklistHeader}>
+                <View>
+                  <Text style={[styles.checklistTitle, { color: colors.textMainLight }]}>Profile Setup Checklist</Text>
+                  <Text style={{ color: colors.primary, fontWeight: 'bold', marginTop: 4 }}>
+                    ⚡ {profileCompletePct}% Completed
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={() => setIsChecklistVisible(false)}
+                  style={styles.checklistCloseBtn}
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
+                  <Icon name="close" size={24} color={colors.textMutedLight} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.progressBarBg, { marginTop: 12, marginBottom: 16 }]}>
+                <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
+              </View>
+
+              <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.48 }} showsVerticalScrollIndicator={false}>
+                {getProfileChecklist(profile).map((item) => (
+                  <TouchableOpacity 
+                    key={item.id} 
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setIsChecklistVisible(false);
+                      if (item.id === 'categories' && (!profile?.categories || profile.categories.length === 0)) {
+                        navigation.navigate('ArtistCategory');
+                      } else {
+                        navigation.navigate('EditProfile');
+                      }
+                    }}
+                    style={[
+                      styles.checklistItemRow, 
+                      { 
+                        backgroundColor: item.completed ? 'rgba(34, 197, 94, 0.08)' : colors.surfaceLight,
+                        borderColor: item.completed ? 'rgba(34, 197, 94, 0.3)' : colors.borderLight,
+                      }
+                    ]}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <View style={styles.checklistIconContainer}>
+                        <AppIcon name={item.iconName} size={24} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.checklistItemTitle, { color: colors.textMainLight, textDecorationLine: item.completed ? 'line-through' : 'none' }]}>
+                          {item.title}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: colors.textMutedLight, marginTop: 2 }}>
+                          {item.hint}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={[styles.checklistWeightBadge, { backgroundColor: item.completed ? '#DCFCE7' : 'rgba(59, 130, 246, 0.1)' }]}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: item.completed ? "#16A34A" : colors.primary }}>
+                        {item.completed ? '✓ Done' : item.weight}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <TouchableOpacity 
+                style={[styles.checklistActionBtn, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setIsChecklistVisible(false);
+                  navigation.navigate('EditProfile');
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>Complete Remaining Info</Text>
+                <Icon name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </>
     );
   };
 
@@ -234,17 +670,28 @@ export default function ArtistDashboardScreen() {
 
     return (
       <View style={styles.statsContainer}>
-        <TouchableOpacity style={styles.statCard} onPress={() => navigation.navigate('ProfileVisitors')}>
-          <Typography variant="h3" style={styles.statNumber}>{visits}</Typography>
-          <Typography variant="caption" style={styles.statLabel}>Profile Views</Typography>
+        <TouchableOpacity style={styles.statCard} activeOpacity={0.8} onPress={() => navigation.navigate('ProfileVisitors')}>
+          <View style={[styles.statIconBadge, { backgroundColor: '#E0F2FE', borderColor: '#BAE6FD' }]}>
+            <ProfileViewsStatIcon size={28} />
+          </View>
+          <Text style={[styles.statNumber, { color: colors.textMainLight }]}>{visits}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMutedLight }]}>Profile Views</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.statCard} onPress={() => navigation.navigate('Applications', { initialTab: 'Pending' })}>
-          <Typography variant="h3" style={styles.statNumber}>{totalApps}</Typography>
-          <Typography variant="caption" style={styles.statLabel}>Applications</Typography>
+
+        <TouchableOpacity style={styles.statCard} activeOpacity={0.8} onPress={() => navigation.navigate('Applications', { initialTab: 'Pending' })}>
+          <View style={[styles.statIconBadge, { backgroundColor: '#F3E8FF', borderColor: '#DDD6FE' }]}>
+            <ApplicationsStatIcon size={28} />
+          </View>
+          <Text style={[styles.statNumber, { color: colors.textMainLight }]}>{totalApps}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMutedLight }]}>Applied</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.statCard} onPress={() => navigation.navigate('Applications', { initialTab: 'Accepted' })}>
-          <Typography variant="h3" style={[styles.statNumber, { color: colors.success }]}>{shortlisted}</Typography>
-          <Typography variant="caption" style={styles.statLabel}>Shortlisted</Typography>
+
+        <TouchableOpacity style={styles.statCard} activeOpacity={0.8} onPress={() => navigation.navigate('Applications', { initialTab: 'Accepted' })}>
+          <View style={[styles.statIconBadge, { backgroundColor: '#D1FAE5', borderColor: '#A7F3D0' }]}>
+            <ShortlistedStatIcon size={28} />
+          </View>
+          <Text style={[styles.statNumber, { color: '#059669' }]}>{shortlisted}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMutedLight }]}>Shortlisted</Text>
         </TouchableOpacity>
       </View>
     );
@@ -252,27 +699,27 @@ export default function ArtistDashboardScreen() {
 
   const renderQuickActions = () => (
     <View style={styles.quickActionsContainer}>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Auditions')}>
-        <View style={[styles.actionBtnIcon, { backgroundColor: colors.primary }]}>
-          <Compass size={28} color="#fff" />
+      <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8} onPress={() => navigation.navigate('Auditions')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: '#0284C7' }]}>
+          <AppIcon name="discover" size={28} color="#FFFFFF" />
         </View>
         <Typography variant="body" style={styles.actionBtnText}>Discover</Typography>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Inbox')}>
-        <View style={[styles.actionBtnIcon, { backgroundColor: '#f59e0b' }]}>
-          <MessageCircle size={28} color="#fff" />
+      <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8} onPress={() => navigation.navigate('Inbox')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: '#F59E0B' }]}>
+          <AppIcon name="messages" size={28} color="#FFFFFF" />
         </View>
         <Typography variant="body" style={styles.actionBtnText}>Messages</Typography>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Profile')}>
-        <View style={[styles.actionBtnIcon, { backgroundColor: '#8b5cf6' }]}>
-          <Briefcase size={28} color="#fff" />
+      <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8} onPress={() => navigation.navigate('Profile')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: '#8B5CF6' }]}>
+          <AppIcon name="portfolio" size={28} color="#FFFFFF" />
         </View>
         <Typography variant="body" style={styles.actionBtnText}>Portfolio</Typography>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ArtistDiscovery')}>
-        <View style={[styles.actionBtnIcon, { backgroundColor: colors.success }]}>
-          <Users size={28} color="#fff" />
+      <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8} onPress={() => navigation.navigate('ArtistDiscovery')}>
+        <View style={[styles.actionBtnIcon, { backgroundColor: '#10B981' }]}>
+          <AppIcon name="network" size={28} color="#FFFFFF" />
         </View>
         <Typography variant="body" style={styles.actionBtnText}>Network</Typography>
       </TouchableOpacity>
@@ -280,38 +727,49 @@ export default function ArtistDashboardScreen() {
   );
 
   const renderRecentApplications = () => {
-    if (myApplications.length === 0) return null;
-    const recent = myApplications.slice(0, 2);
+    const recent = myApplications.slice(0, 3);
+    if (recent.length === 0) return null;
+
     return (
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
           <Typography variant="h3" style={styles.sectionTitle}>Recent Applications</Typography>
           <TouchableOpacity onPress={() => navigation.navigate('Applications')}>
-            <Typography variant="body" style={styles.seeAllText}>See All</Typography>
+            <Typography variant="bodySmall" style={styles.seeAll}>See All</Typography>
           </TouchableOpacity>
         </View>
-        {recent.map((app) => (
-          <TouchableOpacity key={app.id} style={styles.applicationCard} onPress={() => navigation.navigate('ApplicationDetail', { application: app })}>
-            <View style={styles.appIconBg}>
-              <Briefcase size={22} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Typography variant="body" style={styles.appTitle} numberOfLines={1}>{app.auditions?.title}</Typography>
-              <Typography variant="caption" style={styles.appDate}>Applied {timeAgo(app.created_at)}</Typography>
-            </View>
-            <View style={[styles.statusBadge, 
-              app.status === 'shortlisted' ? { backgroundColor: colors.success + '20' } : 
-              app.status === 'rejected' ? { backgroundColor: colors.error + '20' } : 
-              { backgroundColor: colors.warning + '20' }
-            ]}>
-              <Typography variant="caption" style={[styles.statusText,
-                app.status === 'shortlisted' ? { color: colors.success } : 
-                app.status === 'rejected' ? { color: colors.error } : 
-                { color: colors.warning }
-              ]}>{app.status || 'Pending'}</Typography>
-            </View>
-          </TouchableOpacity>
-        ))}
+
+        {recent.map(app => {
+          const s = String(app.status || 'pending').toLowerCase().trim();
+          const isPositive = s === 'shortlisted' || s === 'accepted' || s === 'hired';
+          const isRejected = s === 'rejected';
+
+          return (
+            <TouchableOpacity 
+              key={app.id} 
+              style={styles.appCard}
+              onPress={() => navigation.navigate('ApplicationDetail', { application: app })}
+            >
+              <View style={{ flex: 1 }}>
+                <Typography variant="body" style={styles.appTitle} numberOfLines={1}>{app.auditions?.title}</Typography>
+                <Typography variant="caption" style={styles.appDate}>Applied {timeAgo(app.created_at)}</Typography>
+              </View>
+              <View style={[styles.statusBadge, 
+                isPositive ? { backgroundColor: colors.success + '20' } : 
+                isRejected ? { backgroundColor: colors.error + '20' } : 
+                { backgroundColor: colors.warning + '20' }
+              ]}>
+                <Typography variant="caption" style={[styles.statusText,
+                  isPositive ? { color: colors.success } : 
+                  isRejected ? { color: colors.error } : 
+                  { color: colors.warning }
+                ]}>
+                  {s === 'accepted' ? 'Shortlisted' : (app.status || 'Pending')}
+                </Typography>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     );
   };
@@ -374,8 +832,8 @@ export default function ArtistDashboardScreen() {
   const renderTrendingAuditions = () => {
     if (trendingAuditions.length === 0) return null;
     return (
-      <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceLight, paddingVertical: spacing.l, marginHorizontal: -spacing.xl }]}>
-        <View style={[styles.sectionHeader, { paddingHorizontal: spacing.xl }]}>
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
           <Typography variant="h3" style={styles.sectionTitle}>🔥 Trending Now</Typography>
           <TouchableOpacity onPress={() => navigation.navigate('Auditions', { initialCategory: 'Trending' })}>
             <Typography variant="body" style={styles.seeAllText}>See All</Typography>
@@ -390,7 +848,7 @@ export default function ArtistDashboardScreen() {
           maxToRenderPerBatch={4}
           windowSize={5}
           removeClippedSubviews={true}
-          contentContainerStyle={{ paddingLeft: spacing.xl, paddingRight: spacing.m }}
+          contentContainerStyle={styles.listContent}
           renderItem={({ item }) => <AuditionCard audition={item} onPress={() => handleAuditionPress(item, trendingAuditions)} compact />}
         />
       </View>
@@ -474,9 +932,10 @@ export default function ArtistDashboardScreen() {
     let labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     if (myApplications && myApplications.length > 0) {
+      const today = new Date();
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
+        d.setDate(today.getDate() - (6 - i));
         return { 
           dateStr: d.toISOString().split('T')[0], 
           dayName: d.toLocaleDateString('en-US', { weekday: 'short' }), 
@@ -492,64 +951,187 @@ export default function ArtistDashboardScreen() {
         }
       });
 
-      let runningTotal = myApplications.filter(a => a.created_at && a.created_at.split('T')[0] < last7Days[0].dateStr).length;
-      dataPoints = last7Days.map(d => { runningTotal += d.count; return runningTotal; });
+      dataPoints = last7Days.map(d => d.count);
       labels = last7Days.map(d => d.dayName);
     }
     
-    if (Math.max(...dataPoints) === 0) dataPoints = [0,0,0,0,0,0,0];
-
-    const datasets = [{ data: dataPoints }];
-    if (Math.max(...dataPoints) === 0) {
-      datasets.push({ data: [5], color: () => 'transparent', strokeWidth: 0, withDots: false });
-    }
+    const maxVal = Math.max(...dataPoints);
 
     return (
       <View style={styles.sectionContainer}>
-        <Typography variant="h3" style={styles.sectionTitle}>Application Growth</Typography>
-        <LineChart
-          data={{ labels, datasets }}
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>Application Growth</Typography>
+          <Text style={{ fontSize: 12, color: colors.textMutedLight, fontWeight: '600' }}>Last 7 Days</Text>
+        </View>
+        <BarChart
+          data={{
+            labels,
+            datasets: [
+              {
+                data: dataPoints,
+                colors: [
+                  () => '#3B82F6',
+                  () => '#06B6D4',
+                  () => '#10B981',
+                  () => '#F59E0B',
+                  () => '#EC4899',
+                  () => '#8B5CF6',
+                  () => '#6366F1',
+                ]
+              }
+            ]
+          }}
           width={width - spacing.xl * 2}
-          height={180}
-          withInnerLines={false}
-          withOuterLines={false}
+          height={190}
           yAxisLabel=""
+          yAxisSuffix=""
           fromZero={true}
-          formatYLabel={(y) => Number(y) % 1 !== 0 ? '' : y}
+          withInnerLines={true}
+          withCustomBarColorFromFunction={true}
+          flatColor={true}
+          showValuesOnTopOfBars={maxVal > 0}
           chartConfig={{
             backgroundColor: colors.surfaceLight,
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
+            backgroundGradientFrom: colors.surfaceLight,
+            backgroundGradientTo: colors.surfaceLight,
             decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(${parseInt(colors.primary.slice(1,3),16)}, ${parseInt(colors.primary.slice(3,5),16)}, ${parseInt(colors.primary.slice(5,7),16)}, ${opacity})`,
+            color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
             labelColor: (opacity = 1) => colors.textMutedLight,
-            style: { borderRadius: 16 },
-            propsForDots: { r: "4", strokeWidth: "2", stroke: colors.primary },
-            propsForLabels: { dy: 15 }, // Push labels down to prevent overlap
-            paddingRight: 32 // Add internal padding to balance the Y-axis labels on the left
+            barPercentage: 0.55,
+            fillShadowGradientOpacity: 1,
+            propsForBackgroundLines: {
+              strokeDasharray: '4 4',
+              stroke: colors.borderLight,
+              strokeWidth: 1,
+            },
+            propsForLabels: {
+              fontSize: 11,
+              fontWeight: '600',
+            }
           }}
-          bezier
-          style={{ marginVertical: 8, borderRadius: 16, paddingBottom: 16 }}
+          style={{
+            marginVertical: 8,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: colors.borderLight,
+            paddingRight: 20,
+            paddingTop: 14,
+            backgroundColor: colors.surfaceLight,
+          }}
         />
       </View>
     );
   };
 
+  const PRO_TIPS = [
+    {
+      id: 'tip_1',
+      category: 'SHOWREELS',
+      badgeIcon: 'videocam',
+      badgeBg: '#EDE9FE',
+      badgeColor: '#8B5CF6',
+      title: 'Showreel Advantage',
+      description: 'Profiles with video showreels get up to 50% more callbacks and recruiter shortlists.',
+      actionText: 'Add Showreel',
+      actionRoute: 'VideoPortfolio',
+    },
+    {
+      id: 'tip_2',
+      category: 'HEADSHOTS',
+      badgeIcon: 'camera',
+      badgeBg: '#E0F2FE',
+      badgeColor: '#0284C7',
+      title: 'Natural Lighting',
+      description: 'Casting directors prioritize high-res headshots with natural expressions and neutral backdrops.',
+      actionText: 'Upload Photos',
+      actionRoute: 'EditProfile',
+    },
+    {
+      id: 'tip_3',
+      category: 'NETWORKING',
+      badgeIcon: 'network',
+      badgeBg: '#D1FAE5',
+      badgeColor: '#059669',
+      title: 'Grow Your Network',
+      description: 'Follow casting directors and production agencies to get instant alerts on direct casting calls.',
+      actionText: 'Explore Network',
+      actionRoute: 'ArtistDiscovery',
+    },
+    {
+      id: 'tip_4',
+      category: 'SPECIAL SKILLS',
+      badgeIcon: 'skills',
+      badgeBg: '#FEF3C7',
+      badgeColor: '#D97706',
+      title: 'Tag Special Skills',
+      description: 'Tag special talents like voice-modulation, martial arts, or languages to appear in niche searches.',
+      actionText: 'Update Skills',
+      actionRoute: 'EditProfile',
+    },
+  ];
+
   const renderProTips = () => (
-    <View style={styles.proTipCard}>
-      <View style={styles.proTipHeader}>
-        <Star size={20} color="#f59e0b" fill="#f59e0b" />
-        <Typography variant="h4" style={styles.proTipTitle}>Pro Tip</Typography>
+    <View style={styles.sectionContainer}>
+      <View style={styles.sectionHeader}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ ...typography.h3, color: colors.textMainLight }}>💡 Pro Tips for Artists</Text>
+        </View>
       </View>
-      <Typography variant="body" style={styles.proTipText}>Adding a high-quality showreel increases your chances of being shortlisted by up to 50%!</Typography>
-      <TouchableOpacity style={styles.proTipBtn} onPress={() => navigation.navigate('VideoPortfolio')}>
-        <Typography variant="caption" style={styles.proTipBtnText}>Add Showreel</Typography>
-      </TouchableOpacity>
+      <FlatList
+        data={PRO_TIPS}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={item => item.id}
+        snapToInterval={width - spacing.xl * 2}
+        decelerationRate="fast"
+        onMomentumScrollEnd={(e) => {
+          const index = Math.round(e.nativeEvent.contentOffset.x / (width - spacing.xl * 2));
+          setActiveTipIndex(index);
+        }}
+        renderItem={({ item }) => (
+          <View style={[styles.proTipCarouselCard, { width: width - spacing.xl * 2, backgroundColor: colors.surfaceLight, borderColor: colors.borderLight }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={[styles.proTipIconBadge, { backgroundColor: item.badgeBg }]}>
+                  <AppIcon name={item.badgeIcon} size={22} />
+                </View>
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: item.badgeColor, letterSpacing: 0.8 }}>{item.category}</Text>
+                  <Text style={{ fontSize: 15, fontWeight: 'bold', color: colors.textMainLight }}>{item.title}</Text>
+                </View>
+              </View>
+            </View>
+            <Text style={{ fontSize: 13, color: colors.textMutedLight, lineHeight: 19, marginBottom: 14 }}>{item.description}</Text>
+            <TouchableOpacity 
+              style={[styles.proTipActionBtn, { backgroundColor: item.badgeColor }]}
+              onPress={() => navigation.navigate(item.actionRoute)}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>{item.actionText} →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+      <View style={styles.proTipPagination}>
+        {PRO_TIPS.map((_, i) => (
+          <View 
+            key={i} 
+            style={[
+              styles.proTipDot, 
+              { 
+                backgroundColor: i === activeTipIndex ? colors.primary : colors.borderLight,
+                width: i === activeTipIndex ? 18 : 6,
+              }
+            ]} 
+          />
+        ))}
+      </View>
     </View>
   );
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+    <View style={[styles.safeArea, { paddingTop: Platform.OS === 'android' ? Math.max(insets.top, (StatusBar.currentHeight || 24)) + 4 : insets.top }]}>
       <Modal
         visible={user && !user.disclaimer_accepted}
         transparent={true}
@@ -591,13 +1173,20 @@ export default function ArtistDashboardScreen() {
         </View>
       </Modal>
 
-      <ScrollView 
+      {/* Sticky Shrinking Header with Live Ticker */}
+      {renderWelcomeHeader()}
+
+      <Animated.ScrollView 
         style={styles.container} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
-        {renderWelcomeHeader()}
         {renderBannerCarousel()}
         {renderProfileBanner()}
         {renderOverviewStats()}
@@ -612,7 +1201,7 @@ export default function ArtistDashboardScreen() {
         {renderProTips()}
         
         <View style={styles.bottomSpacer} />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Peek Modal */}
       <AuditionPeekModal
@@ -635,32 +1224,41 @@ const getStyles = (colors) => StyleSheet.create({
   loadingSafeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundLight },
   
   // 1. Header
-  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.m, paddingBottom: spacing.m },
-  headerTextContainer: { flex: 1 },
-  greetingText: { color: colors.textMutedLight, marginBottom: 2 },
+  stickyHeader: { paddingHorizontal: spacing.xl, zIndex: 10 },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerLeftGroup: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  greetingText: { color: colors.textMutedLight, fontSize: 11, marginBottom: 1 },
   nameText: { color: colors.textMainLight, fontWeight: 'bold' },
   headerIcons: { flexDirection: 'row', alignItems: 'center' },
-  iconButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginLeft: 12 },
-  notificationBadge: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.error, borderWidth: 1, borderColor: '#fff' },
+  iconButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginLeft: 10, borderWidth: 1, borderColor: colors.borderLight },
+  notificationBadge: { position: 'absolute', top: 9, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.error, borderWidth: 1, borderColor: '#fff' },
 
   // 2. Banner
-  profileBanner: { backgroundColor: colors.primary + '15', marginHorizontal: spacing.xl, borderRadius: 16, padding: spacing.l, marginBottom: spacing.l, borderWidth: 1, borderColor: colors.primary + '30' },
-  profileBannerTitle: { fontWeight: 'bold', color: colors.primary, marginBottom: spacing.xs },
-  profileBannerText: { color: colors.textMutedLight, marginBottom: spacing.m, fontSize: 13 },
-  progressBarBg: { height: 6, backgroundColor: colors.borderLight, borderRadius: 3, overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: colors.primary },
+  profileBanner: { backgroundColor: colors.surfaceLight, marginHorizontal: spacing.xl, borderRadius: 18, padding: 14, marginBottom: spacing.l, borderWidth: 1, borderColor: colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  profileBannerTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  profileRocketBadge: { width: 52, height: 52, borderRadius: 16, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#DBEAFE', justifyContent: 'center', alignItems: 'center' },
+  profileBannerTitle: { fontSize: 15, fontWeight: '700', color: colors.textMainLight },
+  profileStrengthBadge: { paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8 },
+  profileStrengthText: { fontSize: 11.5, fontWeight: '800' },
+  profileBannerSub: { fontSize: 11.5, color: colors.textMutedLight, marginTop: 2 },
+  profileBannerProgressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  progressBarBg: { flex: 1, height: 7, backgroundColor: colors.borderLight, borderRadius: 4, overflow: 'hidden', marginRight: 12 },
+  progressBarFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
+  viewChecklistPill: { paddingHorizontal: 4, paddingVertical: 2 },
+  viewChecklistText: { fontSize: 12, fontWeight: '700' },
 
   // 3. Stats
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
-  statCard: { flex: 1, backgroundColor: colors.surfaceLight, paddingVertical: spacing.m, paddingHorizontal: spacing.s, borderRadius: 12, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: colors.borderLight },
-  statNumber: { fontWeight: 'bold', color: colors.textMainLight },
-  statLabel: { color: colors.textMutedLight, fontSize: 11, marginTop: 4 },
+  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.l },
+  statCard: { flex: 1, backgroundColor: colors.surfaceLight, paddingVertical: 14, paddingHorizontal: 6, borderRadius: 18, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 1 },
+  statIconBadge: { width: 46, height: 46, borderRadius: 14, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  statNumber: { fontSize: 17, fontWeight: 'bold', marginBottom: 2 },
+  statLabel: { fontSize: 11, fontWeight: '500' },
 
   // 4. Quick Actions
-  quickActionsContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.l },
-  actionBtn: { width: '23%', alignItems: 'center', marginBottom: spacing.m },
-  actionBtnIcon: { width: 56, height: 56, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.s, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  actionBtnText: { fontSize: 12, color: colors.textMainLight, textAlign: 'center', fontWeight: '500' },
+  quickActionsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginTop: 4, marginBottom: spacing.xl },
+  actionBtn: { flex: 1, alignItems: 'center', marginHorizontal: 4 },
+  actionBtnIcon: { width: 58, height: 58, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 5, elevation: 3 },
+  actionBtnText: { fontSize: 12, color: colors.textMainLight, textAlign: 'center', fontWeight: '600', letterSpacing: 0.2 },
 
   // Shared Sections
   sectionContainer: { paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
@@ -701,13 +1299,12 @@ const getStyles = (colors) => StyleSheet.create({
   followBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.primary + '15' },
   followBtnText: { color: colors.primary, fontWeight: 'bold' },
 
-  // 14. Pro Tips
-  proTipCard: { marginHorizontal: spacing.xl, padding: spacing.l, backgroundColor: '#fffbe4', borderRadius: 16, marginBottom: spacing.xl, borderWidth: 1, borderColor: '#fde047' },
-  proTipHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  proTipTitle: { fontWeight: 'bold', color: '#b45309', marginLeft: 8 },
-  proTipText: { color: '#92400e', marginBottom: 16, lineHeight: 20 },
-  proTipBtn: { alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#f59e0b', borderRadius: 8 },
-  proTipBtnText: { color: '#fff', fontWeight: 'bold' },
+  // 14. Pro Tips Carousel
+  proTipCarouselCard: { padding: 16, borderRadius: 16, borderWidth: 1, marginRight: 16 },
+  proTipIconBadge: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  proTipActionBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  proTipPagination: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12 },
+  proTipDot: { height: 6, borderRadius: 3, marginHorizontal: 3 },
 
   // 15. Visitors
   visitorsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
@@ -725,5 +1322,17 @@ const getStyles = (colors) => StyleSheet.create({
   disclaimerBtnDeny: { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight, marginRight: 10 },
   disclaimerBtnAgree: { backgroundColor: colors.primary, marginLeft: 10 },
   disclaimerBtnTextDeny: { color: colors.textMainLight, fontWeight: 'bold' },
-  disclaimerBtnTextAgree: { color: '#fff', fontWeight: 'bold' }
+  disclaimerBtnTextAgree: { color: '#fff', fontWeight: 'bold' },
+
+  // Checklist Modal
+  checklistModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  checklistModalContainer: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36, maxHeight: Dimensions.get('window').height * 0.8 },
+  checklistHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  checklistTitle: { fontSize: 18, fontWeight: 'bold' },
+  checklistCloseBtn: { padding: 4 },
+  checklistItemRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 14, marginBottom: 8, borderWidth: 1 },
+  checklistItemTitle: { fontSize: 14, fontWeight: '600' },
+  checklistIconContainer: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.surfaceDark + '10', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  checklistWeightBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  checklistActionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, marginTop: 16 }
 });

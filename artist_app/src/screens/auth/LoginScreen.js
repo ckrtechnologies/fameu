@@ -40,47 +40,52 @@ const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
-      {/* Top Half - Dark */}
-      <View style={styles.topHalf}>
-        <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
-          <View style={styles.logoWrapper}>
-            <View style={styles.logoContainer}>
-              <Image 
-                source={require('../../assets/images/logo.jpeg')} 
-                style={styles.logoImage}
-              />
-            </View>
-          </View>
-        </SafeAreaView>
-      </View>
-
-      {/* Bottom Half - Light */}
       <KeyboardAwareScrollView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.bottomHalf}
+        contentContainerStyle={{ flexGrow: 1 }}
+        enableOnAndroid={true}
+        extraScrollHeight={50}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
-        <Typography variant="h1" style={styles.title}>Welcome Back</Typography>
-        
-        <CustomInput
-          // label="Email Address"
-          placeholder="Enter your email address"
-          value={identifier}
-          onChangeText={setIdentifier}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          leftIcon={<User size={20} color={colors.textMuted} />}
-        />
+        {/* Top Half - Dark */}
+        <View style={styles.topHalf}>
+          <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
+            <View style={styles.logoWrapper}>
+              <View style={styles.logoContainer}>
+                <Image 
+                  source={require('../../assets/images/logo.jpeg')} 
+                  style={styles.logoImage}
+                />
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
 
-        <View style={styles.buttonContainer}>
-          {isLoading ? (
-            <ActivityIndicator size="large" color={colors.primary} />
-          ) : (
-            <CustomButton 
-              title="Send OTP" 
-              onPress={handleSendOtp} 
-              variant="primary"
-            />
-          )}
+        {/* Bottom Half - Light */}
+        <View style={styles.bottomHalf}>
+          <Typography variant="h1" style={styles.title}>Welcome Back</Typography>
+          
+          <CustomInput
+            // label="Email Address"
+            placeholder="Enter your email address"
+            value={identifier}
+            onChangeText={setIdentifier}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            leftIcon={<User size={20} color={colors.textMuted} />}
+          />
+
+          <View style={styles.buttonContainer}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color={colors.primary} />
+            ) : (
+              <CustomButton 
+                title="Send OTP" 
+                onPress={handleSendOtp} 
+                variant="primary"
+              />
+            )}
+          </View>
         </View>
       </KeyboardAwareScrollView>
 
@@ -110,13 +115,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   topHalf: {
     backgroundColor: '#0F172A', 
-    height: '35%',
+    minHeight: 240,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     justifyContent: 'center',
+    paddingVertical: spacing.xl,
   },
   safeAreaTop: {
-    flex: 1,
     justifyContent: 'center',
   },
   logoWrapper: {
@@ -144,7 +149,9 @@ const getStyles = (colors) => StyleSheet.create({
   bottomHalf: {
     flex: 1,
     paddingHorizontal: spacing.l,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
+    justifyContent: 'center',
   },
   title: {
     textAlign: 'center',

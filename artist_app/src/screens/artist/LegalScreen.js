@@ -2,11 +2,12 @@ import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { TERMS_OF_SERVICE, PRIVACY_POLICY } from '../../constants/LegalText';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 export default function LegalScreen() {
   const { colors } = useTheme();
@@ -18,6 +19,16 @@ export default function LegalScreen() {
   const isTerms = type === 'terms';
   const title = isTerms ? 'Terms of Service' : 'Privacy Policy';
   const legalText = isTerms ? TERMS_OF_SERVICE : PRIVACY_POLICY;
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const renderFormattedText = (text) => {
     return text.split('\n').map((line, index) => {
@@ -63,17 +74,25 @@ export default function LegalScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ChevronLeft size={28} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Typography variant="h2" style={styles.headerTitle}>{title}</Typography>
-        <View style={{ width: 28 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title={title}
+        subtitle={isTerms ? 'FameU Master Agreement' : 'Data Protection & Privacy'}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
-      <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.contentContainer} 
+        showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         <Typography variant="h3" style={styles.sectionTitle}>
           {isTerms ? 'FameU Master Agreement' : 'FameU Privacy Policy'}
         </Typography>

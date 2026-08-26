@@ -34,13 +34,28 @@ export default function TalentDiscoveryScreen() {
 
   const currentUser = useSelector(state => state.auth.user);
   
-  // Format searchParams for API
+  // Format searchParams for API with case-resilient category expansion
   const apiParams = useMemo(() => {
     const params = { ...searchParams };
     if (params.category === 'All' || (Array.isArray(params.category) && params.category.includes('All'))) {
        delete params.category;
-    } else if (Array.isArray(params.category)) {
-       params.category = params.category.join(',');
+    } else if (params.category) {
+       const selectedList = Array.isArray(params.category) ? params.category : [params.category];
+       const expanded = [...new Set(selectedList.flatMap(c => {
+         const matchProf = (professionsResponse?.data || []).find(p => 
+           p.name?.toLowerCase().trim() === c.toLowerCase().trim() ||
+           p.slug?.toLowerCase().trim() === c.toLowerCase().trim()
+         );
+         return [
+           c,
+           c.toLowerCase(),
+           c.toUpperCase(),
+           c.charAt(0).toUpperCase() + c.slice(1).toLowerCase(),
+           matchProf?.name,
+           matchProf?.slug
+         ].filter(Boolean);
+       }))];
+       params.category = expanded.join(',');
     }
 
     if (params.language === 'All' || (Array.isArray(params.language) && params.language.includes('All'))) {
@@ -52,7 +67,7 @@ export default function TalentDiscoveryScreen() {
     if (params.gender === 'All') delete params.gender;
     if (params.location === 'All Locations') delete params.location;
     return params;
-  }, [searchParams]);
+  }, [searchParams, professionsResponse]);
 
   const { data: searchResponse, isFetching: isFetchingArtists, refetch: refetchArtists } = useSearchArtistsQuery(apiParams);
   const artists = (searchResponse?.data || []).filter(artist => artist.user_id !== currentUser?.id);

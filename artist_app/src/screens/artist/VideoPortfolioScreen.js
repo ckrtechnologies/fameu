@@ -9,8 +9,12 @@ import Video from 'react-native-video';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetProfileQuery, useUpsertProfileMutation } from '../../services/profileApi';
 import { getVideoInfo } from '../../utils/media';
+import VideoThumbnail from '../../components/core/VideoThumbnail';
+import InAppMediaModal from '../../components/core/InAppMediaModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,11 +39,10 @@ export default function VideoPortfolioScreen() {
     videos = route.params.videos.filter(Boolean);
   }
 
-  const initialIndex = route.params?.initialIndex ?? null;
-
-  const [activeVideoIndex, setActiveVideoIndex] = useState(initialIndex);
+  const [activeVideoIndex, setActiveVideoIndex] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [mediaModalUrl, setMediaModalUrl] = useState(null);
 
   const handleAddVideo = async () => {
     if (!newVideoUrl.trim()) return;
@@ -117,28 +120,13 @@ export default function VideoPortfolioScreen() {
                 if (videoInfo?.type === 'direct') {
                   setActiveVideoIndex(index);
                 } else {
-                  import('react-native').then(({ Linking }) => {
-                    Linking.openURL(item).catch(() => GlobalAlert.show('Error', 'Could not open link.'));
-                  });
+                  setMediaModalUrl(item);
                 }
               }}
             >
-              {videoInfo?.thumbnail === 'INSTAGRAM' ? (
-                <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                  <Icon name="logo-instagram" color={colors.primary} size={48} />
-                  <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
-                </View>
-              ) : videoInfo?.thumbnail === 'LINK' ? (
-                <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
-                </View>
-              ) : videoInfo?.thumbnail ? (
-                <Image source={{ uri: videoInfo.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
-              ) : (
-                <Video source={{ uri: item }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
-              )}
+              <VideoThumbnail url={item} colors={colors} />
               <View style={styles.playButtonOverlay}>
-                <Play fill={colors.white} color={colors.white} size={32} />
+                <Play fill={colors.primary} color={colors.primary} size={28} style={{ marginLeft: 3 }} />
               </View>
               <Typography variant="body" style={styles.videoTitle}>Video {index + 1}</Typography>
             </TouchableOpacity>
@@ -156,14 +144,29 @@ export default function VideoPortfolioScreen() {
     );
   };
 
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Typography variant="h3" style={styles.headerTitle}>Video Portfolio</Typography>
-      </View>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Video Portfolio"
+        subtitle={`${videos.length} videos & showreels`}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
@@ -175,6 +178,8 @@ export default function VideoPortfolioScreen() {
         renderItem={renderVideoItem}
         contentContainerStyle={styles.listContainer}
         keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Typography variant="body" style={{color: colors.textMutedLight}}>No videos uploaded yet.</Typography>
@@ -201,6 +206,13 @@ export default function VideoPortfolioScreen() {
         }
       />
       </KeyboardAvoidingView>
+
+      {/* In-App Media Player Modal */}
+      <InAppMediaModal
+        visible={Boolean(mediaModalUrl)}
+        url={mediaModalUrl}
+        onClose={() => setMediaModalUrl(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -240,29 +252,38 @@ const getStyles = (colors) => StyleSheet.create({
   },
   thumbnailPlaceholder: {
     height: 200,
-    backgroundColor: colors.surfaceDark,
+    width: '100%',
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
   playButtonOverlay: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: 'rgba(255,255,255,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
     zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   videoTitle: {
     position: 'absolute',
-    bottom: spacing.m,
-    left: spacing.m,
+    top: spacing.s,
+    left: spacing.s,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
     color: colors.white,
-    fontWeight: '600',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    fontWeight: '700',
+    fontSize: 12,
     zIndex: 2,
   },
   activeVideoWrapper: {

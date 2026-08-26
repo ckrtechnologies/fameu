@@ -7,12 +7,24 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/theme';
 import { useGetProfileVisitorsQuery } from '../../services/profileApi';
 import { timeAgo } from '../../utils/dateUtils';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 const ProfileVisitorsScreen = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { data: response, isLoading, isError, refetch } = useGetProfileVisitorsQuery();
   const visitors = response?.data || [];
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const renderVisitorItem = ({ item }) => (
     <View style={styles.visitorCard}>
@@ -48,14 +60,18 @@ const ProfileVisitorsScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-         <Text variant="h2" style={styles.headerTitle}>Profile Visitors</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Profile Visitors"
+        subtitle={`${visitors.length} total visits`}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
       {isLoading ? (
         <View style={styles.centerContainer}>
@@ -75,6 +91,8 @@ const ProfileVisitorsScreen = ({ navigation }) => {
           renderItem={renderVisitorItem}
           contentContainerStyle={visitors.length === 0 ? styles.flexGrow : styles.listContent}
           ListEmptyComponent={renderEmptyState}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           refreshing={isLoading}
           onRefresh={refetch}
         />

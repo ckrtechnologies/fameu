@@ -11,6 +11,8 @@ import { apiSlice } from '../../services/apiSlice';
 import { useDeleteAccountMutation } from '../../services/authApi';
 import { typography, spacing } from '../../theme/theme';
 import { useTheme } from '../../theme/ThemeProvider';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 export default function ArtistSettingsScreen() {
   const { colors, isDarkMode, toggleTheme } = useTheme();
@@ -18,6 +20,16 @@ export default function ArtistSettingsScreen() {
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
   const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const handleLogout = () => {
     GlobalAlert.show(
@@ -88,15 +100,24 @@ export default function ArtistSettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]} edges={['top', 'left', 'right']}>
-      <ScrollView style={styles.container}>
-        <View style={[styles.header, { borderBottomColor: colors.surfaceDark }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.textMainLight }]}>Settings</Text>
-          <View style={{ width: 24 }} />
-        </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Settings"
+        subtitle="Preferences & Account"
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
+
+      <ScrollView 
+        style={styles.container}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textMutedLight }]}>Account</Text>

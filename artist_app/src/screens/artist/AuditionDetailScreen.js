@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, ImageBackground, KeyboardAvoidingView, Platform, Animated } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -8,6 +8,7 @@ import { typography, spacing } from '../../theme/theme';
 import { useGetAuditionDetailsQuery, useToggleBookmarkMutation } from '../../services/discoverApi';
 import CustomButton from '../../components/forms/CustomButton';
 import CommentsSection from '../../components/CommentsSection';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 export default function AuditionDetailScreen() {
   const { colors } = useTheme();
@@ -16,6 +17,14 @@ export default function AuditionDetailScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { id, scrollToComments } = route.params;
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const { data: response, isLoading, isError, refetch, isFetching } = useGetAuditionDetailsQuery(id);
   const audition = response?.data;
@@ -73,11 +82,17 @@ export default function AuditionDetailScreen() {
   const heroImage = heroImageError || !initialHeroImage || initialHeroImage === 'null' || initialHeroImage.trim() === '' ? fallbackImg : initialHeroImage;
 
   return (
-    <View style={styles.safeArea}>
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: colors.backgroundLight }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.safeArea}>
       <ScrollView 
         ref={scrollViewRef} 
         style={styles.container} 
         showsVerticalScrollIndicator={false} 
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
       >
         {/* Hero Image */}
@@ -193,20 +208,6 @@ export default function AuditionDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Requirements & Details</Text>
             <View style={styles.detailsCard}>
-              {(audition.gender || audition.gender_req || parsedInstructions.gender_req) && (
-                <View style={styles.detailRow}>
-                  <Icon name="male-female" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>Gender: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{audition.gender_req || parsedInstructions.gender_req || audition.gender}</Text></Text>
-                </View>
-              )}
-              
-              {(audition.age_min || audition.age_max) && (
-                <View style={styles.detailRow}>
-                  <Icon name="person" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>Age: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{audition.age_min || 0} - {audition.age_max || 'Any'}</Text></Text>
-                </View>
-              )}
-
               {(audition.city || parsedInstructions.city) && (
                 <View style={styles.detailRow}>
                   <Icon name="business" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
@@ -258,15 +259,64 @@ export default function AuditionDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Floating Header Buttons */}
-      <View style={[styles.floatingHeader, { top: Math.max(insets.top, 20) }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.floatingIconButton}>
-          <Icon name="arrow-back" size={24} color="#FFF" />
+      {/* Floating Animated Header */}
+      <Animated.View 
+        style={[
+          styles.floatingHeader, 
+          { 
+            top: 0,
+            left: 0,
+            right: 0,
+            paddingTop: Math.max(insets.top, 12),
+            paddingBottom: headerPaddingVertical,
+            paddingHorizontal: 16,
+            backgroundColor: scrollY.interpolate({
+              inputRange: [100, 200],
+              outputRange: ['rgba(255,255,255,0)', colors.backgroundLight],
+              extrapolate: 'clamp',
+            }),
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: scrollY.interpolate({
+              inputRange: [100, 200],
+              outputRange: ['transparent', colors.borderLight],
+              extrapolate: 'clamp',
+            }),
+            elevation: headerElevation,
+          }
+        ]}
+      >
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.floatingIconButton, { backgroundColor: 'rgba(0,0,0,0.4)' }]}>
+          <Icon name="arrow-back" size={22} color="#FFF" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleBookmark} style={styles.floatingIconButton} disabled={isBookmarking}>
-          <Icon name={audition.is_bookmarked ? "bookmark" : "bookmark-outline"} size={24} color={audition.is_bookmarked ? colors.primary : "#FFF"} />
+
+        <Animated.View 
+          style={{ 
+            flex: 1, 
+            paddingHorizontal: 12, 
+            alignItems: 'center',
+            opacity: scrollY.interpolate({
+              inputRange: [140, 200],
+              outputRange: [0, 1],
+              extrapolate: 'clamp',
+            }),
+          }}
+        >
+          <Animated.Text 
+            numberOfLines={1} 
+            style={{ 
+              color: colors.textMainLight, 
+              fontWeight: '700', 
+              fontSize: headerTitleSize 
+            }}
+          >
+            {audition.title}
+          </Animated.Text>
+        </Animated.View>
+
+        <TouchableOpacity onPress={handleBookmark} style={[styles.floatingIconButton, { backgroundColor: 'rgba(0,0,0,0.4)' }]} disabled={isBookmarking}>
+          <Icon name={audition.is_bookmarked ? "bookmark" : "bookmark-outline"} size={22} color={audition.is_bookmarked ? colors.primary : "#FFF"} />
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       {/* Sticky Bottom Action */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 20) }]}>
@@ -285,7 +335,8 @@ export default function AuditionDetailScreen() {
           />
         )}
       </View>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 

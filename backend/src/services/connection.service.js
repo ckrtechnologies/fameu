@@ -257,7 +257,8 @@ class ConnectionService {
 
     if (error || !user) throw new Error('User not found');
 
-    let profile = user.role === 'artist' ? user.artist_profiles : user.hiring_profiles;
+    let rawProfile = user.role === 'artist' ? user.artist_profiles : user.hiring_profiles;
+    let profile = Array.isArray(rawProfile) ? (rawProfile[0] || null) : (rawProfile || null);
 
     if (user.role === 'artist' && profile) {
       profile.category_details = {};

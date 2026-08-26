@@ -32,12 +32,30 @@ export default function FindTalentScreen() {
   // Active Search Params State (applied on submit)
   const [searchParams, setSearchParams] = useState({});
   
-  // Format searchParams for API
+  // Format searchParams for API with case-resilient category expansion
   const apiParams = useMemo(() => {
     const params = { ...searchParams };
     
-    if (params.category === 'All' || (Array.isArray(params.category) && params.category.includes('All'))) delete params.category;
-    else if (Array.isArray(params.category)) params.category = params.category.join(',');
+    if (params.category === 'All' || (Array.isArray(params.category) && params.category.includes('All'))) {
+      delete params.category;
+    } else if (params.category) {
+      const selectedList = Array.isArray(params.category) ? params.category : [params.category];
+      const expanded = [...new Set(selectedList.flatMap(c => {
+        const matchProf = (professionsResponse?.data || []).find(p => 
+          p.name?.toLowerCase().trim() === c.toLowerCase().trim() ||
+          p.slug?.toLowerCase().trim() === c.toLowerCase().trim()
+        );
+        return [
+          c,
+          c.toLowerCase(),
+          c.toUpperCase(),
+          c.charAt(0).toUpperCase() + c.slice(1).toLowerCase(),
+          matchProf?.name,
+          matchProf?.slug
+        ].filter(Boolean);
+      }))];
+      params.category = expanded.join(',');
+    }
     
     if (params.gender === 'All' || (Array.isArray(params.gender) && params.gender.includes('All'))) delete params.gender;
     else if (Array.isArray(params.gender)) params.gender = params.gender.join(',');
@@ -48,7 +66,7 @@ export default function FindTalentScreen() {
     if (params.language === 'All Languages' || (Array.isArray(params.language) && params.language.includes('All Languages'))) delete params.language;
     else if (Array.isArray(params.language)) params.language = params.language.join(',');
     return params;
-  }, [searchParams]);
+  }, [searchParams, professionsResponse]);
 
   const { data: searchResponse, isFetching, refetch } = useSearchArtistsQuery(apiParams);
   useRefetchOnFocus(refetch);

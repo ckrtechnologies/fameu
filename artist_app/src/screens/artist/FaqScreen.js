@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 const faqs = [
   { question: "How do I apply for an audition?", answer: "You can apply for auditions by visiting the Auditions tab, selecting an audition, and clicking 'Apply'. Make sure your profile is complete to increase your chances." },
@@ -19,21 +21,40 @@ export default function FaqScreen() {
   const navigation = useNavigation();
   const [expandedIndex, setExpandedIndex] = useState(null);
 
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
+
   const toggleExpand = (index) => {
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]} edges={['top', 'left', 'right']}>
-      <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ChevronLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textMainLight }]}>FAQ</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="FAQ"
+        subtitle="Frequently Asked Questions"
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
-      <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.xl }}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={{ padding: spacing.xl }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         {faqs.map((faq, index) => (
           <TouchableOpacity 
             key={index} 

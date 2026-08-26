@@ -1,15 +1,27 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 export default function WalkInListingsScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const handleGoBack = () => {
     if (navigation.canGoBack()) {
@@ -20,16 +32,26 @@ export default function WalkInListingsScreen() {
   };
 
   return (
-    <SafeAreaView style={globalStyles.container} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Walk-in Listings</Text>
-      </View>
-      <View style={styles.content}>
+    <SafeAreaView style={globalStyles.container} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Walk-in Listings"
+        subtitle="Direct Walk-in Auditions"
+        showBack={true}
+        onBack={handleGoBack}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
+
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         <Text style={styles.emptyText}>No walk-in listings available right now.</Text>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

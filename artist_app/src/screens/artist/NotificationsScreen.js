@@ -9,6 +9,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { 
   useGetNotificationsQuery, 
   useMarkNotificationReadMutation, 
@@ -101,17 +103,38 @@ export default function NotificationsScreen() {
     );
   };
 
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundLight }} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Typography variant="h3" style={styles.headerTitle}>Notifications</Typography>
-        <TouchableOpacity style={styles.markAllButton} onPress={handleMarkAllRead}>
-          <Typography variant="caption" style={styles.markAllText}>Mark all read</Typography>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundLight }} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Notifications"
+        subtitle={unreadCount > 0 ? `${unreadCount} unread updates` : 'All caught up'}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        rightActions={
+          unreadCount > 0 ? (
+            <TouchableOpacity style={[styles.markAllButton, { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: colors.primary + '15' }]} onPress={handleMarkAllRead}>
+              <Typography variant="caption" style={[styles.markAllText, { color: colors.primary, fontWeight: '700' }]}>Mark all read</Typography>
+            </TouchableOpacity>
+          ) : null
+        }
+      />
 
       {isLoading && !isFetching ? (
         <View style={styles.loadingContainer}>
@@ -123,6 +146,8 @@ export default function NotificationsScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderNotification}
           contentContainerStyle={styles.listContainer}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
           }

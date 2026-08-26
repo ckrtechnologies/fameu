@@ -6,6 +6,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetFollowersQuery, useGetFollowingQuery } from '../../services/connectionsApi';
 
 export default function ConnectionListScreen() {
@@ -16,6 +18,16 @@ export default function ConnectionListScreen() {
   
   // Params: type ('followers' or 'following'), userId (the user's profile UUID)
   const { type, userId } = route.params;
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   // We conditionally call the appropriate query. RTK Query handles skipping if we provide `skip: true`.
   const followersQuery = useGetFollowersQuery(userId, { skip: type !== 'followers' });
@@ -48,16 +60,18 @@ export default function ConnectionListScreen() {
   const listData = Array.isArray(usersList) ? usersList : [];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Typography variant="h3" style={styles.headerTitle}>
-          {isFollowers ? 'Followers' : 'Following'}
-        </Typography>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title={isFollowers ? 'Followers' : 'Following'}
+        subtitle={`${listData.length} connections`}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
       {isLoading ? (
         <View style={styles.centerContainer}>
@@ -77,6 +91,8 @@ export default function ConnectionListScreen() {
           refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Users size={64} color={colors.borderLight} />

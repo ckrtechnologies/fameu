@@ -62,6 +62,11 @@ class ArtistService {
       }
     });
 
+    // Support both alt_number and alternate_phone alias
+    if (profileData.alt_number !== undefined && !payload.alternate_phone) {
+      payload.alternate_phone = profileData.alt_number;
+    }
+
     if (existing) {
       // Update
       const { data, error } = await supabase
@@ -178,6 +183,7 @@ class ArtistService {
 
     return {
       ...profile,
+      alt_number: profile.alt_number || profile.alternate_phone || '',
       category_details: categoryDetails,
       stats: {
         applications: applicationsCount,

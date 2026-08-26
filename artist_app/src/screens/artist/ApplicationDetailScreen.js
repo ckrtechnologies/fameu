@@ -6,6 +6,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import CustomButton from '../../components/forms/CustomButton';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 export default function ApplicationDetailScreen() {
   const { colors } = useTheme();
@@ -14,10 +16,20 @@ export default function ApplicationDetailScreen() {
   const navigation = useNavigation();
   const { application } = route.params || {};
 
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
+
   if (!application) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#fff' }}>Application details not available.</Text>
+        <Text style={{ color: colors.textMainLight }}>Application details not available.</Text>
       </View>
     );
   }
@@ -25,8 +37,9 @@ export default function ApplicationDetailScreen() {
   const audition = application.auditions || application;
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
+    switch (status?.toLowerCase()?.trim()) {
       case 'shortlisted':
+      case 'accepted':
       case 'hired':
         return colors.success;
       case 'rejected':
@@ -42,16 +55,25 @@ export default function ApplicationDetailScreen() {
   const statusColor = getStatusColor(application.status);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Application Status</Text>
-        <View style={styles.iconButton} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Application Status"
+        subtitle={audition.title || 'Role Details'}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.scrollContent}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         {/* Status Card */}
         <View style={styles.statusCard}>
           <Text style={styles.statusLabel}>Current Status</Text>

@@ -1,8 +1,23 @@
 import { GlobalAlert } from '../components/core/GlobalAlert';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { 
+  User, 
+  Image as ImageIcon, 
+  Video, 
+  Bookmark, 
+  Search, 
+  Bell, 
+  PlayCircle, 
+  HelpCircle, 
+  FileText, 
+  MessageSquare, 
+  Settings, 
+  LogOut, 
+  Trash2 
+} from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 
 import TabNavigator from './TabNavigator';
@@ -17,7 +32,8 @@ const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props) {
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
   const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
@@ -62,93 +78,80 @@ function CustomDrawerContent(props) {
     );
   };
 
+  const menuItems = [
+    { title: 'Edit Profile', icon: User, screen: 'EditProfile', color: colors.primary },
+    { title: 'Photo Gallery', icon: ImageIcon, screen: 'PhotoGallery', color: '#10B981' },
+    { title: 'Video Portfolio', icon: Video, screen: 'VideoPortfolio', color: '#F59E0B' },
+    { title: 'Saved Auditions', icon: Bookmark, screen: 'SavedAuditions', color: '#8B5CF6' },
+    { title: 'Search Users', icon: Search, screen: 'Search', color: '#06B6D4' },
+    { title: 'Notifications', icon: Bell, screen: 'Notifications', color: '#EC4899' },
+    { title: 'How it Works', icon: PlayCircle, screen: 'Tutorial', color: '#3B82F6' },
+    { title: 'FAQ', icon: HelpCircle, screen: 'Faq', color: '#6366F1' },
+    { title: 'Terms & Conditions', icon: FileText, screen: 'Legal', params: { type: 'terms' }, color: '#64748B' },
+    { title: 'Contact Us', icon: MessageSquare, screen: 'ContactUs', color: '#14B8A6' },
+    { title: 'Settings', icon: Settings, screen: 'ArtistSettings', color: '#475569' },
+  ];
+
   return (
-    <DrawerContentScrollView {...props} style={styles.drawerContainer}>
+    <DrawerContentScrollView 
+      {...props} 
+      style={styles.drawerContainer} 
+      contentContainerStyle={{ paddingTop: 0 }}
+      bounces={false}
+    >
       <View style={styles.drawerHeader}>
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={styles.drawerAvatar} />
         ) : (
           <View style={styles.drawerAvatarPlaceholder}>
-            <Icon name="person" size={32} color={colors.textMutedLight} />
+            <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '700' }}>
+              {fullName.charAt(0).toUpperCase()}
+            </Text>
           </View>
         )}
-        <Text style={styles.drawerUsername}>{username}</Text>
-        <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 4 }}>
-          {user?.mobile || user?.phone || user?.email || 'No contact info'}
+        <Text style={styles.drawerUsername} numberOfLines={1}>{username}</Text>
+        <Text style={styles.drawerContactText} numberOfLines={1}>
+          {user?.email || user?.mobile || user?.phone || 'No contact info'}
         </Text>
       </View>
       
-      <ScrollView>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('EditProfile')}>
-          <Icon name="person-circle-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Edit Profile</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('PhotoGallery')}>
-          <Icon name="images-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Photo Gallery</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('VideoPortfolio')}>
-          <Icon name="videocam-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Video Portfolio</Text>
-        </TouchableOpacity>
-
-
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('SavedAuditions')}>
-          <Icon name="bookmark-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Saved Auditions</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Search')}>
-          <Icon name="search-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Search Users</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Notifications')}>
-          <Icon name="notifications-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Notifications</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Tutorial')}>
-          <Icon name="play-circle-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>How it Works</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Faq')}>
-          <Icon name="help-circle-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>FAQ</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('Legal', { type: 'terms' })}>
-          <Icon name="document-text-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Terms & Conditions</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('ContactUs')}>
-          <Icon name="chatbubble-ellipses-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Contact Us</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.drawerItem} onPress={() => handleNavigation('ArtistSettings')}>
-          <Icon name="settings-outline" size={24} color={colors.textMainLight} />
-          <Text style={styles.drawerItemText}>Settings</Text>
-        </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false} style={{ paddingVertical: 4 }}>
+        {menuItems.map((item, idx) => {
+          const IconComponent = item.icon;
+          return (
+            <TouchableOpacity 
+              key={idx} 
+              style={styles.drawerItem} 
+              onPress={() => handleNavigation(item.screen, item.params)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.iconWrapper, { backgroundColor: item.color + '12' }]}>
+                <IconComponent size={18} color={item.color} strokeWidth={2} />
+              </View>
+              <Text style={styles.drawerItemText}>{item.title}</Text>
+            </TouchableOpacity>
+          );
+        })}
         
         <View style={styles.drawerDivider} />
         
-        <TouchableOpacity style={styles.drawerItem} onPress={handleLogout}>
-          <Icon name="log-out-outline" size={24} color={colors.danger} />
-          <Text style={[styles.drawerItemText, { color: colors.danger }]}>Log Out</Text>
+        <TouchableOpacity style={styles.drawerItem} onPress={handleLogout} activeOpacity={0.7}>
+          <View style={[styles.iconWrapper, { backgroundColor: colors.danger + '12' }]}>
+            <LogOut size={18} color={colors.danger} strokeWidth={2} />
+          </View>
+          <Text style={[styles.drawerItemText, { color: colors.danger, fontWeight: '600' }]}>Log Out</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.drawerItem} onPress={handleDeleteAccount} disabled={isDeleting}>
-          <Icon name="trash-outline" size={24} color={colors.danger} />
-          <Text style={[styles.drawerItemText, { color: colors.danger }]}>
+        <TouchableOpacity style={styles.drawerItem} onPress={handleDeleteAccount} disabled={isDeleting} activeOpacity={0.7}>
+          <View style={[styles.iconWrapper, { backgroundColor: colors.danger + '12' }]}>
+            <Trash2 size={18} color={colors.danger} strokeWidth={2} />
+          </View>
+          <Text style={[styles.drawerItemText, { color: colors.danger, fontWeight: '600' }]}>
             {isDeleting ? 'Deleting...' : 'Delete Account'}
           </Text>
         </TouchableOpacity>
+        
+        <View style={{ height: 24 }} />
       </ScrollView>
     </DrawerContentScrollView>
   );
@@ -161,9 +164,11 @@ export default function DrawerNavigator() {
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
+        drawerType: 'front',
+        overlayColor: 'rgba(0,0,0,0.5)',
         drawerStyle: {
           backgroundColor: colors.backgroundLight,
-          width: '75%',
+          width: '78%',
         },
       }}
     >
@@ -172,53 +177,70 @@ export default function DrawerNavigator() {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors, insets) => StyleSheet.create({
   drawerContainer: {
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
   drawerHeader: {
-    padding: spacing.xl,
-    paddingTop: spacing.m,
+    paddingHorizontal: 20,
+    paddingTop: Math.max(insets?.top || 0, 24) + 12,
+    paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderLight,
-    marginBottom: spacing.m,
+    marginBottom: 4,
   },
   drawerAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginBottom: spacing.m,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginBottom: 12,
   },
   drawerAvatarPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.borderLight,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.m,
+    marginBottom: 12,
   },
   drawerUsername: {
-    ...typography.h2,
+    fontSize: 17,
     fontWeight: '700',
     color: colors.textMainLight,
+    letterSpacing: -0.2,
+  },
+  drawerContactText: {
+    fontSize: 12.5,
+    color: colors.textMutedLight,
+    marginTop: 2,
+    fontWeight: '400',
   },
   drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.l,
-    paddingHorizontal: spacing.xl,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  iconWrapper: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
   },
   drawerItemText: {
-    ...typography.h3,
-    marginLeft: spacing.l,
+    fontSize: 14.5,
     color: colors.textMainLight,
     fontWeight: '500',
+    letterSpacing: -0.1,
   },
   drawerDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.borderLight,
-    marginVertical: spacing.m,
+    marginVertical: 8,
+    marginHorizontal: 20,
   }
 });

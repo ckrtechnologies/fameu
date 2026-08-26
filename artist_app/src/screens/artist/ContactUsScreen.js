@@ -3,13 +3,14 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Text, TextInput, Activi
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import CustomButton from '../../components/forms/CustomButton';
 import { useSubmitSupportTicketMutation } from '../../services/profileApi';
 import { useSelector } from 'react-redux';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 export default function ContactUsScreen() {
   const { colors } = useTheme();
@@ -20,6 +21,16 @@ export default function ContactUsScreen() {
   
   const [submitTicket, { isLoading: isSubmitting }] = useSubmitSupportTicketMutation();
   const { user } = useSelector((state) => state.auth);
+
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const handleSubmit = async () => {
     if (!subject.trim() || !message.trim()) {
@@ -44,14 +55,18 @@ export default function ContactUsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]} edges={['top', 'left', 'right']}>
-      <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ChevronLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textMainLight }]}>Contact Us</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundLight }]} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Contact Us"
+        subtitle="We're here to help"
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
 
       <KeyboardAwareScrollView 
         style={styles.container} 

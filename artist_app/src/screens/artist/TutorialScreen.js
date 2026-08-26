@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import Typography from '../../components/core/Typography';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/theme';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 
 const { width } = Dimensions.get('window');
 
@@ -35,17 +37,36 @@ export default function TutorialScreen() {
   const styles = getStyles(colors);
   const navigation = useNavigation();
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <Typography variant="h2" style={styles.title}>How it Works</Typography>
-        <View style={{ width: 24 }} />
-      </View>
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+  return (
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="How it Works"
+        subtitle="Quick starter guide for artists"
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+      />
+
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         <Typography variant="body" style={styles.description}>
           Welcome to Fameu! Here is a quick overview of how you can use this app to jumpstart your career.
         </Typography>

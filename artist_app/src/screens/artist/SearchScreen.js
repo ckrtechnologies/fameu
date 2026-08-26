@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator , RefreshControl } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, RefreshControl, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Search, XCircle, User, Search as SearchOutline } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -7,10 +7,8 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import { useLazySearchUsersQuery } from '../../services/connectionsApi';
-
-  import { useEffect } from 'react';
   
-  export default function SearchScreen() {
+export default function SearchScreen() {
     const { colors } = useTheme();
     const styles = getStyles(colors);
     const navigation = useNavigation();
@@ -19,7 +17,7 @@ import { useLazySearchUsersQuery } from '../../services/connectionsApi';
   
     useEffect(() => {
       triggerSearch('');
-    }, []);
+    }, [triggerSearch]);
   
     const handleSearch = (text) => {
       setSearchQuery(text);
@@ -49,51 +47,56 @@ import { useLazySearchUsersQuery } from '../../services/connectionsApi';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <View style={styles.searchContainer}>
-          <Search size={20} color={colors.textMutedLight} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search users..."
-            placeholderTextColor={colors.textMutedLight}
-            value={searchQuery}
-            onChangeText={handleSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearButton}>
-              <XCircle size={20} color={colors.textMutedLight} />
-            </TouchableOpacity>
-          )}
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ArrowLeft size={24} color={colors.textMainLight} />
+          </TouchableOpacity>
+          <View style={styles.searchContainer}>
+            <Search size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search users..."
+              placeholderTextColor={colors.textMutedLight}
+              value={searchQuery}
+              onChangeText={handleSearch}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearButton}>
+                <XCircle size={20} color={colors.textMutedLight} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
 
-      {isFetching ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : error ? (
-        <View style={styles.centerContainer}>
-          <Typography variant="body" style={styles.errorText}>Error fetching results. Please try again.</Typography>
-        </View>
-      ) : (
-        <FlatList
-          data={searchResults?.data || []}
-          keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={() => triggerSearch(searchQuery)} tintColor={colors.primary} />}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <View style={styles.centerContainer}>
-              <Typography variant="body" style={styles.emptyText}>No users found</Typography>
-            </View>
-          }
-        />
-      )}
+        {isFetching ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : error ? (
+          <View style={styles.centerContainer}>
+            <Typography variant="body" style={styles.errorText}>Error fetching results. Please try again.</Typography>
+          </View>
+        ) : (
+          <FlatList
+            data={searchResults?.data || []}
+            keyExtractor={(item) => item.id}
+            refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={() => triggerSearch(searchQuery)} tintColor={colors.primary} />}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={
+              <View style={styles.centerContainer}>
+                <Typography variant="body" style={styles.emptyText}>No users found</Typography>
+              </View>
+            }
+          />
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

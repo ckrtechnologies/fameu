@@ -12,6 +12,10 @@ import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { uploadFileWithProgress } from '../../utils/uploadUtils';
 import ProgressBar from '../../components/core/ProgressBar';
+import { parseArray } from '../../utils/dataUtils';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
 const IMAGE_SIZE = (width - 32 - (COLUMN_COUNT - 1) * 8) / COLUMN_COUNT;
@@ -27,7 +31,9 @@ export default function PhotoGalleryScreen() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const photos = profileResponse?.data?.photo_urls || [];
+  const photos = React.useMemo(() => {
+    return parseArray(profileResponse?.data?.photo_urls).filter(url => url && typeof url === 'string' && url.trim().length > 0);
+  }, [profileResponse?.data?.photo_urls]);
   const artistId = profileResponse?.data?.id;
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -90,14 +96,14 @@ export default function PhotoGalleryScreen() {
                 showError('Error', err?.message || 'Failed to request camera permission');
               }
             } else {
-              launchCamera({ mediaType: 'photo', quality: 0.8 }, handleImageUpload);
+              launchCamera({ mediaType: 'photo', quality: 0.8, maxWidth: 1440, maxHeight: 1440 }, handleImageUpload);
             }
           }
         },
         {
           text: 'Choose from Gallery',
           onPress: () => {
-            launchImageLibrary({ mediaType: 'photo', selectionLimit: 5, quality: 0.8 }, handleImageUpload);
+            launchImageLibrary({ mediaType: 'photo', selectionLimit: 5, quality: 0.8, maxWidth: 1440, maxHeight: 1440 }, handleImageUpload);
           }
         }
       ]
@@ -146,7 +152,7 @@ export default function PhotoGalleryScreen() {
 
   const renderItem = ({ item, index }) => (
     <TouchableOpacity style={[styles.imageContainer, isUploading && { opacity: 0.5 }]} onPress={() => !isUploading && openModal(index)} disabled={isUploading}>
-      <Image source={{ uri: item }} style={styles.image} />
+      <ImageWithFallback source={{ uri: item }} style={styles.image} resizeMode="cover" />
       <TouchableOpacity 
         style={styles.deleteButton} 
         onPress={() => handleDeletePhoto(index)}
@@ -157,15 +163,38 @@ export default function PhotoGalleryScreen() {
     </TouchableOpacity>
   );
 
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} disabled={isUploading}>
-          <Icon name="arrow-back" size={24} color={isUploading ? "#ccc" : colors.textMainLight} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Photo Gallery</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+      <ShrinkableHeader 
+        title="Photo Gallery"
+        subtitle={`${photos.length} portfolio photos`}
+        showBack={true}
+        onBack={() => navigation.goBack()}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        rightActions={
+          <TouchableOpacity 
+            style={[styles.backButton, { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight, width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' }]} 
+            onPress={handlePickImage} 
+            disabled={isUploading}
+          >
+            <Icon name="add" size={22} color={colors.primary} />
+          </TouchableOpacity>
+        }
+      />
 
       {isLoadingProfile ? (
         <View style={styles.center}>
@@ -183,10 +212,12 @@ export default function PhotoGalleryScreen() {
             <FlatList
               data={photos}
               renderItem={renderItem}
-              keyExtractor={(item, index) => index.toString()}
+              keyExtractor={(item, index) => `gallery-${index}-${item}`}
               refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
               numColumns={COLUMN_COUNT}
               contentContainerStyle={styles.listContent}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
               columnWrapperStyle={styles.row}
             />
           )}
@@ -222,7 +253,7 @@ export default function PhotoGalleryScreen() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            initialScrollIndex={selectedPhotoIndex}
+            initialScrollIndex={selectedPhotoIndex >= 0 && selectedPhotoIndex < photos.length ? selectedPhotoIndex : 0}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 500));
               wait.then(() => {
@@ -235,10 +266,10 @@ export default function PhotoGalleryScreen() {
               }
             }}
             viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item, index) => `modal-${index}-${item}`}
             renderItem={({ item }) => (
               <View style={styles.fullScreenImageContainer}>
-                <Image source={{ uri: item }} style={styles.fullScreenImage} resizeMode="contain" />
+                <ImageWithFallback source={{ uri: item }} style={styles.fullScreenImage} resizeMode="contain" />
               </View>
             )}
           />

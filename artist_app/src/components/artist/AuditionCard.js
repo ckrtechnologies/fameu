@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { differenceInDays, isToday, startOfDay, parseISO } from 'date-fns';
+import { CheckCircle2, Clock, Sparkles, XCircle, Calendar } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, shadows } from '../../theme/theme';
 import ImageWithFallback from '../core/ImageWithFallback';
@@ -77,6 +78,18 @@ const AuditionCard = ({ audition, onPress, style, imageContainerStyle, compact }
         <View style={styles.viewsBadge}>
           <Text style={styles.viewsText}>👁 {audition.view_count || 0}</Text>
         </View>
+
+        {/* Mode Badge (Online vs In-Person) */}
+        {(audition.mode || audition.audition_type) && (
+          <View style={[
+            styles.modeBadge,
+            String(audition.mode || audition.audition_type).toLowerCase().includes('online') ? styles.onlineBadge : styles.offlineBadge
+          ]}>
+            <Text style={styles.modeBadgeText}>
+              {String(audition.mode || audition.audition_type).toLowerCase().includes('online') ? '🌐 Online' : '📍 In-Person'}
+            </Text>
+          </View>
+        )}
       </View>
       
       <View style={[styles.content, compact && { padding: 8 }]}>
@@ -88,26 +101,58 @@ const AuditionCard = ({ audition, onPress, style, imageContainerStyle, compact }
         </Text>
         
         <View style={[styles.detailsRow, compact && { flexDirection: 'column', alignItems: 'flex-start' }]}>
-          <Text numberOfLines={1} style={[styles.detailText, compact ? { marginBottom: 2, fontSize: 11 } : { flex: 1, marginRight: 8 }]}>📍 {audition.venue_address || audition.city || 'TBA'}</Text>
-          <Text style={[styles.detailText, compact && { fontSize: 11 }]} numberOfLines={1}>💰 {audition.compensation || 'Unpaid / TFP'}</Text>
+          <Text numberOfLines={1} style={[styles.detailText, compact ? { marginBottom: 2, fontSize: 11 } : { flex: 1, marginRight: 8 }]}>
+            📍 {audition.city && audition.venue_address && !audition.venue_address.toLowerCase().includes(audition.city.toLowerCase())
+                ? `${audition.city} • ${audition.venue_address}`
+                : (audition.venue_address || audition.city || 'TBA')}
+          </Text>
+          <Text style={[styles.detailText, compact && { fontSize: 11 }, audition.compensation && !audition.compensation.toLowerCase().includes('unpaid') && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>💰 {audition.compensation || 'Unpaid / TFP'}</Text>
         </View>
 
         {/* Optional status pill if used in Applications view */}
-        {audition.status && (
-          <View style={[
-            styles.statusBadge, 
-            audition.status === 'Accepted' ? styles.statusAccepted : 
-            audition.status === 'Rejected' ? styles.statusRejected : styles.statusPending
-          ]}>
-            <Text style={[
-              styles.statusText,
-              audition.status === 'Accepted' ? styles.textAccepted : 
-              audition.status === 'Rejected' ? styles.textRejected : styles.textPending
-            ]}>
-              {audition.status}
-            </Text>
-          </View>
-        )}
+        {audition.status && (() => {
+          const s = String(audition.status).toLowerCase().trim();
+          let bg = '#FEF3C7';
+          let borderColor = '#FDE68A';
+          let textColor = '#B45309';
+          let label = 'In Review';
+          let IconComponent = Clock;
+
+          if (s === 'hired') {
+            bg = '#DCFCE7';
+            borderColor = '#BBF7D0';
+            textColor = '#15803D';
+            label = 'Hired';
+            IconComponent = CheckCircle2;
+          } else if (s === 'shortlisted' || s === 'accepted') {
+            bg = '#DBEAFE';
+            borderColor = '#BFDBFE';
+            textColor = '#1D4ED8';
+            label = 'Shortlisted';
+            IconComponent = Sparkles;
+          } else if (s === 'interview_scheduled') {
+            bg = '#E0E7FF';
+            borderColor = '#C7D2FE';
+            textColor = '#4338CA';
+            label = 'Interview Scheduled';
+            IconComponent = Calendar;
+          } else if (s === 'rejected') {
+            bg = '#FEE2E2';
+            borderColor = '#FECACA';
+            textColor = '#B91C1C';
+            label = 'Not Selected';
+            IconComponent = XCircle;
+          }
+
+          return (
+            <View style={[styles.statusBadge, { backgroundColor: bg, borderColor, borderWidth: 1 }]}>
+              <IconComponent size={13} color={textColor} strokeWidth={2.5} style={{ marginRight: 5 }} />
+              <Text style={[styles.statusText, { color: textColor }]}>
+                {label}
+              </Text>
+            </View>
+          );
+        })()}
       </View>
     </TouchableOpacity>
   );
@@ -207,6 +252,26 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '700',
     fontSize: 11,
   },
+  modeBadge: {
+    position: 'absolute',
+    top: spacing.s,
+    right: spacing.s,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  onlineBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.9)',
+  },
+  offlineBadge: {
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+  },
+  modeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
   content: {
     padding: spacing.xs,
     flex: 1,
@@ -234,24 +299,18 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '600',
   },
   statusBadge: {
-    marginTop: spacing.m,
+    marginTop: 10,
     alignSelf: 'flex-start',
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.xs,
-    borderRadius: 16,
-  },
-  statusPending: {
-    backgroundColor: '#FEF3C7', // amber-100
-  },
-  statusAccepted: {
-    backgroundColor: '#D1FAE5', // emerald-100
-  },
-  statusRejected: {
-    backgroundColor: '#FEE2E2', // red-100
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   statusText: {
-    ...typography.caption,
+    fontSize: 12,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
   textPending: {
     color: '#D97706', // amber-600

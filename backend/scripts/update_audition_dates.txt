@@ -1,0 +1,26 @@
+-- 1. Update all auditions to have dates evenly spread across today and the next 7 days
+WITH numbered_auditions AS (
+  SELECT 
+    id,
+    -- Spreads auditions across day 0 (today) to day 7
+    (ROW_NUMBER() OVER (ORDER BY created_at DESC) % 8) AS day_offset
+  FROM auditions
+)
+UPDATE auditions a
+SET 
+  audition_date = (CURRENT_DATE + (na.day_offset || ' days')::INTERVAL)::date,
+  date = (CURRENT_DATE + (na.day_offset || ' days')::INTERVAL)::date,
+  status = 'active',
+  is_live = true,
+  updated_at = NOW()
+FROM numbered_auditions na
+WHERE a.id = na.id;
+
+-- 2. Verify the updated distribution
+SELECT 
+  audition_date, 
+  status, 
+  COUNT(*) as total_auditions
+FROM auditions
+GROUP BY audition_date, status
+ORDER BY audition_date ASC;

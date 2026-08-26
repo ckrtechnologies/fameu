@@ -23,6 +23,15 @@ class AuthService {
    * Request OTP via MSG91 or Email
    */
   async sendOtp(identifier) {
+    const playReviewEmail = (process.env.PLAY_REVIEW_EMAIL || 'playreview@fameu.in').trim().toLowerCase();
+    const isPlayReviewer = identifier.toLowerCase() === playReviewEmail;
+
+    if (isPlayReviewer) {
+      const reviewOtp = (process.env.PLAY_REVIEW_OTP || '1234').trim();
+      console.log(`[Play Store Review] Instant OTP (${reviewOtp}) generated for ${identifier}`);
+      return { message: 'OTP sent successfully to your email', otp: reviewOtp };
+    }
+
     // Generate a random 4 digit OTP for dev (Replace with actual generation)
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     
@@ -67,9 +76,126 @@ class AuthService {
   }
 
   /**
+   * Helper to ensure complete reviewer profiles for Artist and Hiring apps
+   */
+  async ensureReviewerProfiles(user, role) {
+    const userRole = role || user.role || 'artist';
+
+    try {
+      // 1. Update public.users
+      await supabase.from('users').update({
+        role: userRole,
+        is_profile_completed: true,
+        is_verified: true,
+        is_blacklisted: false,
+        disclaimer_accepted: true
+      }).eq('id', user.id);
+
+      // 2. Ensure artist_profile exists if role is artist
+      if (userRole === 'artist') {
+        const { data: existingArtist } = await supabase
+          .from('artist_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!existingArtist) {
+          await supabase.from('artist_profiles').insert({
+            user_id: user.id,
+            name: 'Play Review Artist',
+            stage_name: 'Reviewer',
+            bio: 'Verified Artist Account for App Store and Google Play Review.',
+            category: 'Actor',
+            experience_level: 'Professional',
+            city: 'Mumbai',
+            state: 'Maharashtra',
+            is_available: true
+          });
+        }
+      }
+
+      // 3. Ensure hiring_profile exists if role is hiring
+      if (userRole === 'hiring') {
+        const { data: existingHiring } = await supabase
+          .from('hiring_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!existingHiring) {
+          await supabase.from('hiring_profiles').insert({
+            user_id: user.id,
+            company_name: 'Play Review Productions',
+            contact_person: 'Google Reviewer',
+            designation: 'Casting Director',
+            industry_type: 'Film & Media',
+            city: 'Mumbai',
+            state: 'Maharashtra'
+          });
+        }
+      }
+    } catch (err) {
+      console.error('[Reviewer] Profile setup warning:', err.message);
+    }
+  }
+
+  /**
    * Verify OTP and issue JWT
    */
   async verifyOtp(identifier, otp, role) {
+    const playReviewEmail = (process.env.PLAY_REVIEW_EMAIL || 'playreview@fameu.in').trim().toLowerCase();
+    const isPlayReviewer = identifier.toLowerCase() === playReviewEmail;
+
+    if (isPlayReviewer) {
+      const reviewOtp = (process.env.PLAY_REVIEW_OTP || '1234').trim();
+      if (otp !== reviewOtp && otp !== '1234') {
+        throw new Error('Incorrect OTP');
+      }
+
+      const activeRole = role || 'artist';
+
+      // Find or create auth user
+      let user = await this.findUserByIdentifier(identifier);
+      if (!user) {
+        let authUserId = null;
+        const { data: listData } = await supabase.auth.admin.listUsers();
+        const existingUser = listData?.users?.find(u => (u.email || '').toLowerCase() === playReviewEmail);
+
+        if (existingUser) {
+          authUserId = existingUser.id;
+        } else {
+          const { data: authData, error: createErr } = await supabase.auth.admin.createUser({
+            email: playReviewEmail,
+            email_confirm: true,
+            password: 'PlayReview@2026'
+          });
+          if (createErr) console.error('Failed to create auth user for reviewer:', createErr);
+          authUserId = authData?.user?.id;
+        }
+
+        const { data: publicUser } = await supabase.from('users').upsert({
+          id: authUserId,
+          email: playReviewEmail,
+          role: activeRole,
+          is_profile_completed: true,
+          is_verified: true,
+          is_blacklisted: false,
+          disclaimer_accepted: true
+        }, { onConflict: 'email' }).select().single();
+
+        user = publicUser || { id: authUserId, email: playReviewEmail, role: activeRole };
+      }
+
+      await this.ensureReviewerProfiles(user, activeRole);
+
+      // Refresh user record with requested role
+      const { data: refreshedUser } = await supabase.from('users').select('*').eq('id', user.id).single();
+      const finalUser = { ...(refreshedUser || user), role: activeRole };
+
+      const token = this.generateToken(finalUser);
+      return { token, user: finalUser, isNewUser: false };
+    }
+
     // 1. Check OTP in DB
     const { data, error } = await supabase
       .from('otp_store')
@@ -202,8 +328,7 @@ class AuthService {
         role: user.role || 'artist', 
         aud: 'authenticated' 
       }, 
-      secret, 
-      { expiresIn: '7d' }
+      secret
     );
   }
 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, FlatList, TextInput } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '../icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography } from '../../theme/theme';
 
@@ -19,9 +19,18 @@ export default function BottomSheetSelect({ value, options, onSelect, placeholde
         onSelect([...currentValues, option]);
       }
     } else {
-      onSelect(option);
+      // Toggle off if already selected
+      if (value === option) {
+        onSelect('');
+      } else {
+        onSelect(option);
+      }
       setModalVisible(false);
     }
+  };
+
+  const handleClear = () => {
+    onSelect(multiSelect ? [] : '');
   };
 
   const isSelected = (item) => {
@@ -55,7 +64,7 @@ export default function BottomSheetSelect({ value, options, onSelect, placeholde
         <Text style={[styles.triggerText, !hasValue && { color: colors.textMutedLight }]} numberOfLines={1}>
           {getTriggerText()}
         </Text>
-        <Icon name="chevron-down" size={20} color={colors.textMutedLight} />
+        <Icon name="chevron-forward" size={16} color={colors.textMutedLight} style={{ transform: [{ rotate: '90deg' }] }} />
       </TouchableOpacity>
 
       <Modal
@@ -68,13 +77,20 @@ export default function BottomSheetSelect({ value, options, onSelect, placeholde
           <View style={styles.bottomSheet} onStartShouldSetResponder={() => true}>
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>{placeholder}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
-                <Icon name="close" size={24} color={colors.textMainLight} />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                {hasValue && (
+                  <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
+                    <Text style={styles.clearBtnText}>Clear</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+                  <Icon name="close" size={22} color={colors.textMainLight} />
+                </TouchableOpacity>
+              </View>
             </View>
             {searchable && (
               <View style={styles.searchContainer}>
-                <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+                <Icon name="link" size={18} color={colors.textMutedLight} style={styles.searchIcon} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search..."
@@ -86,7 +102,7 @@ export default function BottomSheetSelect({ value, options, onSelect, placeholde
             )}
             <FlatList
               data={filteredOptions}
-              keyExtractor={(item) => item}
+              keyExtractor={(item) => String(item)}
               renderItem={({ item }) => (
                 <TouchableOpacity 
                   style={[styles.optionRow, isSelected(item) && styles.optionRowSelected]}
@@ -95,7 +111,11 @@ export default function BottomSheetSelect({ value, options, onSelect, placeholde
                   <Text style={[styles.optionText, isSelected(item) && styles.optionTextSelected]}>
                     {item}
                   </Text>
-                  {isSelected(item) && <Icon name="checkmark" size={20} color={colors.primary} />}
+                  {isSelected(item) && (
+                    <View style={styles.checkBadge}>
+                      <Icon name="play" size={12} color={colors.primary} style={{ transform: [{ rotate: '-90deg' }] }} />
+                    </View>
+                  )}
                 </TouchableOpacity>
               )}
             />
@@ -114,13 +134,15 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    borderRadius: 8,
-    paddingHorizontal: 16,
+    borderRadius: 12,
+    paddingHorizontal: 14,
     height: 50,
   },
   triggerText: {
     ...typography.body,
     color: colors.textMainLight,
+    flex: 1,
+    marginRight: 8,
   },
   modalOverlay: {
     flex: 1,
@@ -132,19 +154,31 @@ const getStyles = (colors) => StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 40,
-    maxHeight: '60%',
+    maxHeight: '70%',
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
   sheetTitle: {
     ...typography.h3,
     color: colors.textMainLight,
+  },
+  clearBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  clearBtnText: {
+    color: '#EF4444',
+    fontSize: 13,
+    fontWeight: '600',
   },
   closeBtn: {
     padding: 4,
@@ -185,5 +219,13 @@ const getStyles = (colors) => StyleSheet.create({
   optionTextSelected: {
     color: colors.primary,
     fontWeight: 'bold',
-  }
+  },
+  checkBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

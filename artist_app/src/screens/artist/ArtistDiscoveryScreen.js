@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, Modal, TextInput, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, Modal, TextInput, ScrollView, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,8 @@ import { ArrowLeft, User, Filter, X, Briefcase } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useSearchArtistsQuery, useSearchHiringAgenciesQuery } from '../../services/discoveryApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
@@ -32,23 +34,42 @@ export default function ArtistDiscoveryScreen() {
 
   // Active Search Params State (applied on submit)
   const [searchParams, setSearchParams] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   const currentUser = useSelector(state => state.auth.user);
   
-  // Format searchParams for API
+  // Format searchParams for API with case-resilient category expansion
   const apiParams = useMemo(() => {
     const params = { ...searchParams };
+    if (searchQuery.trim()) {
+      params.q = searchQuery.trim();
+    }
     if (params.category === 'All' || (Array.isArray(params.category) && params.category.includes('All'))) {
        delete params.category;
-    } else if (Array.isArray(params.category)) {
-       params.category = params.category.join(',');
+    } else if (params.category) {
+       const selectedList = Array.isArray(params.category) ? params.category : [params.category];
+       const expanded = [...new Set(selectedList.flatMap(c => {
+         const matchProf = (professionsResponse?.data || []).find(p => 
+           p.name?.toLowerCase().trim() === c.toLowerCase().trim() ||
+           p.slug?.toLowerCase().trim() === c.toLowerCase().trim()
+         );
+         return [
+           c,
+           c.toLowerCase(),
+           c.toUpperCase(),
+           c.charAt(0).toUpperCase() + c.slice(1).toLowerCase(),
+           matchProf?.name,
+           matchProf?.slug
+         ].filter(Boolean);
+       }))];
+       params.category = expanded.join(',');
     }
 
     if (params.gender === 'All') delete params.gender;
     if (params.location === 'All Locations') delete params.location;
     if (params.company_type === 'All') delete params.company_type;
     return params;
-  }, [searchParams]);
+  }, [searchParams, searchQuery, professionsResponse]);
 
   const { data: searchResponse, isFetching: isFetchingArtists, refetch: refetchArtists } = useSearchArtistsQuery(apiParams, { skip: activeTab !== 'Talents' });
   const artists = (searchResponse?.data || []).filter(artist => artist.user_id !== currentUser?.id);
@@ -144,64 +165,105 @@ export default function ArtistDiscoveryScreen() {
     );
   };
 
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
+
   const isFetching = activeTab === 'Talents' ? isFetchingArtists : isFetchingAgencies;
   const listData = activeTab === 'Talents' ? artists : agencies;
   const refetch = activeTab === 'Talents' ? refetchArtists : refetchAgencies;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textMainLight} />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.searchContainer} 
-          onPress={() => navigation.navigate('Search')}
-          activeOpacity={0.8}
-        >
-          <Icon name="search-outline" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
-          <Typography variant="body" style={styles.searchPlaceholder}>Search {activeTab.toLowerCase()}...</Typography>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.filterButton}>
-          <Filter size={20} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ShrinkableHeader 
+          title={activeTab === 'Talents' ? 'Discover Talents' : 'Hiring Agencies'}
+          subtitle={`${listData.length} ${activeTab.toLowerCase()} available`}
+          showBack={true}
+          onBack={() => navigation.goBack()}
+          headerPaddingVertical={headerPaddingVertical}
+          headerTitleSize={headerTitleSize}
+          subtitleHeight={subtitleHeight}
+          subtitleOpacity={subtitleOpacity}
+          headerElevation={headerElevation}
+          rightActions={
+            <TouchableOpacity 
+              onPress={() => setShowFilterModal(true)} 
+              style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight, justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Filter size={18} color={colors.primary} />
+            </TouchableOpacity>
+          }
+          bottomComponent={
+            <View style={{ width: '100%' }}>
+              <View style={[styles.searchContainer, { marginTop: 4, marginBottom: 8 }]}>
+                <Icon name="search-outline" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder={`Search ${activeTab.toLowerCase()} by name, role, city...`}
+                  placeholderTextColor={colors.textMutedLight}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="search"
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <X size={18} color={colors.textMutedLight} />
+                  </TouchableOpacity>
+                )}
+              </View>
 
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'Talents' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('Talents')}
-        >
-          <Typography variant="h4" style={[styles.tabText, activeTab === 'Talents' && styles.tabTextActive]}>Talents</Typography>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'Agencies' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('Agencies')}
-        >
-          <Typography variant="h4" style={[styles.tabText, activeTab === 'Agencies' && styles.tabTextActive]}>Hiring Agencies</Typography>
-        </TouchableOpacity>
-      </View>
+              <View style={[styles.tabsContainer, { marginHorizontal: 0, marginBottom: 0 }]}>
+                <TouchableOpacity 
+                  style={[styles.tabButton, activeTab === 'Talents' && styles.tabButtonActive]}
+                  onPress={() => setActiveTab('Talents')}
+                >
+                  <Typography variant="h4" style={[styles.tabText, activeTab === 'Talents' && styles.tabTextActive]}>Talents</Typography>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.tabButton, activeTab === 'Agencies' && styles.tabButtonActive]}
+                  onPress={() => setActiveTab('Agencies')}
+                >
+                  <Typography variant="h4" style={[styles.tabText, activeTab === 'Agencies' && styles.tabTextActive]}>Hiring Agencies</Typography>
+                </TouchableOpacity>
+              </View>
+            </View>
+          }
+        />
 
-      {isFetching && !listData.length ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={listData}
-          keyExtractor={(item) => item.id}
-          numColumns={activeTab === 'Talents' ? 2 : 1}
-          key={activeTab} // Force re-render on tab change for numColumns
-          columnWrapperStyle={activeTab === 'Talents' ? styles.row : undefined}
-          refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />}
-          renderItem={activeTab === 'Talents' ? renderTalentCard : renderAgencyCard}
-          contentContainerStyle={styles.listContainer}
+        {isFetching && !listData.length ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={listData}
+            keyExtractor={(item) => item.id}
+            numColumns={activeTab === 'Talents' ? 2 : 1}
+            key={activeTab} // Force re-render on tab change for numColumns
+            columnWrapperStyle={activeTab === 'Talents' ? styles.row : undefined}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />}
+            renderItem={activeTab === 'Talents' ? renderTalentCard : renderAgencyCard}
+            contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.centerContainer}>
               <User size={64} color={colors.borderLight} />
               <Typography variant="h4" style={styles.emptyText}>No {activeTab.toLowerCase()} found</Typography>
               <Typography variant="body" style={{ color: colors.textMutedLight, marginTop: 8 }}>
-                Try adjusting your filters
+                {searchQuery ? 'Try adjusting your search query' : 'Try adjusting your filters'}
               </Typography>
             </View>
           }
@@ -216,6 +278,7 @@ export default function ArtistDiscoveryScreen() {
         initialFilters={searchParams}
         defaultFilters={{ category: 'All', gender: 'All', location: 'All Locations' }}
       />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -229,22 +292,24 @@ const getStyles = (colors) => StyleSheet.create({
   headerTitle: { flex: 1, color: colors.textMainLight },
   backButton: { padding: spacing.xs, marginRight: spacing.s },
   searchContainer: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
-    borderRadius: 24,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.borderLight,
     paddingHorizontal: spacing.m,
-    height: 44,
-    marginRight: spacing.s,
+    height: 42,
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    color: colors.textMainLight,
+    fontSize: 14,
+    paddingVertical: 0,
   },
   searchIcon: {
     marginRight: spacing.s,
-  },
-  searchPlaceholder: {
-    color: colors.textMutedLight,
   },
   filterButton: { padding: spacing.xs },
   tabsContainer: { flexDirection: 'row', paddingHorizontal: spacing.m, borderBottomWidth: 1, borderBottomColor: colors.borderLight, backgroundColor: colors.backgroundLight },

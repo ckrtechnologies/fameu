@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { TouchableOpacity, StyleSheet, View, Image, Text } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, Image, Text, Animated } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGetProfileQuery } from '../services/profileApi';
@@ -14,10 +14,58 @@ import InboxScreen from '../screens/artist/InboxScreen';
 
 import { useTheme } from '../theme/ThemeProvider';
 import { typography, spacing } from '../theme/theme';
+import {
+  HomeTabIcon,
+  ProfileTabIcon,
+  AuditionsTabIcon,
+  ApplicationsTabIcon,
+  MessagesTabIcon,
+} from '../components/icons';
+
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+function AnimatedTabIcon({ routeName, focused, activeColor, inactiveColor }) {
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: focused ? 1.12 : 1,
+      friction: 4,
+      tension: 60,
+      useNativeDriver: true,
+    }).start();
+  }, [focused, scaleAnim]);
+
+  let IconComponent;
+  if (routeName === 'Dashboard') {
+    IconComponent = HomeTabIcon;
+  } else if (routeName === 'Profile') {
+    IconComponent = ProfileTabIcon;
+  } else if (routeName === 'Auditions') {
+    IconComponent = AuditionsTabIcon;
+  } else if (routeName === 'Applications') {
+    IconComponent = ApplicationsTabIcon;
+  } else if (routeName === 'Inbox') {
+    IconComponent = MessagesTabIcon;
+  }
+
+  return (
+    <Animated.View style={[styles.tabIconWrapper, { transform: [{ scale: scaleAnim }] }]}>
+      <View style={[styles.tabIconPill, focused && { backgroundColor: activeColor + '15' }]}>
+        {IconComponent ? (
+          <IconComponent
+            size={24}
+            focused={focused}
+            activeColor={activeColor}
+            inactiveColor={inactiveColor}
+          />
+        ) : null}
+      </View>
+    </Animated.View>
+  );
+}
 
 export default function TabNavigator() {
   const { colors } = useTheme();
@@ -35,77 +83,36 @@ export default function TabNavigator() {
 
   return (
     <Tab.Navigator
-      screenOptions={({ route, navigation }) => ({
-        headerShown: true,
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: colors.backgroundLight,
-          elevation: 0,
-          shadowOpacity: 0,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.borderLight,
-        },
-        headerTitleStyle: {
-          ...typography.h2,
-          color: colors.textMainLight,
-          fontWeight: '700',
-        },
-        headerLeft: () => (
-          <TouchableOpacity style={{ marginLeft: spacing.xl, padding: 4 }} onPress={() => navigation.openDrawer()}>
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} />
-            ) : (
-              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>{fullName.charAt(0).toUpperCase()}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused }) => (
+          <AnimatedTabIcon
+            routeName={route.name}
+            focused={focused}
+            activeColor={colors.primary}
+            inactiveColor={colors.textMutedLight}
+          />
         ),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', marginRight: spacing.xl }}>
-            <TouchableOpacity style={{ padding: 4, marginRight: 12 }} onPress={() => navigation.navigate('ArtistDiscovery')}>
-              <Icon name="search-outline" size={26} color={colors.textMainLight} />
-            </TouchableOpacity>
-            <TouchableOpacity style={{ padding: 4 }} onPress={() => navigation.navigate('Notifications')}>
-              <Icon name="notifications-outline" size={26} color={colors.textMainLight} />
-            </TouchableOpacity>
-          </View>
-        ),
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'Dashboard') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Auditions') {
-            iconName = focused ? 'search' : 'search-outline';
-          } else if (route.name === 'Applications') {
-            iconName = focused ? 'document-text' : 'document-text-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Inbox') {
-            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-          }
-
-          return <Icon name={iconName} size={size} color={color} />;
-        },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMutedLight,
         tabBarStyle: {
           backgroundColor: colors.backgroundLight,
           borderTopColor: colors.borderLight,
           borderTopWidth: 1,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom || 10,
-          paddingTop: 10,
+          height: 62 + insets.bottom,
+          paddingBottom: (insets.bottom || 8) + 2,
+          paddingTop: 6,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.06,
           shadowRadius: 8,
-          elevation: 5,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontFamily: typography.fontFamily,
-          fontSize: 12,
+          fontSize: 11.5,
+          fontWeight: 'bold',
+          marginTop: -2,
         },
       })}
       initialRouteName="Dashboard"
@@ -113,12 +120,12 @@ export default function TabNavigator() {
       <Tab.Screen 
         name="Dashboard" 
         component={ArtistDashboardScreen} 
-        options={{ tabBarLabel: 'Home', headerShown: false }}
+        options={{ tabBarLabel: 'Home' }}
       />
       <Tab.Screen 
         name="Profile" 
         component={ArtistProfileScreen} 
-        options={{ tabBarLabel: 'Profile', headerTitle: 'Artist' }}
+        options={{ tabBarLabel: 'Profile' }}
       />
       <Tab.Screen 
         name="Auditions" 
@@ -142,3 +149,17 @@ export default function TabNavigator() {
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  tabIconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabIconPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

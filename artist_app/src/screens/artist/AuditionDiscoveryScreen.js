@@ -1,34 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, ScrollView, TextInput } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  RefreshControl, 
+  ScrollView, 
+  TextInput, 
+  KeyboardAvoidingView, 
+  Platform 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
-import { typography, spacing, globalStyles } from '../../theme/theme';
+import { typography, spacing } from '../../theme/theme';
 import AuditionCard from '../../components/artist/AuditionCard';
 import AuditionPeekModal from '../../components/artist/AuditionPeekModal';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
-import CustomInput from '../../components/forms/CustomInput';
-import ImageWithFallback from '../../components/core/ImageWithFallback';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetFeedQuery } from '../../services/discoverApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
-import { useGetProfessionsQuery } from '../../services/profileApi';
+import { useGetProfessionsQuery, useGetProfileQuery } from '../../services/profileApi';
 
 const CATEGORY_MAP = {
   'Relevant': 'Relevant',
+  '✨ Matches Profile': 'matches_profile',
   'Live (Today)': 'Live (Today)',
   'Trending': 'Trending',
   'Acting': 'Actor',
   'Modeling': 'Model',
   'Singing': 'Singer',
   'Dancing': 'Dancer',
-  'Crew': 'Technician'
+  'Writing': 'Writer',
+  'Direction': 'Director',
+  'Crew / Tech': 'Technician'
 };
 
 const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
 
-const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
+
+const DEFAULT_FILTERS = {
+  category: 'All',
+  project_type: 'All',
+  mode: 'All',
+  duration_type: 'All',
+  city: 'All',
+  gender_req: 'All',
+  is_paid: 'All',
+  min_budget: '',
+  sort_by: 'Recent',
+  age_min: '',
+  age_max: '',
+};
 
 export default function AuditionDiscoveryScreen() {
   const { colors } = useTheme();
@@ -36,6 +65,9 @@ export default function AuditionDiscoveryScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { user } = useSelector((state) => state.auth);
+  const { data: userProfileData } = useGetProfileQuery();
+  const artistProfile = userProfileData?.data?.profile || userProfileData?.profile || {};
+
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'Relevant');
 
@@ -46,33 +78,40 @@ export default function AuditionDiscoveryScreen() {
   }, [route.params?.initialCategory]);
 
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [filters, setFilters] = useState({
-    category: 'All',
-    project_type: 'All',
-    duration_type: 'All',
-    city: 'All',
-    gender_req: 'All',
-    age_min: '',
-    age_max: '',
-  });
-
-  const [tempFilters, setTempFilters] = useState(filters);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [tempFilters, setTempFilters] = useState(DEFAULT_FILTERS);
 
   const { data: professionsResponse } = useGetProfessionsQuery();
   const dynamicCategories = (professionsResponse?.data || []).map(p => capitalize(p.name));
   const CATEGORIES = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Singer', 'Dancer', 'Technician', 'Writer', 'Director'])];
 
-  const PROJECT_TYPES = ['All', 'Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'];
+  const SORT_OPTIONS = ['Recent', 'Expiring Soon', 'Popular', 'Highest Budget'];
+  const COMPENSATION_OPTIONS = ['All', 'Paid Only', '₹5,000+', '₹25,000+', '₹50,000+', '₹1,00,000+'];
+  const MODE_OPTIONS = ['All', 'Online / Self-Tape', 'Offline (In-Person)', 'Walk-in'];
+  const PROJECT_TYPES = ['All', 'Online', 'Offline', 'Walk-in', 'Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'];
   const DURATION_TYPES = ['All', 'Full-time', 'Part-time', 'Date Specific'];
   const CITIES = ['All', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Chandigarh', 'Other'];
   const GENDERS = ['All', 'Male', 'Female', 'Other', 'Any'];
 
+  // Construct Query Params for API
   const queryParams = { search };
-  
+
+  // 1. Top Category Tabs
   if (activeCategory === 'Live (Today)') {
     queryParams.is_live = true;
   } else if (activeCategory === 'Trending') {
     queryParams.filter = 'trending';
+  } else if (activeCategory === '✨ Matches Profile') {
+    // Smart Filter: Match artist's registered profile attributes
+    if (artistProfile.categories && artistProfile.categories.length > 0) {
+      queryParams.category = artistProfile.categories.join(',');
+    }
+    if (artistProfile.gender) {
+      queryParams.gender_req = artistProfile.gender;
+    }
+    if (artistProfile.city || user?.city) {
+      queryParams.city = artistProfile.city || user?.city;
+    }
   } else if (activeCategory === 'Relevant') {
     if (!search) {
       queryParams.filter = 'relevant';
@@ -81,32 +120,85 @@ export default function AuditionDiscoveryScreen() {
     queryParams.category = CATEGORY_MAP[activeCategory];
   }
   
+  // 2. Filter Modal Overrides
   if (filters?.category && filters.category !== 'All' && filters.category !== 'Any') {
-     // override the tab category if filter modal has one selected
-     if (Array.isArray(filters.category)) {
-        if (!filters.category.includes('All') && !filters.category.includes('Any') && filters.category.length > 0) {
-            queryParams.category = filters.category.join(',');
-        }
-     } else if (typeof filters.category === 'string') {
-        queryParams.category = filters.category;
-     }
+    const selectedList = Array.isArray(filters.category) ? filters.category : [filters.category];
+    const validSelected = selectedList.filter(c => c && c !== 'All' && c !== 'Any');
+    if (validSelected.length > 0) {
+      queryParams.category = validSelected.join(',');
+    }
   }
 
   if (filters.project_type !== 'All') queryParams.project_type = filters.project_type;
+  if (filters.mode !== 'All') queryParams.mode = filters.mode;
   if (filters.duration_type !== 'All') queryParams.duration_type = filters.duration_type;
   if (filters.city !== 'All') queryParams.city = filters.city;
   if (filters.gender_req !== 'All') queryParams.gender_req = filters.gender_req;
+  if (filters.is_paid === 'Paid Only') queryParams.is_paid = true;
+  
+  if (filters.min_budget) {
+    const parsedNum = filters.min_budget.replace(/[^\d]/g, '');
+    if (parsedNum) queryParams.min_budget = parsedNum;
+  }
+
+  if (filters.sort_by) {
+    if (filters.sort_by === 'Expiring Soon') queryParams.sort_by = 'expiring_soon';
+    else if (filters.sort_by === 'Popular') queryParams.sort_by = 'popular';
+    else if (filters.sort_by === 'Highest Budget') queryParams.sort_by = 'budget_high';
+    else queryParams.sort_by = 'recent';
+  }
+
   if (filters.age_min) queryParams.age_min = filters.age_min;
   if (filters.age_max) queryParams.age_max = filters.age_max;
 
   const filterConfig = [
+    { key: 'sort_by', label: 'Sort By', type: 'select', options: SORT_OPTIONS },
+    { key: 'min_budget', label: 'Compensation', type: 'select', options: COMPENSATION_OPTIONS },
+    { key: 'mode', label: 'Audition Mode', type: 'select', options: MODE_OPTIONS },
     { key: 'category', label: 'Profession', type: 'select', options: CATEGORIES, multiSelect: true },
     { key: 'project_type', label: 'Project Type', type: 'select', options: PROJECT_TYPES },
-    { key: 'duration_type', label: 'Duration', type: 'select', options: DURATION_TYPES },
     { key: 'city', label: 'City', type: 'select', options: CITIES },
+    { key: 'duration_type', label: 'Duration', type: 'select', options: DURATION_TYPES },
     { key: 'gender_req', label: 'Gender', type: 'select', options: GENDERS },
     { key: 'age', label: 'Age Range', type: 'range', minKey: 'age_min', maxKey: 'age_max' }
   ];
+
+  // Active Filter Pills Calculation
+  const getActiveFilterPills = () => {
+    const pills = [];
+    if (filters.sort_by && filters.sort_by !== 'Recent') {
+      pills.push({ key: 'sort_by', label: `Sort: ${filters.sort_by}`, onRemove: () => setFilters(p => ({ ...p, sort_by: 'Recent' })) });
+    }
+    if (filters.min_budget && filters.min_budget !== 'All') {
+      pills.push({ key: 'min_budget', label: `💰 ${filters.min_budget}`, onRemove: () => setFilters(p => ({ ...p, min_budget: '' })) });
+    }
+    if (filters.mode && filters.mode !== 'All') {
+      pills.push({ key: 'mode', label: `🎬 ${filters.mode}`, onRemove: () => setFilters(p => ({ ...p, mode: 'All' })) });
+    }
+    if (filters.category && filters.category !== 'All' && filters.category !== 'Any') {
+      const catText = Array.isArray(filters.category) ? filters.category.join(', ') : filters.category;
+      pills.push({ key: 'category', label: `🎭 ${catText}`, onRemove: () => setFilters(p => ({ ...p, category: 'All' })) });
+    }
+    if (filters.project_type && filters.project_type !== 'All') {
+      pills.push({ key: 'project_type', label: filters.project_type, onRemove: () => setFilters(p => ({ ...p, project_type: 'All' })) });
+    }
+    if (filters.city && filters.city !== 'All') {
+      pills.push({ key: 'city', label: `📍 ${filters.city}`, onRemove: () => setFilters(p => ({ ...p, city: 'All' })) });
+    }
+    if (filters.duration_type && filters.duration_type !== 'All') {
+      pills.push({ key: 'duration_type', label: filters.duration_type, onRemove: () => setFilters(p => ({ ...p, duration_type: 'All' })) });
+    }
+    if (filters.gender_req && filters.gender_req !== 'All') {
+      pills.push({ key: 'gender_req', label: `Gender: ${filters.gender_req}`, onRemove: () => setFilters(p => ({ ...p, gender_req: 'All' })) });
+    }
+    if (filters.age_min || filters.age_max) {
+      pills.push({ key: 'age', label: `Age: ${filters.age_min || 0} - ${filters.age_max || '100+'}`, onRemove: () => setFilters(p => ({ ...p, age_min: '', age_max: '' })) });
+    }
+    return pills;
+  };
+
+  const activePills = getActiveFilterPills();
+  const activeFiltersCount = activePills.length;
 
   const { data: feedData, isLoading, isError, refetch } = useGetFeedQuery(queryParams);
   
@@ -147,6 +239,7 @@ export default function AuditionDiscoveryScreen() {
     <TouchableOpacity 
       style={[styles.categoryChip, activeCategory === item && styles.activeCategoryChip]}
       onPress={() => setActiveCategory(item)}
+      activeOpacity={0.75}
     >
       <Text style={[styles.categoryText, activeCategory === item && styles.activeCategoryText]}>
         {item}
@@ -154,64 +247,150 @@ export default function AuditionDiscoveryScreen() {
     </TouchableOpacity>
   );
 
-  const auditions = Array.isArray(feedData?.data) ? feedData.data : [];
+  const {
+    onScroll,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    headerElevation,
+  } = useShrinkableHeader();
 
+  const auditions = Array.isArray(feedData?.data) ? feedData.data : [];
   const loading = isLoading;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('Profile')}
-            style={styles.headerAvatarBtn}
-          >
-            <ImageWithFallback 
-              source={{ uri: user?.avatar_url }} 
-              fallbackSource={{ uri: 'https://via.placeholder.com/150' }}
-              style={styles.headerAvatar}
-            />
-          </TouchableOpacity>
-          <View style={styles.searchContainer}>
-            <CustomInput
-              placeholder="Search by role, location..."
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
-          <TouchableOpacity style={styles.filterBtn} onPress={() => {
-            setTempFilters(filters);
-            setShowFilterModal(true);
-          }}>
-            <Icon name="filter" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ShrinkableHeader 
+          title="Auditions"
+          subtitle={`${auditions.length} active casting opportunities`}
+          avatarUrl={user?.avatar_url}
+          avatarText={user?.full_name?.charAt(0) || 'A'}
+          onAvatarPress={() => navigation.openDrawer()}
+          headerTitleSize={headerTitleSize}
+          subtitleHeight={subtitleHeight}
+          subtitleOpacity={subtitleOpacity}
+          headerElevation={headerElevation}
+          rightActions={
+            <TouchableOpacity 
+              style={[
+                styles.filterBtn, 
+                { backgroundColor: activeFiltersCount > 0 ? colors.primary + '15' : colors.surfaceLight, borderColor: activeFiltersCount > 0 ? colors.primary : colors.borderLight }
+              ]} 
+              onPress={() => {
+                setTempFilters(filters);
+                setShowFilterModal(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <Icon name="options-outline" size={19} color={activeFiltersCount > 0 ? colors.primary : colors.textMainLight} />
+              {activeFiltersCount > 0 && (
+                <View style={styles.filterBadge}>
+                  <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          }
+          bottomComponent={
+            <View style={{ marginTop: 4, marginBottom: 2 }}>
+              {/* Search input */}
+              <View style={[styles.compactSearchRow, { backgroundColor: colors.surfaceLight, borderColor: colors.borderLight }]}>
+                <Icon name="search" size={16} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+                <TextInput
+                  placeholder="Search roles, city, keywords..."
+                  placeholderTextColor={colors.textMutedLight}
+                  value={search}
+                  onChangeText={setSearch}
+                  style={[styles.compactSearchInput, { color: colors.textMainLight }]}
+                />
+                {search.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearch('')}>
+                    <Icon name="close-circle" size={16} color={colors.textMutedLight} />
+                  </TouchableOpacity>
+                )}
+              </View>
 
-        <View style={styles.categoriesContainer}>
-          <FlatList
-            data={UI_CATEGORIES}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={renderCategory}
-            keyExtractor={item => item}
-            contentContainerStyle={styles.categoriesContent}
-          />
-        </View>
+              {/* Horizontal Category Chips */}
+              <FlatList
+                data={UI_CATEGORIES}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                renderItem={renderCategory}
+                keyExtractor={item => item}
+                contentContainerStyle={{ paddingVertical: 4 }}
+              />
 
+              {/* Active Filter Pills Bar */}
+              {activePills.length > 0 && (
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false} 
+                  contentContainerStyle={styles.activePillsContainer}
+                >
+                  {activePills.map((pill) => (
+                    <View key={pill.key} style={styles.activePill}>
+                      <Text style={styles.activePillText} numberOfLines={1}>{pill.label}</Text>
+                      <TouchableOpacity onPress={pill.onRemove} style={styles.pillRemoveBtn}>
+                        <Icon name="close" size={13} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TouchableOpacity 
+                    onPress={() => setFilters(DEFAULT_FILTERS)} 
+                    style={styles.clearAllPill}
+                  >
+                    <Text style={styles.clearAllPillText}>Reset All</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              )}
+            </View>
+          }
+        />
+
+        <View style={styles.container}>
         {loading ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : isError ? (
           <View style={styles.centerContent}>
-            <Text style={{ color: colors.danger }}>Failed to load auditions.</Text>
-            <TouchableOpacity onPress={refetch}>
-              <Text style={{ color: colors.primary, marginTop: spacing.s }}>Retry</Text>
+            <Text style={{ color: colors.danger, fontWeight: '600' }}>Failed to load auditions.</Text>
+            <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Retry</Text>
             </TouchableOpacity>
           </View>
         ) : auditions.length === 0 ? (
-          <View style={styles.centerContent}>
-            <Text style={{ color: colors.textMutedLight }}>No auditions match your criteria.</Text>
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconCircle}>
+              <Icon name="search-outline" size={32} color={colors.primary} />
+            </View>
+            <Text style={styles.emptyTitle}>No Matching Auditions</Text>
+            <Text style={styles.emptySubtitle}>
+              We couldn't find any casting calls with your current search or active filters.
+            </Text>
+            <View style={styles.emptyActionsRow}>
+              {activeFiltersCount > 0 && (
+                <TouchableOpacity 
+                  style={styles.emptyPrimaryBtn}
+                  onPress={() => setFilters(DEFAULT_FILTERS)}
+                >
+                  <Text style={styles.emptyPrimaryBtnText}>Clear All Filters</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity 
+                style={styles.emptySecondaryBtn}
+                onPress={() => {
+                  setActiveCategory('Relevant');
+                  setSearch('');
+                  setFilters(DEFAULT_FILTERS);
+                }}
+              >
+                <Text style={styles.emptySecondaryBtnText}>View All Auditions</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <FlatList
@@ -222,6 +401,8 @@ export default function AuditionDiscoveryScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
             columnWrapperStyle={styles.columnWrapper}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
             }
@@ -246,8 +427,9 @@ export default function AuditionDiscoveryScreen() {
         onApply={(newFilters) => setFilters(newFilters)}
         filterConfig={filterConfig}
         initialFilters={filters}
-        defaultFilters={{ category: 'All', project_type: 'All', duration_type: 'All', city: 'All', gender_req: 'All', age_min: '', age_max: '' }}
+        defaultFilters={DEFAULT_FILTERS}
       />
+
       <AuditionPeekModal
         visible={peekVisible}
         auditions={peekAuditions}
@@ -258,6 +440,7 @@ export default function AuditionDiscoveryScreen() {
           handleViewAuditionDetails(item);
         }}
       />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -270,65 +453,118 @@ const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.l,
+  filterBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.primary,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  filterBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  compactSearchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerAvatarBtn: {
-    marginRight: spacing.m,
-  },
-  headerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: colors.primary + '30',
-  },
-  searchContainer: {
-    flex: 1,
-    marginRight: spacing.m,
-  },
-  filterBtn: {
-    padding: spacing.s,
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 8,
+    height: 38,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    paddingHorizontal: 10,
+    marginBottom: 6,
   },
-  categoriesContainer: {
-    marginBottom: spacing.m,
-  },
-  categoriesContent: {
-    paddingHorizontal: spacing.xl,
-    alignItems: 'center',
+  compactSearchInput: {
+    flex: 1,
+    fontSize: 13.5,
+    paddingVertical: 0,
+    height: '100%',
   },
   categoryChip: {
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.s,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5.5,
+    borderRadius: 14,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
-    borderColor: colors.textMutedLight + '40', // transparent border
-    marginRight: spacing.s,
+    borderColor: colors.borderLight,
+    marginRight: 6,
   },
   activeCategoryChip: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   categoryText: {
-    ...typography.body,
+    fontSize: 12.5,
     color: colors.textMainLight,
+    fontWeight: '500',
   },
   activeCategoryText: {
-    color: colors.backgroundLight,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
+  activePillsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    gap: 6,
+  },
+  activePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingLeft: 10,
+    paddingRight: 6,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  activePillText: {
+    color: '#FFFFFF',
+    fontSize: 11.5,
+    fontWeight: '700',
+    marginRight: 4,
+  },
+  pillRemoveBtn: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearAllPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceLight,
+  },
+  clearAllPillText: {
+    color: colors.textMutedLight,
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
   listContent: {
-    paddingHorizontal: spacing.l, // slightly less padding to maximize space
+    paddingHorizontal: spacing.l,
     paddingBottom: spacing.xxl,
+    paddingTop: 8,
   },
   columnWrapper: {
     justifyContent: 'space-between',
@@ -337,7 +573,7 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     marginHorizontal: spacing.xs,
     marginBottom: spacing.m,
-    maxWidth: '48%', // Ensure 2 columns fit evenly
+    maxWidth: '48.5%',
   },
   gridCard: {
     width: '100%',
@@ -348,106 +584,73 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.backgroundLight,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '80%',
     padding: spacing.xl,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  retryBtn: {
+    marginTop: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.l,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: 40,
   },
-  modalTitle: {
-    ...typography.h2,
-    color: colors.textMainLight,
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  modalBody: {
-    flexShrink: 1,
-  },
-  filterSectionTitle: {
+  emptyTitle: {
     ...typography.h3,
     color: colors.textMainLight,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
+    fontWeight: '800',
+    marginBottom: 6,
+    textAlign: 'center',
   },
-  filterOptionsRow: {
+  emptySubtitle: {
+    ...typography.body2,
+    color: colors.textMutedLight,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  emptyActionsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: spacing.s,
+    gap: 10,
   },
-  filterOptionChip: {
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.s,
-    borderRadius: 20,
+  emptyPrimaryBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  emptyPrimaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  emptySecondaryBtn: {
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    marginRight: spacing.s,
-    marginBottom: spacing.s,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
   },
-  filterOptionChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  filterOptionText: {
-    ...typography.caption,
-    color: colors.textMutedLight,
-  },
-  filterOptionTextActive: {
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
-  ageRangeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  ageInput: {
-    flex: 1,
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 8,
-    padding: spacing.m,
+  emptySecondaryBtnText: {
     color: colors.textMainLight,
-  },
-  filterActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: spacing.m,
-    paddingBottom: spacing.xl,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-  },
-  clearFiltersBtn: {
-    paddingVertical: spacing.m,
-    paddingHorizontal: spacing.xl,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  clearFiltersText: {
-    ...typography.body2,
-    color: colors.textMutedLight,
-    fontWeight: 'bold',
-  },
-  applyFiltersBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.m,
-    paddingHorizontal: spacing.xl,
-    borderRadius: 8,
-  },
-  applyFiltersText: {
-    ...typography.body2,
-    color: '#FFF',
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

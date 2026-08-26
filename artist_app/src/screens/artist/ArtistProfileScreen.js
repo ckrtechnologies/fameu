@@ -1,9 +1,27 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking, FlatList, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, Modal, RefreshControl, Linking, FlatList, Animated, Share, Platform, KeyboardAvoidingView } from 'react-native';
 import Video from 'react-native-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import AppIcon, {
+  default as Icon,
+  BasicInfoSectionIcon,
+  ShareProfileIcon,
+  CintaaGoldBadgeIcon,
+  EditPencilIcon,
+  AgeProfileIcon,
+  GenderProfileIcon,
+  HeightProfileIcon,
+  WeightProfileIcon,
+  PhoneProfileIcon,
+  NearbySpotlightIcon,
+  LanguagesProfileIcon,
+  MediaGallerySectionIcon,
+  VideoSectionIcon,
+  PreferencesSectionIcon,
+  AssignmentsSectionIcon,
+  ProfessionCategoryIcon,
+} from '../../components/icons';
 import { WebView } from 'react-native-webview';
 import { parseArray } from '../../utils/dataUtils';
 
@@ -16,8 +34,13 @@ import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useAcceptDisclaimerMutation } from '../../services/authApi';
 import { logout } from '../../store/slices/authSlice';
 import CommentsSection from '../../components/CommentsSection';
-import { getVideoInfo } from '../../utils/media';
 import VerifiedBadge from '../../components/core/VerifiedBadge';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
+import VideoThumbnail from '../../components/core/VideoThumbnail';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import InAppMediaModal from '../../components/core/InAppMediaModal';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
+import { getVideoInfo } from '../../utils/media';
 
 const { width } = Dimensions.get('window');
 
@@ -38,7 +61,7 @@ const MEDIA_REGEX = /\.(mp4|mov|avi|wmv|mkv|mp3|wav|aac|ogg|webm|m4a|flac|jpg|jp
 
 export default function ArtistProfileScreen() {
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
@@ -50,34 +73,42 @@ export default function ArtistProfileScreen() {
   
   const profile = profileResponse?.data;
   const [activeTab, setActiveTab] = useState('Overview');
+  const [showComments, setShowComments] = useState(false);
   const [modalImages, setModalImages] = useState([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+  const [mediaModalUrl, setMediaModalUrl] = useState(null);
+  const [mediaModalTitle, setMediaModalTitle] = useState('');
 
-  const glowAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
+  const handleOpenMedia = (url, title = '') => {
+    if (!url) return;
+    const info = getVideoInfo(url);
+    if (info?.type === 'direct') {
+      navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: 0 });
+    } else {
+      setMediaModalTitle(title);
+      setMediaModalUrl(url);
+    }
+  };
 
   useEffect(() => {
-    // Start pulse animation loop
-    const glowLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
-      ])
-    );
-    glowLoop.start();
+    if (profile?.id) {
+      const timer = setTimeout(() => setShowComments(true), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [profile?.id]);
 
-    // Start slide & fade entrance
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, tension: 20, friction: 7, useNativeDriver: true }),
-    ]).start();
-
-    return () => {
-      glowLoop.stop();
-    };
-  }, [glowAnim, fadeAnim, slideAnim]);
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    avatarSize,
+    avatarRadius,
+    headerElevation,
+  } = useShrinkableHeader();
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
@@ -86,6 +117,15 @@ export default function ArtistProfileScreen() {
       await refetch();
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const openImageModal = (images, index = 0) => {
+    const arr = parseArray(images).filter(Boolean);
+    if (arr.length > 0) {
+      setModalImages(arr);
+      setSelectedImageIndex(index >= 0 && index < arr.length ? index : 0);
+      setIsImageModalVisible(true);
     }
   };
 
@@ -153,7 +193,11 @@ export default function ArtistProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={[]}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
       <Modal
         visible={user && !user.disclaimer_accepted}
         transparent={true}
@@ -188,25 +232,44 @@ export default function ArtistProfileScreen() {
         </View>
       </Modal>
 
+      {/* Shrinkable Animated Top Header */}
+      <ShrinkableHeader 
+        title="Profile"
+        showMenu={true}
+        onMenuPress={() => navigation.openDrawer()}
+        avatarUrl={avatarUrl}
+        avatarText={fullName?.charAt(0) || 'A'}
+        scrollY={scrollY}
+        headerPaddingVertical={headerPaddingVertical}
+        headerTitleSize={headerTitleSize}
+        subtitleHeight={subtitleHeight}
+        subtitleOpacity={subtitleOpacity}
+        headerElevation={headerElevation}
+        rightActions={
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity style={{ padding: 4, marginRight: 10 }} onPress={() => navigation.navigate('ArtistDiscovery')}>
+              <Icon name="search-outline" size={24} color={colors.textMainLight} />
+            </TouchableOpacity>
+            <TouchableOpacity style={{ padding: 4 }} onPress={() => navigation.navigate('Notifications')}>
+              <Icon name="notifications-outline" size={24} color={colors.textMainLight} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
+
       <ScrollView 
         style={styles.container} 
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        removeClippedSubviews={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
         
         {/* Instagram Profile Info Row */}
         <View style={styles.profileRow}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => { setModalImages([avatarUrl]); setSelectedImageIndex(0); setIsImageModalVisible(true); }} style={{ position: 'relative' }}>
-            <Animated.View style={[
-              StyleSheet.absoluteFillObject,
-              {
-                backgroundColor: colors.primary,
-                borderRadius: 45,
-                transform: [{ scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] }) }],
-                opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.6] })
-              }
-            ]} />
-            <Image source={{ uri: avatarUrl }} style={[styles.avatarInsta, { borderWidth: 2, borderColor: colors.backgroundLight }]} />
+          <TouchableOpacity activeOpacity={0.9} onPress={() => openImageModal([avatarUrl], 0)} style={{ position: 'relative' }}>
+            <ImageWithFallback source={{ uri: avatarUrl }} style={[styles.avatarInsta, { borderWidth: 2, borderColor: colors.backgroundLight }]} />
           </TouchableOpacity>
           <View style={styles.statsContainerInsta}>
             <TouchableOpacity 
@@ -254,9 +317,19 @@ export default function ArtistProfileScreen() {
           )}
           <Text style={styles.bioInsta}>{bio}</Text>
           
+          {/* CINTAA Top Bio Badge */}
+          {profile?.is_cintaa_member && (
+            <View style={styles.cintaaTopBadge}>
+              <CintaaGoldBadgeIcon size={18} />
+              <Text style={styles.cintaaTopBadgeText}>
+                Verified CINTAA Member ({profile.cintaa_reg_number})
+              </Text>
+            </View>
+          )}
+
           {/* Social Links Row */}
           {profile?.social_links && (
-            <View style={{ flexDirection: 'row', marginTop: 12, marginBottom: 8, gap: 16 }}>
+            <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 4, gap: 14 }}>
               {(() => {
                 const links = typeof profile.social_links === 'string' 
                   ? JSON.parse(profile.social_links || '{}') 
@@ -264,23 +337,23 @@ export default function ArtistProfileScreen() {
                 return (
                   <>
                     {links.instagram ? (
-                      <TouchableOpacity onPress={() => Linking.openURL(links.instagram)}>
-                        <Icon name="logo-instagram" size={28} color="#E1306C" />
+                      <TouchableOpacity onPress={() => Linking.openURL(links.instagram).catch(() => {})}>
+                        <Icon name="logo-instagram" size={26} color="#E1306C" />
                       </TouchableOpacity>
                     ) : null}
                     {links.youtube ? (
-                      <TouchableOpacity onPress={() => Linking.openURL(links.youtube)}>
-                        <Icon name="logo-youtube" size={28} color="#FF0000" />
+                      <TouchableOpacity onPress={() => Linking.openURL(links.youtube).catch(() => {})}>
+                        <Icon name="logo-youtube" size={26} color="#FF0000" />
                       </TouchableOpacity>
                     ) : null}
                     {links.facebook ? (
-                      <TouchableOpacity onPress={() => Linking.openURL(links.facebook)}>
-                        <Icon name="logo-facebook" size={28} color="#1877F2" />
+                      <TouchableOpacity onPress={() => Linking.openURL(links.facebook).catch(() => {})}>
+                        <Icon name="logo-facebook" size={26} color="#1877F2" />
                       </TouchableOpacity>
                     ) : null}
                     {links.snapchat ? (
-                      <TouchableOpacity onPress={() => Linking.openURL(links.snapchat)}>
-                        <Icon name="logo-snapchat" size={28} color="#FFFC00" />
+                      <TouchableOpacity onPress={() => Linking.openURL(links.snapchat).catch(() => {})}>
+                        <Icon name="logo-snapchat" size={26} color="#FFFC00" />
                       </TouchableOpacity>
                     ) : null}
                   </>
@@ -288,12 +361,34 @@ export default function ArtistProfileScreen() {
               })()}
             </View>
           )}
-          <TouchableOpacity 
-            style={styles.editProfileBtnInsta}
-            onPress={() => navigation.navigate('EditProfile')}
-          >
-            <Text style={styles.editProfileTextInsta}>Edit Profile</Text>
-          </TouchableOpacity>
+
+          {/* Symmetrical Action Buttons Row */}
+          <View style={styles.profileActionRow}>
+            <TouchableOpacity 
+              style={[styles.profileActionBtn, { backgroundColor: colors.surfaceLight, borderColor: colors.borderLight }]}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('EditProfile')}
+            >
+              <EditPencilIcon size={16} style={{ marginRight: 8 }} />
+              <Text style={[styles.profileActionBtnText, { color: colors.textMainLight }]}>Edit Profile</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.profileActionBtn, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}
+              activeOpacity={0.8}
+              onPress={async () => {
+                try {
+                  await Share.share({
+                    message: `Check out my Fameu artist profile: https://fameu.in/artist/${profile?.username || profile?.id}`,
+                    title: 'Share My Profile',
+                  });
+                } catch (e) { console.log(e); }
+              }}
+            >
+              <ShareProfileIcon size={18} style={{ marginRight: 8 }} />
+              <Text style={[styles.profileActionBtnText, { color: colors.primary }]}>Share Profile</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Tabs */}
@@ -305,7 +400,7 @@ export default function ArtistProfileScreen() {
                 style={[styles.tab, activeTab === tab && styles.tabActive]}
                 onPress={() => setActiveTab(tab)}
               >
-                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive, { textTransform: 'capitalize' }]}>{tab}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -318,69 +413,50 @@ export default function ArtistProfileScreen() {
             {(() => {
               const profileVideos = [
                 { url: profile.intro_video_url, title: 'Intro Video' },
-                { url: profile.left_profile_url, title: 'Left Profile' },
-                { url: profile.right_profile_url, title: 'Right Profile' }
               ].filter(v => v.url && v.url.trim().length > 0);
 
               if (profileVideos.length === 0) return null;
 
               return (
-                <View style={{ marginBottom: 24 }}>
-                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12, paddingHorizontal: spacing.xl }}>Profile Videos</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }}>
+                <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                    <View style={{ backgroundColor: '#FEE2E2', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                      <VideoSectionIcon size={24} />
+                    </View>
+                    <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Profile Videos</Text>
+                  </View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 0 }}>
                     {profileVideos.map((video, index) => (
-                          <View key={index} style={{ marginRight: spacing.m, width: 140 }}>
-                            <TouchableOpacity 
-                              onPress={() => {
-                                const info = getVideoInfo(video.url);
-                                if (info?.type !== 'direct') {
-                                  import('react-native').then(({ Linking }) => {
-                                    Linking.openURL(video.url).catch(() => {});
-                                  });
-                                } else {
-                                  navigation.navigate('VideoPortfolio', { videos: profileVideos.map(v => v.url), initialIndex: index });
-                                }
-                              }}
-                              style={{ width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, overflow: 'hidden', borderRadius: 12, position: 'relative' }}
-                            >
-                              {(() => {
-                                const info = getVideoInfo(video.url);
-                                if (info?.thumbnail === 'INSTAGRAM') {
-                                  return (
-                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                                      <Icon name="logo-instagram" color={colors.primary} size={40} />
-                                    </View>
-                                  );
-                                }
-                                if (info?.thumbnail === 'LINK') {
-                                  return (
-                                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                                      <Text style={{ ...typography.caption, color: colors.textMutedLight }}>Web Link</Text>
-                                    </View>
-                                  );
-                                }
-                                if (info?.thumbnail) {
-                                  return <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />;
-                                }
-                                return <Video source={{ uri: video.url }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />;
-                              })()}
-                              <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
-                                <Icon name="play" size={40} color={colors.white} />
-                              </View>
-                            </TouchableOpacity>
-                            <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 8, textAlign: 'center', fontWeight: '600' }}>{video.title}</Text>
+                      <View key={index} style={{ marginRight: spacing.m, width: 140 }}>
+                        <TouchableOpacity 
+                          onPress={() => handleOpenMedia(video.url, video.title)}
+                          style={{ width: '100%', height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A', overflow: 'hidden', borderRadius: 16, position: 'relative', borderWidth: 1, borderColor: colors.borderLight }}
+                        >
+                          <VideoThumbnail url={video.url} colors={colors} />
+                          <View style={{ backgroundColor: 'rgba(0,0,0,0.35)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.85)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 4 }}>
+                              <Icon name="play" size={24} color={colors.primary} style={{ marginLeft: 3 }} />
+                            </View>
                           </View>
+                        </TouchableOpacity>
+                        <Text style={{ ...typography.caption, color: colors.textMainLight, marginTop: 4, textAlign: 'center' }} numberOfLines={1}>{video.title}</Text>
+                      </View>
                     ))}
                   </ScrollView>
                 </View>
               );
             })()}
 
-            {/* Video Portfolio Grid */}
-            {typeof profile.video_url === 'string' && profile.video_url.trim().length > 0 && (
-              <View style={{ marginBottom: 24 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: 12 }}>
-                  <Text style={{ ...typography.h3, color: colors.primary }}>Video Portfolio</Text>
+            {/* Additional Videos from Portfolio */}
+            {parsedVideoUrls.length > 0 && (
+              <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ backgroundColor: '#FEE2E2', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                      <VideoSectionIcon size={24} />
+                    </View>
+                    <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Video Gallery</Text>
+                  </View>
                   <TouchableOpacity onPress={() => navigation.navigate('VideoPortfolio', { isOwner: true })}>
                     <Text style={{ color: colors.primary, fontWeight: 'bold' }}>See All</Text>
                   </TouchableOpacity>
@@ -388,150 +464,153 @@ export default function ArtistProfileScreen() {
                 <FlatList
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: spacing.xl }}
+                  contentContainerStyle={{ paddingHorizontal: 0 }}
                   data={parsedVideoUrls}
                   keyExtractor={(_, idx) => `vid-${idx}`}
                   initialNumToRender={2}
                   windowSize={3}
-                  renderItem={({ item: vUrl, index: idx }) => {
-                    const info = getVideoInfo(vUrl);
-                    return (
-                      <TouchableOpacity 
-                        style={{ width: 140, height: 200, borderRadius: 12, backgroundColor: colors.surfaceDark, marginRight: 12, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}
-                        onPress={() => {
-                          if (info?.type !== 'direct') {
-                            import('react-native').then(({ Linking }) => {
-                              Linking.openURL(vUrl).catch(() => {});
-                            });
-                          } else {
-                            navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: idx });
-                          }
-                        }}
-                      >
-                        {info?.thumbnail === 'INSTAGRAM' ? (
-                          <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                            <Icon name="logo-instagram" color={colors.primary} size={32} />
-                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
-                          </View>
-                        ) : info?.thumbnail === 'LINK' ? (
-                          <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
-                          </View>
-                        ) : info?.thumbnail ? (
-                          <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute', resizeMode: 'cover' }} />
-                        ) : (
-                          <Video source={{ uri: vUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
-                        )}
-                        <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
-                          <Icon name="play" size={32} color={colors.white} />
+                  renderItem={({ item: vUrl, index: idx }) => (
+                    <TouchableOpacity 
+                      style={{ width: 140, height: 200, borderRadius: 16, backgroundColor: '#0F172A', marginRight: 12, overflow: 'hidden', justifyContent: 'center', alignItems: 'center', position: 'relative', borderWidth: 1, borderColor: colors.borderLight }}
+                      onPress={() => handleOpenMedia(vUrl, `Video ${idx + 1}`)}
+                    >
+                      <VideoThumbnail url={vUrl} colors={colors} />
+                      <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.85)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 4 }}>
+                          <Icon name="play" size={24} color={colors.primary} style={{ marginLeft: 3 }} />
                         </View>
-                      </TouchableOpacity>
-                    );
-                  }}
+                      </View>
+                    </TouchableOpacity>
+                  )}
                 />
               </View>
             )}
 
-            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+            {/* Basic Info Section */}
+            <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
-                  <Icon name="information-circle-outline" size={24} color={colors.primary} />
+                <View style={{ backgroundColor: colors.primary + '15', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                  <BasicInfoSectionIcon size={24} />
                 </View>
-                <Text style={{ ...typography.h3, color: colors.primary }}>Basic Info</Text>
+                <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Basic Info</Text>
               </View>
 
+              {/* Symmetrical 2-Column Side-by-Side Grid */}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                {BASIC_INFO_KEYS.map((k) => {
-                  const v = profile[k];
-                  if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                  
-                  const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                  const value = Array.isArray(v) ? v.join(', ') : String(v);
+                {(() => {
+                  const standardInfoItems = [
+                    profile.age ? { key: 'age', label: 'Age', value: `${profile.age} yrs`, IconComp: AgeProfileIcon, bg: '#FFF7ED' } : null,
+                    profile.gender ? { key: 'gender', label: 'Gender', value: profile.gender, IconComp: GenderProfileIcon, bg: '#FDF2F8' } : null,
+                    profile.height ? { key: 'height', label: 'Height', value: profile.height, IconComp: HeightProfileIcon, bg: '#ECFDF5' } : null,
+                    profile.weight ? { key: 'weight', label: 'Weight', value: `${profile.weight} kg`, IconComp: WeightProfileIcon, bg: '#EFF6FF' } : null,
+                    (profile.alt_number || profile.alternate_phone) ? { key: 'alt_phone', label: 'Alt. Number', value: profile.alt_number || profile.alternate_phone, IconComp: PhoneProfileIcon, bg: '#ECFDF5' } : null,
+                    (Array.isArray(profile.languages) && profile.languages.length > 0) ? { key: 'languages', label: 'Languages', value: profile.languages.join(', '), IconComp: LanguagesProfileIcon, bg: '#EFF6FF' } : null,
+                    profile.city ? { key: 'city', label: 'Base City', value: profile.city, IconComp: NearbySpotlightIcon, bg: '#F0FDF4' } : null,
+                    profile.availability_type ? { key: 'availability', label: 'Availability', value: profile.availability_type, IconComp: null, iconName: 'availability_type', bg: '#FFFBEB' } : null,
+                    profile.available_dates ? { key: 'dates', label: 'Dates', value: profile.available_dates, IconComp: null, iconName: 'available_dates', bg: '#EEF2FF' } : null,
+                  ].filter(Boolean);
 
-                  return (
-                    <View key={k} style={{ width: '48%', backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }}>
-                      <Icon name={BASIC_INFO_ICONS[k] || 'information-outline'} size={24} color={colors.primary} style={{ marginBottom: 12 }} />
-                      <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 4 }}>{label}</Text>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '600' }} numberOfLines={2}>{value}</Text>
-                    </View>
-                  );
-                })}
-
-                {/* CINTAA Info */}
-                {profile.is_cintaa_member && (
-                  <View style={{ width: '100%', backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 16, marginBottom: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.1)' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                      <Icon name="id-card-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
-                      <View>
-                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>CINTAA Member</Text>
-                        <Text style={{ ...typography.body, color: colors.primary, fontWeight: 'bold' }}>Yes ({profile.cintaa_reg_number})</Text>
+                  return standardInfoItems.map((item) => {
+                    const CustomIcon = item.IconComp;
+                    return (
+                      <View key={item.key} style={styles.basicInfoGridCard}>
+                        <View style={[styles.basicInfoIconBadge, { backgroundColor: item.bg }]}>
+                          {CustomIcon ? <CustomIcon size={26} /> : <AppIcon name={item.iconName} size={24} />}
+                        </View>
+                        <Text style={styles.basicInfoLabel}>{item.label}</Text>
+                        <Text style={styles.basicInfoValue} numberOfLines={1}>{item.value}</Text>
                       </View>
-                    </View>
-                  </View>
-                )}
+                    );
+                  });
+                })()}
               </View>
-            </Animated.View>
+
+              {/* Full Width Card: Special Skills */}
+              {Array.isArray(profile.skills) && profile.skills.length > 0 && (
+                <View style={styles.basicInfoFullCard}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#FEF3C7' }]}>
+                      <AppIcon name="skills" size={20} />
+                    </View>
+                    <Text style={styles.basicInfoSectionTitle}>Special Skills</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {profile.skills.map((sk, idx) => (
+                      <View key={idx} style={[styles.languageChip, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+                        <Text style={[styles.languageChipText, { color: '#B45309' }]}>{sk}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
 
             {/* Tags / Preferences Section */}
             {(profile.work_preference?.length > 0 || profile.preferred_cities?.length > 0 || profile.look_alike?.length > 0 || profile.hashtags?.length > 0) && (
-              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 24, marginHorizontal: spacing.xl }}>
+              <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                  <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: 8, borderRadius: 20, marginRight: 10 }}>
-                    <Icon name="options-outline" size={24} color={colors.primary} />
+                  <View style={{ backgroundColor: '#D1FAE5', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                    <PreferencesSectionIcon size={24} />
                   </View>
-                  <Text style={{ ...typography.h3, color: colors.primary }}>Preferences & Tags</Text>
+                  <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Preferences & Tags</Text>
                 </View>
                 
                 {profile.work_preference?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                      <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
-                        <Icon name="briefcase" size={16} color="#f97316" />
+                  <View style={styles.basicInfoFullCard}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                      <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#FFEDD5' }]}>
+                        <AppIcon name="briefcase" size={18} />
                       </View>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Work Preference</Text>
+                      <Text style={styles.basicInfoSectionTitle}>Work Preference</Text>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {workPreferences.map((t, i) => (
-                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(249, 115, 22, 0.15)' }]}><Text style={[styles.chipText, { color: '#f97316' }]}>{t}</Text></View>
+                        <View key={i} style={[styles.languageChip, { backgroundColor: '#FFF7ED', borderColor: '#FFEDD5' }]}>
+                          <Text style={[styles.languageChipText, { color: '#C2410C' }]}>{t}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
                 )}
                 
                 {profile.preferred_cities?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                      <View style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
-                        <Icon name="location" size={16} color="#14b8a6" />
+                  <View style={styles.basicInfoFullCard}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                      <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#CCFBF1' }]}>
+                        <AppIcon name="location" size={18} />
                       </View>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Preferred Locations</Text>
+                      <Text style={styles.basicInfoSectionTitle}>Preferred Locations</Text>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {preferredCities.map((t, i) => (
-                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}><Text style={[styles.chipText, { color: '#14b8a6' }]}>{t}</Text></View>
+                        <View key={i} style={[styles.languageChip, { backgroundColor: '#F0FDFA', borderColor: '#CCFBF1' }]}>
+                          <Text style={[styles.languageChipText, { color: '#0F766E' }]}>{t}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
                 )}
 
                 {profile.look_alike?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                      <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
-                        <Icon name="people" size={16} color="#a855f7" />
+                  <View style={styles.basicInfoFullCard}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                      <View style={[styles.basicInfoIconBadgeSmall, { backgroundColor: '#F3E8FF' }]}>
+                        <AppIcon name="people" size={18} />
                       </View>
-                      <Text style={{ ...typography.body, color: colors.textMainLight, fontWeight: '700' }}>Look Alikes</Text>
+                      <Text style={styles.basicInfoSectionTitle}>Look Alikes</Text>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {lookAlikes.map((t, i) => (
-                        <View key={i} style={[styles.chip, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}><Text style={[styles.chipText, { color: '#a855f7' }]}>{t}</Text></View>
+                        <View key={i} style={[styles.languageChip, { backgroundColor: '#FAF5FF', borderColor: '#F3E8FF' }]}>
+                          <Text style={[styles.languageChipText, { color: '#7E22CE' }]}>{t}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
                 )}
 
                 {profile.hashtags?.length > 0 && (
-                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                  <View style={{ marginBottom: 20, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.borderLight }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                       <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: 6, borderRadius: 12, marginRight: 8 }}>
                         <Icon name="pricetag" size={16} color="#ec4899" />
@@ -545,13 +624,18 @@ export default function ArtistProfileScreen() {
                     </View>
                   </View>
                 )}
-              </Animated.View>
+              </View>
             )}
 
             {/* Recent Assignments Section */}
             {profile.recent_assignments?.length > 0 && (
-              <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-                <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Recent Assignments</Text>
+              <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                  <View style={{ backgroundColor: '#FEF3C7', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                    <AssignmentsSectionIcon size={24} />
+                  </View>
+                  <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Recent Assignments</Text>
+                </View>
                 {recentAssignments.map((assignment, idx) => (
                   <View key={idx} style={{ backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 8, marginBottom: 8 }}>
                       <View style={{ flex: 1, marginBottom: assignment.link ? 12 : 0 }}>
@@ -566,12 +650,14 @@ export default function ArtistProfileScreen() {
                             style={{ 
                               width: '100%', height: 160, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceDark, justifyContent: 'center', alignItems: 'center', position: 'relative'
                             }}
-                            onPress={() => import('react-native').then(({ Linking }) => Linking.openURL(linkStr).catch(() => {}))}
+                            onPress={() => handleOpenMedia(linkStr, 'External Media')}
                           >
                             {info?.thumbnail && info.thumbnail !== 'INSTAGRAM' && info.thumbnail !== 'LINK' ? (
-                              <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />
+                              <ImageWithFallback source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', position: 'absolute' }} resizeMode="cover" />
                             ) : info?.type === 'direct' ? (
-                              <Video source={{ uri: linkStr }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
+                              <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: '#1A1A1A', justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon name="videocam" size={36} color={colors.primary} />
+                              </View>
                             ) : null}
                             <View style={{ width: '100%', height: '100%', position: 'absolute', backgroundColor: (info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? 'rgba(0,0,0,0.3)' : colors.primary + '20', justifyContent: 'center', alignItems: 'center' }}>
                               <Icon name={info?.thumbnail === 'INSTAGRAM' ? 'logo-instagram' : (!info || info?.thumbnail === 'LINK' ? 'link-outline' : 'play')} size={32} color={(info?.thumbnail && info.thumbnail !== 'LINK' && info.thumbnail !== 'INSTAGRAM') || info?.type === 'direct' ? colors.white : colors.primary} />
@@ -584,12 +670,19 @@ export default function ArtistProfileScreen() {
               </View>
             )}
 
-            <View style={{ marginBottom: 24, paddingHorizontal: spacing.xl }}>
-              <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>Media Gallery</Text>
+            {/* Media Gallery Section */}
+            <View style={{ marginBottom: 24, marginHorizontal: spacing.xl }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ backgroundColor: '#EDE9FE', padding: 8, borderRadius: 14, marginRight: 10 }}>
+                  <MediaGallerySectionIcon size={24} />
+                </View>
+                <Text style={{ ...typography.h3, color: colors.textMainLight, fontWeight: 'bold' }}>Media Gallery</Text>
+              </View>
               
               {(!profile.photo_urls || profile.photo_urls.length === 0) && !profile.video_url ? (
-                <View style={styles.emptyPortfolio}>
-                  <Text style={{ color: colors.textMutedLight, textAlign: 'center' }}>No media in portfolio.</Text>
+                <View style={styles.emptyPortfolioCard}>
+                  <Icon name="images-outline" size={28} color={colors.textMutedLight} style={{ marginBottom: 8 }} />
+                  <Text style={styles.emptyPortfolioText}>No media uploaded in portfolio yet.</Text>
                 </View>
               ) : (
                 <View>
@@ -598,40 +691,20 @@ export default function ArtistProfileScreen() {
                   <FlatList 
                     horizontal 
                     showsHorizontalScrollIndicator={false} 
+                    nestedScrollEnabled={true}
                     style={{ marginHorizontal: 0, marginBottom: 16 }}
                     data={parsedVideoUrls}
-                    keyExtractor={(_, index) => index.toString()}
+                    keyExtractor={(_, index) => `media-vid-${index}`}
                     initialNumToRender={2}
                     windowSize={3}
                     renderItem={({ item: vidUrl, index }) => {
                       const info = getVideoInfo(vidUrl);
                       return (
                         <TouchableOpacity 
-                          onPress={() => {
-                            if (info?.type !== 'direct') {
-                              import('react-native').then(({ Linking }) => {
-                                Linking.openURL(vidUrl).catch(() => {});
-                              });
-                            } else {
-                              navigation.navigate('VideoPortfolio', { isOwner: true, initialIndex: index });
-                            }
-                          }}
+                          onPress={() => handleOpenMedia(vidUrl, `Video ${index + 1}`)}
                           style={[styles.galleryItem, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceDark, marginRight: spacing.s, overflow: 'hidden' }]}
                         >
-                          {info?.thumbnail === 'INSTAGRAM' ? (
-                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                              <Icon name="logo-instagram" color={colors.primary} size={32} />
-                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Instagram</Text>
-                            </View>
-                          ) : info?.thumbnail === 'LINK' ? (
-                            <View style={{ width: '100%', height: '100%', backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center' }}>
-                              <Text style={{ ...typography.caption, color: colors.textMutedLight, marginTop: 8 }}>Web Link</Text>
-                            </View>
-                          ) : info?.thumbnail ? (
-                            <Image source={{ uri: info.thumbnail }} style={{ width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' }} />
-                          ) : (
-                            <Video source={{ uri: vidUrl }} style={{ width: '100%', height: '100%', position: 'absolute' }} paused={true} resizeMode="cover" muted={true} />
-                          )}
+                          <VideoThumbnail url={vidUrl} colors={colors} />
                           <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', width: '100%', height: '100%', position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
                             <Icon name="play" size={40} color={colors.white} />
                           </View>
@@ -646,14 +719,15 @@ export default function ArtistProfileScreen() {
                     <FlatList 
                       horizontal 
                       showsHorizontalScrollIndicator={false} 
+                      nestedScrollEnabled={true}
                       style={{ marginHorizontal: 0 }}
                       data={parsedPhotoUrls}
-                      keyExtractor={(_, index) => index.toString()}
+                      keyExtractor={(_, index) => `media-photo-${index}`}
                       initialNumToRender={3}
-                      windowSize={5}
+                      windowSize={3}
                       renderItem={({ item: imgUrl, index }) => (
-                        <TouchableOpacity onPress={() => { setModalImages(profile.photo_urls); setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
-                          <Image source={{ uri: imgUrl }} style={styles.galleryItem} resizeMode="contain" />
+                        <TouchableOpacity onPress={() => openImageModal(parsedPhotoUrls, index)} style={{ marginRight: spacing.s }}>
+                          <ImageWithFallback source={{ uri: imgUrl }} style={styles.galleryItem} resizeMode="cover" />
                         </TouchableOpacity>
                       )}
                     />
@@ -665,168 +739,322 @@ export default function ArtistProfileScreen() {
         ) : (
           <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.l }}>
             {(() => {
-              const details = profile.category_details?.[activeTab] || profile.category_details?.[activeTab.toLowerCase()];
-              if (!details) {
-                return (
-                  <View style={styles.emptyPortfolio}>
-                    <Text style={{ color: colors.textMutedLight }}>No {activeTab} details added.</Text>
-                  </View>
-                );
-              }
+              const details = profile.category_details?.[activeTab] || 
+                              profile.category_details?.[activeTab.toLowerCase()] ||
+                              (profile.category_details ? profile.category_details[Object.keys(profile.category_details).find(k => k.toLowerCase() === activeTab.toLowerCase())] : null);
               
-              const entries = Object.entries(details).filter(([k,v]) => k !== 'id' && k !== 'artist_id' && v !== null && v !== '');
-              if (entries.length === 0) {
+              const entries = details ? Object.entries(details).filter(([k,v]) => k !== 'id' && k !== 'artist_id' && v !== null && v !== '' && (!Array.isArray(v) || v.length > 0)) : [];
+              
+              if (!details || entries.length === 0) {
                 return (
-                  <View style={styles.emptyPortfolio}>
-                    <Text style={{ color: colors.textMutedLight }}>No {activeTab} details added.</Text>
+                  <View style={styles.emptyPortfolioCard}>
+                    <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#DBEAFE' }}>
+                      <ProfessionCategoryIcon categoryName={activeTab} size={32} />
+                    </View>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMainLight, marginBottom: 4, textTransform: 'capitalize' }}>
+                      No {activeTab} Details Added
+                    </Text>
+                    <Text style={{ fontSize: 13, color: colors.textMutedLight, textAlign: 'center', marginBottom: 16, paddingHorizontal: 16, lineHeight: 18 }}>
+                      Highlight your verified skills, experience, and domain portfolio for {activeTab.toLowerCase()} roles.
+                    </Text>
+                    <TouchableOpacity 
+                      style={{ backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 11, borderRadius: 12, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 }}
+                      onPress={() => navigation.navigate('EditProfile')}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>+ Add {activeTab} Details</Text>
+                    </TouchableOpacity>
                   </View>
                 );
               }
 
               return (
-                <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 12, marginBottom: 12 }}>
-                  <Text style={{ ...typography.h3, color: colors.primary, marginBottom: 12 }}>{activeTab} Details</Text>
-                  {entries.map(([k,v]) => {
-                    const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                <View style={{ marginBottom: 20 }}>
+                  {/* Profession Section Header */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 14, borderRadius: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.borderLight }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: '#DBEAFE' }}>
+                      <ProfessionCategoryIcon categoryName={activeTab} size={26} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMainLight, textTransform: 'capitalize' }}>
+                        {activeTab} Specialization
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.textMutedLight, marginTop: 2, fontWeight: '500' }}>
+                        Verified domain attributes & talent specifications
+                      </Text>
+                    </View>
+                  </View>
 
-                    const renderMediaItem = (itemValue, index) => {
-                      const strVal = String(itemValue);
-                      const isVideo = strVal.match(/\.(mp4|mov|avi|wmv|mkv)$/i);
-                      const isAudio = strVal.match(/\.(mp3|wav|aac|ogg|webm|m4a|flac)$/i);
-                      const isImage = strVal.match(/\.(jpg|jpeg|png|webp)$/i);
+                  {/* Attribute Details Container */}
+                  <View style={{ backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.borderLight }}>
+                    {(() => {
+                      const mediaRegex = /\.(mp4|mov|avi|wmv|mkv|mp3|wav|aac|ogg|webm|m4a|flac|jpg|jpeg|png|webp)$/i;
+                      const urlRegex = /^(https?:\/\/[^\s]+)$/i;
 
-                      if (isVideo || isAudio) {
-                        return (
-                          <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
-                            {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
-                            <Video 
-                              source={{ uri: strVal }} 
-                              style={{ width: '100%', height: isVideo ? 250 : 50, borderRadius: 8, backgroundColor: '#000', marginBottom: 8 }} 
-                              controls={true}
-                              resizeMode={isVideo ? "cover" : "contain"}
-                              paused={true}
-                            />
-                          </View>
-                        );
-                      }
+                      const complexEntries = [];
+                      const gridSpecEntries = [];
 
-                      if (isImage) {
-                        return (
-                          <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
-                            {index === 0 && <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>}
-                            <Image source={{ uri: strVal }} style={{ width: '100%', height: 250, borderRadius: 8, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
-                          </View>
-                        );
-                      }
-                      return null;
-                    };
+                      entries.forEach(([k, v]) => {
+                        const isMediaArray = Array.isArray(v) && v.some(val => String(val).match(mediaRegex));
+                        const isSingleMedia = typeof v === 'string' && String(v).match(mediaRegex);
+                        const isUrl = typeof v === 'string' && urlRegex.test(v.trim());
+                        const isTagList = Array.isArray(v) || (typeof v === 'string' && (v.includes(',') || k.toLowerCase().includes('specialism') || k.toLowerCase().includes('skills') || k.toLowerCase().includes('styles') || k.toLowerCase().includes('permit') || k.toLowerCase().includes('language')));
 
-                    const mediaRegex = /\.(mp4|mov|avi|wmv|mkv|mp3|wav|aac|ogg|webm|m4a|flac|jpg|jpeg|png|webp)$/i;
-                    const isMediaArray = Array.isArray(v) && v.some(val => String(val).match(mediaRegex));
-                    const isSingleMedia = typeof v === 'string' && String(v).match(mediaRegex);
+                        if (isMediaArray || isSingleMedia || isUrl || isTagList) {
+                          complexEntries.push([k, v]);
+                        } else {
+                          gridSpecEntries.push([k, v]);
+                        }
+                      });
 
-                    if (isMediaArray) {
-                      return <View key={k}>{v.map((item, idx) => renderMediaItem(item, idx))}</View>;
-                    }
+                      return (
+                        <>
+                          {/* 1. Complex & List Items */}
+                          {complexEntries.map(([k, v]) => {
+                            const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-                    if (isSingleMedia) {
-                      return <View key={k}>{renderMediaItem(v, 0)}</View>;
-                    }
+                            const renderMediaItem = (itemValue, index) => {
+                              const strVal = String(itemValue);
+                              const isVideo = strVal.match(/\.(mp4|mov|avi|wmv|mkv)$/i);
+                              const isAudio = strVal.match(/\.(mp3|wav|aac|ogg|webm|m4a|flac)$/i);
+                              const isImage = strVal.match(/\.(jpg|jpeg|png|webp)$/i);
 
-                    const urlStr = typeof v === 'string' ? v.trim() : '';
-                    const urlRegex = /^(https?:\/\/[^\s]+)$/i;
-                    const isUrl = urlRegex.test(urlStr);
+                              if (isVideo || isAudio) {
+                                return (
+                                  <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
+                                    {index === 0 && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMutedLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>}
+                                    <Video 
+                                      source={{ uri: strVal }} 
+                                      style={{ width: '100%', height: isVideo ? 220 : 50, borderRadius: 12, backgroundColor: '#000', marginBottom: 8 }} 
+                                      controls={true}
+                                      resizeMode={isVideo ? "cover" : "contain"}
+                                      paused={true}
+                                    />
+                                  </View>
+                                );
+                              }
 
-                    if (isUrl) {
-                      const isYoutube = urlStr.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-                      const isInstagram = urlStr.match(/instagram\.com/i);
+                              if (isImage) {
+                                return (
+                                  <View key={`${k}-${index}`} style={{ marginBottom: 16 }}>
+                                    {index === 0 && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMutedLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>}
+                                    <ImageWithFallback source={{ uri: strVal }} style={{ width: '100%', height: 220, borderRadius: 12, backgroundColor: colors.surfaceLight, marginBottom: 8 }} resizeMode="cover" />
+                                  </View>
+                                );
+                              }
+                              return null;
+                            };
 
-                      if (isYoutube) {
-                        const videoId = isYoutube[1];
-                        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
-                        return (
-                          <View key={k} style={{ marginBottom: 16 }}>
-                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
-                            <TouchableOpacity 
-                              onPress={() => Linking.openURL(urlStr)}
-                              style={{ position: 'relative', width: '100%', height: 200, borderRadius: 12, overflow: 'hidden' }}
-                            >
-                              <Image source={{ uri: thumbnailUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
-                                <Icon name="logo-youtube" size={48} color="#ef4444" />
-                              </View>
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      }
-                      
-                      if (isInstagram) {
-                        return (
-                          <View key={k} style={{ marginBottom: 16 }}>
-                            <Text style={{ ...typography.caption, color: colors.textMutedLight, marginBottom: 8 }}>{label}</Text>
-                            <TouchableOpacity 
-                              onPress={() => Linking.openURL(urlStr)}
-                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fdf4ff', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#fbcfe8' }}
-                            >
-                              <Icon name="logo-instagram" size={24} color="#db2777" style={{ marginRight: 12 }} />
-                              <Text style={{ ...typography.body, color: '#db2777', fontWeight: 'bold' }}>View on Instagram</Text>
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      }
-                    }
+                            const isMediaArray = Array.isArray(v) && v.some(val => String(val).match(mediaRegex));
+                            const isSingleMedia = typeof v === 'string' && String(v).match(mediaRegex);
 
-                    const textValue = Array.isArray(v) ? v.join(', ') : String(v);
-                    return (
-                      <View key={k} style={{ marginBottom: 8 }}>
-                        <Text style={{ ...typography.caption, color: colors.textMutedLight }}>{label}</Text>
-                        <Text style={{ ...typography.body, color: colors.textMainLight }}>{textValue}</Text>
-                      </View>
-                    );
-                  })}
+                            if (isMediaArray) return <View key={k}>{v.map((item, idx) => renderMediaItem(item, idx))}</View>;
+                            if (isSingleMedia) return <View key={k}>{renderMediaItem(v, 0)}</View>;
+
+                            const urlStr = typeof v === 'string' ? v.trim() : '';
+                            if (urlRegex.test(urlStr)) {
+                              const isYoutube = urlStr.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                              const isInstagram = urlStr.match(/instagram\.com/i);
+
+                              if (isYoutube) {
+                                const videoId = isYoutube[1];
+                                const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                                return (
+                                  <View key={k} style={{ marginBottom: 16 }}>
+                                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMutedLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
+                                    <TouchableOpacity 
+                                      onPress={() => Linking.openURL(urlStr)}
+                                      style={{ position: 'relative', width: '100%', height: 190, borderRadius: 12, overflow: 'hidden' }}
+                                    >
+                                      <ImageWithFallback source={{ uri: thumbnailUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                                      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Icon name="logo-youtube" size={44} color="#ef4444" />
+                                      </View>
+                                    </TouchableOpacity>
+                                  </View>
+                                );
+                              }
+                              
+                              if (isInstagram) {
+                                return (
+                                  <View key={k} style={{ marginBottom: 16 }}>
+                                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMutedLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
+                                    <TouchableOpacity 
+                                      onPress={() => handleOpenMedia(urlStr, 'Instagram Reel')}
+                                      style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fdf4ff', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#fbcfe8' }}
+                                    >
+                                      <Icon name="logo-instagram" size={22} color="#db2777" style={{ marginRight: 10 }} />
+                                      <Text style={{ fontSize: 13, color: '#db2777', fontWeight: '700' }}>View on Instagram</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                );
+                              }
+
+                              return (
+                                <View key={k} style={{ marginBottom: 16 }}>
+                                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMutedLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
+                                  <TouchableOpacity 
+                                    onPress={() => handleOpenMedia(urlStr, label)}
+                                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight }}
+                                  >
+                                    <Icon name="link" size={18} color={colors.primary} style={{ marginRight: 10 }} />
+                                    <Text style={{ fontSize: 13, color: colors.primary, flex: 1 }} numberOfLines={1}>{urlStr}</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              );
+                            }
+
+                            // Tag list / pill array
+                            const itemsList = Array.isArray(v) 
+                              ? v 
+                              : (typeof v === 'string' && (v.includes(',') || k.toLowerCase().includes('specialism') || k.toLowerCase().includes('skills') || k.toLowerCase().includes('styles') || k.toLowerCase().includes('permit') || k.toLowerCase().includes('language')))
+                                ? v.split(',').map(s => s.trim()).filter(Boolean)
+                                : null;
+
+                            if (itemsList && itemsList.length > 0) {
+                              return (
+                                <View key={k} style={{ marginBottom: 16 }}>
+                                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMutedLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                    {label}
+                                  </Text>
+                                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                                    {itemsList.map((item, idx) => (
+                                      <View 
+                                        key={idx} 
+                                        style={{ 
+                                          backgroundColor: '#F8FAFC', 
+                                          paddingHorizontal: 12, 
+                                          paddingVertical: 6, 
+                                          borderRadius: 20, 
+                                          borderWidth: 1, 
+                                          borderColor: '#E2E8F0',
+                                          flexDirection: 'row',
+                                          alignItems: 'center'
+                                        }}
+                                      >
+                                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, marginRight: 6 }} />
+                                        <Text style={{ fontSize: 13, color: colors.textMainLight, fontWeight: '600' }}>
+                                          {String(item)}
+                                        </Text>
+                                      </View>
+                                    ))}
+                                  </View>
+                                </View>
+                              );
+                            }
+
+                            return null;
+                          })}
+
+                          {/* 2. Symmetrical 2-Column Grid for Short Single Specs */}
+                          {gridSpecEntries.length > 0 && (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: complexEntries.length > 0 ? 4 : 0 }}>
+                              {gridSpecEntries.map(([k, v]) => {
+                                const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                const textValue = String(v);
+                                const isLong = textValue.length > 35;
+
+                                return (
+                                  <View 
+                                    key={k} 
+                                    style={{ 
+                                      width: isLong ? '100%' : '48.5%', 
+                                      backgroundColor: '#F8FAFC', 
+                                      padding: 12, 
+                                      borderRadius: 14, 
+                                      marginBottom: 10, 
+                                      borderWidth: 1, 
+                                      borderColor: '#E2E8F0',
+                                      minHeight: 58,
+                                      justifyContent: 'center'
+                                    }}
+                                  >
+                                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMutedLight, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                      {label}
+                                    </Text>
+                                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMainLight }} numberOfLines={2}>
+                                      {textValue}
+                                    </Text>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </View>
                 </View>
               );
             })()}
           </View>
         )}
 
-        {profile && profile.id && (
+        {showComments && profile && profile.id ? (
           <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
-            <CommentsSection targetType="artist_profile" targetId={profile.id} />
+            <CommentsSection targetType="artist_profile" targetId={profile.id} isOwnProfile={true} />
           </View>
-        )}
+        ) : null}
 
         <View style={{ height: 40 }} />
       </ScrollView>
 
       {/* Full Screen Image Modal */}
-      <Modal visible={isImageModalVisible} transparent={true} animationType="fade" onRequestClose={() => { setIsImageModalVisible(false); setModalImages([]); }}>
+      <Modal 
+        visible={isImageModalVisible} 
+        transparent={true} 
+        animationType="fade" 
+        onRequestClose={() => { setIsImageModalVisible(false); setModalImages([]); }}
+      >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.closeModalBtn} onPress={() => { setIsImageModalVisible(false); setModalImages([]); }}>
-            <Icon name="close" size={30} color="#fff" />
+          <TouchableOpacity 
+            style={styles.closeModalBtn} 
+            onPress={() => { setIsImageModalVisible(false); setModalImages([]); }}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
+            <Icon name="close" size={32} color="#fff" />
           </TouchableOpacity>
+
           {modalImages.length > 0 && (
-            <FlatList
-              data={modalImages}
-              keyExtractor={(item, index) => index.toString()}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              initialScrollIndex={selectedImageIndex}
-              getItemLayout={(data, index) => ({
-                length: Dimensions.get('window').width,
-                offset: Dimensions.get('window').width * index,
-                index,
-              })}
-              renderItem={({ item }) => (
-                <View style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center' }}>
-                  <Image source={{ uri: item }} style={styles.fullScreenImage} resizeMode="contain" />
+            <View style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+              <ImageWithFallback 
+                source={{ uri: modalImages[selectedImageIndex] || modalImages[0] }} 
+                style={{ width: Dimensions.get('window').width * 0.95, height: Dimensions.get('window').height * 0.75 }} 
+                resizeMode="contain" 
+              />
+              
+              {/* Pagination controls if multiple images */}
+              {modalImages.length > 1 && (
+                <View style={{ position: 'absolute', bottom: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+                  <TouchableOpacity 
+                    onPress={() => setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : modalImages.length - 1))}
+                    style={{ padding: 12, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 30 }}
+                  >
+                    <Icon name="chevron-back" size={28} color="#fff" />
+                  </TouchableOpacity>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+                    {(selectedImageIndex >= 0 && selectedImageIndex < modalImages.length ? selectedImageIndex : 0) + 1} / {modalImages.length}
+                  </Text>
+                  <TouchableOpacity 
+                    onPress={() => setSelectedImageIndex(prev => (prev < modalImages.length - 1 ? prev + 1 : 0))}
+                    style={{ padding: 12, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 30 }}
+                  >
+                    <Icon name="chevron-forward" size={28} color="#fff" />
+                  </TouchableOpacity>
                 </View>
               )}
-            />
+            </View>
           )}
         </View>
       </Modal>
+
+      {/* In-App Media Player Modal */}
+      <InAppMediaModal
+        visible={Boolean(mediaModalUrl)}
+        url={mediaModalUrl}
+        title={mediaModalTitle}
+        onClose={() => setMediaModalUrl(null)}
+      />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -897,6 +1125,44 @@ const getStyles = (colors) => StyleSheet.create({
     marginTop: 2,
     lineHeight: 20,
   },
+  cintaaTopBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  cintaaTopBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#B45309',
+    marginLeft: 6,
+  },
+  profileActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  profileActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  profileActionBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+  },
   editProfileBtnInsta: {
     backgroundColor: '#EFEFEF',
     borderRadius: 8,
@@ -911,34 +1177,35 @@ const getStyles = (colors) => StyleSheet.create({
     color: '#000000',
   },
   tabsContainer: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.borderLight,
-    marginBottom: 8,
-    paddingTop: 8,
+    marginBottom: 12,
+    backgroundColor: colors.backgroundLight,
   },
   tabsScroll: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
   },
   tab: {
-    paddingVertical: 8,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    marginRight: 12,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceLight,
+    marginRight: 8,
+    borderBottomWidth: 2.5,
+    borderBottomColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabActive: {
-    backgroundColor: colors.primary,
+    borderBottomColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   tabText: {
-    ...typography.body,
+    fontSize: 14.5,
     fontWeight: '600',
     color: colors.textMutedLight,
   },
   tabTextActive: {
-    color: colors.backgroundLight,
+    color: colors.primary,
+    fontWeight: '800',
   },
   portfolioSection: {
     marginTop: spacing.m,
@@ -958,6 +1225,21 @@ const getStyles = (colors) => StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     marginTop: 20,
+  },
+  emptyPortfolioCard: {
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyPortfolioText: {
+    fontSize: 13,
+    color: colors.textMutedLight,
+    textAlign: 'center',
   },
   errorText: {
     color: colors.danger,
@@ -1056,5 +1338,116 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 13,
     color: colors.primary, // Primary color text
     fontWeight: '600',
-  }
+  },
+  basicInfoGridCard: {
+    width: '48%',
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 124,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  basicInfoIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  basicInfoLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMutedLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  basicInfoValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.textMainLight,
+    marginTop: 3,
+    textAlign: 'center',
+  },
+  basicInfoFullCard: {
+    width: '100%',
+    backgroundColor: colors.surfaceLight,
+    padding: 16,
+    borderRadius: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  basicInfoIconBadgeSmall: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  basicInfoFullRowCard: {
+    width: '100%',
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  basicInfoRowLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMutedLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  basicInfoRowValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.textMainLight,
+    marginTop: 2,
+  },
+  basicInfoSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textMainLight,
+  },
+  languageChip: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  languageChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+  },
 });

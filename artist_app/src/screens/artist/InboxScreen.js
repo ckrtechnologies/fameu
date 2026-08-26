@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,6 +10,8 @@ import { format } from 'date-fns';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetInboxQuery } from '../../services/chatApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
@@ -23,6 +25,18 @@ export default function InboxScreen() {
   const { user } = useSelector((state) => state.auth);
   const conversations = useSelector(state => state.chat.conversations);
   
+  const {
+    scrollY,
+    onScroll,
+    headerPaddingVertical,
+    headerTitleSize,
+    subtitleHeight,
+    subtitleOpacity,
+    avatarSize,
+    avatarRadius,
+    headerElevation,
+  } = useShrinkableHeader();
+
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredConversations = useMemo(() => {
@@ -104,40 +118,64 @@ export default function InboxScreen() {
   }
 
   return (
-    <SafeAreaView style={[globalStyles.container, { backgroundColor: colors.backgroundLight }]} edges={['bottom', 'left', 'right']}>
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search chats..."
-          placeholderTextColor={colors.textMutedLight}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCapitalize="none"
-          autoCorrect={false}
+    <SafeAreaView style={[globalStyles.container, { backgroundColor: colors.backgroundLight }]} edges={['left', 'right']}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ShrinkableHeader 
+          title="Messages"
+          subtitle={`${filteredConversations?.length || 0} active conversations`}
+          avatarUrl={user?.avatar_url}
+          avatarText={user?.full_name?.charAt(0) || 'U'}
+          onAvatarPress={() => navigation.openDrawer()}
+          headerPaddingVertical={headerPaddingVertical}
+          headerTitleSize={headerTitleSize}
+          subtitleHeight={subtitleHeight}
+          subtitleOpacity={subtitleOpacity}
+          avatarSize={avatarSize}
+          avatarRadius={avatarRadius}
+          headerElevation={headerElevation}
+          bottomComponent={
+            <View style={[styles.searchContainer, { marginHorizontal: 0, marginTop: 4 }]}>
+              <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search chats..."
+                placeholderTextColor={colors.textMutedLight}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                  <Icon name="close-circle" size={20} color={colors.textMutedLight} />
+                </TouchableOpacity>
+              )}
+            </View>
+          }
         />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-            <Icon name="close-circle" size={20} color={colors.textMutedLight} />
-          </TouchableOpacity>
-        )}
-      </View>
-      <FlatList
-        data={filteredConversations}
-        keyExtractor={(item) => item.id}
-        renderItem={renderConversationItem}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
-        }
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Icon name={searchQuery ? "search-outline" : "chatbubbles-outline"} size={48} color={colors.borderLight} />
-            <Typography variant="h3" style={styles.emptyTitle}>{searchQuery ? "No Results" : "No Messages"}</Typography>
-            <Typography variant="body" style={styles.emptyText}>{searchQuery ? "No chats match your search." : "You haven't started any conversations yet."}</Typography>
-          </View>
-        )}
-      />
+
+        <FlatList
+          data={filteredConversations}
+          keyExtractor={(item) => item.id}
+          renderItem={renderConversationItem}
+          contentContainerStyle={styles.listContent}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />
+          }
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Icon name={searchQuery ? "search-outline" : "chatbubbles-outline"} size={48} color={colors.borderLight} />
+              <Typography variant="h3" style={styles.emptyTitle}>{searchQuery ? "No Results" : "No Messages"}</Typography>
+              <Typography variant="body" style={styles.emptyText}>{searchQuery ? "No chats match your search." : "You haven't started any conversations yet."}</Typography>
+            </View>
+          )}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -245,22 +283,24 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.borderLight,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingHorizontal: 10,
+    marginBottom: 2,
   },
   searchIcon: {
-    marginRight: spacing.s,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    ...typography.body,
-    fontSize: 16,
+    fontSize: 13.5,
     color: colors.textMainLight,
-    paddingVertical: spacing.xs,
+    paddingVertical: 0,
+    height: '100%',
   },
   clearButton: {
-    padding: spacing.xs,
+    padding: 2,
   },
 });
