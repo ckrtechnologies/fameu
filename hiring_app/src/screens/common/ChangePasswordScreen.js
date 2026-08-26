@@ -8,6 +8,8 @@ import { useChangePasswordMutation } from '../../services/authApi';
 import { useTheme } from '../../theme/ThemeProvider';
 import CustomButton from '../../components/forms/CustomButton';
 
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
 export default function ChangePasswordScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -51,7 +53,12 @@ export default function ChangePasswordScreen({ navigation }) {
         <Text style={styles.headerTitle}>Change Password</Text>
       </View>
 
-      <View style={styles.content}>
+      <KeyboardAwareScrollView 
+        contentContainerStyle={styles.content}
+        enableOnAndroid={true}
+        extraScrollHeight={40}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.formGroup}>
           <Text style={styles.label}>New Password *</Text>
           <TextInput
@@ -82,7 +89,7 @@ export default function ChangePasswordScreen({ navigation }) {
           isLoading={isLoading}
           style={{ marginTop: spacing.l }}
         />
-      </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
