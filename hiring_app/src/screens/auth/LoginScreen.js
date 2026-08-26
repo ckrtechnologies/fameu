@@ -40,8 +40,11 @@ const LoginScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('sendOtp error:', error);
-      const errMsg = error?.data?.error || error?.error || error?.message || JSON.stringify(error) || 'Failed to send OTP';
-      showError('Error', errMsg);
+      let errMsg = error?.data?.error || error?.data?.message || error?.error;
+      if (error?.status === 'FETCH_ERROR' || errMsg === 'TypeError: Network request failed') {
+        errMsg = 'Unable to connect to server. Please check backend server status.';
+      }
+      showError('Error', errMsg || 'Failed to send OTP. Please try again.');
     }
   };
 

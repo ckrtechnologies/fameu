@@ -38,7 +38,11 @@ const OtpScreen = ({ route, navigation }) => {
         }));
       }
     } catch (error) {
-      showError('', error?.data?.error || error?.message || 'Invalid OTP');
+      let errMsg = error?.data?.error || error?.data?.message || error?.error;
+      if (error?.status === 'FETCH_ERROR' || errMsg === 'TypeError: Network request failed') {
+        errMsg = 'Unable to connect to server. Please check backend server status.';
+      }
+      showError('', errMsg || 'Invalid OTP. Please try again.');
     }
   };
 
