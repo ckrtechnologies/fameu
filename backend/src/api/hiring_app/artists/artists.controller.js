@@ -23,27 +23,62 @@ const artistsController = {
         .eq('users.is_blacklisted', false);
 
       if (category) {
-        const cats = category.split(',').map(c => c.trim());
-        query = query.overlaps('categories', cats);
+        const rawCats = category.split(',').map(c => c.trim()).filter(Boolean);
+        const expandedCats = [...new Set(rawCats.flatMap(c => [
+          c,
+          c.toLowerCase(),
+          c.toUpperCase(),
+          c.charAt(0).toUpperCase() + c.slice(1).toLowerCase(),
+          c.replace(/[-_]/g, ' '),
+          c.replace(/\s+/g, '-'),
+          c.replace(/\s+/g, '_')
+        ]))];
+        query = query.overlaps('categories', expandedCats);
       }
       if (req.query.language) {
-        const langs = req.query.language.split(',').map(l => l.trim());
-        query = query.overlaps('languages', langs);
+        const rawLangs = req.query.language.split(',').map(l => l.trim()).filter(Boolean);
+        const expandedLangs = [...new Set(rawLangs.flatMap(l => [
+          l,
+          l.toLowerCase(),
+          l.toUpperCase(),
+          l.charAt(0).toUpperCase() + l.slice(1).toLowerCase()
+        ]))];
+        query = query.overlaps('languages', expandedLangs);
       }
       if (gender) query = query.eq('gender', gender);
       if (location) query = query.ilike('location', `%${location}%`);
       if (minAge) query = query.gte('age', minAge);
       if (maxAge) query = query.lte('age', maxAge);
 
-      // Simple keyword search across skills and bio if q is provided
-      if (q) {
-        query = query.or(`skills.ilike.%${q}%,bio.ilike.%${q}%`);
-      }
-
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      res.status(200).json({ success: true, data });
+
+      let results = data || [];
+      if (q && q.trim()) {
+        const queryTerm = q.trim().toLowerCase();
+        results = results.filter(item => {
+          const name = (item.users?.display_name || item.users?.name || item.full_name || '').toLowerCase();
+          const username = (item.users?.username || '').toLowerCase();
+          const email = (item.users?.email || '').toLowerCase();
+          const bio = (item.bio || '').toLowerCase();
+          const loc = (item.location || item.city || '').toLowerCase();
+          const skills = Array.isArray(item.skills) ? item.skills.join(' ').toLowerCase() : (item.skills || '').toLowerCase();
+          const categories = Array.isArray(item.categories) ? item.categories.join(' ').toLowerCase() : (item.categories || '').toLowerCase();
+          const languages = Array.isArray(item.languages) ? item.languages.join(' ').toLowerCase() : (item.languages || '').toLowerCase();
+          
+          return name.includes(queryTerm) ||
+                 username.includes(queryTerm) ||
+                 email.includes(queryTerm) ||
+                 bio.includes(queryTerm) ||
+                 loc.includes(queryTerm) ||
+                 skills.includes(queryTerm) ||
+                 categories.includes(queryTerm) ||
+                 languages.includes(queryTerm);
+        });
+      }
+
+      res.status(200).json({ success: true, data: results });
     } catch (error) {
       next(error);
     }

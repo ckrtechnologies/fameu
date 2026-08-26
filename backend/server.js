@@ -16,6 +16,7 @@ import connectionRoutes from "./src/api/connections/connections.routes.js";
 import professionRoutes from "./src/api/shared/professions/professions.routes.js";
 import commentsRoutes from "./src/api/comments/comments.routes.js";
 import bannerRoutes from "./src/api/shared/banner.routes.js";
+import proxyRoutes from "./src/api/shared/proxy.routes.js";
 import supportRoutes from "./src/api/shared/support.routes.js";
 import errorHandler from "./src/core/middlewares/errorHandler.js";
 import socketManager from "./src/sockets/socketManager.js";
@@ -66,6 +67,7 @@ app.use('/api/professions', professionRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/proxy', proxyRoutes);
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Fameu Backend is running' });

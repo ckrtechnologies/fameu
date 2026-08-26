@@ -25,14 +25,31 @@ class ArtistDiscoverController {
       if (company_type) query = query.eq('company_type', company_type);
       if (verification_status === 'Verified Only') query = query.eq('is_verified', true);
 
-      if (q) {
-        query = query.or(`company_name.ilike.%${q}%,description.ilike.%${q}%`);
-      }
-
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      res.status(200).json({ success: true, data });
+
+      let results = data || [];
+      if (q && q.trim()) {
+        const queryTerm = q.trim().toLowerCase();
+        results = results.filter(item => {
+          const compName = (item.company_name || '').toLowerCase();
+          const desc = (item.description || '').toLowerCase();
+          const city = (item.city || item.location || '').toLowerCase();
+          const compType = (item.company_type || '').toLowerCase();
+          const name = (item.users?.display_name || item.users?.name || '').toLowerCase();
+          const username = (item.users?.username || '').toLowerCase();
+
+          return compName.includes(queryTerm) ||
+                 desc.includes(queryTerm) ||
+                 city.includes(queryTerm) ||
+                 compType.includes(queryTerm) ||
+                 name.includes(queryTerm) ||
+                 username.includes(queryTerm);
+        });
+      }
+
+      res.status(200).json({ success: true, data: results });
     } catch (err) {
       next(err);
     }
