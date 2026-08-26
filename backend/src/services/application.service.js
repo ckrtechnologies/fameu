@@ -90,7 +90,7 @@ class ApplicationService {
 
     const { data, error } = await supabase
       .from('applications')
-      .select('*, auditions(title, venue_address, audition_date, hiring_profiles(company_name, logo_url, users(username)))')
+      .select('*, auditions(*, hiring_profiles(company_name, logo_url, users(username)))')
       .eq('artist_id', profile.id)
       .order('created_at', { ascending: false });
 
