@@ -173,7 +173,7 @@ class AuditionService {
     }
 
     // Explicit Category Filter (Case-insensitive & Tokenized)
-    const hasExplicitCategory = filters.category && filters.category !== 'All' && filters.category !== 'Any' && filters.filter !== 'relevant';
+    const hasExplicitCategory = Boolean(filters.category && filters.category !== 'All' && filters.category !== 'Any');
     if (hasExplicitCategory) {
       let catArray = [];
       filters.category.split(',').forEach(c => {
