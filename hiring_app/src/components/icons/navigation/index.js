@@ -206,3 +206,9 @@ export function MessagesTabIcon({ size = 26, focused = false, activeColor = '#02
     </IconBase>
   );
 }
+
+// Hiring App Tab Aliases
+export const MyAuditionsTabIcon = AuditionsTabIcon;
+export const ApplicantsTabIcon = ApplicationsTabIcon;
+export const CompanyTabIcon = ProfileTabIcon;
+

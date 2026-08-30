@@ -61,15 +61,22 @@ export const adminApi = apiSlice.injectEndpoints({
     }),
 
     // KYC
+    getKYCDocuments: builder.query({
+      query: (params = {}) => ({
+        url: '/admin_panel/kyc',
+        params,
+      }),
+      providesTags: ['KYC'],
+    }),
     getPendingKYC: builder.query({
       query: () => '/admin_panel/kyc/pending',
       providesTags: ['KYC'],
     }),
     updateKYCStatus: builder.mutation({
-      query: ({ id, status }) => ({
+      query: ({ id, status, rejection_reason }) => ({
         url: `/admin_panel/kyc/${id}/status`,
         method: 'PUT',
-        body: { status },
+        body: { status, rejection_reason },
       }),
       invalidatesTags: ['KYC'],
     }),
@@ -221,6 +228,7 @@ export const {
   useDeleteUserMutation,
   useBlacklistUserMutation,
   useRemoveBlacklistMutation,
+  useGetKYCDocumentsQuery,
   useGetPendingKYCQuery,
   useUpdateKYCStatusMutation,
   useGetAuditionsQuery,

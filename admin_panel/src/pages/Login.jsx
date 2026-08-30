@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLoginMutation } from '../store/api/adminEndpoints';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../store/slices/authSlice';
@@ -12,6 +12,10 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [login, { isLoading: loading }] = useLoginMutation();
+
+  useEffect(() => {
+    document.title = 'Sign In | FameU Admin';
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();

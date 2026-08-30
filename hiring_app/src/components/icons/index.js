@@ -38,6 +38,21 @@ export * from './brands';
 // Profession & Category Specific 3D Icons
 export * from './professions';
 
+// Hiring Dashboard 3D Solid Icons
+export * from './dashboard';
+
+// Project Types 3D Solid Icons
+export * from './project_types';
+
+// Form Selection 3D Solid Icons
+export * from './forms';
+
+// Languages Script Badge Solid Icons
+export * from './languages';
+
+// Wizard Step & Listing Type 3D Icons
+export * from './wizard';
+
 import {
   ArrowBackIcon,
   ShareIcon,

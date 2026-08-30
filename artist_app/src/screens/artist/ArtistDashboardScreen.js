@@ -265,19 +265,141 @@ export default function ArtistDashboardScreen() {
   const getProfileChecklist = (p) => {
     const data = p || {};
     return [
-      { id: 'full_name', title: 'Full Name', hint: 'Professional screen / legal name', iconName: 'person', completed: !!(data.full_name || user?.full_name), weight: '+15%' },
-      { id: 'categories', title: 'Artistic Categories', hint: 'Select Actor, Model, Singer, etc.', iconName: 'briefcase', completed: Array.isArray(data.categories) && data.categories.length > 0, weight: '+20%' },
-      { id: 'photos', title: 'Headshots & Photos', hint: 'Upload portfolio photos', iconName: 'camera', completed: (Array.isArray(data.photo_urls) && data.photo_urls.length > 0) || !!data.avatar_url || !!user?.avatar_url, weight: '+20%' },
-      { id: 'bio', title: 'About / Bio', hint: 'Introduce yourself to recruiters', iconName: 'document-attach-outline', completed: !!data.bio && data.bio.trim().length > 0, weight: '+15%' },
-      { id: 'city', title: 'Base City', hint: 'City where you are currently located', iconName: 'city', completed: !!data.city, weight: '+10%' },
-      { id: 'age_gender', title: 'Age & Gender', hint: 'Required for casting filters', iconName: 'gender', completed: !!data.age && !!data.gender, weight: '+10%' },
-      { id: 'languages', title: 'Languages Known', hint: 'Select languages you speak', iconName: 'languages', completed: Array.isArray(data.languages) && data.languages.length > 0, weight: '+5%' },
-      { id: 'height_weight', title: 'Physical Stats', hint: 'Height & Weight for screen tests', iconName: 'height', completed: !!data.height || !!data.weight, weight: '+5%' },
-      { id: 'availability', title: 'Availability & Dates', hint: 'Full-time, Part-time, Dates', iconName: 'availability_type', completed: !!data.availability_type || !!data.available_dates, weight: 'Bonus' },
-      { id: 'skills', title: 'Special Skills', hint: 'Voiceover, Martial Arts, Dancing', iconName: 'skills', completed: Array.isArray(data.skills) && data.skills.length > 0, weight: 'Bonus' },
-      { id: 'social_links', title: 'Social Media Profiles', hint: 'Instagram, YouTube links', iconName: 'logo-instagram', completed: !!data.social_links && Object.values(typeof data.social_links === 'string' ? JSON.parse(data.social_links || '{}') : data.social_links).some(Boolean), weight: 'Bonus' },
+      { 
+        id: 'full_name', 
+        emoji: '👤', 
+        title: 'Full Name', 
+        hint: 'Screen / legal name', 
+        iconName: 'person', 
+        completed: !!(data.full_name || user?.full_name), 
+        weight: '+15%',
+        color: '#3B82F6',
+        bg: '#EFF6FF',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'categories', 
+        emoji: '🎭', 
+        title: 'Artistic Categories', 
+        hint: 'Actor, Model, Singer, Dancer', 
+        iconName: 'briefcase', 
+        completed: Array.isArray(data.categories) && data.categories.length > 0, 
+        weight: '+20%',
+        color: '#8B5CF6',
+        bg: '#F5F3FF',
+        targetScreen: (Array.isArray(data.categories) && data.categories.length > 0) ? 'EditProfile' : 'ArtistCategory',
+      },
+      { 
+        id: 'photos', 
+        emoji: '📸', 
+        title: 'Headshots & Photos', 
+        hint: 'Portfolio look photos', 
+        iconName: 'camera', 
+        completed: (Array.isArray(data.photo_urls) && data.photo_urls.length > 0) || !!data.avatar_url || !!user?.avatar_url, 
+        weight: '+20%',
+        color: '#EC4899',
+        bg: '#FDF2F8',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'bio', 
+        emoji: '📝', 
+        title: 'About / Bio', 
+        hint: 'Introduce your career to recruiters', 
+        iconName: 'document-attach-outline', 
+        completed: !!data.bio && data.bio.trim().length > 0, 
+        weight: '+15%',
+        color: '#F59E0B',
+        bg: '#FFFBEB',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'city', 
+        emoji: '📍', 
+        title: 'Base City', 
+        hint: 'Current shooting location', 
+        iconName: 'city', 
+        completed: !!data.city, 
+        weight: '+10%',
+        color: '#10B981',
+        bg: '#ECFDF5',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'age_gender', 
+        emoji: '🚻', 
+        title: 'Age & Gender', 
+        hint: 'Character casting filters', 
+        iconName: 'gender', 
+        completed: !!data.age && !!data.gender, 
+        weight: '+10%',
+        color: '#06B6D4',
+        bg: '#ECFEFF',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'languages', 
+        emoji: '🌐', 
+        title: 'Languages Known', 
+        hint: 'Fluent spoken languages', 
+        iconName: 'languages', 
+        completed: Array.isArray(data.languages) && data.languages.length > 0, 
+        weight: '+5%',
+        color: '#6366F1',
+        bg: '#EEF2FF',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'height_weight', 
+        emoji: '📏', 
+        title: 'Physical Stats', 
+        hint: 'Height & weight for roles', 
+        iconName: 'height', 
+        completed: !!data.height || !!data.weight, 
+        weight: '+5%',
+        color: '#F97316',
+        bg: '#FFF7ED',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'availability', 
+        emoji: '📅', 
+        title: 'Availability & Dates', 
+        hint: 'Full-time / shoot availability', 
+        iconName: 'availability_type', 
+        completed: !!data.availability_type || !!data.available_dates, 
+        weight: 'Bonus',
+        color: '#14B8A6',
+        bg: '#F0FDFA',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'skills', 
+        emoji: '⭐', 
+        title: 'Special Skills', 
+        hint: 'Voiceover, Martial Arts, Dance', 
+        iconName: 'skills', 
+        completed: Array.isArray(data.skills) && data.skills.length > 0, 
+        weight: 'Bonus',
+        color: '#EAB308',
+        bg: '#FEFCE8',
+        targetScreen: 'EditProfile',
+      },
+      { 
+        id: 'social_links', 
+        emoji: '📱', 
+        title: 'Social Profiles', 
+        hint: 'Instagram & YouTube work links', 
+        iconName: 'logo-instagram', 
+        completed: !!data.social_links && Object.values(typeof data.social_links === 'string' ? JSON.parse(data.social_links || '{}') : data.social_links).some(Boolean), 
+        weight: 'Bonus',
+        color: '#D946EF',
+        bg: '#FDF4FF',
+        targetScreen: 'EditProfile',
+      },
     ];
   };
+
 
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -515,7 +637,7 @@ export default function ArtistDashboardScreen() {
   const renderBannerCarousel = () => {
     if (!banners || banners.length === 0) return null;
     return (
-      <View style={{ marginTop: 16, marginBottom: 8 }}>
+      <View style={{ marginTop: 16, marginBottom: 8, marginHorizontal: -spacing.l }}>
         <FlatList
           data={banners}
           horizontal
@@ -541,9 +663,12 @@ export default function ArtistDashboardScreen() {
 
   const renderProfileBanner = () => {
     if (profileCompletePct >= 100) return null;
+    const checklistItems = getProfileChecklist(profile);
+    const pendingItems = checklistItems.filter(i => !i.completed);
+
     return (
-      <>
-        <TouchableOpacity style={styles.profileBanner} activeOpacity={0.85} onPress={() => setIsChecklistVisible(true)}>
+      <View style={styles.profileSectionWrapper}>
+        <TouchableOpacity style={styles.profileBanner} activeOpacity={0.88} onPress={() => setIsChecklistVisible(true)}>
           <View style={styles.profileBannerTopRow}>
             <View style={styles.profileRocketBadge}>
               <ProfileRocketIcon size={38} />
@@ -558,7 +683,9 @@ export default function ArtistDashboardScreen() {
                 </View>
               </View>
               <Text style={styles.profileBannerSub} numberOfLines={1}>
-                Complete setup to get 2x more recruiter callbacks
+                {profileCompletePct === 100
+                  ? '🎉 Profile 100% complete! Ready for top recruiters.'
+                  : `Complete ${pendingItems.length} more item${pendingItems.length > 1 ? 's' : ''} to get 2x more callbacks`}
               </Text>
             </View>
           </View>
@@ -567,11 +694,72 @@ export default function ArtistDashboardScreen() {
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${profileCompletePct}%`, backgroundColor: colors.primary }]} />
             </View>
-            <View style={styles.viewChecklistPill}>
+            <TouchableOpacity 
+              style={styles.viewChecklistPill} 
+              onPress={() => setIsChecklistVisible(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Text style={[styles.viewChecklistText, { color: colors.primary }]}>Checklist →</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
+
+        {/* Horizontal Pending Task Cards with Emojis */}
+        {profileCompletePct < 100 && (
+          <View style={styles.pendingCardsContainer}>
+            <Text style={styles.pendingCardsHeader}>WHAT'S PENDING TO COMPLETE</Text>
+            <FlatList
+              data={checklistItems}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={item => item.id}
+              contentContainerStyle={{ paddingRight: spacing.s }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (item.targetScreen === 'ArtistCategory') {
+                      navigation.navigate('ArtistCategory');
+                    } else {
+                      navigation.navigate('EditProfile');
+                    }
+                  }}
+                  style={[
+                    styles.pendingCard,
+                    {
+                      borderColor: item.completed ? '#BBF7D0' : colors.borderLight,
+                      backgroundColor: item.completed ? '#F0FDF4' : colors.surfaceLight,
+                    }
+                  ]}
+                >
+                  <View style={styles.pendingCardTop}>
+                    <View style={[styles.pendingEmojiBadge, { backgroundColor: item.bg }]}>
+                      <Text style={styles.pendingEmojiText}>{item.emoji}</Text>
+                    </View>
+                    <View style={[styles.pendingWeightPill, { backgroundColor: item.completed ? '#DCFCE7' : item.bg }]}>
+                      <Text style={[styles.pendingWeightText, { color: item.completed ? '#16A34A' : item.color }]}>
+                        {item.completed ? '✓ Done' : item.weight}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.pendingCardTitle, { color: colors.textMainLight }]} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.pendingCardHint} numberOfLines={1}>
+                    {item.hint}
+                  </Text>
+
+                  <View style={[styles.pendingCardBtn, { backgroundColor: item.completed ? '#DCFCE7' : item.color }]}>
+                    <Text style={[styles.pendingCardBtnText, { color: item.completed ? '#16A34A' : '#FFFFFF' }]}>
+                      {item.completed ? 'Completed' : '➕ Add Now'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
 
         {/* Profile Checklist Modal */}
         <Modal
@@ -598,18 +786,18 @@ export default function ArtistDashboardScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={[styles.progressBarBg, { marginTop: 12, marginBottom: 16 }]}>
+              <View style={[styles.progressBarBg, { marginTop: 14, marginBottom: 16, marginRight: 0 }]}>
                 <View style={[styles.progressBarFill, { width: `${profileCompletePct}%` }]} />
               </View>
 
               <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.48 }} showsVerticalScrollIndicator={false}>
-                {getProfileChecklist(profile).map((item) => (
+                {checklistItems.map((item) => (
                   <TouchableOpacity 
                     key={item.id} 
                     activeOpacity={0.7}
                     onPress={() => {
                       setIsChecklistVisible(false);
-                      if (item.id === 'categories' && (!profile?.categories || profile.categories.length === 0)) {
+                      if (item.targetScreen === 'ArtistCategory') {
                         navigation.navigate('ArtistCategory');
                       } else {
                         navigation.navigate('EditProfile');
@@ -624,10 +812,10 @@ export default function ArtistDashboardScreen() {
                     ]}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                      <View style={styles.checklistIconContainer}>
-                        <AppIcon name={item.iconName} size={24} />
+                      <View style={[styles.checklistEmojiBadge, { backgroundColor: item.bg }]}>
+                        <Text style={styles.pendingEmojiText}>{item.emoji}</Text>
                       </View>
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, marginLeft: 10 }}>
                         <Text style={[styles.checklistItemTitle, { color: colors.textMainLight, textDecorationLine: item.completed ? 'line-through' : 'none' }]}>
                           {item.title}
                         </Text>
@@ -636,8 +824,8 @@ export default function ArtistDashboardScreen() {
                         </Text>
                       </View>
                     </View>
-                    <View style={[styles.checklistWeightBadge, { backgroundColor: item.completed ? '#DCFCE7' : 'rgba(59, 130, 246, 0.1)' }]}>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: item.completed ? "#16A34A" : colors.primary }}>
+                    <View style={[styles.checklistWeightBadge, { backgroundColor: item.completed ? '#DCFCE7' : item.bg }]}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: item.completed ? "#16A34A" : item.color }}>
                         {item.completed ? '✓ Done' : item.weight}
                       </Text>
                     </View>
@@ -658,9 +846,10 @@ export default function ArtistDashboardScreen() {
             </View>
           </View>
         </Modal>
-      </>
+      </View>
     );
   };
+
 
   const renderOverviewStats = () => {
     const totalApps = myApplications.length;
@@ -1312,10 +1501,11 @@ export default function ArtistDashboardScreen() {
 const getStyles = (colors) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.backgroundLight },
   container: { flex: 1 },
+  scrollContent: { paddingHorizontal: spacing.l },
   loadingSafeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundLight },
   
   // 1. Header
-  stickyHeader: { paddingHorizontal: spacing.xl, zIndex: 10 },
+  stickyHeader: { paddingHorizontal: spacing.l, zIndex: 10 },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerLeftGroup: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   greetingText: { color: colors.textMutedLight, fontSize: 11, marginBottom: 1 },
@@ -1324,8 +1514,22 @@ const getStyles = (colors) => StyleSheet.create({
   iconButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginLeft: 10, borderWidth: 1, borderColor: colors.borderLight },
   notificationBadge: { position: 'absolute', top: 9, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.error, borderWidth: 1, borderColor: '#fff' },
 
-  // 2. Banner
-  profileBanner: { backgroundColor: colors.surfaceLight, marginHorizontal: spacing.xl, borderRadius: 18, padding: 14, marginBottom: spacing.l, borderWidth: 1, borderColor: colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  // 2. Banner & Pending Cards
+  profileSectionWrapper: {
+    marginBottom: spacing.l,
+  },
+  profileBanner: { 
+    backgroundColor: colors.surfaceLight, 
+    borderRadius: 18, 
+    padding: 14, 
+    borderWidth: 1, 
+    borderColor: colors.borderLight, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.04, 
+    shadowRadius: 6, 
+    elevation: 2 
+  },
   profileBannerTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   profileRocketBadge: { width: 52, height: 52, borderRadius: 16, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#DBEAFE', justifyContent: 'center', alignItems: 'center' },
   profileBannerTitle: { fontSize: 15, fontWeight: '700', color: colors.textMainLight },
@@ -1338,27 +1542,104 @@ const getStyles = (colors) => StyleSheet.create({
   viewChecklistPill: { paddingHorizontal: 4, paddingVertical: 2 },
   viewChecklistText: { fontSize: 12, fontWeight: '700' },
 
+  // Pending Cards Carousel
+  pendingCardsContainer: {
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  pendingCardsHeader: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: colors.textMuted,
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    fontFamily: typography.fontFamily,
+  },
+  pendingCard: {
+    width: 140,
+    backgroundColor: colors.surfaceLight,
+    padding: 10,
+    borderRadius: 16,
+    marginRight: 10,
+    borderWidth: 1.2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  pendingCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  pendingEmojiBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pendingEmojiText: {
+    fontSize: 17,
+  },
+  pendingWeightPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  pendingWeightText: {
+    fontSize: 10,
+    fontWeight: '800',
+    fontFamily: typography.fontFamily,
+  },
+  pendingCardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+    fontFamily: typography.fontFamily,
+  },
+  pendingCardHint: {
+    fontSize: 10.5,
+    color: colors.textMutedLight,
+    fontWeight: '500',
+    marginBottom: 8,
+    fontFamily: typography.fontFamily,
+  },
+  pendingCardBtn: {
+    paddingVertical: 5,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  pendingCardBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    fontFamily: typography.fontFamily,
+  },
+
   // 3. Stats
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.l },
+  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: -4, marginBottom: spacing.l },
   statCard: { flex: 1, backgroundColor: colors.surfaceLight, paddingVertical: 14, paddingHorizontal: 6, borderRadius: 18, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 1 },
   statIconBadge: { width: 46, height: 46, borderRadius: 14, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   statNumber: { fontSize: 17, fontWeight: 'bold', marginBottom: 2 },
   statLabel: { fontSize: 11, fontWeight: '500' },
 
   // 4. Quick Actions
-  quickActionsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginTop: 4, marginBottom: spacing.xl },
+  quickActionsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: -4, marginTop: 4, marginBottom: spacing.xl },
   actionBtn: { flex: 1, alignItems: 'center', marginHorizontal: 4 },
   actionBtnIcon: { width: 58, height: 58, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 5, elevation: 3 },
   actionBtnText: { fontSize: 12, color: colors.textMainLight, textAlign: 'center', fontWeight: '600', letterSpacing: 0.2 },
 
   // Shared Sections
-  sectionContainer: { paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
+  sectionContainer: { marginBottom: spacing.xl },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.m },
   sectionTitle: { fontWeight: 'bold', color: colors.textMainLight },
   seeAllText: { color: colors.primary, fontWeight: '600' },
   listContent: { paddingRight: spacing.m },
   emptyState: { padding: spacing.l, backgroundColor: colors.surfaceLight, borderRadius: 12, alignItems: 'center' },
   emptyStateText: { color: colors.textMutedLight },
+
 
   // 5. Applications
   applicationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: colors.borderLight },
@@ -1423,7 +1704,8 @@ const getStyles = (colors) => StyleSheet.create({
   checklistCloseBtn: { padding: 4 },
   checklistItemRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 14, marginBottom: 8, borderWidth: 1 },
   checklistItemTitle: { fontSize: 14, fontWeight: '600' },
-  checklistIconContainer: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.surfaceDark + '10', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  checklistEmojiBadge: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   checklistWeightBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   checklistActionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, marginTop: 16 }
 });
+

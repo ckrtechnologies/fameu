@@ -19,32 +19,48 @@ class AuditionService {
 
     // 2. Insert Audition
     const { 
-      project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, 
-      gender_req, specific_start_date, specific_end_date, mode, video_link,
-      languages, skills, vacancies, is_audition_required, compensation_frequency, tags,
-      ...restData 
+      title, role_description, character_req, category, gender, gender_req,
+      age_min, age_max, audition_type, venue_address, lat, lng,
+      audition_date, date, audition_time, compensation, budget,
+      thumbnail_url, mode, status, is_live,
+      ...extraProps 
     } = auditionData;
     
-    // Validate city if present
+    // Validate city if present in extraProps or auditionData
+    const city = extraProps.city || auditionData.city;
     if (city && !INDIAN_CITIES.includes(city)) {
       throw new Error(`Invalid city: ${city}`);
     }
 
     const extraMeta = JSON.stringify({
-      project_type, duration_type, city, description_pdf_url, budget, gender_req, 
-      specific_start_date, specific_end_date, video_link,
-      languages, skills, vacancies, is_audition_required, compensation_frequency, tags
+      budget: budget || compensation,
+      gender_req: gender_req || gender,
+      city,
+      ...extraProps
     });
 
     const payload = {
       hiring_id: hiringId,
-      ...restData,
-      compensation: budget || restData.compensation,
+      title,
+      role_description: role_description || character_req || '',
+      character_req: character_req || role_description || '',
+      category: Array.isArray(category) ? category.join(', ') : (category || 'Actor'),
+      gender: gender || gender_req || 'Any',
+      age_min: age_min !== undefined && age_min !== null ? Number(age_min) : 0,
+      age_max: age_max !== undefined && age_max !== null ? Number(age_max) : 75,
+      audition_type: audition_type || 'walkin',
+      venue_address: venue_address || extraProps.walk_in_venue || null,
+      lat: lat ? parseFloat(lat) : null,
+      lng: lng ? parseFloat(lng) : null,
+      audition_date: audition_date || date || null,
+      date: date || audition_date || null,
+      audition_time: audition_time || null,
+      compensation: budget || compensation || null,
       instructions: extraMeta,
-      thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
+      thumbnail_url: thumbnail_url || null,
       mode: mode || 'Offline',
-      status: 'active',
-      is_live: true
+      status: status || 'active',
+      is_live: is_live !== undefined ? is_live : true
     };
 
     const { data, error } = await supabase
@@ -66,27 +82,45 @@ class AuditionService {
    */
   async updateAudition(hiringId, auditionId, auditionData) {
     const { 
-      project_type, duration_type, city, description_pdf_url, thumbnail_url, budget, 
-      gender_req, specific_start_date, specific_end_date, mode, video_link,
-      languages, skills, vacancies, is_audition_required, compensation_frequency, tags,
-      ...restData 
+      title, role_description, character_req, category, gender, gender_req,
+      age_min, age_max, audition_type, venue_address, lat, lng,
+      audition_date, date, audition_time, compensation, budget,
+      thumbnail_url, mode, status, is_live,
+      ...extraProps 
     } = auditionData;
 
+    const city = extraProps.city || auditionData.city;
     const extraMeta = JSON.stringify({
-      project_type, duration_type, city, description_pdf_url, budget, gender_req, 
-      specific_start_date, specific_end_date, video_link,
-      languages, skills, vacancies, is_audition_required, compensation_frequency, tags
+      budget: budget || compensation,
+      gender_req: gender_req || gender,
+      city,
+      ...extraProps
     });
     
     const payload = {
-      ...restData,
       instructions: extraMeta,
-      thumbnail_url: thumbnail_url || restData.thumbnail_url || null,
-      mode: mode || undefined,
       updated_at: new Date().toISOString(),
-      is_live: true
     };
-    if (budget) payload.compensation = budget;
+
+    if (title !== undefined) payload.title = title;
+    if (role_description !== undefined) payload.role_description = role_description;
+    if (character_req !== undefined) payload.character_req = character_req;
+    if (category !== undefined) payload.category = Array.isArray(category) ? category.join(', ') : category;
+    if (gender !== undefined || gender_req !== undefined) payload.gender = gender || gender_req;
+    if (age_min !== undefined) payload.age_min = Number(age_min);
+    if (age_max !== undefined) payload.age_max = Number(age_max);
+    if (audition_type !== undefined) payload.audition_type = audition_type;
+    if (venue_address !== undefined) payload.venue_address = venue_address;
+    if (lat !== undefined) payload.lat = parseFloat(lat);
+    if (lng !== undefined) payload.lng = parseFloat(lng);
+    if (audition_date !== undefined) payload.audition_date = audition_date;
+    if (date !== undefined) payload.date = date;
+    if (audition_time !== undefined) payload.audition_time = audition_time;
+    if (budget !== undefined || compensation !== undefined) payload.compensation = budget || compensation;
+    if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
+    if (mode !== undefined) payload.mode = mode;
+    if (status !== undefined) payload.status = status;
+    if (is_live !== undefined) payload.is_live = is_live;
 
     const { data, error } = await supabase
       .from('auditions')

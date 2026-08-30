@@ -62,13 +62,35 @@ const requireAdmin = (req, res, next) => {
 };
 router.use(requireAdmin);
 
+// Fetch All / Filtered KYC Documents
+router.get('/kyc', async (req, res) => {
+  try {
+    const { status } = req.query;
+    let query = supabase
+      .from('verification_documents')
+      .select('*, hiring_profiles(*, users(id, email, mobile, username, display_name, role))')
+      .order('updated_at', { ascending: false });
+      
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Fetch Pending KYC Documents
 router.get('/kyc/pending', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('verification_documents')
-      .select('*, hiring_profiles(company_name)')
-      .eq('status', 'pending');
+      .select('*, hiring_profiles(*, users(id, email, mobile, username, display_name, role))')
+      .eq('status', 'pending')
+      .order('updated_at', { ascending: false });
       
     if (error) throw error;
     res.json({ success: true, data });
@@ -83,13 +105,35 @@ router.put('/kyc/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     
-    await supabase.from('verification_documents').update({ status }).eq('id', id);
+    const updatePayload = { 
+      status, 
+      updated_at: new Date().toISOString() 
+    };
+    
+    const { error: updateErr } = await supabase
+      .from('verification_documents')
+      .update(updatePayload)
+      .eq('id', id);
+      
+    if (updateErr) throw updateErr;
     
     // Fetch hiring_id to update profile too
-    const { data: doc } = await supabase.from('verification_documents').select('hiring_id').eq('id', id).single();
-    if (doc) {
+    const { data: doc } = await supabase
+      .from('verification_documents')
+      .select('hiring_id')
+      .eq('id', id)
+      .single();
+      
+    if (doc?.hiring_id) {
       const isVerified = status === 'approved';
-      await supabase.from('hiring_profiles').update({ verification_status: status, is_verified: isVerified }).eq('id', doc.hiring_id);
+      await supabase
+        .from('hiring_profiles')
+        .update({ 
+          verification_status: status, 
+          is_verified: isVerified,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', doc.hiring_id);
     }
     
     res.json({ success: true });
@@ -221,15 +265,23 @@ router.get('/conversations/:id/messages', async (req, res) => {
 router.get('/analytics', async (req, res) => {
   try {
     const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+    const { count: artistsCount } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'artist');
+    const { count: hiringCount } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'hiring');
     const { count: auditionsCount } = await supabase.from('auditions').select('*', { count: 'exact', head: true }).eq('status', 'active');
     const { count: applicationsCount } = await supabase.from('applications').select('*', { count: 'exact', head: true });
+    const { count: pendingKycCount } = await supabase.from('verification_documents').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+    const { count: pendingFraudCount } = await supabase.from('fraud_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending');
     
     res.json({ 
       success: true, 
       data: { 
-        totalUsers: usersCount || 0, 
+        totalUsers: usersCount || 0,
+        totalArtists: artistsCount || 0,
+        totalHiring: hiringCount || 0,
         activeAuditions: auditionsCount || 0, 
-        totalApplications: applicationsCount || 0
+        totalApplications: applicationsCount || 0,
+        pendingKYC: pendingKycCount || 0,
+        pendingFraud: pendingFraudCount || 0
       } 
     });
   } catch (error) {

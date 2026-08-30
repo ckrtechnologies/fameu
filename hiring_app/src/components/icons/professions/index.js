@@ -268,7 +268,11 @@ export function ProfessionCategoryIcon({ categoryName = '', size = 24, style, ..
     norm.includes('paper') ||
     norm.includes('graff') ||
     norm.includes('micro') ||
-    norm.includes('portrait')
+    norm.includes('portrait') ||
+    norm.includes('sketch') ||
+    norm.includes('illustrat') ||
+    norm.includes('visual') ||
+    norm.includes('graphic')
   ) {
     return <VisualArtsProfessionIcon size={size} style={style} {...props} />;
   }
@@ -282,7 +286,9 @@ export function ProfessionCategoryIcon({ categoryName = '', size = 24, style, ..
     norm.includes('comedian') ||
     norm.includes('stunt') ||
     norm.includes('fight') ||
-    norm.includes('magic')
+    norm.includes('magic') ||
+    norm.includes('drama') ||
+    norm.includes('acting')
   ) {
     return <ActingTheatreProfessionIcon size={size} style={style} {...props} />;
   }
@@ -295,13 +301,15 @@ export function ProfessionCategoryIcon({ categoryName = '', size = 24, style, ..
     norm.includes('rap') ||
     norm.includes('music') ||
     norm.includes('sound') ||
-    norm.includes('band')
+    norm.includes('band') ||
+    norm.includes('audio') ||
+    norm.includes('instrument')
   ) {
     return <MusicSoundProfessionIcon size={size} style={style} {...props} />;
   }
 
   // Dance & Choreography
-  if (norm.includes('danc') || norm.includes('choreo') || norm.includes('group perform')) {
+  if (norm.includes('danc') || norm.includes('choreo') || norm.includes('group perform') || norm.includes('ballet') || norm.includes('hiphop')) {
     return <DanceProfessionIcon size={size} style={style} {...props} />;
   }
 
@@ -315,7 +323,12 @@ export function ProfessionCategoryIcon({ categoryName = '', size = 24, style, ..
     norm.includes('edit') ||
     norm.includes('art director') ||
     norm.includes('publicity') ||
-    norm.includes('set design')
+    norm.includes('set design') ||
+    norm.includes('film') ||
+    norm.includes('movie') ||
+    norm.includes('producer') ||
+    norm.includes('production') ||
+    norm.includes('advertis')
   ) {
     return <CinemaDOPProfessionIcon size={size} style={style} {...props} />;
   }
@@ -327,7 +340,10 @@ export function ProfessionCategoryIcon({ categoryName = '', size = 24, style, ..
     norm.includes('costume') ||
     norm.includes('stylist') ||
     norm.includes('makeup') ||
-    norm.includes('tattoo')
+    norm.includes('tattoo') ||
+    norm.includes('beauty') ||
+    norm.includes('wardrobe') ||
+    norm.includes('hair')
   ) {
     return <FashionStylingProfessionIcon size={size} style={style} {...props} />;
   }
@@ -341,13 +357,24 @@ export function ProfessionCategoryIcon({ categoryName = '', size = 24, style, ..
     norm.includes('rj') ||
     norm.includes('voice') ||
     norm.includes('news') ||
-    norm.includes('vlog')
+    norm.includes('vlog') ||
+    norm.includes('radio') ||
+    norm.includes('podcast') ||
+    norm.includes('presenter')
   ) {
     return <BroadcastingMediaProfessionIcon size={size} style={style} {...props} />;
   }
 
   // Writing & Literature
-  if (norm.includes('writ') || norm.includes('poet') || norm.includes('lyric')) {
+  if (
+    norm.includes('writ') ||
+    norm.includes('poet') ||
+    norm.includes('lyric') ||
+    norm.includes('script') ||
+    norm.includes('author') ||
+    norm.includes('screenplay') ||
+    norm.includes('dialogue')
+  ) {
     return <WritingLiteratureProfessionIcon size={size} style={style} {...props} />;
   }
 
