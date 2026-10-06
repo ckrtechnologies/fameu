@@ -1,17 +1,17 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  Alert, 
-  Modal, 
-  FlatList, 
-  Animated, 
-  Easing, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  FlatList,
+  Animated,
+  Easing,
   Platform,
   ScrollView,
   Dimensions
@@ -33,17 +33,51 @@ import { useCreateAuditionMutation, useUpdateAuditionMutation } from '../../serv
 import { useGetProfessionsQuery } from '../../services/profileApi';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ProfessionCategoryIcon } from '../../components/icons/professions';
-import { 
-  StepBasicInfoIcon, 
-  StepRoleCriteriaIcon, 
-  StepBudgetTermsIcon, 
+import {
+  StepBasicInfoIcon,
+  StepRoleCriteriaIcon,
+  StepBudgetTermsIcon,
   StepLogisticsMediaIcon,
   ListingTypeAuditionIcon,
   ListingTypeJobIcon,
-  ListingTypeCastingCallIcon 
+  ListingTypeCastingCallIcon
 } from '../../components/icons/wizard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const getTodayDateStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getFutureDateStr = (days = 30) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateDisplay = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch (e) {
+    return dateStr;
+  }
+};
 
 export default function CreateAuditionScreen({ route }) {
   const { colors } = useTheme();
@@ -59,12 +93,12 @@ export default function CreateAuditionScreen({ route }) {
 
   const [createAudition, { isLoading: isCreating }] = useCreateAuditionMutation();
   const [updateAudition, { isLoading: isUpdating }] = useUpdateAuditionMutation();
-  
+
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [thumbnailProgress, setThumbnailProgress] = useState(0);
-  
+
   const token = useSelector(state => state.auth.token);
   const { data: professionsResponse } = useGetProfessionsQuery();
   const isLoading = isCreating || isUpdating || isUploadingPdf || isUploadingThumbnail;
@@ -89,29 +123,32 @@ export default function CreateAuditionScreen({ route }) {
     languages: editAudition?.languages ? (Array.isArray(editAudition.languages) ? editAudition.languages : String(editAudition.languages).split(', ')) : ['Hindi', 'English'],
     skills: editAudition?.skills ? (Array.isArray(editAudition.skills) ? editAudition.skills : String(editAudition.skills).split(', ')) : ['Acting'],
     vacancies: editAudition?.vacancies ? String(editAudition.vacancies) : '1',
-    is_audition_required: editAudition?.is_audition_required !== undefined ? (editAudition.is_audition_required ? 'Yes (Audition Required)' : 'No (Direct Selection)') : 'Yes (Audition Required)',
+    is_audition_required: editAudition?.is_audition_required !== undefined ? (editAudition.is_audition_required ? 'Yes (Audition Required)' : 'No') : 'Yes (Audition Required)',
+    valid_from: editAudition?.valid_from || getTodayDateStr(),
+    valid_till: editAudition?.valid_till || editAudition?.expiry_date || getFutureDateStr(30),
     job_validity_days: editAudition?.job_validity_days ? String(editAudition.job_validity_days) : '30',
-    expiry_date: editAudition?.expiry_date || '',
+    expiry_date: editAudition?.expiry_date || editAudition?.valid_till || getFutureDateStr(30),
     tags: editAudition?.tags ? (Array.isArray(editAudition.tags) ? editAudition.tags.join(', ') : String(editAudition.tags)) : '',
     age_min: editAudition?.age_min ? String(editAudition.age_min) : '18',
     age_max: editAudition?.age_max ? String(editAudition.age_max) : '35',
     mode: editAudition?.mode || 'Offline',
     video_link: editAudition?.video_link || '',
+    script_text: editAudition?.script_text || editAudition?.script || '',
     description_pdf_url: editAudition?.description_pdf_url || null,
     thumbnail_url: editAudition?.thumbnail_url || null,
-    audition_type: (editAudition?.audition_type === 'walkin' ? 'Walk-in' : 
-                   editAudition?.audition_type === 'scheduled' ? 'Scheduled' : 
-                   editAudition?.audition_type === 'online' ? 'Online' : 'Walk-in'),
+    audition_type: (editAudition?.audition_type === 'walkin' ? 'Walk-in' :
+      editAudition?.audition_type === 'scheduled' ? 'Scheduled' :
+        editAudition?.audition_type === 'online' ? 'Online' : 'Walk-in'),
     walk_in_venue: editAudition?.venue_address || '',
     walk_in_date: editAudition?.audition_date || '',
-    walk_in_time: editAudition?.audition_time || '',
+    walk_in_time: editAudition?.audition_time || '10:00 AM',
     latitude: editAudition?.lat ? String(editAudition.lat) : '19.0760',
     longitude: editAudition?.lng ? String(editAudition.lng) : '72.8777',
   });
 
   const dynamicCategories = (professionsResponse?.data || []).map(p => p.name);
   const CATEGORIES = dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Dancer', 'Singer', 'Musician', 'Comedian', 'Other'];
-  
+
   const TYPES = ['Walk-in', 'Scheduled', 'Online'];
   const JOB_TYPES = [
     { id: 'Audition', title: 'Audition', subtitle: 'On-camera / stage audition', icon: ListingTypeAuditionIcon },
@@ -124,7 +161,7 @@ export default function CreateAuditionScreen({ route }) {
   const GENDERS = ['Male', 'Female', 'Other', 'Any'];
   const LANGUAGES = ['Hindi', 'English', 'Marathi', 'Bengali', 'Telugu', 'Tamil', 'Kannada', 'Malayalam', 'Gujarati', 'Punjabi', 'Urdu', 'Bhojpuri', 'Other'];
   const SKILLS = ['Acting', 'Dancing', 'Singing', 'Anchoring', 'Modeling', 'Voice Over', 'Martial Arts / Action', 'Instrumentalist', 'Stand-up Comedy', 'Direction', 'Writing'];
-  const AUDITION_REQUIRED_OPTIONS = ['Yes (Audition Required)', 'No (Direct Selection)'];
+  const AUDITION_REQUIRED_OPTIONS = ['Yes (Audition Required)', 'No'];
   const COMPENSATION_FREQUENCIES = ['Per Day', 'Per Week', 'Per Month', 'One Time', 'Unpaid / TFP'];
 
   const STEPS = [
@@ -174,7 +211,7 @@ export default function CreateAuditionScreen({ route }) {
   const [showCityModal, setShowCityModal] = useState(false);
   const [citySearch, setCitySearch] = useState('');
   const [activeDatePicker, setActiveDatePicker] = useState(null); // 'start', 'end', 'walk_in', 'expiry'
-  
+
   const filteredCategories = CATEGORIES.filter(c => c.toLowerCase().includes(categorySearch.toLowerCase()));
 
   const animateToStep = (stepNumber) => {
@@ -209,9 +246,37 @@ export default function CreateAuditionScreen({ route }) {
         showError('Date Range Required', 'Please choose both Start and End dates.');
         return false;
       }
+      if (!form.valid_from) {
+        showError('Validity Required', 'Please choose a Validity From date.');
+        return false;
+      }
+      if (!form.valid_till) {
+        showError('Validity Required', 'Please choose a Validity Till date.');
+        return false;
+      }
+      if (new Date(form.valid_till) < new Date(form.valid_from)) {
+        showError('Invalid Validity Range', 'Validity Till date cannot be earlier than Validity From date.');
+        return false;
+      }
       return true;
     }
     return true;
+  };
+
+  const handleApplyPresetValidity = (days) => {
+    const baseDate = form.valid_from ? new Date(form.valid_from) : new Date();
+    const targetDate = new Date(baseDate);
+    targetDate.setDate(targetDate.getDate() + days);
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getDate()).padStart(2, '0');
+    const formatted = `${year}-${month}-${day}`;
+    setForm(prev => ({
+      ...prev,
+      valid_till: formatted,
+      expiry_date: formatted,
+      job_validity_days: String(days)
+    }));
   };
 
   const handleNextStep = () => {
@@ -243,6 +308,12 @@ export default function CreateAuditionScreen({ route }) {
         handleChange('specific_end_date', formatted);
       } else if (activeDatePicker === 'expiry') {
         handleChange('expiry_date', formatted);
+        handleChange('valid_till', formatted);
+      } else if (activeDatePicker === 'valid_from') {
+        handleChange('valid_from', formatted);
+      } else if (activeDatePicker === 'valid_till') {
+        handleChange('valid_till', formatted);
+        handleChange('expiry_date', formatted);
       }
       setActiveDatePicker(null);
     }
@@ -265,21 +336,21 @@ export default function CreateAuditionScreen({ route }) {
     try {
       const res = await pick({ type: [types.pdf] });
       const file = res[0];
-      
+
       const formData = new FormData();
       formData.append('pdf', {
         uri: file.uri,
         type: file.type,
         name: file.name || 'description.pdf',
       });
-      
+
       setIsUploadingPdf(true);
       setPdfProgress(0);
       try {
         const uploadRes = await uploadFileWithProgress('/hiring_app/auditions/upload-pdf', formData, (progress) => {
           setPdfProgress(progress);
         }, token);
-        
+
         if (uploadRes?.data?.url) {
           handleChange('description_pdf_url', uploadRes.data.url);
           showSuccess('', 'PDF uploaded successfully!');
@@ -302,22 +373,22 @@ export default function CreateAuditionScreen({ route }) {
     try {
       const res = await pick({ type: [types.images] });
       const file = res[0];
-      
+
       const formData = new FormData();
       formData.append('thumbnail', {
         uri: file.uri,
         type: file.type,
         name: file.name || 'thumbnail.jpg',
       });
-      
+
       setIsUploadingThumbnail(true);
       setThumbnailProgress(0);
-      
+
       try {
         const uploadRes = await uploadFileWithProgress('/hiring_app/auditions/upload-thumbnail', formData, (progress) => {
           setThumbnailProgress(progress);
         }, token);
-        
+
         if (uploadRes?.data?.url) {
           handleChange('thumbnail_url', uploadRes.data.url);
           showSuccess('', 'Thumbnail uploaded successfully!');
@@ -341,9 +412,15 @@ export default function CreateAuditionScreen({ route }) {
       return;
     }
 
-    if (form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled') {
-      if (!form.walk_in_venue || !form.walk_in_date || !form.walk_in_time) {
-        showError('', 'Please provide Venue, Date, and Time for the audition.');
+    const isAuditionReq = form.is_audition_required && form.is_audition_required.startsWith('Yes');
+
+    if (isAuditionReq && (form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled')) {
+      if (!form.walk_in_venue?.trim()) {
+        showError('', 'Please provide the Venue Address for the audition.');
+        return;
+      }
+      if (!form.walk_in_date) {
+        showError('', 'Please provide the Audition Date.');
         return;
       }
     }
@@ -355,8 +432,8 @@ export default function CreateAuditionScreen({ route }) {
         'Online': 'online'
       };
 
-      const finalBudget = form.budget_min && form.budget_max 
-        ? `₹${form.budget_min} - ₹${form.budget_max}` 
+      const finalBudget = form.budget_min && form.budget_max
+        ? `₹${form.budget_min} - ₹${form.budget_max}`
         : form.budget || (form.budget_min ? `₹${form.budget_min}` : 'Unspecified');
 
       const payload = {
@@ -375,24 +452,34 @@ export default function CreateAuditionScreen({ route }) {
         languages: form.languages,
         skills: form.skills,
         vacancies: parseInt(form.vacancies) || 1,
-        is_audition_required: form.is_audition_required.startsWith('Yes'),
+        is_audition_required: isAuditionReq,
         tags: form.tags,
         age_min: parseInt(form.age_min) || 0,
         age_max: parseInt(form.age_max) || 75,
         mode: form.mode,
         video_link: form.video_link,
+        script_text: form.script_text ? form.script_text.trim() : null,
         description_pdf_url: form.description_pdf_url,
         thumbnail_url: form.thumbnail_url,
-        audition_type: typeMap[form.audition_type] || form.audition_type,
+        audition_type: isAuditionReq ? (typeMap[form.audition_type] || form.audition_type) : 'online',
+        valid_from: form.valid_from,
+        valid_till: form.valid_till,
+        expiry_date: form.valid_till,
+        job_validity_days: form.job_validity_days,
       };
 
-      if (form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled') {
+      if (isAuditionReq && (form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled')) {
         payload.venue_address = form.walk_in_venue || form.city;
-        payload.audition_date = form.walk_in_date || new Date().toISOString().split('T')[0];
-        payload.date = form.walk_in_date || new Date().toISOString().split('T')[0];
+        payload.audition_date = form.walk_in_date || form.valid_from || new Date().toISOString().split('T')[0];
+        payload.date = form.walk_in_date || form.valid_from || new Date().toISOString().split('T')[0];
         payload.audition_time = form.walk_in_time || '10:00 AM';
         payload.lat = parseFloat(form.latitude) || 19.0760;
         payload.lng = parseFloat(form.longitude) || 72.8777;
+      } else {
+        payload.venue_address = form.walk_in_venue || form.city;
+        payload.audition_date = form.valid_from || new Date().toISOString().split('T')[0];
+        payload.date = form.valid_from || new Date().toISOString().split('T')[0];
+        payload.audition_time = form.walk_in_time || '10:00 AM';
       }
 
       if (isEditMode) {
@@ -437,60 +524,60 @@ export default function CreateAuditionScreen({ route }) {
         {/* Step Nodes Row with Connected Timeline */}
         <View style={styles.stepNodesWrapper}>
           <View style={styles.stepsLineBackground} />
-          <View 
+          <View
             style={[
-              styles.stepsLineFill, 
-              { 
+              styles.stepsLineFill,
+              {
                 width: currentStep === 1 ? '0%' : currentStep === 2 ? '33%' : currentStep === 3 ? '66%' : '85%',
               }
-            ]} 
+            ]}
           />
 
           {/* 4 Step Visual Nodes */}
           <View style={styles.stepNodesRow}>
             {STEPS.map((step) => {
-            const isActive = currentStep === step.number;
-            const isCompleted = currentStep > step.number;
-            const { IconComponent } = step;
+              const isActive = currentStep === step.number;
+              const isCompleted = currentStep > step.number;
+              const { IconComponent } = step;
 
-            return (
-              <TouchableOpacity
-                key={step.number}
-                style={styles.stepNodeItem}
-                onPress={() => {
-                  if (isCompleted || validateStep(currentStep)) {
-                    animateToStep(step.number);
-                  }
-                }}
-                activeOpacity={0.85}
-              >
-                <View 
-                  style={[
-                    styles.stepIconBubble,
-                    isActive && styles.stepIconBubbleActive,
-                    isCompleted && styles.stepIconBubbleCompleted,
-                  ]}
+              return (
+                <TouchableOpacity
+                  key={step.number}
+                  style={styles.stepNodeItem}
+                  onPress={() => {
+                    if (isCompleted || validateStep(currentStep)) {
+                      animateToStep(step.number);
+                    }
+                  }}
+                  activeOpacity={0.85}
                 >
-                  <IconComponent size={24} active={isActive} completed={isCompleted} />
-                  {isCompleted && (
-                    <View style={styles.completedMiniBadge}>
-                      <Icon name="checkmark-sharp" size={10} color="#FFFFFF" />
-                    </View>
-                  )}
-                </View>
-                <Text 
-                  style={[
-                    styles.stepNodeTitle,
-                    isActive && styles.stepNodeTitleActive,
-                    isCompleted && styles.stepNodeTitleCompleted,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {step.title}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+                  <View
+                    style={[
+                      styles.stepIconBubble,
+                      isActive && styles.stepIconBubbleActive,
+                      isCompleted && styles.stepIconBubbleCompleted,
+                    ]}
+                  >
+                    <IconComponent size={24} active={isActive} completed={isCompleted} />
+                    {isCompleted && (
+                      <View style={styles.completedMiniBadge}>
+                        <Icon name="checkmark-sharp" size={10} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepNodeTitle,
+                      isActive && styles.stepNodeTitleActive,
+                      isCompleted && styles.stepNodeTitleCompleted,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {step.title}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -512,7 +599,7 @@ export default function CreateAuditionScreen({ route }) {
       </View>
 
       {/* Main Multi-Step Form Body */}
-      <KeyboardAwareScrollView 
+      <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -524,7 +611,7 @@ export default function CreateAuditionScreen({ route }) {
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>1. Select Listing Type *</Text>
               <Text style={styles.sectionSubheading}>Choose the classification for this opportunity</Text>
-              
+
               <View style={styles.jobTypeCardsRow}>
                 {JOB_TYPES.map((type) => {
                   const isSelected = form.job_type === type.id;
@@ -559,7 +646,7 @@ export default function CreateAuditionScreen({ route }) {
             {/* Job / Audition Title & Category */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>2. Project & Category Details</Text>
-              
+
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Job / Audition Title *</Text>
                 <TextInput
@@ -573,8 +660,8 @@ export default function CreateAuditionScreen({ route }) {
 
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Primary Category *</Text>
-                <TouchableOpacity 
-                  style={[styles.input, styles.selectorInput]} 
+                <TouchableOpacity
+                  style={[styles.input, styles.selectorInput]}
                   onPress={() => setShowCategoryModal(true)}
                   activeOpacity={0.75}
                 >
@@ -582,8 +669,8 @@ export default function CreateAuditionScreen({ route }) {
                     <View style={styles.categoryInputIconCircle}>
                       <ProfessionCategoryIcon categoryName={form.category[0] || 'Actor'} size={20} />
                     </View>
-                    <Text style={{ 
-                      color: form.category.length > 0 ? colors.textMainLight : colors.textMutedLight, 
+                    <Text style={{
+                      color: form.category.length > 0 ? colors.textMainLight : colors.textMutedLight,
                       fontWeight: form.category.length > 0 ? '700' : '400',
                       fontSize: 15,
                       flex: 1,
@@ -600,10 +687,10 @@ export default function CreateAuditionScreen({ route }) {
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>3. Project Classification *</Text>
               <Text style={styles.sectionSubheading}>Select all production types that apply</Text>
-              <AnimatedTileGrid 
-                options={PROJECT_TYPES} 
-                selectedValue={form.project_type} 
-                onSelect={(val) => handleChange('project_type', val)} 
+              <AnimatedTileGrid
+                options={PROJECT_TYPES}
+                selectedValue={form.project_type}
+                onSelect={(val) => handleChange('project_type', val)}
                 isMulti
               />
             </View>
@@ -613,8 +700,8 @@ export default function CreateAuditionScreen({ route }) {
               <Text style={styles.sectionHeading}>4. Shoot / Job Location *</Text>
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Primary City *</Text>
-                <TouchableOpacity 
-                  style={[styles.input, styles.selectorInput, { marginBottom: spacing.m }]} 
+                <TouchableOpacity
+                  style={[styles.input, styles.selectorInput, { marginBottom: spacing.m }]}
                   onPress={() => setShowCityModal(true)}
                   activeOpacity={0.75}
                 >
@@ -719,20 +806,20 @@ export default function CreateAuditionScreen({ route }) {
             {/* Gender Requirement */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>3. Gender Requirement *</Text>
-              <AnimatedTileGrid 
-                options={GENDERS} 
-                selectedValue={form.gender_req} 
-                onSelect={(val) => handleChange('gender_req', val)} 
+              <AnimatedTileGrid
+                options={GENDERS}
+                selectedValue={form.gender_req}
+                onSelect={(val) => handleChange('gender_req', val)}
               />
             </View>
 
             {/* Required Skills */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>4. Required Skills & Performance Expertise</Text>
-              <AnimatedTileGrid 
-                options={SKILLS} 
-                selectedValue={form.skills} 
-                onSelect={(val) => handleChange('skills', val)} 
+              <AnimatedTileGrid
+                options={SKILLS}
+                selectedValue={form.skills}
+                onSelect={(val) => handleChange('skills', val)}
                 isMulti
               />
             </View>
@@ -740,10 +827,10 @@ export default function CreateAuditionScreen({ route }) {
             {/* Preferred Languages */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>5. Dialogue & Script Languages</Text>
-              <AnimatedTileGrid 
-                options={LANGUAGES} 
-                selectedValue={form.languages} 
-                onSelect={(val) => handleChange('languages', val)} 
+              <AnimatedTileGrid
+                options={LANGUAGES}
+                selectedValue={form.languages}
+                onSelect={(val) => handleChange('languages', val)}
                 isMulti
               />
             </View>
@@ -757,7 +844,7 @@ export default function CreateAuditionScreen({ route }) {
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>1. Remuneration / Compensation Range</Text>
               <Text style={styles.sectionSubheading}>Provide an estimated budget range in Indian Rupees (₹)</Text>
-              
+
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.s }}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.miniLabel}>MIN BUDGET (₹)</Text>
@@ -788,20 +875,20 @@ export default function CreateAuditionScreen({ route }) {
             {/* Compensation Frequency */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>2. Payment Frequency *</Text>
-              <AnimatedTileGrid 
-                options={COMPENSATION_FREQUENCIES} 
-                selectedValue={form.compensation_frequency} 
-                onSelect={(val) => handleChange('compensation_frequency', val)} 
+              <AnimatedTileGrid
+                options={COMPENSATION_FREQUENCIES}
+                selectedValue={form.compensation_frequency}
+                onSelect={(val) => handleChange('compensation_frequency', val)}
               />
             </View>
 
             {/* Duration Type */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>3. Engagement Duration *</Text>
-              <AnimatedTileGrid 
-                options={DURATION_TYPES} 
-                selectedValue={form.duration_type} 
-                onSelect={(val) => handleChange('duration_type', val)} 
+              <AnimatedTileGrid
+                options={DURATION_TYPES}
+                selectedValue={form.duration_type}
+                onSelect={(val) => handleChange('duration_type', val)}
               />
 
               {/* Date Specific Pickers */}
@@ -809,7 +896,7 @@ export default function CreateAuditionScreen({ route }) {
                 <View style={[styles.row, { marginTop: spacing.m }]}>
                   <View style={[styles.formGroup, { width: '48%' }]}>
                     <Text style={styles.label}>Shoot Start Date *</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.input, styles.selectorInput]}
                       onPress={() => {
                         setActiveDatePicker('start');
@@ -825,7 +912,7 @@ export default function CreateAuditionScreen({ route }) {
 
                   <View style={[styles.formGroup, { width: '48%' }]}>
                     <Text style={styles.label}>Shoot End Date *</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.input, styles.selectorInput]}
                       onPress={() => {
                         setActiveDatePicker('end');
@@ -842,27 +929,82 @@ export default function CreateAuditionScreen({ route }) {
               )}
             </View>
 
-            {/* Job Post Validity */}
+            {/* Casting Post Validity */}
             <View style={styles.cardSection}>
-              <Text style={styles.sectionHeading}>4. Casting Post Validity</Text>
-              <TouchableOpacity 
-                style={[styles.input, styles.selectorInput, { marginTop: spacing.s }]}
-                onPress={() => {
-                  setActiveDatePicker('expiry');
-                  setShowDatePicker(true);
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={[styles.categoryInputIconCircle, { backgroundColor: '#F59E0B15' }]}>
-                    <Icon name="time" size={18} color="#F59E0B" />
-                  </View>
-                  <Text style={{ color: form.expiry_date ? colors.textMainLight : colors.textMutedLight, fontWeight: '700' }}>
-                    {form.expiry_date ? `Closes on: ${form.expiry_date}` : 'Default: Automatically closes in 30 days'}
-                  </Text>
+              <Text style={styles.sectionHeading}>4. Casting Post Validity *</Text>
+              <Text style={[styles.helpText, { marginBottom: spacing.s }]}>
+                Specify the date range during which artists can view and apply for this post.
+              </Text>
+
+              <View style={[styles.row, { marginTop: spacing.xs }]}>
+                <View style={[styles.formGroup, { width: '48%' }]}>
+                  <Text style={styles.label}>Valid From *</Text>
+                  <TouchableOpacity
+                    style={[styles.input, styles.selectorInput]}
+                    onPress={() => {
+                      setActiveDatePicker('valid_from');
+                      setShowDatePicker(true);
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 4 }}>
+                      <Icon name="calendar-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                      <Text style={{ color: form.valid_from ? colors.textMainLight : colors.textMutedLight, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
+                        {formatDateDisplay(form.valid_from) || 'From Date'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-                <Icon name="calendar-outline" size={18} color={colors.primary} />
-              </TouchableOpacity>
-              <Text style={styles.helpText}>If left empty, this post will automatically expire after 30 days.</Text>
+
+                <View style={[styles.formGroup, { width: '48%' }]}>
+                  <Text style={styles.label}>Valid Till (Closes On) *</Text>
+                  <TouchableOpacity
+                    style={[styles.input, styles.selectorInput]}
+                    onPress={() => {
+                      setActiveDatePicker('valid_till');
+                      setShowDatePicker(true);
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 4 }}>
+                      <Icon name="time-outline" size={16} color="#F59E0B" style={{ marginRight: 6 }} />
+                      <Text style={{ color: form.valid_till ? colors.textMainLight : colors.textMutedLight, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
+                        {formatDateDisplay(form.valid_till) || 'Till Date'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Quick Presets */}
+              <View style={{ marginTop: spacing.xs }}>
+                <Text style={[styles.label, { fontSize: 11, color: colors.textMutedLight, marginBottom: 6 }]}>Quick Duration Presets:</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {[7, 15, 30, 45, 60].map((days) => {
+                    const isSelected = form.valid_from && form.valid_till && (() => {
+                      const diffTime = Math.abs(new Date(form.valid_till) - new Date(form.valid_from));
+                      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                      return diffDays === days;
+                    })();
+                    return (
+                      <TouchableOpacity
+                        key={days}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 20,
+                          backgroundColor: isSelected ? colors.primary + '20' : colors.surfaceLight,
+                          borderWidth: 1,
+                          borderColor: isSelected ? colors.primary : colors.borderLight,
+                        }}
+                        onPress={() => handleApplyPresetValidity(days)}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: isSelected ? '700' : '500', color: isSelected ? colors.primary : colors.textMainLight }}>
+                          +{days} Days
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
 
             {/* Search Tags */}
@@ -885,86 +1027,129 @@ export default function CreateAuditionScreen({ route }) {
             {/* Audition Required? */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionHeading}>1. Audition Screening Type *</Text>
-              <AnimatedTileGrid 
-                options={AUDITION_REQUIRED_OPTIONS} 
-                selectedValue={form.is_audition_required} 
-                onSelect={(val) => handleChange('is_audition_required', val)} 
+              <AnimatedTileGrid
+                options={AUDITION_REQUIRED_OPTIONS}
+                selectedValue={form.is_audition_required}
+                onSelect={(val) => handleChange('is_audition_required', val)}
               />
+              {!form.is_audition_required?.startsWith('Yes') && (
+                <Text style={[styles.helpText, { marginTop: spacing.s }]}>
+                  Direct application: Candidates will apply directly with their portfolio and profile. No offline audition required.
+                </Text>
+              )}
             </View>
 
-            {/* Audition Mode */}
-            <View style={styles.cardSection}>
-              <Text style={styles.sectionHeading}>2. Audition Execution Mode *</Text>
-              <AnimatedTileGrid 
-                options={TYPES} 
-                selectedValue={form.audition_type} 
-                onSelect={(val) => handleChange('audition_type', val)} 
-              />
-            </View>
-
-            {/* Walk-in Logistics Details */}
-            {(form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled') && (
-              <View style={styles.cardSection}>
-                <View style={styles.walkInHeader}>
-                  <View style={[styles.categoryInputIconCircle, { backgroundColor: colors.primary + '20' }]}>
-                    <Icon name="location" size={20} color={colors.primary} />
-                  </View>
-                  <Text style={styles.walkInTitle}>{form.audition_type} Venue & Schedule Details</Text>
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Venue Complete Address *</Text>
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Enter complete studio address, floor, room number and nearest landmark..."
-                    placeholderTextColor={colors.textMutedLight}
-                    multiline
-                    value={form.walk_in_venue}
-                    onChangeText={(text) => handleChange('walk_in_venue', text)}
+            {/* Audition Mode & Logistics - Only when Audition is Required */}
+            {form.is_audition_required?.startsWith('Yes') && (
+              <>
+                <View style={styles.cardSection}>
+                  <Text style={styles.sectionHeading}>2. Audition Execution Mode *</Text>
+                  <AnimatedTileGrid
+                    options={TYPES}
+                    selectedValue={form.audition_type}
+                    onSelect={(val) => handleChange('audition_type', val)}
                   />
                 </View>
 
-                <View style={styles.row}>
-                  <View style={[styles.formGroup, { width: '48%' }]}>
-                    <Text style={styles.label}>Audition Date *</Text>
-                    <TouchableOpacity 
-                      style={[styles.input, styles.selectorInput]}
-                      onPress={() => {
-                        setActiveDatePicker('walk_in');
-                        setShowDatePicker(true);
-                      }}
-                    >
-                      <Text style={{ color: form.walk_in_date ? colors.textMainLight : colors.textMutedLight, fontWeight: '700' }}>
-                        {form.walk_in_date || 'YYYY-MM-DD'}
-                      </Text>
-                      <Icon name="calendar" size={18} color={colors.primary} />
-                    </TouchableOpacity>
-                  </View>
+                {/* Walk-in Logistics Details */}
+                {(form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled') && (
+                  <View style={styles.cardSection}>
+                    <View style={styles.walkInHeader}>
+                      <View style={[styles.categoryInputIconCircle, { backgroundColor: colors.primary + '20' }]}>
+                        <Icon name="location" size={20} color={colors.primary} />
+                      </View>
+                      <Text style={styles.walkInTitle}>{form.audition_type} Venue & Schedule Details</Text>
+                    </View>
 
-                  <View style={[styles.formGroup, { width: '48%' }]}>
-                    <Text style={styles.label}>Reporting Time *</Text>
-                    <TouchableOpacity 
-                      style={[styles.input, styles.selectorInput]}
-                      onPress={() => setShowTimePicker(true)}
-                    >
-                      <Text style={{ color: form.walk_in_time ? colors.textMainLight : colors.textMutedLight, fontWeight: '700' }}>
-                        {form.walk_in_time || '10:00 AM'}
-                      </Text>
-                      <Icon name="time" size={18} color={colors.primary} />
-                    </TouchableOpacity>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>Venue Complete Address *</Text>
+                      <TextInput
+                        style={[styles.input, styles.textArea]}
+                        placeholder="Enter complete studio address, floor, room number and nearest landmark..."
+                        placeholderTextColor={colors.textMutedLight}
+                        multiline
+                        value={form.walk_in_venue}
+                        onChangeText={(text) => handleChange('walk_in_venue', text)}
+                      />
+                    </View>
+
+                    <View style={styles.row}>
+                      <View style={[styles.formGroup, { width: '48%' }]}>
+                        <Text style={styles.label}>Audition Date *</Text>
+                        <TouchableOpacity
+                          style={[styles.input, styles.selectorInput]}
+                          onPress={() => {
+                            setActiveDatePicker('walk_in');
+                            setShowDatePicker(true);
+                          }}
+                        >
+                          <Text style={{ color: form.walk_in_date ? colors.textMainLight : colors.textMutedLight, fontWeight: '700' }}>
+                            {form.walk_in_date || 'YYYY-MM-DD'}
+                          </Text>
+                          <Icon name="calendar" size={18} color={colors.primary} />
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={[styles.formGroup, { width: '48%' }]}>
+                        <Text style={styles.label}>Reporting Time *</Text>
+                        <TouchableOpacity
+                          style={[styles.input, styles.selectorInput]}
+                          onPress={() => setShowTimePicker(true)}
+                        >
+                          <Text style={{ color: colors.textMainLight, fontWeight: '700' }}>
+                            {form.walk_in_time || '10:00 AM'}
+                          </Text>
+                          <Icon name="time" size={18} color={colors.primary} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
+                )}
+              </>
             )}
 
             {/* Media & Script Attachments */}
             <View style={styles.cardSection}>
-              <Text style={styles.sectionHeading}>3. Script & Media Attachments</Text>
-              
+              <Text style={styles.sectionHeading}>
+                {form.is_audition_required?.startsWith('Yes') ? '3. Script & Media Attachments' : '2. Script & Media Attachments'}
+              </Text>
+
+              {/* Audition Script Text Input */}
+              <View style={styles.formGroup}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Text style={styles.label}>Audition Script / Scene Dialogue (Optional)</Text>
+                  {form.script_text ? (
+                    <Text style={[styles.helpText, { marginTop: 0, fontSize: 11 }]}>
+                      {form.script_text.length} chars
+                    </Text>
+                  ) : null}
+                </View>
+                <TextInput
+                  style={[styles.input, styles.textArea, { minHeight: 120, textAlignVertical: 'top' }]}
+                  placeholder="Type or paste audition script, monologue lines, or character dialogue sides here..."
+                  placeholderTextColor={colors.textMutedLight}
+                  multiline
+                  numberOfLines={5}
+                  value={form.script_text}
+                  onChangeText={(text) => handleChange('script_text', text)}
+                />
+                <Text style={styles.helpText}>
+                  Actors will be able to read and rehearse this script directly inside the app.
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.s }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.borderLight }} />
+                <Text style={{ marginHorizontal: 12, ...typography.caption, color: colors.textMutedLight, fontWeight: '700' }}>
+                  OR ATTACH SCRIPT PDF
+                </Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.borderLight }} />
+              </View>
+
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Detailed Script / Audition Sides (PDF)</Text>
-                <TouchableOpacity 
-                  style={[styles.uploadCard, form.description_pdf_url && styles.uploadCardSuccess]} 
+                <TouchableOpacity
+                  style={[styles.uploadCard, form.description_pdf_url && styles.uploadCardSuccess]}
                   onPress={handlePdfUpload}
                   disabled={isUploadingPdf}
                   activeOpacity={0.8}
@@ -974,10 +1159,10 @@ export default function CreateAuditionScreen({ route }) {
                   ) : (
                     <View style={{ alignItems: 'center' }}>
                       <View style={[styles.uploadIconBadge, form.description_pdf_url && { backgroundColor: colors.success + '20' }]}>
-                        <Icon 
-                          name={form.description_pdf_url ? "checkmark-done-circle" : "document-text"} 
-                          size={28} 
-                          color={form.description_pdf_url ? colors.success : colors.primary} 
+                        <Icon
+                          name={form.description_pdf_url ? "checkmark-done-circle" : "document-text"}
+                          size={28}
+                          color={form.description_pdf_url ? colors.success : colors.primary}
                         />
                       </View>
                       <Text style={[styles.uploadCardTitle, form.description_pdf_url && { color: colors.success }]}>
@@ -995,8 +1180,8 @@ export default function CreateAuditionScreen({ route }) {
               {/* Poster / Thumbnail Image */}
               <View style={[styles.formGroup, { marginTop: spacing.m }]}>
                 <Text style={styles.label}>Casting Call Banner / Poster Image</Text>
-                <TouchableOpacity 
-                  style={[styles.uploadCard, form.thumbnail_url && styles.uploadCardSuccess]} 
+                <TouchableOpacity
+                  style={[styles.uploadCard, form.thumbnail_url && styles.uploadCardSuccess]}
                   onPress={handleThumbnailUpload}
                   disabled={isUploadingThumbnail}
                   activeOpacity={0.8}
@@ -1006,10 +1191,10 @@ export default function CreateAuditionScreen({ route }) {
                   ) : (
                     <View style={{ alignItems: 'center' }}>
                       <View style={[styles.uploadIconBadge, form.thumbnail_url && { backgroundColor: colors.success + '20' }]}>
-                        <Icon 
-                          name={form.thumbnail_url ? "checkmark-done-circle" : "images"} 
-                          size={28} 
-                          color={form.thumbnail_url ? colors.success : colors.primary} 
+                        <Icon
+                          name={form.thumbnail_url ? "checkmark-done-circle" : "images"}
+                          size={28}
+                          color={form.thumbnail_url ? colors.success : colors.primary}
                         />
                       </View>
                       <Text style={[styles.uploadCardTitle, form.thumbnail_url && { color: colors.success }]}>
@@ -1032,8 +1217,8 @@ export default function CreateAuditionScreen({ route }) {
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <View style={styles.footerRow}>
           {currentStep > 1 && (
-            <TouchableOpacity 
-              style={styles.prevButton} 
+            <TouchableOpacity
+              style={styles.prevButton}
               onPress={handlePrevStep}
               activeOpacity={0.8}
             >
@@ -1043,8 +1228,8 @@ export default function CreateAuditionScreen({ route }) {
           )}
 
           {currentStep < 4 ? (
-            <TouchableOpacity 
-              style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0 }]} 
+            <TouchableOpacity
+              style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0 }]}
               onPress={handleNextStep}
               activeOpacity={0.85}
             >
@@ -1054,8 +1239,8 @@ export default function CreateAuditionScreen({ route }) {
               <Icon name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity 
-              style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0, backgroundColor: '#10B981' }]} 
+            <TouchableOpacity
+              style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0, backgroundColor: '#10B981' }]}
               onPress={handleSubmit}
               disabled={isLoading}
               activeOpacity={0.85}
@@ -1097,8 +1282,8 @@ export default function CreateAuditionScreen({ route }) {
               renderItem={({ item }) => {
                 const isSelected = form.category.includes(item);
                 return (
-                  <TouchableOpacity 
-                    style={[styles.categoryModalItem, isSelected && styles.categoryModalItemSelected]} 
+                  <TouchableOpacity
+                    style={[styles.categoryModalItem, isSelected && styles.categoryModalItemSelected]}
                     onPress={() => {
                       if (isSelected) {
                         handleChange('category', form.category.filter(c => c !== item));
@@ -1153,8 +1338,8 @@ export default function CreateAuditionScreen({ route }) {
               renderItem={({ item }) => {
                 const isSelected = form.city === item;
                 return (
-                  <TouchableOpacity 
-                    style={[styles.categoryModalItem, isSelected && styles.categoryModalItemSelected]} 
+                  <TouchableOpacity
+                    style={[styles.categoryModalItem, isSelected && styles.categoryModalItemSelected]}
                     onPress={() => {
                       handleChange('city', item);
                       setShowCityModal(false);
@@ -1185,11 +1370,22 @@ export default function CreateAuditionScreen({ route }) {
       {/* Native Date Pickers */}
       {showDatePicker && (
         <DateTimePicker
-          value={new Date()}
+          value={
+            activeDatePicker === 'valid_from' && form.valid_from ? new Date(form.valid_from) :
+            activeDatePicker === 'valid_till' && form.valid_till ? new Date(form.valid_till) :
+            activeDatePicker === 'start' && form.specific_start_date ? new Date(form.specific_start_date) :
+            activeDatePicker === 'end' && form.specific_end_date ? new Date(form.specific_end_date) :
+            activeDatePicker === 'walk_in' && form.walk_in_date ? new Date(form.walk_in_date) :
+            new Date()
+          }
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={handleDateChange}
-          minimumDate={new Date()}
+          minimumDate={
+            activeDatePicker === 'valid_till' && form.valid_from
+              ? new Date(form.valid_from)
+              : (activeDatePicker === 'end' && form.specific_start_date ? new Date(form.specific_start_date) : new Date())
+          }
         />
       )}
 

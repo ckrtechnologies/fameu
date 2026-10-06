@@ -20,6 +20,43 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import ImageWithFallback from '../../components/core/ImageWithFallback';
 
+function ExpandableRoleDescription({ text, styles, colors }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const [canExpand, setCanExpand] = React.useState(false);
+
+  if (!text) return null;
+
+  const isLong = text.length > 100 || (text.match(/\n/g) || []).length >= 2;
+
+  return (
+    <View style={styles.cardRoleContainer}>
+      <Text
+        style={styles.cardRole}
+        numberOfLines={expanded ? undefined : 3}
+        onTextLayout={(e) => {
+          if (e.nativeEvent.lines.length > 3) {
+            setCanExpand(true);
+          }
+        }}
+      >
+        {text}
+      </Text>
+      {(canExpand || isLong) && (
+        <TouchableOpacity
+          onPress={() => setExpanded(!expanded)}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={styles.readMoreBtn}
+        >
+          <Text style={[styles.readMoreText, { color: colors.primary }]}>
+            {expanded ? 'Read Less' : 'Read More'}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
 export default function MyAuditionsScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -128,7 +165,7 @@ export default function MyAuditionsScreen() {
         style={{ width: '100%', height: 160, borderRadius: 8, marginBottom: 10 }} 
       />
 
-      <Text style={styles.cardRole}>{item.role_description}</Text>
+      <ExpandableRoleDescription text={item.role_description} styles={styles} colors={colors} />
 
       <View style={styles.cardFooter}>
         <View style={styles.cardMetaContainer}>
@@ -300,10 +337,22 @@ const getStyles = (colors) => StyleSheet.create({
   statusClosedText: {
     color: colors.textMutedLight,
   },
+  cardRoleContainer: {
+    marginBottom: spacing.l,
+  },
   cardRole: {
     ...typography.body2,
     color: colors.textMutedLight,
-    marginBottom: spacing.l,
+    lineHeight: 20,
+  },
+  readMoreBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingVertical: 2,
+  },
+  readMoreText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   cardFooter: {
     borderTopWidth: 1,

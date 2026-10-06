@@ -369,8 +369,11 @@ CREATE TABLE IF NOT EXISTS public.auditions (
   lng              DOUBLE PRECISION,
   audition_date    DATE,
   date             DATE,                    -- duplicate date field used by expireAuditions.job.js
+  valid_from       DATE,                    -- start date of audition post validity
+  valid_till       DATE,                    -- expiry / closing date of audition post
   audition_time    TIME,
   compensation     TEXT,
+  script_text      TEXT,                    -- direct dialogue, monologue, or scene sides script
   required_docs    TEXT,
   instructions     TEXT,                    -- OVERLOADED: stores JSON string with extra metadata
                                             -- {project_type, duration_type, city, description_pdf_url,

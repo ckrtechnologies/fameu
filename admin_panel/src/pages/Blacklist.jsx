@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGetUsersQuery, useBlacklistUserMutation, useRemoveBlacklistMutation } from '../store/api/adminEndpoints';
 import DataTable from '../components/DataTable';
+import { X } from 'lucide-react';
 
 export default function Blacklist() {
   const { data: response, isLoading: loading } = useGetUsersQuery('all');
@@ -79,10 +80,35 @@ export default function Blacklist() {
       />
 
       {showAddForm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="card" style={{ width: '400px', maxWidth: '90vw', margin: 0 }}>
-            <h2 style={{marginBottom: '1rem'}}>Ban User</h2>
-            <form onSubmit={handleAddBlacklist}>
+        <div 
+          className="drawer-backdrop"
+          onClick={() => setShowAddForm(false)}
+        >
+          <div 
+            className="drawer-panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              width: '100%', 
+              maxWidth: '520px', 
+              height: '100vh',
+              borderTopLeftRadius: '16px',
+              borderBottomLeftRadius: '16px',
+              background: '#ffffff',
+              padding: '32px 28px',
+              position: 'relative'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px' }}>Ban User</h2>
+              <button 
+                onClick={() => setShowAddForm(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={22} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddBlacklist} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div className="input-group" style={{ marginBottom: '16px' }}>
                 <label>User UUID:</label>
                 <input 
@@ -94,18 +120,18 @@ export default function Blacklist() {
                   required
                 />
               </div>
-              <div className="input-group">
+              <div className="input-group" style={{ marginBottom: '24px' }}>
                 <label>Reason:</label>
                 <textarea 
                   className="input-field" 
-                  rows="3" 
+                  rows="4" 
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Reason for blacklisting..."
                   required
                 ></textarea>
               </div>
-              <div style={{display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '1rem'}}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: 'auto', paddingTop: '20px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
                 <button type="submit" className="btn btn-danger">Confirm Ban</button>
               </div>

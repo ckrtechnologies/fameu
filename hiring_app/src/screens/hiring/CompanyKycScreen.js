@@ -158,10 +158,10 @@ export default function CompanyKycScreen({ navigation }) {
     }
 
     const hasPan = Boolean(getDoc('pan'));
-    const hasDl = Boolean(getDoc('driving_license'));
+    const hasAadhaar = Boolean(getDoc('aadhaar'));
 
-    if (!hasPan || !hasDl) {
-      showError('', 'Please upload BOTH mandatory documents (PAN Card AND Driving License) to submit KYC.');
+    if (!hasPan || !hasAadhaar) {
+      showError('', 'Please upload BOTH mandatory documents (PAN Card AND Aadhaar) to submit KYC.');
       return;
     }
 
@@ -211,10 +211,10 @@ export default function CompanyKycScreen({ navigation }) {
 
   const KYC_DOCS_CONFIG = [
     { key: 'pan', title: 'PAN Card', badge: 'Mandatory', required: true, icon: 'card-outline' },
-    { key: 'driving_license', title: 'Driving License', badge: 'Mandatory', required: true, icon: 'car-outline' },
+    { key: 'driving_license', title: 'Driving License', badge: 'Optional', required: false, icon: 'car-outline' },
     { key: 'gst', title: 'GST Certificate', badge: 'Optional', required: false, icon: 'receipt-outline' },
     { key: 'company_reg', title: 'Company Reg.', badge: 'Optional', required: false, icon: 'business-outline' },
-    { key: 'aadhaar', title: 'Aadhaar (F&B)', badge: 'Optional', required: false, icon: 'finger-print-outline' },
+    { key: 'aadhaar', title: 'Aadhaar (F&B)', badge: 'Mandatory', required: true, icon: 'finger-print-outline' },
     { key: 'passport', title: 'Passport', badge: 'Optional', required: false, icon: 'airplane-outline' },
     { key: 'voter_id', title: 'Voter ID', badge: 'Optional', required: false, icon: 'checkbox-outline' },
     { key: 'selfie', title: 'Auth. Selfie', badge: 'Optional', required: false, icon: 'camera-outline' },
@@ -222,8 +222,8 @@ export default function CompanyKycScreen({ navigation }) {
 
   const totalUploaded = KYC_DOCS_CONFIG.filter(item => Boolean(getDoc(item.key))).length;
   const hasPan = Boolean(getDoc('pan'));
-  const hasDl = Boolean(getDoc('driving_license'));
-  const hasBothMandatory = hasPan && hasDl;
+  const hasAadhaar = Boolean(getDoc('aadhaar'));
+  const hasBothMandatory = hasPan && hasAadhaar;
 
   const DocumentGridCard = ({ item }) => {
     const doc = getDoc(item.key);
@@ -431,7 +431,7 @@ export default function CompanyKycScreen({ navigation }) {
                 </View>
                 <View style={[styles.statusPill, hasBothMandatory ? styles.statusPillReady : styles.statusPillPending]}>
                   <Text style={[styles.statusPillText, hasBothMandatory ? styles.statusPillTextReady : styles.statusPillTextPending]}>
-                    {hasBothMandatory ? 'Mandatory Ready (2/2)' : (hasPan || hasDl) ? 'Mandatory Incomplete (1/2)' : 'Mandatory Required (0/2)'}
+                    {hasBothMandatory ? 'Mandatory Ready (2/2)' : (hasPan || hasAadhaar) ? 'Mandatory Incomplete (1/2)' : 'Mandatory Required (0/2)'}
                   </Text>
                 </View>
               </View>

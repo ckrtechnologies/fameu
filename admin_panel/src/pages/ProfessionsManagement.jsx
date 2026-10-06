@@ -287,23 +287,39 @@ export default function ProfessionsManagement() {
 
       {/* CRUD Modal for Profession */}
       {isModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card" style={{ width: '400px', padding: '24px', background: '#ffffff', color: '#333', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-              <h3 style={{ margin: 0, color: '#1e293b' }}>{editingId ? 'Edit Profession' : 'Add New Profession'}</h3>
+        <div 
+          className="drawer-backdrop"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div 
+            className="drawer-panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              width: '100%', 
+              maxWidth: '520px', 
+              height: '100vh',
+              borderTopLeftRadius: '16px',
+              borderBottomLeftRadius: '16px',
+              background: '#ffffff',
+              padding: '32px 28px',
+              position: 'relative'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, color: '#1e293b', fontSize: '20px' }}>{editingId ? 'Edit Profession' : 'Add New Profession'}</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
             
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#475569', fontWeight: '500' }}>Profession Name</label>
                 <input 
                   type="text" 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  style={{ width: '100%', padding: '10px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#333', borderRadius: '8px', outline: 'none' }}
+                  style={{ width: '100%', padding: '10px 12px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#333', borderRadius: '8px', outline: 'none' }}
                   required
                 />
               </div>
@@ -317,7 +333,7 @@ export default function ProfessionsManagement() {
                 <label style={{ fontSize: '14px', margin: 0, color: '#475569', fontWeight: '500' }}>Is Active (Visible to users)</label>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', paddingTop: '24px' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Save Profession</button>
               </div>
@@ -328,15 +344,31 @@ export default function ProfessionsManagement() {
 
       {/* Dynamic Fields Modal */}
       {isFieldsModalOpen && selectedProfession && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card" style={{ width: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', background: '#ffffff', color: '#333', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div 
+          className="drawer-backdrop"
+          onClick={() => setIsFieldsModalOpen(false)}
+        >
+          <div 
+            className="drawer-panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              width: '100%', 
+              maxWidth: '680px', 
+              height: '100vh',
+              borderTopLeftRadius: '16px',
+              borderBottomLeftRadius: '16px',
+              background: '#ffffff',
+              padding: '32px 28px',
+              position: 'relative'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h3 style={{ margin: 0, color: '#1e293b' }}>Manage Custom Fields</h3>
+                <h3 style={{ margin: 0, color: '#1e293b', fontSize: '20px' }}>Manage Custom Fields</h3>
                 <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b' }}>For {selectedProfession.name}</p>
               </div>
-              <button onClick={() => setIsFieldsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', height: 'fit-content' }}>
-                <X size={20} />
+              <button onClick={() => setIsFieldsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>
+                <X size={22} />
               </button>
             </div>
             

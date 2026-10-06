@@ -103,10 +103,11 @@ router.get('/kyc/pending', async (req, res) => {
 router.put('/kyc/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, rejection_reason } = req.body;
     
     const updatePayload = { 
       status, 
+      review_note: status === 'rejected' ? rejection_reason : null,
       updated_at: new Date().toISOString() 
     };
     
@@ -120,7 +121,7 @@ router.put('/kyc/:id/status', async (req, res) => {
     // Fetch hiring_id to update profile too
     const { data: doc } = await supabase
       .from('verification_documents')
-      .select('hiring_id')
+      .select('hiring_id, hiring_profiles(company_name, users(email))')
       .eq('id', id)
       .single();
       
@@ -134,6 +135,20 @@ router.put('/kyc/:id/status', async (req, res) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', doc.hiring_id);
+        
+      if (status === 'rejected' && doc.hiring_profiles?.users?.email) {
+        const emailService = (await import('../../services/email.service.js')).default;
+        const companyName = doc.hiring_profiles.company_name;
+        await emailService.sendEmail(
+          doc.hiring_profiles.users.email,
+          'FameU KYC Verification Rejected',
+          `<p>Hi ${companyName},</p>
+          <p>Unfortunately, your recent KYC verification has been rejected.</p>
+          <p><strong>Reason:</strong> ${rejection_reason}</p>
+          <p>Please update your documents and try again.</p>
+          <p>Thanks,<br/>FameU Team</p>`
+        );
+      }
     }
     
     res.json({ success: true });

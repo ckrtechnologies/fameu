@@ -66,6 +66,17 @@ export default function Auditions() {
     { key: 'category', label: 'Category' },
     { key: 'audition_type', label: 'Type' },
     { 
+      key: 'validity', 
+      label: 'Validity',
+      render: (val, row) => (
+        <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+          {row.valid_from && row.valid_till
+            ? `${row.valid_from} to ${row.valid_till}`
+            : (row.valid_till ? `Till ${row.valid_till}` : 'N/A')}
+        </span>
+      )
+    },
+    { 
       key: 'status', 
       label: 'Status',
       render: (val, row) => (
@@ -117,6 +128,8 @@ export default function Auditions() {
   }, [rawAuditions]);
 
   const dateFilterFields = [
+    { key: 'valid_from', label: 'Valid From' },
+    { key: 'valid_till', label: 'Valid Till' },
     { key: 'audition_date', label: 'Audition Date' },
     { key: 'created_at', label: 'Posted Date' }
   ];

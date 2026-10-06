@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, ImageBackground, KeyboardAvoidingView, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, ImageBackground, KeyboardAvoidingView, Platform, Animated, Share } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -204,6 +204,31 @@ export default function AuditionDetailScreen() {
             <Text style={styles.bodyText}>{audition.role_description || 'No description provided.'}</Text>
           </View>
 
+          {/* Audition Script / Dialogue */}
+          {(audition.script_text || parsedInstructions.script_text) && (
+            <View style={styles.section}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.s }}>
+                <Text style={styles.sectionTitle}>Audition Script / Dialogue</Text>
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: colors.primary + '15' }}
+                  onPress={() => {
+                    const script = audition.script_text || parsedInstructions.script_text;
+                    Share.share({ message: script, title: 'Audition Script' });
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Icon name="share-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>Share / Copy</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={[styles.detailsCard, { backgroundColor: colors.surfaceLight, padding: spacing.m }]}>
+                <Text selectable style={[styles.bodyText, { lineHeight: 22, color: colors.textMainLight }]}>
+                  {audition.script_text || parsedInstructions.script_text}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Requirements & Details */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Requirements & Details</Text>
@@ -230,9 +255,20 @@ export default function AuditionDetailScreen() {
               )}
               
               {((audition.specific_start_date || parsedInstructions.specific_start_date) && (audition.specific_end_date || parsedInstructions.specific_end_date)) && (
-                <View style={[styles.detailRow, { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 0 }]}>
+                <View style={styles.detailRow}>
                   <Icon name="calendar" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
                   <Text style={styles.detailText}>Dates: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{audition.specific_start_date || parsedInstructions.specific_start_date} to {audition.specific_end_date || parsedInstructions.specific_end_date}</Text></Text>
+                </View>
+              )}
+
+              {(audition.valid_from || audition.valid_till || parsedInstructions.valid_from || parsedInstructions.valid_till) && (
+                <View style={[styles.detailRow, { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 0 }]}>
+                  <Icon name="time" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
+                  <Text style={styles.detailText}>
+                    Apply Window: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>
+                      {(audition.valid_from || parsedInstructions.valid_from) ? new Date(audition.valid_from || parsedInstructions.valid_from).toLocaleDateString() : 'N/A'} to {(audition.valid_till || parsedInstructions.valid_till) ? new Date(audition.valid_till || parsedInstructions.valid_till).toLocaleDateString() : 'N/A'}
+                    </Text>
+                  </Text>
                 </View>
               )}
             </View>

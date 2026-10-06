@@ -8,15 +8,27 @@ export const startExpireAuditionsJob = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      // Update auditions where date < today and status != closed
-      const { data, error } = await supabase
+      // 1. Update auditions where valid_till < today and status != closed
+      const { error: validTillErr } = await supabase
         .from('auditions')
         .update({ status: 'closed' })
+        .lt('valid_till', today)
+        .neq('status', 'closed');
+
+      if (validTillErr) {
+        console.error('[CRON] expireAuditions valid_till error:', validTillErr.message);
+      }
+
+      // 2. Fallback: Update legacy auditions where valid_till is NULL and date < today
+      const { error: legacyErr } = await supabase
+        .from('auditions')
+        .update({ status: 'closed' })
+        .is('valid_till', null)
         .lt('date', today)
         .neq('status', 'closed');
 
-      if (error) {
-        console.error('[CRON] expireAuditions error:', error.message);
+      if (legacyErr) {
+        console.error('[CRON] expireAuditions legacy date error:', legacyErr.message);
       } else {
         console.log(`[CRON] expireAuditions finished successfully.`);
       }

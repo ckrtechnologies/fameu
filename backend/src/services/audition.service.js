@@ -23,6 +23,8 @@ class AuditionService {
       age_min, age_max, audition_type, venue_address, lat, lng,
       audition_date, date, audition_time, compensation, budget,
       thumbnail_url, mode, status, is_live,
+      valid_from, valid_till, expiry_date,
+      script_text, script,
       ...extraProps 
     } = auditionData;
     
@@ -32,10 +34,18 @@ class AuditionService {
       throw new Error(`Invalid city: ${city}`);
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    const computedValidFrom = valid_from || todayStr;
+    const computedValidTill = valid_till || expiry_date || date || null;
+    const finalScriptText = script_text !== undefined ? script_text : (script !== undefined ? script : (extraProps.script_text || null));
+
     const extraMeta = JSON.stringify({
       budget: budget || compensation,
       gender_req: gender_req || gender,
       city,
+      valid_from: computedValidFrom,
+      valid_till: computedValidTill,
+      script_text: finalScriptText,
       ...extraProps
     });
 
@@ -53,7 +63,10 @@ class AuditionService {
       lat: lat ? parseFloat(lat) : null,
       lng: lng ? parseFloat(lng) : null,
       audition_date: audition_date || date || null,
-      date: date || audition_date || null,
+      date: date || computedValidTill || audition_date || null,
+      valid_from: computedValidFrom,
+      valid_till: computedValidTill,
+      script_text: finalScriptText,
       audition_time: audition_time || null,
       compensation: budget || compensation || null,
       instructions: extraMeta,
@@ -86,14 +99,23 @@ class AuditionService {
       age_min, age_max, audition_type, venue_address, lat, lng,
       audition_date, date, audition_time, compensation, budget,
       thumbnail_url, mode, status, is_live,
+      valid_from, valid_till, expiry_date,
+      script_text, script,
       ...extraProps 
     } = auditionData;
 
     const city = extraProps.city || auditionData.city;
+    const finalValidFrom = valid_from !== undefined ? valid_from : extraProps.valid_from;
+    const finalValidTill = valid_till !== undefined ? valid_till : (expiry_date !== undefined ? expiry_date : extraProps.valid_till);
+    const finalScriptText = script_text !== undefined ? script_text : (script !== undefined ? script : extraProps.script_text);
+
     const extraMeta = JSON.stringify({
       budget: budget || compensation,
       gender_req: gender_req || gender,
       city,
+      ...(finalValidFrom !== undefined ? { valid_from: finalValidFrom } : {}),
+      ...(finalValidTill !== undefined ? { valid_till: finalValidTill } : {}),
+      ...(finalScriptText !== undefined ? { script_text: finalScriptText } : {}),
       ...extraProps
     });
     
@@ -115,6 +137,12 @@ class AuditionService {
     if (lng !== undefined) payload.lng = parseFloat(lng);
     if (audition_date !== undefined) payload.audition_date = audition_date;
     if (date !== undefined) payload.date = date;
+    if (finalValidFrom !== undefined) payload.valid_from = finalValidFrom;
+    if (finalValidTill !== undefined) {
+      payload.valid_till = finalValidTill;
+      if (date === undefined) payload.date = finalValidTill;
+    }
+    if (finalScriptText !== undefined) payload.script_text = finalScriptText;
     if (audition_time !== undefined) payload.audition_time = audition_time;
     if (budget !== undefined || compensation !== undefined) payload.compensation = budget || compensation;
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;

@@ -27,10 +27,10 @@ import {
 
 const DOC_DEFINITIONS = [
   { key: 'pan_url', label: 'PAN Card', icon: '💳', mandatory: true, hint: 'Company or Director PAN' },
-  { key: 'driving_license_url', label: 'Driving License', icon: '🚗', mandatory: true, hint: 'Director / Authorized Signatory' },
+  { key: 'driving_license_url', label: 'Driving License', icon: '🚗', mandatory: false, hint: 'Director / Authorized Signatory' },
   { key: 'gst_url', label: 'GST Certificate', icon: '📑', mandatory: false, hint: 'Goods & Services Tax Reg.' },
   { key: 'company_reg_url', label: 'Company Reg. Cert', icon: '🏢', mandatory: false, hint: 'CIN / Trade License / COI' },
-  { key: 'aadhaar_url', label: 'Aadhaar (F&B)', icon: '🆔', mandatory: false, hint: 'Front & Back Photo ID' },
+  { key: 'aadhaar_url', label: 'Aadhaar (F&B)', icon: '🆔', mandatory: true, hint: 'Front & Back Photo ID' },
   { key: 'passport_url', label: 'Passport', icon: '✈️', mandatory: false, hint: 'Director / Signatory Passport' },
   { key: 'voter_id_url', label: 'Voter ID', icon: '🗳️', mandatory: false, hint: 'Electoral Photo ID Card' },
   { key: 'selfie_url', label: 'Auth. Selfie', icon: '🤳', mandatory: false, hint: 'Live face verification photo' },
@@ -76,9 +76,9 @@ export default function KYCVerification() {
     });
   }, [allDocuments, selectedStatus, searchQuery]);
 
-  const handleStatusChange = async (id, status) => {
+  const handleStatusChange = async (id, status, rejection_reason = null) => {
     try {
-      await updateKYCStatus({ id, status }).unwrap();
+      await updateKYCStatus({ id, status, rejection_reason }).unwrap();
       if (rejectionModalDoc) {
         setRejectionModalDoc(null);
         setRejectionReason('');
@@ -305,7 +305,7 @@ export default function KYCVerification() {
 
             const uploadedCount = docItems.filter(d => d.isUploaded).length;
             const mandatoryCount = docItems.filter(d => d.mandatory && d.isUploaded).length;
-            const isMandatoryReady = mandatoryCount >= 2; // PAN + Driving License
+            const isMandatoryReady = mandatoryCount >= 2; // PAN + Aadhaar
 
             const statusClass = doc.status === 'approved' 
               ? 'badge-approved' 
@@ -547,38 +547,29 @@ export default function KYCVerification() {
       {/* Lightbox / Document Preview Modal */}
       {activePreviewDoc && (
         <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
-            backdropFilter: 'blur(4px)'
-          }}
+          className="drawer-backdrop"
           onClick={() => setActivePreviewDoc(null)}
         >
           <div 
+            className="drawer-panel"
             style={{
               backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
+              borderTopLeftRadius: '16px',
+              borderBottomLeftRadius: '16px',
               maxWidth: '850px',
               width: '100%',
-              maxHeight: '90vh',
+              height: '100vh',
               overflow: 'hidden',
               display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+              flexDirection: 'column'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>{activePreviewDoc.title}</h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{activePreviewDoc.company || 'Agency Document'}</span>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>{activePreviewDoc.title}</h3>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{activePreviewDoc.company || 'Agency Document'}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <a 
@@ -594,17 +585,17 @@ export default function KYCVerification() {
                   onClick={() => setActivePreviewDoc(null)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
                 >
-                  <X size={20} color="var(--text-muted)" />
+                  <X size={22} color="var(--text-muted)" />
                 </button>
               </div>
             </div>
 
             {/* Modal Image Body */}
-            <div style={{ flex: 1, overflow: 'auto', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC' }}>
+            <div style={{ flex: 1, overflow: 'auto', padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC' }}>
               <img 
                 src={activePreviewDoc.url} 
                 alt={activePreviewDoc.title} 
-                style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                style={{ maxWidth: '100%', maxHeight: '82vh', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextSibling.style.display = 'block';
@@ -625,49 +616,52 @@ export default function KYCVerification() {
       {/* Rejection Reason Modal */}
       {rejectionModalDoc && (
         <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.75)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px'
-          }}
+          className="drawer-backdrop"
           onClick={() => setRejectionModalDoc(null)}
         >
           <div 
+            className="drawer-panel"
             style={{
               backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              maxWidth: '480px',
+              borderTopLeftRadius: '16px',
+              borderBottomLeftRadius: '16px',
+              maxWidth: '520px',
               width: '100%',
-              padding: '24px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+              height: '100vh',
+              padding: '32px 28px',
+              display: 'flex',
+              flexDirection: 'column'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-              <div style={{ backgroundColor: '#FEE2E2', padding: '8px', borderRadius: '10px' }}>
-                <AlertTriangle size={20} color="#EF4444" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ backgroundColor: '#FEE2E2', padding: '8px', borderRadius: '10px' }}>
+                  <AlertTriangle size={20} color="#EF4444" />
+                </div>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>Reject Agency KYC</h3>
               </div>
-              <h3 style={{ margin: 0, fontSize: '17px' }}>Reject Agency KYC</h3>
+              <button 
+                onClick={() => setRejectionModalDoc(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={22} />
+              </button>
             </div>
             
             <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginBottom: '16px' }}>
               Please specify the reason for rejecting <strong>{rejectionModalDoc.hiring_profiles?.company_name || 'this agency'}</strong>. This note helps the company fix their submission.
             </p>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
               {['Blurry / Unreadable ID', 'PAN name mismatch', 'Driving license expired', 'Aadhaar back missing', 'Fake or invalid document'].map((template) => (
                 <button
                   key={template}
                   type="button"
                   onClick={() => setRejectionReason(template)}
                   style={{
-                    padding: '4px 8px',
-                    fontSize: '11.5px',
+                    padding: '6px 10px',
+                    fontSize: '12px',
                     borderRadius: '6px',
                     border: '1px solid var(--border)',
                     backgroundColor: rejectionReason === template ? '#EFF6FF' : '#F8FAFC',
@@ -681,15 +675,15 @@ export default function KYCVerification() {
             </div>
 
             <textarea 
-              rows={3}
+              rows={4}
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="Enter rejection reason or feedback..."
               className="input-field"
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', marginBottom: '20px', resize: 'vertical' }}
+              style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '20px', resize: 'vertical' }}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 'auto', paddingTop: '20px' }}>
               <button 
                 onClick={() => setRejectionModalDoc(null)} 
                 className="btn btn-secondary"
@@ -697,7 +691,7 @@ export default function KYCVerification() {
                 Cancel
               </button>
               <button 
-                onClick={() => handleStatusChange(rejectionModalDoc.id, 'rejected')}
+                onClick={() => handleStatusChange(rejectionModalDoc.id, 'rejected', rejectionReason)}
                 disabled={isUpdating}
                 className="btn btn-danger"
                 style={{ backgroundColor: '#EF4444', color: '#fff' }}

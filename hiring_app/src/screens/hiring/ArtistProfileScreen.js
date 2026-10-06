@@ -1,7 +1,7 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
-import React, { useState } from 'react';
-import { View, Animated, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl, TextInput, Share } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Animated, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl, TextInput, Share, KeyboardAvoidingView, Platform } from 'react-native';
 import Video from 'react-native-video';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,11 +36,19 @@ import CommentsSection from '../../components/CommentsSection';
 import { useGetArtistDetailsQuery, useInviteArtistMutation, useReportArtistMutation } from '../../services/discoveryApi';
 import { useStartConversationMutation } from '../../services/chatApi';
 import { useGetCompanyProfileQuery, useGetDashboardDataQuery } from '../../services/hiringApi';
+import { useGetMyAuditionsQuery } from '../../services/auditionApi';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/forms/CustomButton';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import InAppMediaModal from '../../components/core/InAppMediaModal';
 import VideoThumbnail from '../../components/core/VideoThumbnail';
+
+const INVITATION_TEMPLATES = [
+  "We loved your profile and would love to invite you to audition!",
+  "Your experience is a great fit for our upcoming role.",
+  "Please check out the role breakdown and submit your application."
+];
+
 export default function ArtistProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -60,6 +68,9 @@ export default function ArtistProfileScreen() {
   const [isInviteModalVisible, setIsInviteModalVisible] = useState(false);
   const [selectedAuditionId, setSelectedAuditionId] = useState('');
   const [auditionSearchText, setAuditionSearchText] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
+  const [selectedModeFilter, setSelectedModeFilter] = useState('All');
+  const [onlyMatchingTalent, setOnlyMatchingTalent] = useState(false);
   const [invitationMessage, setInvitationMessage] = useState('');
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -70,7 +81,7 @@ export default function ArtistProfileScreen() {
   const [inviteArtist, { isLoading: isInviting }] = useInviteArtistMutation();
   const [reportArtist, { isLoading: isReporting }] = useReportArtistMutation();
   const { data: dashboardData } = useGetDashboardDataQuery();
-  const myAuditions = dashboardData?.data?.activeAuditions || [];
+  const { data: myAuditionsResponse } = useGetMyAuditionsQuery();
 
   
   const parseArray = (str) => {
@@ -100,6 +111,80 @@ export default function ArtistProfileScreen() {
 
   const artist = response?.data;
   const user = artist?.users;
+
+  const allMyAuditions = useMemo(() => {
+    return (myAuditionsResponse?.data || dashboardData?.data?.activeAuditions || []).filter(
+      a => a.status === 'active' || !a.status
+    );
+  }, [myAuditionsResponse, dashboardData]);
+
+  const recruiterCategories = useMemo(() => {
+    const cats = new Set();
+    allMyAuditions.forEach(a => {
+      if (a.category) {
+        a.category.split(',').forEach(c => cats.add(c.trim()));
+      }
+    });
+    return ['All', ...Array.from(cats)];
+  }, [allMyAuditions]);
+
+  const artistCategories = useMemo(() => {
+    if (!artist) return [];
+    if (Array.isArray(artist.categories)) return artist.categories.map(c => String(c).toLowerCase().trim());
+    if (typeof artist.categories === 'string') {
+      try {
+        const parsed = JSON.parse(artist.categories);
+        if (Array.isArray(parsed)) return parsed.map(c => String(c).toLowerCase().trim());
+      } catch (e) {
+        return artist.categories.split(',').map(c => c.toLowerCase().trim());
+      }
+    }
+    if (artist.category) return [String(artist.category).toLowerCase().trim()];
+    return [];
+  }, [artist]);
+
+  const isProfileMatch = (audition) => {
+    if (!audition.category || artistCategories.length === 0) return false;
+    const audCat = audition.category.toLowerCase();
+    return artistCategories.some(ac => audCat.includes(ac));
+  };
+
+  const filteredAuditions = useMemo(() => {
+    return allMyAuditions.filter(audition => {
+      if (auditionSearchText.trim()) {
+        const query = auditionSearchText.toLowerCase();
+        const matchesTitle = audition.title?.toLowerCase().includes(query);
+        const matchesRole = audition.role_description?.toLowerCase().includes(query);
+        const matchesChar = audition.character_req?.toLowerCase().includes(query);
+        const matchesCat = audition.category?.toLowerCase().includes(query);
+        const matchesCity = (audition.city || audition.venue_address)?.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesRole && !matchesChar && !matchesCat && !matchesCity) {
+          return false;
+        }
+      }
+
+      if (selectedCategoryFilter !== 'All') {
+        const catStr = (audition.category || '').toLowerCase();
+        if (!catStr.includes(selectedCategoryFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
+      if (selectedModeFilter !== 'All') {
+        const mode = (audition.audition_type || audition.mode || '').toLowerCase();
+        if (selectedModeFilter === 'Online' && !mode.includes('online')) return false;
+        if (selectedModeFilter === 'Walk-in' && (mode.includes('online') || !mode)) return false;
+      }
+
+      if (onlyMatchingTalent && artistCategories.length > 0) {
+        const audCat = (audition.category || '').toLowerCase();
+        const matchesArtist = artistCategories.some(ac => audCat.includes(ac));
+        if (!matchesArtist) return false;
+      }
+
+      return true;
+    });
+  }, [allMyAuditions, auditionSearchText, selectedCategoryFilter, selectedModeFilter, onlyMatchingTalent, artistCategories]);
 
   if (isLoading) {
     return (
@@ -886,52 +971,255 @@ export default function ArtistProfileScreen() {
         </View>
       </Modal>
 
-      <Modal visible={isInviteModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsInviteModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={[typography.h3, { marginBottom: 16, color: colors.textMainLight }]}>Invite to Audition</Text>
-            {myAuditions.length === 0 ? (
-              <Text style={[typography.body, { color: colors.textMutedLight, marginBottom: 16 }]}>You have no active auditions. Please create one first.</Text>
-            ) : (
-              <View style={{ marginBottom: 16, maxHeight: 350 }}>
-                <TextInput
-                  style={[styles.searchInput, { marginBottom: 12, backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }]}
-                  placeholder="Search auditions..."
-                  placeholderTextColor={colors.textMutedLight}
-                  value={auditionSearchText}
-                  onChangeText={setAuditionSearchText}
-                />
-                <ScrollView style={{ maxHeight: 150 }}>
-                  {myAuditions.filter(a => a.title.toLowerCase().includes(auditionSearchText.toLowerCase())).map(audition => (
+      <Modal 
+        visible={isInviteModalVisible} 
+        transparent={true} 
+        animationType="slide" 
+        onRequestClose={() => setIsInviteModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+          style={styles.bottomSheetOverlay}
+        >
+          <TouchableOpacity 
+            style={styles.bottomSheetBackdropTouch} 
+            activeOpacity={1} 
+            onPress={() => setIsInviteModalVisible(false)} 
+          />
+          <View style={styles.bottomSheetContent}>
+            {/* Drag Handle */}
+            <View style={styles.dragHandle} />
+
+            {/* Header */}
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={styles.modalHeaderTitle}>Invite to Audition</Text>
+                <Text style={styles.modalHeaderSubtitle} numberOfLines={1}>
+                  Invite {artist.full_name} to a casting call
+                </Text>
+              </View>
+              <TouchableOpacity 
+                onPress={() => setIsInviteModalVisible(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icon name="close" size={20} color={colors.textMutedLight} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Bar */}
+            <View style={styles.searchBarContainer}>
+              <Icon name="search-outline" size={18} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.searchBarInput}
+                placeholder="Search title, role, city, category..."
+                placeholderTextColor={colors.textMutedLight}
+                value={auditionSearchText}
+                onChangeText={setAuditionSearchText}
+              />
+              {auditionSearchText.length > 0 && (
+                <TouchableOpacity onPress={() => setAuditionSearchText('')}>
+                  <Icon name="close-circle" size={18} color={colors.textMutedLight} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Filter Chips Row */}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.filterChipsRow}
+            >
+              {artistCategories.length > 0 && (
+                <TouchableOpacity 
+                  style={[styles.filterChip, onlyMatchingTalent && styles.filterChipActive]}
+                  onPress={() => setOnlyMatchingTalent(!onlyMatchingTalent)}
+                >
+                  <Text style={[styles.filterChipText, onlyMatchingTalent && styles.filterChipTextActive]}>
+                    ⭐ Matches Profile
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {recruiterCategories.map(cat => (
+                <TouchableOpacity 
+                  key={cat} 
+                  style={[styles.filterChip, selectedCategoryFilter === cat && styles.filterChipActive]}
+                  onPress={() => setSelectedCategoryFilter(cat)}
+                >
+                  <Text style={[styles.filterChipText, selectedCategoryFilter === cat && styles.filterChipTextActive]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+
+              {['All', 'Walk-in', 'Online'].map(mode => (
+                <TouchableOpacity 
+                  key={mode} 
+                  style={[styles.filterChip, selectedModeFilter === mode && styles.filterChipActive]}
+                  onPress={() => setSelectedModeFilter(mode)}
+                >
+                  <Text style={[styles.filterChipText, selectedModeFilter === mode && styles.filterChipTextActive]}>
+                    {mode === 'All' ? 'All Modes' : mode === 'Walk-in' ? '📍 Walk-in' : '🌐 Online'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Results Counter & Reset */}
+            <View style={styles.counterRow}>
+              <Text style={styles.counterText}>
+                {filteredAuditions.length} audition{filteredAuditions.length !== 1 ? 's' : ''} available
+              </Text>
+              {(auditionSearchText !== '' || selectedCategoryFilter !== 'All' || selectedModeFilter !== 'All' || onlyMatchingTalent) && (
+                <TouchableOpacity onPress={() => {
+                  setAuditionSearchText('');
+                  setSelectedCategoryFilter('All');
+                  setSelectedModeFilter('All');
+                  setOnlyMatchingTalent(false);
+                }}>
+                  <Text style={styles.resetFilterText}>Clear Filters</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Auditions List & Composer */}
+            <ScrollView 
+              style={styles.modalScrollableBody}
+              contentContainerStyle={{ paddingBottom: 24 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {allMyAuditions.length === 0 ? (
+                <View style={styles.emptyAuditionsBox}>
+                  <Icon name="film-outline" size={36} color={colors.textMutedLight} style={{ marginBottom: 8 }} />
+                  <Text style={styles.emptyAuditionsTitle}>No active auditions</Text>
+                  <Text style={styles.emptyAuditionsSubtitle}>
+                    You haven't posted any active auditions yet. Post an audition first to invite artists.
+                  </Text>
+                </View>
+              ) : filteredAuditions.length === 0 ? (
+                <View style={styles.emptyAuditionsBox}>
+                  <Icon name="search-outline" size={36} color={colors.textMutedLight} style={{ marginBottom: 8 }} />
+                  <Text style={styles.emptyAuditionsTitle}>No matches found</Text>
+                  <Text style={styles.emptyAuditionsSubtitle}>Try adjusting your search terms or filter selection.</Text>
+                </View>
+              ) : (
+                filteredAuditions.map(audition => {
+                  const isSelected = selectedAuditionId === audition.id;
+                  const isMatch = isProfileMatch(audition);
+                  return (
                     <TouchableOpacity
                       key={audition.id}
                       style={[
-                        styles.auditionSelectBtn,
-                        selectedAuditionId === audition.id && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
+                        styles.richAuditionCard,
+                        isSelected && styles.richAuditionCardSelected
                       ]}
                       onPress={() => setSelectedAuditionId(audition.id)}
+                      activeOpacity={0.8}
                     >
-                      <Icon name={selectedAuditionId === audition.id ? "radio-button-on" : "radio-button-off"} size={20} color={selectedAuditionId === audition.id ? colors.primary : colors.textMutedLight} />
-                      <Text style={{ marginLeft: 8, flex: 1, color: colors.textMainLight, ...typography.body }} numberOfLines={1}>{audition.title}</Text>
+                      <View style={styles.cardHeaderRow}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <Text style={styles.cardAuditionTitle}>{audition.title}</Text>
+                            {isMatch && (
+                              <View style={styles.matchPill}>
+                                <Text style={styles.matchPillText}>⭐ Match</Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                        <Icon 
+                          name={isSelected ? "checkmark-circle" : "ellipse-outline"} 
+                          size={22} 
+                          color={isSelected ? colors.primary : colors.textMutedLight} 
+                        />
+                      </View>
+
+                      <View style={styles.cardBadgesRow}>
+                        {audition.category && (
+                          <View style={styles.metaBadge}>
+                            <Text style={styles.metaBadgeText}>🎭 {audition.category}</Text>
+                          </View>
+                        )}
+                        {(audition.audition_type || audition.mode) && (
+                          <View style={styles.metaBadge}>
+                            <Text style={styles.metaBadgeText}>
+                              {String(audition.audition_type || audition.mode).toLowerCase().includes('online') 
+                                ? '🌐 Online' 
+                                : `📍 ${audition.city || 'In-Person'}`}
+                            </Text>
+                          </View>
+                        )}
+                        {audition.compensation && (
+                          <View style={[styles.metaBadge, styles.compBadge]}>
+                            <Text style={styles.compBadgeText}>💰 {audition.compensation}</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {audition.role_description ? (
+                        <Text style={styles.cardRoleSnippet} numberOfLines={2}>
+                          {audition.role_description}
+                        </Text>
+                      ) : null}
                     </TouchableOpacity>
-                  ))}
-                </ScrollView>
-                <TextInput
-                  style={[styles.searchInput, { marginTop: 12, height: 80, textAlignVertical: 'top', backgroundColor: colors.surfaceLight, color: colors.textMainLight, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }]}
-                  placeholder="Type invitation message (optional)..."
-                  placeholderTextColor={colors.textMutedLight}
-                  multiline
-                  value={invitationMessage}
-                  onChangeText={setInvitationMessage}
-                />
-              </View>
-            )}
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-              <CustomButton title="Cancel" variant="outline" onPress={() => setIsInviteModalVisible(false)} style={{ flex: 1 }} />
-              <CustomButton title="Invite" onPress={handleInviteSubmit} isLoading={isInviting} disabled={!selectedAuditionId || isInviting} style={{ flex: 1 }} />
+                  );
+                })
+              )}
+
+              {/* Invitation Message Composer Section */}
+              {selectedAuditionId ? (
+                <View style={styles.messageComposerSection}>
+                  <Text style={styles.messageSectionTitle}>
+                    Invitation Note <Text style={{ fontWeight: 'normal', color: colors.textMutedLight }}>(Optional)</Text>
+                  </Text>
+                  
+                  {/* Template Chips */}
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                    {INVITATION_TEMPLATES.map((tmpl, idx) => (
+                      <TouchableOpacity 
+                        key={idx}
+                        style={styles.templateChip}
+                        onPress={() => setInvitationMessage(tmpl)}
+                      >
+                        <Text style={styles.templateChipText} numberOfLines={1}>
+                          "{tmpl}"
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+
+                  <TextInput
+                    style={styles.messageInput}
+                    placeholder={`Hi ${artist.full_name}, we'd love for you to audition...`}
+                    placeholderTextColor={colors.textMutedLight}
+                    multiline
+                    numberOfLines={3}
+                    value={invitationMessage}
+                    onChangeText={setInvitationMessage}
+                  />
+                </View>
+              ) : null}
+            </ScrollView>
+
+            {/* Bottom Actions Bar */}
+            <View style={styles.bottomSheetActions}>
+              <CustomButton 
+                title="Cancel" 
+                variant="outline" 
+                onPress={() => setIsInviteModalVisible(false)} 
+                style={{ flex: 1 }} 
+              />
+              <CustomButton 
+                title={selectedAuditionId ? "Send Invitation" : "Select an Audition"} 
+                onPress={handleInviteSubmit} 
+                isLoading={isInviting} 
+                disabled={!selectedAuditionId || isInviting} 
+                style={{ flex: 2 }} 
+              />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal visible={isReportModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsReportModalVisible(false)}>
@@ -1354,6 +1642,258 @@ const getStyles = (colors) => StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.m },
   modalContent: { width: '100%', backgroundColor: colors.surfaceLight, borderRadius: 12, padding: spacing.l },
   auditionSelectBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: colors.borderLight, borderRadius: 8, marginBottom: 8 },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheetBackdropTouch: {
+    flex: 1,
+  },
+  bottomSheetContent: {
+    width: '100%',
+    maxHeight: '88%',
+    backgroundColor: colors.surfaceLight,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 24,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.borderLight,
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.l,
+    marginBottom: 12,
+  },
+  modalHeaderTitle: {
+    ...typography.h3,
+    color: colors.textMainLight,
+    fontWeight: '700',
+  },
+  modalHeaderSubtitle: {
+    ...typography.caption,
+    color: colors.textMutedLight,
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 12,
+    marginHorizontal: spacing.l,
+    paddingHorizontal: 12,
+    height: 42,
+    marginBottom: 10,
+  },
+  searchBarInput: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textMainLight,
+    paddingVertical: 0,
+  },
+  filterChipsRow: {
+    paddingHorizontal: spacing.l,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.backgroundLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    marginRight: 6,
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMutedLight,
+  },
+  filterChipTextActive: {
+    color: '#FFF',
+  },
+  counterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.l,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  counterText: {
+    fontSize: 12,
+    color: colors.textMutedLight,
+    fontWeight: '500',
+  },
+  resetFilterText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  modalScrollableBody: {
+    paddingHorizontal: spacing.l,
+    paddingTop: 12,
+    maxHeight: 380,
+  },
+  richAuditionCard: {
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    backgroundColor: colors.surfaceLight,
+  },
+  richAuditionCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '08',
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  cardAuditionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textMainLight,
+  },
+  matchPill: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  matchPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#B45309',
+  },
+  cardBadgesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
+  },
+  metaBadge: {
+    backgroundColor: colors.backgroundLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  metaBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textMutedLight,
+  },
+  compBadge: {
+    backgroundColor: '#ECFDF5',
+  },
+  compBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  cardRoleSnippet: {
+    fontSize: 12,
+    color: colors.textMutedLight,
+    lineHeight: 17,
+  },
+  messageComposerSection: {
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  messageSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textMainLight,
+    marginBottom: 8,
+  },
+  templateChip: {
+    backgroundColor: colors.backgroundLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 6,
+  },
+  templateChipText: {
+    fontSize: 11,
+    color: colors.textMutedLight,
+  },
+  messageInput: {
+    backgroundColor: colors.backgroundLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 13,
+    color: colors.textMainLight,
+    minHeight: 70,
+    textAlignVertical: 'top',
+  },
+  bottomSheetActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: spacing.l,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    backgroundColor: colors.surfaceLight,
+  },
+  emptyAuditionsBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: spacing.l,
+  },
+  emptyAuditionsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textMainLight,
+    marginBottom: 4,
+  },
+  emptyAuditionsSubtitle: {
+    fontSize: 13,
+    color: colors.textMutedLight,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   closeModalBtn: {
     position: 'absolute',
     top: 50,
