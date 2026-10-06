@@ -30,6 +30,7 @@ import AppIcon, {
   ShortlistedStatIcon,
   ProfileRocketIcon,
 } from '../../components/icons';
+import { calculateArtistProfileScore, getArtistProfileChecklist } from '../../utils/profileScoring';
 
 const { width } = Dimensions.get('window');
 
@@ -262,143 +263,7 @@ export default function ArtistDashboardScreen() {
   }
   const scrollY = scrollYRef.current;
 
-  const getProfileChecklist = (p) => {
-    const data = p || {};
-    return [
-      { 
-        id: 'full_name', 
-        emoji: '👤', 
-        title: 'Full Name', 
-        hint: 'Screen / legal name', 
-        iconName: 'person', 
-        completed: !!(data.full_name || user?.full_name), 
-        weight: '+15%',
-        color: '#3B82F6',
-        bg: '#EFF6FF',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'categories', 
-        emoji: '🎭', 
-        title: 'Artistic Categories', 
-        hint: 'Actor, Model, Singer, Dancer', 
-        iconName: 'briefcase', 
-        completed: Array.isArray(data.categories) && data.categories.length > 0, 
-        weight: '+20%',
-        color: '#8B5CF6',
-        bg: '#F5F3FF',
-        targetScreen: (Array.isArray(data.categories) && data.categories.length > 0) ? 'EditProfile' : 'ArtistCategory',
-      },
-      { 
-        id: 'photos', 
-        emoji: '📸', 
-        title: 'Headshots & Photos', 
-        hint: 'Portfolio look photos', 
-        iconName: 'camera', 
-        completed: (Array.isArray(data.photo_urls) && data.photo_urls.length > 0) || !!data.avatar_url || !!user?.avatar_url, 
-        weight: '+20%',
-        color: '#EC4899',
-        bg: '#FDF2F8',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'bio', 
-        emoji: '📝', 
-        title: 'About / Bio', 
-        hint: 'Introduce your career to recruiters', 
-        iconName: 'document-attach-outline', 
-        completed: !!data.bio && data.bio.trim().length > 0, 
-        weight: '+15%',
-        color: '#F59E0B',
-        bg: '#FFFBEB',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'city', 
-        emoji: '📍', 
-        title: 'Base City', 
-        hint: 'Current shooting location', 
-        iconName: 'city', 
-        completed: !!data.city, 
-        weight: '+10%',
-        color: '#10B981',
-        bg: '#ECFDF5',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'age_gender', 
-        emoji: '🚻', 
-        title: 'Age & Gender', 
-        hint: 'Character casting filters', 
-        iconName: 'gender', 
-        completed: !!data.age && !!data.gender, 
-        weight: '+10%',
-        color: '#06B6D4',
-        bg: '#ECFEFF',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'languages', 
-        emoji: '🌐', 
-        title: 'Languages Known', 
-        hint: 'Fluent spoken languages', 
-        iconName: 'languages', 
-        completed: Array.isArray(data.languages) && data.languages.length > 0, 
-        weight: '+5%',
-        color: '#6366F1',
-        bg: '#EEF2FF',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'height_weight', 
-        emoji: '📏', 
-        title: 'Physical Stats', 
-        hint: 'Height & weight for roles', 
-        iconName: 'height', 
-        completed: !!data.height || !!data.weight, 
-        weight: '+5%',
-        color: '#F97316',
-        bg: '#FFF7ED',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'availability', 
-        emoji: '📅', 
-        title: 'Availability & Dates', 
-        hint: 'Full-time / shoot availability', 
-        iconName: 'availability_type', 
-        completed: !!data.availability_type || !!data.available_dates, 
-        weight: 'Bonus',
-        color: '#14B8A6',
-        bg: '#F0FDFA',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'skills', 
-        emoji: '⭐', 
-        title: 'Special Skills', 
-        hint: 'Voiceover, Martial Arts, Dance', 
-        iconName: 'skills', 
-        completed: Array.isArray(data.skills) && data.skills.length > 0, 
-        weight: 'Bonus',
-        color: '#EAB308',
-        bg: '#FEFCE8',
-        targetScreen: 'EditProfile',
-      },
-      { 
-        id: 'social_links', 
-        emoji: '📱', 
-        title: 'Social Profiles', 
-        hint: 'Instagram & YouTube work links', 
-        iconName: 'logo-instagram', 
-        completed: !!data.social_links && Object.values(typeof data.social_links === 'string' ? JSON.parse(data.social_links || '{}') : data.social_links).some(Boolean), 
-        weight: 'Bonus',
-        color: '#D946EF',
-        bg: '#FDF4FF',
-        targetScreen: 'EditProfile',
-      },
-    ];
-  };
+  const getProfileChecklist = (p) => getArtistProfileChecklist(p, user);
 
 
   const handleRefresh = React.useCallback(async () => {
@@ -449,21 +314,7 @@ export default function ArtistDashboardScreen() {
   const myApplications = Array.isArray(myAppsData?.data) ? myAppsData.data : [];
   const savedAuditions = Array.isArray(savedData?.data) ? savedData.data : [];
   
-  const calculateProfileCompletion = (p) => {
-    if (!p) return 0;
-    let score = 0;
-    if (p.full_name) score += 15;
-    if (p.age) score += 5;
-    if (p.gender) score += 5;
-    if (p.city || (p.preferred_cities && p.preferred_cities.length > 0)) score += 10;
-    if (p.bio) score += 15;
-    if (p.categories && p.categories.length > 0) score += 20;
-    if (p.avatar_url || (p.photo_urls && p.photo_urls.length > 0)) score += 20;
-    if (p.languages && p.languages.length > 0) score += 5;
-    if (p.height || p.weight) score += 5;
-    return Math.min(100, score);
-  };
-  const profileCompletePct = Math.max(profile?.profile_complete_pct || 0, calculateProfileCompletion(profile));
+  const profileCompletePct = Math.max(profile?.profile_complete_pct || 0, calculateArtistProfileScore(profile, user));
 
   // Header Shrinking Interpolations
   const headerPaddingVertical = scrollY.interpolate({

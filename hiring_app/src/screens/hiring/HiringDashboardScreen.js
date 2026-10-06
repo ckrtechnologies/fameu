@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, StyleSheet, Animated, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, FlatList, StatusBar, Modal, Text, Easing, ScrollView } from 'react-native';
+import { View, StyleSheet, Animated, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, FlatList, StatusBar, Modal, Text, Easing, ScrollView, Platform } from 'react-native';
 import { ChevronRight, Lock, Bell, CheckCircle2, X } from 'lucide-react-native';
 import ReAnimated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { LineChart } from 'react-native-chart-kit';
@@ -42,6 +42,11 @@ import AppIcon, {
   ProTalentStarIcon,
   ProfileRocketIcon,
 } from '../../components/icons';
+import { 
+  calculateCompanyProfileScore, 
+  isCompanyProfileComplete, 
+  getCompanyProfileChecklist 
+} from '../../utils/profileScoring';
 
 const { width } = Dimensions.get('window');
 
@@ -277,70 +282,11 @@ export default function HiringDashboardScreen({ navigation }) {
   }
 
 
-  const getCompanyChecklist = (p) => {
-    const data = p || {};
-    return [
-      {
-        id: 'company_name',
-        emoji: '🏢',
-        title: 'Company Name',
-        hint: 'Registered or brand trade name',
-        completed: !!(data.company_name || user?.display_name),
-        weight: '+25%',
-        color: '#3B82F6',
-        bg: '#EFF6FF',
-      },
-      {
-        id: 'company_type',
-        emoji: '🎬',
-        title: 'Company Type',
-        hint: 'Production house, Casting, Studio, OTT',
-        completed: !!data.company_type,
-        weight: '+25%',
-        color: '#8B5CF6',
-        bg: '#F5F3FF',
-      },
-      {
-        id: 'description',
-        emoji: '📝',
-        title: 'About Company',
-        hint: 'Overview of your casting work & projects',
-        completed: !!(data.description && data.description.trim().length > 0),
-        weight: '+25%',
-        color: '#F59E0B',
-        bg: '#FFFBEB',
-      },
-      {
-        id: 'logo_url',
-        emoji: '🖼️',
-        title: 'Company Logo',
-        hint: 'Official brand avatar / production logo',
-        completed: !!(data.logo_url || user?.avatar_url),
-        weight: '+25%',
-        color: '#10B981',
-        bg: '#ECFDF5',
-      },
-      {
-        id: 'alternate_contact',
-        emoji: '📞',
-        title: 'Contact Details',
-        hint: 'Alternate phone & official coordinator email',
-        completed: !!(data.alternate_phone || data.alternate_email),
-        weight: 'Bonus',
-        color: '#06B6D4',
-        bg: '#ECFEFF',
-      },
-    ];
-  };
-
+  const getCompanyChecklist = (p) => getCompanyProfileChecklist(p, user);
   const checklistItems = getCompanyChecklist(profile);
   const pendingItems = checklistItems.filter(i => !i.completed);
-  let profileCompleteness = 0;
-  if (profile?.company_name || user?.display_name) profileCompleteness += 25;
-  if (profile?.company_type) profileCompleteness += 25;
-  if (profile?.description) profileCompleteness += 25;
-  if (profile?.logo_url || user?.avatar_url) profileCompleteness += 25;
-  const isProfileFullyComplete = profileCompleteness === 100;
+  const profileCompleteness = calculateCompanyProfileScore(profile, user);
+  const isProfileFullyComplete = isCompanyProfileComplete(profile, user);
 
   const tickerItems = [
     {

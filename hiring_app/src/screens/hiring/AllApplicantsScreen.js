@@ -11,6 +11,7 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetAllApplicantsQuery, useUpdateApplicationStatusMutation } from '../../services/auditionApi';
+import { useStartConversationMutation } from '../../services/chatApi';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useTheme } from '../../theme/ThemeProvider';
 import {
@@ -455,22 +456,6 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: spacing.m,
     borderWidth: 1,
     borderColor: colors.borderLight,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.l,
-    paddingBottom: spacing.m,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    backgroundColor: colors.backgroundLight,
-  },
-  backButton: {
-    marginRight: spacing.m,
-  },
-  headerTitle: {
-    ...typography.h3,
-    color: colors.textMainLight,
   },
   cardHeader: {
     flexDirection: 'row',

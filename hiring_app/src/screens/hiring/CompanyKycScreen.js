@@ -13,26 +13,17 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useSelector } from 'react-redux';
 import { uploadFileWithProgress } from '../../utils/uploadUtils';
 import ProgressBar from '../../components/core/ProgressBar';
+import { calculateCompanyProfileScore, isCompanyProfileComplete } from '../../utils/profileScoring';
 
 export default function CompanyKycScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
+  const user = useSelector(state => state.auth.user);
   const { data: profileResponse, isFetching, refetch } = useGetCompanyProfileQuery();
   const profile = profileResponse?.data;
 
-  const isProfileIncomplete = !isFetching && (
-    !profile ||
-    !profile.company_name ||
-    !profile.company_type ||
-    !profile.description ||
-    !profile.logo_url
-  );
-
-  let profileScore = 0;
-  if (profile?.company_name) profileScore += 25;
-  if (profile?.company_type) profileScore += 25;
-  if (profile?.description) profileScore += 25;
-  if (profile?.logo_url) profileScore += 25;
+  const isProfileIncomplete = !isFetching && !isCompanyProfileComplete(profile, user);
+  const profileScore = calculateCompanyProfileScore(profile, user);
 
   const [showProfileModal, setShowProfileModal] = useState(false);
 

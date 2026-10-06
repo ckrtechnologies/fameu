@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, Animated, Text } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, Animated, Text, Share, TextInput } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,10 +44,12 @@ import {
 import { useStartConversationMutation } from '../../services/chatApi';
 import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useGetFeedQuery } from '../../services/discoverApi';
+import { useReportArtistMutation } from '../../services/discoveryApi';
 import CommentsSection from '../../components/CommentsSection';
 import InAppMediaModal from '../../components/core/InAppMediaModal';
 
 const CustomAudioPlayerItem = ({ uri, label }) => {
+  const { colors } = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -107,6 +109,7 @@ const CustomAudioPlayerItem = ({ uri, label }) => {
 };
 
 const CustomVideoPlayerItem = ({ uri, label }) => {
+  const { colors } = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(false);
   
@@ -174,6 +177,37 @@ export default function PublicProfileScreen() {
   const [unfollowUser, { isLoading: isUnfollowingLoad }] = useUnfollowUserMutation();
   const [startConversation, { isLoading: isStartingChat }] = useStartConversationMutation();
   const [recordVisit] = useRecordVisitMutation();
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportArtist, { isLoading: isReporting }] = useReportArtistMutation();
+
+  const handleShare = async () => {
+    if (!profileData) return;
+    try {
+      const url = `https://fameu.app/artist/${profileData.username}`;
+      await Share.share({
+        message: `Check out ${profileData.name || profileData.username}'s profile on Fameu! ${url}`,
+        url: url,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!reportReason.trim()) {
+      showError('', 'Please provide a reason for reporting.');
+      return;
+    }
+    try {
+      await reportArtist({ id: profileData.id, reason: reportReason.trim() }).unwrap();
+      setIsReportModalVisible(false);
+      setReportReason('');
+      showSuccess('', 'Profile reported successfully.');
+    } catch (error) {
+      showError('', error?.data?.error || 'Failed to report profile.');
+    }
+  };
 
   const parseArray = (str) => {
     if (!str) return [];
@@ -1136,6 +1170,42 @@ export default function PublicProfileScreen() {
         title={mediaModalTitle}
         onClose={() => setMediaModalUrl(null)}
       />
+
+      {/* Report Modal */}
+      <Modal visible={isReportModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsReportModalVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '85%', backgroundColor: colors.surfaceLight, borderRadius: 16, padding: spacing.l }}>
+            <Typography variant="body" style={{ ...typography.h3, color: colors.textMainLight, marginBottom: spacing.m }}>Report Profile</Typography>
+            <Typography variant="body" style={{ color: colors.textMutedLight, marginBottom: spacing.s }}>Why are you reporting this profile?</Typography>
+            <TextInput
+              style={{
+                backgroundColor: colors.surfaceDark,
+                color: colors.textMainLight,
+                borderRadius: 8,
+                padding: spacing.m,
+                minHeight: 90,
+                textAlignVertical: 'top',
+                marginBottom: spacing.l,
+                borderWidth: 1,
+                borderColor: colors.borderLight
+              }}
+              placeholder="e.g. Inappropriate content, spam, fake profile..."
+              placeholderTextColor={colors.textMutedLight}
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.m }}>
+              <TouchableOpacity onPress={() => setIsReportModalVisible(false)} style={{ paddingVertical: spacing.s, paddingHorizontal: spacing.m }}>
+                <Typography variant="body" style={{ color: colors.textMutedLight, fontWeight: 'bold' }}>Cancel</Typography>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleReport} disabled={isReporting} style={{ paddingVertical: spacing.s, paddingHorizontal: spacing.m, backgroundColor: colors.error, borderRadius: 8 }}>
+                {isReporting ? <ActivityIndicator color="#fff" /> : <Typography variant="body" style={{ color: '#fff', fontWeight: 'bold' }}>Report</Typography>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity, ActivityIndicator, Image, Dimensions, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, ActivityIndicator, Image, Dimensions, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import AppIcon, { Icon } from '../../components/icons';

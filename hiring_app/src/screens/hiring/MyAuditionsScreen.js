@@ -25,6 +25,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import ImageWithFallback from '../../components/core/ImageWithFallback';
+import SidebarFilterModal from '../../components/SidebarFilterModal';
 
 function ExpandableRoleDescription({ text, styles, colors }) {
   const [expanded, setExpanded] = React.useState(false);

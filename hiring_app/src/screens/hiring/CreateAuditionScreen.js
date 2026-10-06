@@ -22,6 +22,7 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { pick, types, errorCodes, isErrorWithCode } from '@react-native-documents/picker';
 import {
   PROJECT_TYPES,
   DURATION_TYPES,
