@@ -18,6 +18,7 @@ import commentsRoutes from "./src/api/comments/comments.routes.js";
 import bannerRoutes from "./src/api/shared/banner.routes.js";
 import proxyRoutes from "./src/api/shared/proxy.routes.js";
 import supportRoutes from "./src/api/shared/support.routes.js";
+import lookupRoutes from "./src/api/shared/lookups/lookups.routes.js";
 import errorHandler from "./src/core/middlewares/errorHandler.js";
 import socketManager from "./src/sockets/socketManager.js";
 import { startCronJobs } from "./src/jobs/index.js";
@@ -68,6 +69,7 @@ app.use('/api/comments', commentsRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/proxy', proxyRoutes);
+app.use('/api/lookups', lookupRoutes);
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Fameu Backend is running' });

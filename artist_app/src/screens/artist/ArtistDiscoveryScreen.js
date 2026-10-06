@@ -16,6 +16,7 @@ import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useSearchArtistsQuery, useSearchHiringAgenciesQuery } from '../../services/discoveryApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetProfessionsQuery } from '../../services/profileApi';
+import { COMPANY_TYPES_WITH_ALL } from '../../constants/masterData';
 
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
@@ -67,7 +68,11 @@ export default function ArtistDiscoveryScreen() {
 
     if (params.gender === 'All') delete params.gender;
     if (params.location === 'All Locations') delete params.location;
-    if (params.company_type === 'All') delete params.company_type;
+    if (params.company_type === 'All' || (Array.isArray(params.company_type) && params.company_type.includes('All'))) {
+      delete params.company_type;
+    } else if (Array.isArray(params.company_type)) {
+      params.company_type = params.company_type.join(',');
+    }
     return params;
   }, [searchParams, searchQuery, professionsResponse]);
 
@@ -94,7 +99,7 @@ export default function ArtistDiscoveryScreen() {
     { key: 'age', label: 'Age Range', type: 'range', minKey: 'minAge', maxKey: 'maxAge' },
     { key: 'location', label: 'Location', type: 'select', options: dynamicLocations.map(l => l.label) }
   ] : [
-    { key: 'company_type', label: 'Agency Type', type: 'select', options: ['All', 'Production House', 'Casting Agency', 'Ad Agency', 'Event Management', 'Record Label', 'Other'] }
+    { key: 'company_type', label: 'Company Type', type: 'select', options: COMPANY_TYPES_WITH_ALL, multiSelect: true }
   ];
 
   const renderTalentCard = ({ item }) => {

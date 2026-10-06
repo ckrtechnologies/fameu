@@ -152,98 +152,119 @@ export default function CommentsSection({ targetType, targetId, disableComment =
 
   return (
     <View style={styles.container}>
-      {/* Section Header */}
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionHeaderIconBadge}>
-          <CommentsSectionIcon size={24} />
+      {/* 1. Comments Box Section (Top) */}
+      <View style={styles.sectionBlock}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionHeaderIconBadge}>
+            <CommentsSectionIcon size={22} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionHeaderTitle}>Add Comment</Text>
+            <Text style={styles.sectionHeaderSubtitle}>
+              Share public questions or feedback
+            </Text>
+          </View>
         </View>
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.sectionHeaderTitle}>Comments & Reviews</Text>
+
+        {/* Input Area — blocked on own profile unless replying/editing */}
+        {((!disableComment && !isOwnProfile) || replyingTo || editing) ? (
+          <View style={styles.inputContainer}>
+            {(replyingTo || editing) && (
+              <View style={styles.replyingIndicator}>
+                <Text style={styles.replyingText}>
+                  {editing ? 'Editing your comment' : `Replying to ${replyingTo.user?.display_name || (Array.isArray(replyingTo.user?.artist_profiles) ? replyingTo.user.artist_profiles[0]?.full_name : replyingTo.user?.artist_profiles?.full_name) || (Array.isArray(replyingTo.user?.hiring_profiles) ? replyingTo.user.hiring_profiles[0]?.company_name : replyingTo.user?.hiring_profiles?.company_name) || 'User'}`}
+                </Text>
+                <TouchableOpacity onPress={() => { setReplyingTo(null); setEditing(null); setInputText(''); }}>
+                  <Icon name="close-circle" size={16} color={colors.textMutedLight} />
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                placeholder="Write a comment..."
+                placeholderTextColor={colors.textMutedLight}
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+              />
+              <TouchableOpacity onPress={handleSubmit} disabled={isAdding || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding) && styles.sendBtnDisabled]}>
+                {isAdding ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={18} color="#FFF" />}
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : isOwnProfile && !replyingTo && !editing ? (
+          <View style={styles.ownProfileNoteCard}>
+            <Text style={styles.ownProfileNoteText}>
+              💬 You can reply to feedback, but cannot post top-level comments on your own profile.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.ownProfileNoteCard}>
+            <Text style={styles.ownProfileNoteText}>
+              Commenting is disabled for this section.
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* 2. Historical Comments Section (Below) */}
+      <View style={[styles.sectionBlock, styles.historicalBlock]}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={[styles.sectionHeaderIconBadge, { backgroundColor: '#F3F4F6' }]}>
+            <Icon name="time-outline" size={20} color={colors.textMainLight} />
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.sectionHeaderTitle}>What others say?</Text>
             <View style={styles.headerCountBadge}>
               <Text style={styles.headerCountText}>{comments.length}</Text>
             </View>
           </View>
-          <Text style={styles.sectionHeaderSubtitle}>
-            Feedback and notes from artists & casting recruiters
-          </Text>
         </View>
-      </View>
+        <Text style={styles.historicalSubtitle}>
+          Past notes and reviews from artists & casting recruiters
+        </Text>
 
-      {/* Segmented Filter Pills */}
-      <View style={styles.segmentedFilterRow}>
-        <TouchableOpacity 
-          style={[styles.filterPill, activeTab === 'artists' && styles.filterPillActive]} 
-          onPress={() => setActiveTab('artists')}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.filterPillText, activeTab === 'artists' && styles.filterPillTextActive]}>
-            🎭 Artists ({artistCommentsCount})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.filterPill, activeTab === 'recruiters' && styles.filterPillActive]} 
-          onPress={() => setActiveTab('recruiters')}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.filterPillText, activeTab === 'recruiters' && styles.filterPillTextActive]}>
-            🏢 Recruiters ({recruiterCommentsCount})
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {/* Segmented Filter Pills strictly inside Historical Comments */}
+        <View style={styles.segmentedFilterRow}>
+          <TouchableOpacity 
+            style={[styles.filterPill, activeTab === 'artists' && styles.filterPillActive]} 
+            onPress={() => setActiveTab('artists')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.filterPillText, activeTab === 'artists' && styles.filterPillTextActive]}>
+              🎭 Artists ({artistCommentsCount})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.filterPill, activeTab === 'recruiters' && styles.filterPillActive]} 
+            onPress={() => setActiveTab('recruiters')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.filterPillText, activeTab === 'recruiters' && styles.filterPillTextActive]}>
+              🏢 Recruiters ({recruiterCommentsCount})
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Input Area — blocked on own profile unless replying/editing */}
-      {((!disableComment && !isOwnProfile) || replyingTo || editing) ? (
-        <View style={styles.inputContainer}>
-          {(replyingTo || editing) && (
-            <View style={styles.replyingIndicator}>
-              <Text style={styles.replyingText}>
-                {editing ? 'Editing your comment' : `Replying to ${replyingTo.user?.display_name || (Array.isArray(replyingTo.user?.artist_profiles) ? replyingTo.user.artist_profiles[0]?.full_name : replyingTo.user?.artist_profiles?.full_name) || (Array.isArray(replyingTo.user?.hiring_profiles) ? replyingTo.user.hiring_profiles[0]?.company_name : replyingTo.user?.hiring_profiles?.company_name) || 'User'}`}
-              </Text>
-              <TouchableOpacity onPress={() => { setReplyingTo(null); setEditing(null); setInputText(''); }}>
-                <Icon name="close-circle" size={16} color={colors.textMutedLight} />
-              </TouchableOpacity>
-            </View>
-          )}
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="Write a review or comment..."
-              placeholderTextColor={colors.textMutedLight}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-            />
-            <TouchableOpacity onPress={handleSubmit} disabled={isAdding || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding) && styles.sendBtnDisabled]}>
-              {isAdding ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={20} color="#FFF" />}
-            </TouchableOpacity>
+        {/* Historical Comments List */}
+        {filteredComments.map(comment => (
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            onReply={(c) => { setReplyingTo(c); setEditing(null); setInputText(''); }}
+            onEdit={(c) => { setEditing(c); setReplyingTo(null); setInputText(c.content); }}
+            onDelete={handleDelete}
+            currentUserId={user?.id}
+            onPressProfile={handlePressProfile}
+          />
+        ))}
+        {filteredComments.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No comments from {activeTab === 'artists' ? 'artists' : 'recruiters'} yet.</Text>
           </View>
-        </View>
-      ) : isOwnProfile && !replyingTo && !editing ? (
-        <View style={styles.ownProfileNoteCard}>
-          <Text style={styles.ownProfileNoteText}>
-            💬 You can reply to feedback, but cannot post top-level comments on your own profile.
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Comments List */}
-      {filteredComments.map(comment => (
-        <CommentItem
-          key={comment.id}
-          comment={comment}
-          onReply={(c) => { setReplyingTo(c); setEditing(null); setInputText(''); }}
-          onEdit={(c) => { setEditing(c); setReplyingTo(null); setInputText(c.content); }}
-          onDelete={handleDelete}
-          currentUserId={user?.id}
-          onPressProfile={handlePressProfile}
-        />
-      ))}
-      {filteredComments.length === 0 && (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No comments from {activeTab === 'artists' ? 'artists' : 'recruiters'} yet.</Text>
-        </View>
-      )}
+        )}
+      </View>
     </View>
   );
 }
@@ -251,30 +272,55 @@ export default function CommentsSection({ targetType, targetId, disableComment =
 const getStyles = (colors) => StyleSheet.create({
   container: {
     marginTop: spacing.l,
-    marginHorizontal: spacing.xl,
+    marginHorizontal: spacing.l,
     paddingHorizontal: 0,
     marginBottom: spacing.xl,
+  },
+  sectionBlock: {
+    backgroundColor: colors.surfaceLight || '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight || '#E5E7EB',
+    padding: spacing.m,
+    marginBottom: spacing.l,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  historicalBlock: {
+    marginTop: 4,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 4,
   },
   sectionHeaderIconBadge: {
     backgroundColor: colors.primary + '15',
-    padding: 8,
-    borderRadius: 14,
-    marginRight: 12,
+    padding: 7,
+    borderRadius: 12,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionHeaderTitle: {
     ...typography.h3,
+    fontSize: 16,
     color: colors.textMainLight,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   sectionHeaderSubtitle: {
     fontSize: 12,
     color: colors.textMutedLight,
-    marginTop: 2,
+    marginTop: 1,
+  },
+  historicalSubtitle: {
+    fontSize: 12,
+    color: colors.textMutedLight,
+    marginBottom: 12,
+    marginLeft: 42,
   },
   headerCountBadge: {
     backgroundColor: colors.primary + '18',
@@ -284,7 +330,7 @@ const getStyles = (colors) => StyleSheet.create({
     marginLeft: 8,
   },
   headerCountText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: colors.primary,
   },
@@ -292,7 +338,7 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginBottom: 16,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.backgroundLight || '#F9FAFB',
     padding: 4,
     borderRadius: 14,
     borderWidth: 1,

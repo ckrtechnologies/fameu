@@ -22,7 +22,14 @@ class ArtistDiscoverController {
         `)
         .eq('users.is_blacklisted', false);
 
-      if (company_type) query = query.eq('company_type', company_type);
+      if (company_type && company_type !== 'All') {
+        const typesList = String(company_type).split(',').map(s => s.trim()).filter(Boolean);
+        if (typesList.length === 1) {
+          query = query.eq('company_type', typesList[0]);
+        } else if (typesList.length > 1) {
+          query = query.in('company_type', typesList);
+        }
+      }
       if (verification_status === 'Verified Only') query = query.eq('is_verified', true);
 
       const { data, error } = await query.order('created_at', { ascending: false });

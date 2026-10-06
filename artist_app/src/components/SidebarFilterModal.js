@@ -20,17 +20,21 @@ import {
   Plus, 
   Minus,
   CheckCircle2,
-  X
+  X,
+  Building2
 } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { typography, spacing } from '../theme/theme';
 import CustomButton from './forms/CustomButton';
+import { COMPANY_TYPE_OPTIONS } from '../constants/masterData';
+import { FILTER_PLACEHOLDERS } from '../constants/formPlaceholders';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Category icons and accents for the left sidebar
 const CATEGORY_META = {
   sort_by: { icon: ArrowUpDown, color: '#3B82F6', label: 'Sort By' },
+  company_type: { icon: Building2, color: '#0EA5E9', label: 'Company Type' },
   min_budget: { icon: Coins, color: '#10B981', label: 'Compensation' },
   mode: { icon: Globe, color: '#8B5CF6', label: 'Audition Mode' },
   category: { icon: Briefcase, color: '#F59E0B', label: 'Profession' },
@@ -294,7 +298,7 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
               <TextInput
                 style={styles.stepperInput}
                 value={tempFilters.age_min ? tempFilters.age_min.toString() : ''}
-                placeholder="0"
+                placeholder={FILTER_PLACEHOLDERS.AGE_MIN}
                 placeholderTextColor={colors.textMutedLight}
                 keyboardType="number-pad"
                 onChangeText={(val) => setTempFilters({ ...tempFilters, age_min: val })}
@@ -317,7 +321,7 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
               <TextInput
                 style={styles.stepperInput}
                 value={tempFilters.age_max ? tempFilters.age_max.toString() : ''}
-                placeholder="100"
+                placeholder={FILTER_PLACEHOLDERS.AGE_MAX}
                 placeholderTextColor={colors.textMutedLight}
                 keyboardType="number-pad"
                 onChangeText={(val) => setTempFilters({ ...tempFilters, age_max: val })}
@@ -369,6 +373,11 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
         const dMap = { 'Full-time': '⏱', 'Part-time': '⏳', 'Date Specific': '📅', All: '✨' };
         return dMap[opt] || '⏱';
       }
+      if (key === 'company_type') {
+        if (opt === 'All' || opt === 'Any') return '✨';
+        const found = COMPANY_TYPE_OPTIONS.find(c => c.value === opt || c.label === opt);
+        return found ? found.badge : '🏢';
+      }
       return null;
     };
 
@@ -378,26 +387,33 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
         <View style={styles.optionsGrid}>
           {activeConfig.options.map((opt) => {
             const val = tempFilters[activeConfig.key];
-            const isSelected = Array.isArray(val) ? val.includes(opt) : val === opt;
+            const isSelected = Array.isArray(val) 
+              ? val.includes(opt) 
+              : (opt === 'All' || opt === 'Any' ? (!val || val === 'All' || val === 'Any') : val === opt);
             const badge = getOptionBadge(activeConfig.key, opt);
 
             const handlePress = () => {
               if (activeConfig.multiSelect) {
-                let currentArr = Array.isArray(val) ? val : (val && val !== 'All' && val !== 'Any' ? [val] : []);
                 if (opt === 'All' || opt === 'Any') {
-                  setTempFilters({ ...tempFilters, [activeConfig.key]: opt });
+                  setTempFilters(prev => ({ ...prev, [activeConfig.key]: opt }));
                 } else {
-                  let newArr;
-                  if (currentArr.includes(opt)) {
-                    newArr = currentArr.filter(i => i !== opt);
-                  } else {
-                    newArr = [...currentArr, opt];
-                  }
-                  if (newArr.length === 0) newArr = activeConfig.options[0];
-                  setTempFilters({ ...tempFilters, [activeConfig.key]: newArr });
+                  setTempFilters(prev => {
+                    const currentVal = prev[activeConfig.key];
+                    const currentArr = Array.isArray(currentVal) 
+                      ? currentVal 
+                      : (currentVal && currentVal !== 'All' && currentVal !== 'Any' ? [currentVal] : []);
+                    let newArr;
+                    if (currentArr.includes(opt)) {
+                      newArr = currentArr.filter(i => i !== opt);
+                    } else {
+                      newArr = [...currentArr, opt];
+                    }
+                    if (newArr.length === 0) newArr = activeConfig.options[0];
+                    return { ...prev, [activeConfig.key]: newArr };
+                  });
                 }
               } else {
-                setTempFilters({ ...tempFilters, [activeConfig.key]: opt });
+                setTempFilters(prev => ({ ...prev, [activeConfig.key]: opt }));
               }
             };
 

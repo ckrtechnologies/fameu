@@ -11,9 +11,14 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useGetAllApplicantsQuery, useUpdateApplicationStatusMutation } from '../../services/auditionApi';
-import { useStartConversationMutation } from '../../services/chatApi';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { useTheme } from '../../theme/ThemeProvider';
+import {
+  GENDERS_WITH_ALL,
+  PROJECT_TYPES_WITH_ALL,
+  TOP_CITIES,
+  DEFAULT_CATEGORIES_FALLBACK
+} from '../../constants/masterData';
 export default function AllApplicantsScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -57,12 +62,12 @@ export default function AllApplicantsScreen() {
   }, [route.params?.initialTab]);
 
   const tabs = ['all', 'pending', 'shortlisted', 'rejected', 'hired'];
-  const genders = ['All', 'Male', 'Female', 'Other'];
+  const genders = GENDERS_WITH_ALL;
   const types = ['Any', 'Walk-in', 'Scheduled', 'Live'];
   const dateRanges = ['All Time', 'Last 7 Days', 'Last 30 Days'];
-  const professions = ['All', 'Actor', 'Model', 'Dancer', 'Singer', 'Musician', 'Comedian', 'Other'];
-  const projectTypes = ['All', 'Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'];
-  const CITIES = ['Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Chandigarh', 'Other'];
+  const professions = ['All', ...DEFAULT_CATEGORIES_FALLBACK];
+  const projectTypes = PROJECT_TYPES_WITH_ALL;
+  const CITIES = TOP_CITIES;
 
   const applicants = applicantsResponse?.data || [];
   

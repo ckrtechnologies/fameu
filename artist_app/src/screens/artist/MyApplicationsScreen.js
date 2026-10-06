@@ -160,6 +160,7 @@ export default function MyApplicationsScreen() {
                     ...(item.auditions || item.audition || item),
                     status: item.status || 'pending'
                   }} 
+                  showStatus
                   onPress={() => handleAuditionPress(item)} 
                   style={styles.fullWidthCard}
                 />

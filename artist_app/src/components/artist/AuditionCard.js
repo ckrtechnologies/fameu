@@ -6,7 +6,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, shadows } from '../../theme/theme';
 import ImageWithFallback from '../core/ImageWithFallback';
 
-const AuditionCard = ({ audition, onPress, style, imageContainerStyle, compact }) => {
+const AuditionCard = ({ audition, onPress, style, imageContainerStyle, compact, showStatus = false }) => {
   const { colors } = useTheme();
   const styles = getStyles(colors);
 
@@ -110,8 +110,12 @@ const AuditionCard = ({ audition, onPress, style, imageContainerStyle, compact }
         </View>
 
         {/* Optional status pill if used in Applications view */}
-        {audition.status && (() => {
+        {showStatus && audition.status && (() => {
           const s = String(audition.status).toLowerCase().trim();
+          if (!['pending', 'in_review', 'under_review', 'hired', 'shortlisted', 'accepted', 'interview_scheduled', 'rejected'].includes(s)) {
+            return null;
+          }
+
           let bg = '#FEF3C7';
           let borderColor = '#FDE68A';
           let textColor = '#B45309';

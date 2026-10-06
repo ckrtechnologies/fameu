@@ -22,8 +22,19 @@ import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { pick, types, errorCodes, isErrorWithCode } from '@react-native-documents/picker';
-import { INDIAN_CITIES } from '../../constants/cities';
+import {
+  PROJECT_TYPES,
+  DURATION_TYPES,
+  GENDERS,
+  LANGUAGES,
+  SKILLS,
+  AUDITION_REQUIRED_OPTIONS,
+  COMPENSATION_FREQUENCIES,
+  AUDITION_MODES as AUDITION_MODES_LIST,
+  DEFAULT_CATEGORIES_FALLBACK,
+  INDIAN_CITIES,
+} from '../../constants/masterData';
+import { AUDITION_FORM_PLACEHOLDERS } from '../../constants/formPlaceholders';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useSelector } from 'react-redux';
@@ -147,22 +158,15 @@ export default function CreateAuditionScreen({ route }) {
   });
 
   const dynamicCategories = (professionsResponse?.data || []).map(p => p.name);
-  const CATEGORIES = dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Dancer', 'Singer', 'Musician', 'Comedian', 'Other'];
+  const CATEGORIES = dynamicCategories.length > 0 ? dynamicCategories : DEFAULT_CATEGORIES_FALLBACK;
 
-  const TYPES = ['Walk-in', 'Scheduled', 'Online'];
+  const TYPES = AUDITION_MODES_LIST;
   const JOB_TYPES = [
     { id: 'Audition', title: 'Audition', subtitle: 'On-camera / stage audition', icon: ListingTypeAuditionIcon },
     { id: 'Job', title: 'Job', subtitle: 'Crew & production role', icon: ListingTypeJobIcon },
     { id: 'Casting Call', title: 'Casting Call', subtitle: 'Open public talent call', icon: ListingTypeCastingCallIcon }
   ];
-  const PROJECT_TYPES = ['Web-series', 'Films', 'TV serials', 'Short Films', 'Ad films', 'Reality Shows', 'Talent Hunt', 'Regional Movies', 'Regional Shows', 'Branded Content', 'Music Videos', 'Music Albums', 'Print shoots', 'Catalog Shoots', 'Documentary', 'Other'];
   const CITIES = INDIAN_CITIES;
-  const DURATION_TYPES = ['Full-time', 'Part-time', 'Date Specific'];
-  const GENDERS = ['Male', 'Female', 'Other', 'Any'];
-  const LANGUAGES = ['Hindi', 'English', 'Marathi', 'Bengali', 'Telugu', 'Tamil', 'Kannada', 'Malayalam', 'Gujarati', 'Punjabi', 'Urdu', 'Bhojpuri', 'Other'];
-  const SKILLS = ['Acting', 'Dancing', 'Singing', 'Anchoring', 'Modeling', 'Voice Over', 'Martial Arts / Action', 'Instrumentalist', 'Stand-up Comedy', 'Direction', 'Writing'];
-  const AUDITION_REQUIRED_OPTIONS = ['Yes (Audition Required)', 'No'];
-  const COMPENSATION_FREQUENCIES = ['Per Day', 'Per Week', 'Per Month', 'One Time', 'Unpaid / TFP'];
 
   const STEPS = [
     { number: 1, title: 'Basic Info', subtitle: 'Project & Category', IconComponent: StepBasicInfoIcon },
@@ -651,7 +655,7 @@ export default function CreateAuditionScreen({ route }) {
                 <Text style={styles.label}>Job / Audition Title *</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. Lead Female Actor for Feature Film"
+                  placeholder={AUDITION_FORM_PLACEHOLDERS.TITLE}
                   placeholderTextColor={colors.textMutedLight}
                   value={form.title}
                   onChangeText={(text) => handleChange('title', text)}
@@ -721,7 +725,7 @@ export default function CreateAuditionScreen({ route }) {
                 <Text style={styles.label}>Specific Shoot Location / Studio (Optional)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. Film City Studio 4, Goregaon East"
+                  placeholder={AUDITION_FORM_PLACEHOLDERS.PROJECT_LOCATION}
                   placeholderTextColor={colors.textMutedLight}
                   value={form.job_location}
                   onChangeText={(text) => handleChange('job_location', text)}
@@ -740,7 +744,7 @@ export default function CreateAuditionScreen({ route }) {
               <Text style={styles.sectionSubheading}>Describe scene context, physical look, traits & dialogue</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Describe the role breakdown, look requirements, personality traits, and key scenes..."
+                placeholder={AUDITION_FORM_PLACEHOLDERS.ROLE_DESCRIPTION}
                 placeholderTextColor={colors.textMutedLight}
                 multiline
                 numberOfLines={4}
@@ -783,7 +787,7 @@ export default function CreateAuditionScreen({ route }) {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <TextInput
                       style={[styles.input, { flex: 1, textAlign: 'center', fontWeight: '700' }]}
-                      placeholder="Min"
+                      placeholder={AUDITION_FORM_PLACEHOLDERS.AGE_MIN}
                       placeholderTextColor={colors.textMutedLight}
                       keyboardType="numeric"
                       value={form.age_min}
@@ -792,7 +796,7 @@ export default function CreateAuditionScreen({ route }) {
                     <Text style={{ marginHorizontal: 8, color: colors.textMutedLight, fontWeight: '700' }}>—</Text>
                     <TextInput
                       style={[styles.input, { flex: 1, textAlign: 'center', fontWeight: '700' }]}
-                      placeholder="Max"
+                      placeholder={AUDITION_FORM_PLACEHOLDERS.AGE_MAX}
                       placeholderTextColor={colors.textMutedLight}
                       keyboardType="numeric"
                       value={form.age_max}
@@ -850,7 +854,7 @@ export default function CreateAuditionScreen({ route }) {
                   <Text style={styles.miniLabel}>MIN BUDGET (₹)</Text>
                   <TextInput
                     style={[styles.input, { fontWeight: '700', fontSize: 16 }]}
-                    placeholder="e.g. 5,000"
+                    placeholder={AUDITION_FORM_PLACEHOLDERS.BUDGET_MIN}
                     placeholderTextColor={colors.textMutedLight}
                     keyboardType="numeric"
                     value={form.budget_min}
@@ -862,7 +866,7 @@ export default function CreateAuditionScreen({ route }) {
                   <Text style={styles.miniLabel}>MAX BUDGET (₹)</Text>
                   <TextInput
                     style={[styles.input, { fontWeight: '700', fontSize: 16 }]}
-                    placeholder="e.g. 25,000"
+                    placeholder={AUDITION_FORM_PLACEHOLDERS.BUDGET_MAX}
                     placeholderTextColor={colors.textMutedLight}
                     keyboardType="numeric"
                     value={form.budget_max}
@@ -1012,7 +1016,7 @@ export default function CreateAuditionScreen({ route }) {
               <Text style={styles.sectionHeading}>5. Search Tags & Keywords (Optional)</Text>
               <TextInput
                 style={[styles.input, { marginTop: spacing.s }]}
-                placeholder="e.g. Lead, TVC, Hindi, Urgent, Mumbai, Commercial"
+                placeholder={AUDITION_FORM_PLACEHOLDERS.TAGS}
                 placeholderTextColor={colors.textMutedLight}
                 value={form.tags}
                 onChangeText={(text) => handleChange('tags', text)}
@@ -1065,7 +1069,7 @@ export default function CreateAuditionScreen({ route }) {
                       <Text style={styles.label}>Venue Complete Address *</Text>
                       <TextInput
                         style={[styles.input, styles.textArea]}
-                        placeholder="Enter complete studio address, floor, room number and nearest landmark..."
+                        placeholder={AUDITION_FORM_PLACEHOLDERS.STUDIO_ADDRESS}
                         placeholderTextColor={colors.textMutedLight}
                         multiline
                         value={form.walk_in_venue}
@@ -1126,7 +1130,7 @@ export default function CreateAuditionScreen({ route }) {
                 </View>
                 <TextInput
                   style={[styles.input, styles.textArea, { minHeight: 120, textAlignVertical: 'top' }]}
-                  placeholder="Type or paste audition script, monologue lines, or character dialogue sides here..."
+                  placeholder={AUDITION_FORM_PLACEHOLDERS.SCRIPT_SIDES}
                   placeholderTextColor={colors.textMutedLight}
                   multiline
                   numberOfLines={5}
@@ -1270,7 +1274,7 @@ export default function CreateAuditionScreen({ route }) {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search categories..."
+              placeholder={AUDITION_FORM_PLACEHOLDERS.SEARCH_CATEGORIES}
               placeholderTextColor={colors.textMutedLight}
               value={categorySearch}
               onChangeText={setCategorySearch}
@@ -1326,7 +1330,7 @@ export default function CreateAuditionScreen({ route }) {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search city..."
+              placeholder={AUDITION_FORM_PLACEHOLDERS.SEARCH_CITY}
               placeholderTextColor={colors.textMutedLight}
               value={citySearch}
               onChangeText={setCitySearch}

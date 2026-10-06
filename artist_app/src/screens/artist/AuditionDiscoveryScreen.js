@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -26,38 +26,22 @@ import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetFeedQuery } from '../../services/discoverApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 import { useGetProfessionsQuery, useGetProfileQuery } from '../../services/profileApi';
-
-const CATEGORY_MAP = {
-  'Relevant': 'Relevant',
-  '✨ Matches Profile': 'matches_profile',
-  'Live (Today)': 'Live (Today)',
-  'Trending': 'Trending',
-  'Acting': 'Actor',
-  'Modeling': 'Model',
-  'Singing': 'Singer',
-  'Dancing': 'Dancer',
-  'Writing': 'Writer',
-  'Direction': 'Director',
-  'Crew / Tech': 'Technician'
-};
-
-const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
+import {
+  CATEGORY_MAP,
+  UI_CATEGORIES,
+  DEFAULT_FILTERS,
+  COMPANY_TYPES_WITH_ALL,
+  SORT_OPTIONS,
+  COMPENSATION_OPTIONS,
+  AUDITION_MODES_WITH_ALL,
+  PROJECT_TYPES_WITH_ALL,
+  DURATION_TYPES_WITH_ALL,
+  TOP_CITIES_WITH_ALL,
+  GENDERS_WITH_ALL,
+} from '../../constants/masterData';
+import { SEARCH_PLACEHOLDERS } from '../../constants/formPlaceholders';
 
 const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
-
-const DEFAULT_FILTERS = {
-  category: 'All',
-  project_type: 'All',
-  mode: 'All',
-  duration_type: 'All',
-  city: 'All',
-  gender_req: 'All',
-  is_paid: 'All',
-  min_budget: '',
-  sort_by: 'Recent',
-  age_min: '',
-  age_max: '',
-};
 
 export default function AuditionDiscoveryScreen() {
   const { colors } = useTheme();
@@ -84,14 +68,6 @@ export default function AuditionDiscoveryScreen() {
   const { data: professionsResponse } = useGetProfessionsQuery();
   const dynamicCategories = (professionsResponse?.data || []).map(p => capitalize(p.name));
   const CATEGORIES = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Singer', 'Dancer', 'Technician', 'Writer', 'Director'])];
-
-  const SORT_OPTIONS = ['Recent', 'Expiring Soon', 'Popular', 'Highest Budget'];
-  const COMPENSATION_OPTIONS = ['All', 'Paid Only', '₹5,000+', '₹25,000+', '₹50,000+', '₹1,00,000+'];
-  const MODE_OPTIONS = ['All', 'Online / Self-Tape', 'Offline (In-Person)', 'Walk-in'];
-  const PROJECT_TYPES = ['All', 'Online', 'Offline', 'Walk-in', 'Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'];
-  const DURATION_TYPES = ['All', 'Full-time', 'Part-time', 'Date Specific'];
-  const CITIES = ['All', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Chandigarh', 'Other'];
-  const GENDERS = ['All', 'Male', 'Female', 'Other', 'Any'];
 
   // Construct Query Params for API
   const queryParams = { search };
@@ -129,6 +105,9 @@ export default function AuditionDiscoveryScreen() {
     }
   }
 
+  if (filters.company_type && filters.company_type !== 'All') {
+    queryParams.company_type = Array.isArray(filters.company_type) ? filters.company_type.join(',') : filters.company_type;
+  }
   if (filters.project_type !== 'All') queryParams.project_type = filters.project_type;
   if (filters.mode !== 'All') queryParams.mode = filters.mode;
   if (filters.duration_type !== 'All') queryParams.duration_type = filters.duration_type;
@@ -153,13 +132,14 @@ export default function AuditionDiscoveryScreen() {
 
   const filterConfig = [
     { key: 'sort_by', label: 'Sort By', type: 'select', options: SORT_OPTIONS },
+    { key: 'company_type', label: 'Company Type', type: 'select', options: COMPANY_TYPES_WITH_ALL, multiSelect: true },
     { key: 'min_budget', label: 'Compensation', type: 'select', options: COMPENSATION_OPTIONS },
-    { key: 'mode', label: 'Audition Mode', type: 'select', options: MODE_OPTIONS },
+    { key: 'mode', label: 'Audition Mode', type: 'select', options: AUDITION_MODES_WITH_ALL },
     { key: 'category', label: 'Profession', type: 'select', options: CATEGORIES, multiSelect: true },
-    { key: 'project_type', label: 'Project Type', type: 'select', options: PROJECT_TYPES },
-    { key: 'city', label: 'City', type: 'select', options: CITIES },
-    { key: 'duration_type', label: 'Duration', type: 'select', options: DURATION_TYPES },
-    { key: 'gender_req', label: 'Gender', type: 'select', options: GENDERS },
+    { key: 'project_type', label: 'Project Type', type: 'select', options: PROJECT_TYPES_WITH_ALL },
+    { key: 'city', label: 'City', type: 'select', options: TOP_CITIES_WITH_ALL },
+    { key: 'duration_type', label: 'Duration', type: 'select', options: DURATION_TYPES_WITH_ALL },
+    { key: 'gender_req', label: 'Gender', type: 'select', options: GENDERS_WITH_ALL },
     { key: 'age', label: 'Age Range', type: 'range', minKey: 'age_min', maxKey: 'age_max' }
   ];
 
@@ -187,6 +167,10 @@ export default function AuditionDiscoveryScreen() {
     }
     if (filters.duration_type && filters.duration_type !== 'All') {
       pills.push({ key: 'duration_type', label: filters.duration_type, onRemove: () => setFilters(p => ({ ...p, duration_type: 'All' })) });
+    }
+    if (filters.company_type && filters.company_type !== 'All') {
+      const compText = Array.isArray(filters.company_type) ? filters.company_type.join(', ') : filters.company_type;
+      pills.push({ key: 'company_type', label: `🏢 ${compText}`, onRemove: () => setFilters(p => ({ ...p, company_type: 'All' })) });
     }
     if (filters.gender_req && filters.gender_req !== 'All') {
       pills.push({ key: 'gender_req', label: `Gender: ${filters.gender_req}`, onRemove: () => setFilters(p => ({ ...p, gender_req: 'All' })) });
@@ -255,7 +239,18 @@ export default function AuditionDiscoveryScreen() {
     headerElevation,
   } = useShrinkableHeader();
 
-  const auditions = Array.isArray(feedData?.data) ? feedData.data : [];
+  const auditions = useMemo(() => {
+    let list = Array.isArray(feedData?.data) ? feedData.data : [];
+    if (filters.company_type && filters.company_type !== 'All') {
+      const selectedTypes = Array.isArray(filters.company_type) ? filters.company_type : [filters.company_type];
+      const normalizedTargets = selectedTypes.map(t => String(t).toLowerCase().replace(/[-_\s]/g, ''));
+      list = list.filter(item => {
+        const cType = String(item.hiring_profiles?.company_type || '').toLowerCase().replace(/[-_\s]/g, '');
+        return normalizedTargets.some(target => cType === target || cType.includes(target) || target.includes(cType));
+      });
+    }
+    return list;
+  }, [feedData?.data, filters.company_type]);
   const loading = isLoading;
 
   return (
@@ -300,7 +295,7 @@ export default function AuditionDiscoveryScreen() {
               <View style={[styles.compactSearchRow, { backgroundColor: colors.surfaceLight, borderColor: colors.borderLight }]}>
                 <Icon name="search" size={16} color={colors.textMutedLight} style={{ marginRight: 8 }} />
                 <TextInput
-                  placeholder="Search roles, city, keywords..."
+                  placeholder={SEARCH_PLACEHOLDERS.AUDITIONS}
                   placeholderTextColor={colors.textMutedLight}
                   value={search}
                   onChangeText={setSearch}

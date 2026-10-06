@@ -19,23 +19,23 @@ import MediaOrLinkInput from '../../components/core/MediaOrLinkInput';
 import DateRangePicker from '../../components/core/DateRangePicker';
 import { parseArray } from '../../utils/dataUtils';
 import CustomButton from '../../components/forms/CustomButton';
-import { INDIAN_CITIES } from '../../constants/cities';
 import { useSelector } from 'react-redux';
 import { uploadFileWithProgress } from '../../utils/uploadUtils';
 import ProgressBar from '../../components/core/ProgressBar';
 import { ProfessionCategoryIcon } from '../../components/icons';
 import ShrinkableHeader from '../../components/core/ShrinkableHeader';
 import useShrinkableHeader from '../../hooks/useShrinkableHeader';
+import { 
+  LANGUAGES, 
+  GENDERS, 
+  AVAILABILITY_OPTIONS, 
+  TRAVEL_PREFERENCES, 
+  HEIGHT_OPTIONS,
+  INDIAN_CITIES 
+} from '../../constants/masterData';
+import { PROFILE_PLACEHOLDERS } from '../../constants/formPlaceholders';
 
-const AVAILABLE_LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati', 'Odia', 'Bhojpuri', 'Urdu', 'Assamese'];
-
-const HEIGHT_OPTIONS = Array.from({ length: 37 }, (_, i) => {
-  const totalInches = 48 + i; // Start from 4' 0"
-  const feet = Math.floor(totalInches / 12);
-  const inches = totalInches % 12;
-  const cm = Math.round(totalInches * 2.54);
-  return `${feet}' ${inches}" (${cm} cm)`;
-});
+const AVAILABLE_LANGUAGES = LANGUAGES.filter(l => l !== 'Other');
 
 export default function EditProfileScreen() {
   const { colors } = useTheme();
@@ -550,7 +550,7 @@ export default function EditProfileScreen() {
         >
           <View style={{ backgroundColor: colors.surfaceLight, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: colors.textMainLight }}>Select Gender</Text>
-            {['Male', 'Female', 'Other'].map(opt => (
+            {GENDERS.filter(opt => opt !== 'Any').map(opt => (
               <TouchableOpacity
                 key={opt}
                 style={{ paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}
@@ -699,7 +699,7 @@ export default function EditProfileScreen() {
                     style={styles.input}
                     value={formData.cintaa_reg_number}
                     onChangeText={(text) => setFormData(p => ({ ...p, cintaa_reg_number: text }))}
-                    placeholder="Enter Reg Number"
+                    placeholder={PROFILE_PLACEHOLDERS.REG_NUMBER}
                     placeholderTextColor={colors.textMutedLight}
                   />
                 </View>
@@ -710,7 +710,7 @@ export default function EditProfileScreen() {
               <Text style={styles.label}>Full Name *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. John Doe"
+                placeholder={PROFILE_PLACEHOLDERS.FULL_NAME}
                 placeholderTextColor={colors.textMutedLight}
                 value={formData.full_name}
                 onChangeText={(t) => setFormData(p => ({ ...p, full_name: t }))}
@@ -721,7 +721,7 @@ export default function EditProfileScreen() {
               <Text style={styles.label}>Alternate Number</Text>
               <TextInput
                 style={styles.input}
-                placeholder="+91 XXXXXXXXXX"
+                placeholder={PROFILE_PLACEHOLDERS.PHONE}
                 placeholderTextColor={colors.textMutedLight}
                 value={formData.alt_number}
                 onChangeText={(t) => setFormData(p => ({ ...p, alt_number: t }))}
@@ -734,7 +734,7 @@ export default function EditProfileScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TextInput
                   style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                  placeholder="e.g. johndoe (must be unique)"
+                  placeholder={PROFILE_PLACEHOLDERS.USERNAME}
                   placeholderTextColor={colors.textMutedLight}
                   value={formData.username}
                   onChangeText={(t) => setFormData(p => ({ ...p, username: t.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
@@ -759,7 +759,7 @@ export default function EditProfileScreen() {
                 <Text style={styles.label}>Age *</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. 24"
+                  placeholder={PROFILE_PLACEHOLDERS.AGE}
                   keyboardType="numeric"
                   placeholderTextColor={colors.textMutedLight}
                   value={formData.age}
@@ -783,7 +783,7 @@ export default function EditProfileScreen() {
               <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                 <Text style={styles.label}>Height</Text>
                 <BottomSheetSelect
-                  placeholder="Select Height"
+                  placeholder={PROFILE_PLACEHOLDERS.SELECT_HEIGHT}
                   options={HEIGHT_OPTIONS}
                   value={formData.height}
                   onSelect={(t) => setFormData(p => ({ ...p, height: t }))}
@@ -793,7 +793,7 @@ export default function EditProfileScreen() {
                 <Text style={styles.label}>Weight (kg)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. 75"
+                  placeholder={PROFILE_PLACEHOLDERS.WEIGHT}
                   keyboardType="numeric"
                   placeholderTextColor={colors.textMutedLight}
                   value={formData.weight}
@@ -806,7 +806,7 @@ export default function EditProfileScreen() {
               <Text style={styles.label}>Bio</Text>
               <TextInput
                 style={[styles.input, styles.inputMultiline]}
-                placeholder="Tell us about yourself..."
+                placeholder={PROFILE_PLACEHOLDERS.BIO}
                 placeholderTextColor={colors.textMutedLight}
                 multiline
                 value={formData.bio}
@@ -849,9 +849,9 @@ export default function EditProfileScreen() {
               <Text style={styles.label}>Availability Type</Text>
               <BottomSheetSelect
                 value={formData.availability_type}
-                options={['Full Time', 'Part Time', 'Weekends', 'Short Term', 'Long Term', 'Freelance']}
+                options={AVAILABILITY_OPTIONS}
                 onSelect={(t) => setFormData(p => ({ ...p, availability_type: t }))}
-                placeholder="Select Availability"
+                placeholder={PROFILE_PLACEHOLDERS.SELECT_AVAILABILITY}
               />
             </View>
 
@@ -860,15 +860,15 @@ export default function EditProfileScreen() {
               <DateRangePicker
                 value={formData.available_dates}
                 onSelect={(t) => setFormData(p => ({ ...p, available_dates: t }))}
-                placeholder="Select Dates"
+                placeholder={PROFILE_PLACEHOLDERS.SELECT_DATES}
               />
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Work Preference</Text>
               <BottomSheetSelect
-                placeholder="Select Preference"
-                options={['Available in India', 'Outside India', 'Specific Cities']}
+                placeholder={PROFILE_PLACEHOLDERS.SELECT_PREFERENCE}
+                options={TRAVEL_PREFERENCES}
                 value={formData.work_preference}
                 onSelect={(val) => {
                   const hasSpecific = Array.isArray(val) ? val.includes('Specific Cities') : val === 'Specific Cities';
@@ -887,7 +887,7 @@ export default function EditProfileScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Select Specific Cities</Text>
                 <BottomSheetSelect
-                  placeholder="Select Cities"
+                  placeholder={PROFILE_PLACEHOLDERS.SELECT_CITIES}
                   options={INDIAN_CITIES}
                   value={formData.preferred_cities}
                   onSelect={(val) => setFormData(p => ({ ...p, preferred_cities: val }))}
@@ -902,7 +902,7 @@ export default function EditProfileScreen() {
               <TagInput
                 tags={formData.look_alike}
                 onTagsChange={(t) => setFormData(p => ({ ...p, look_alike: t }))}
-                placeholder="e.g. Shahrukh Khan"
+                placeholder={PROFILE_PLACEHOLDERS.INSPIRATION}
               />
             </View>
 
@@ -911,7 +911,7 @@ export default function EditProfileScreen() {
               <TagInput
                 tags={formData.hashtags}
                 onTagsChange={(t) => setFormData(p => ({ ...p, hashtags: t }))}
-                placeholder="e.g. actor, model"
+                placeholder={PROFILE_PLACEHOLDERS.TAGS}
               />
             </View>
 
@@ -919,7 +919,7 @@ export default function EditProfileScreen() {
               <Text style={styles.label}>Intro Video (30 sec)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Paste YouTube or Instagram URL"
+                placeholder={PROFILE_PLACEHOLDERS.VIDEO_LINK}
                 placeholderTextColor={colors?.textMuted || '#888'}
                 value={formData.intro_video_url}
                 onChangeText={(t) => setFormData(p => ({ ...p, intro_video_url: t }))}
@@ -973,7 +973,7 @@ export default function EditProfileScreen() {
                 style={styles.input}
                 value={formData.social_links?.instagram || ''}
                 onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, instagram: text } }))}
-                placeholder="https://instagram.com/yourhandle"
+                placeholder={PROFILE_PLACEHOLDERS.SOCIAL_INSTAGRAM}
                 placeholderTextColor={colors.textMutedLight}
                 autoCapitalize="none"
               />
@@ -985,7 +985,7 @@ export default function EditProfileScreen() {
                 style={styles.input}
                 value={formData.social_links?.youtube || ''}
                 onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, youtube: text } }))}
-                placeholder="https://youtube.com/@yourchannel"
+                placeholder={PROFILE_PLACEHOLDERS.SOCIAL_YOUTUBE}
                 placeholderTextColor={colors.textMutedLight}
                 autoCapitalize="none"
               />
@@ -997,7 +997,7 @@ export default function EditProfileScreen() {
                 style={styles.input}
                 value={formData.social_links?.facebook || ''}
                 onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, facebook: text } }))}
-                placeholder="https://facebook.com/yourprofile"
+                placeholder={PROFILE_PLACEHOLDERS.SOCIAL_FACEBOOK}
                 placeholderTextColor={colors.textMutedLight}
                 autoCapitalize="none"
               />
@@ -1009,7 +1009,7 @@ export default function EditProfileScreen() {
                 style={styles.input}
                 value={formData.social_links?.snapchat || ''}
                 onChangeText={(text) => setFormData(p => ({ ...p, social_links: { ...p.social_links, snapchat: text } }))}
-                placeholder="https://snapchat.com/add/yourhandle"
+                placeholder={PROFILE_PLACEHOLDERS.SOCIAL_SNAPCHAT}
                 placeholderTextColor={colors.textMutedLight}
                 autoCapitalize="none"
               />
@@ -1022,14 +1022,14 @@ export default function EditProfileScreen() {
                 <View key={index} style={{ marginBottom: 15, padding: 15, backgroundColor: colors.backgroundLight, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}>
                   <TextInput
                     style={[styles.input, { marginBottom: 10 }]}
-                    placeholder="Project Title (e.g. Fameu Ad)"
+                    placeholder={PROFILE_PLACEHOLDERS.EXPERIENCE_TITLE}
                     placeholderTextColor={colors.textMutedLight}
                     value={assignment.title}
                     onChangeText={(text) => updateAssignment(index, 'title', text)}
                   />
                   <TextInput
                     style={[styles.input, { marginBottom: 10 }]}
-                    placeholder="Role (e.g. Lead Actor)"
+                    placeholder={PROFILE_PLACEHOLDERS.EXPERIENCE_ROLE}
                     placeholderTextColor={colors.textMutedLight}
                     value={assignment.role}
                     onChangeText={(text) => updateAssignment(index, 'role', text)}
@@ -1037,7 +1037,7 @@ export default function EditProfileScreen() {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <TextInput
                       style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 10 }]}
-                      placeholder="Year (e.g. 2023)"
+                      placeholder={PROFILE_PLACEHOLDERS.EXPERIENCE_YEAR}
                       placeholderTextColor={colors.textMutedLight}
                       value={assignment.year}
                       onChangeText={(text) => updateAssignment(index, 'year', text)}
@@ -1049,7 +1049,7 @@ export default function EditProfileScreen() {
                   </View>
                   <TextInput
                     style={[styles.input, { marginTop: 10, marginBottom: 0 }]}
-                    placeholder="Link (e.g. YouTube/IMDb)"
+                    placeholder={PROFILE_PLACEHOLDERS.EXPERIENCE_LINK}
                     placeholderTextColor={colors.textMutedLight}
                     value={assignment.link}
                     onChangeText={(text) => updateAssignment(index, 'link', text)}

@@ -18,6 +18,8 @@ import { useGetCompanyProfileQuery, useUpsertCompanyProfileMutation } from '../.
 import { useLazyCheckUsernameQuery } from '../../services/profileApi';
 import CommentsSection from '../../components/CommentsSection';
 import { useTheme } from '../../theme/ThemeProvider';
+import { COMPANY_TYPE_OPTIONS } from '../../constants/masterData';
+import { COMPANY_PROFILE_PLACEHOLDERS } from '../../constants/formPlaceholders';
 
 export default function EditCompanyProfileScreen() {
   const { colors } = useTheme();
@@ -48,23 +50,6 @@ export default function EditCompanyProfileScreen() {
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [showCompanyTypeModal, setShowCompanyTypeModal] = useState(false);
   const scrollViewRef = React.useRef(null);
-
-  const COMPANY_TYPE_OPTIONS = [
-    { label: 'Production house', value: 'Production house', icon: 'videocam', color: '#8b5cf6' },
-    { label: 'Casting company or director', value: 'Casting company or director', icon: 'person-add', color: '#3b82f6' },
-    { label: 'Free lancer', value: 'Free lancer', icon: 'person', color: '#10b981' },
-    { label: 'Theater group or institution', value: 'Theater group or institution', icon: 'business', color: '#f59e0b' },
-    { label: 'Music company', value: 'Music company', icon: 'musical-notes', color: '#ec4899' },
-    { label: 'Post production Studio', value: 'Post production Studio', icon: 'desktop', color: '#6366f1' },
-    { label: 'Brand or Corporate', value: 'Brand or Corporate', icon: 'briefcase', color: '#0ea5e9' },
-    { label: 'Broadcaster or channel', value: 'Broadcaster or channel', icon: 'tv', color: '#ef4444' },
-    { label: 'Filmmaker', value: 'Filmmaker', icon: 'film', color: '#8b5cf6' },
-    { label: 'Media or Advertising agency', value: 'Media or Advertising agency', icon: 'megaphone', color: '#f97316' },
-    { label: 'Event or outdoor', value: 'Event or outdoor', icon: 'calendar', color: '#14b8a6' },
-    { label: 'Media company or network', value: 'Media company or network', icon: 'globe', color: '#06b6d4' },
-    { label: 'Talent management agency', value: 'Talent management agency', icon: 'star', color: '#eab308' },
-    { label: 'Others', value: 'Others', icon: 'ellipsis-horizontal', color: '#94a3b8' }
-  ];
   const scrollToComments = route.params?.scrollToComments;
 
   useEffect(() => {
@@ -270,7 +255,7 @@ export default function EditCompanyProfileScreen() {
             <AtSign size={16} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
             <TextInput
               style={styles.innerInput}
-              placeholder="e.g. dharmaproductions"
+              placeholder={COMPANY_PROFILE_PLACEHOLDERS.USERNAME}
               placeholderTextColor={colors.textMutedLight}
               value={form.username}
               onChangeText={(text) => handleChange('username', text.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
@@ -298,7 +283,7 @@ export default function EditCompanyProfileScreen() {
             <Building2 size={16} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
             <TextInput
               style={styles.innerInput}
-              placeholder="e.g. Dharma Productions"
+              placeholder={COMPANY_PROFILE_PLACEHOLDERS.COMPANY_NAME}
               placeholderTextColor={colors.textMutedLight}
               value={form.company_name}
               onChangeText={(text) => handleChange('company_name', text)}
@@ -330,7 +315,7 @@ export default function EditCompanyProfileScreen() {
               <Phone size={14} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
               <TextInput
                 style={styles.innerInput}
-                placeholder="+91 98765..."
+                placeholder={COMPANY_PROFILE_PLACEHOLDERS.CONTACT_PHONE}
                 placeholderTextColor={colors.textMutedLight}
                 value={form.alternate_phone || ''}
                 onChangeText={(text) => handleChange('alternate_phone', text)}
@@ -345,7 +330,7 @@ export default function EditCompanyProfileScreen() {
               <Mail size={14} color={colors.textMutedLight} style={styles.fieldLeadingIcon} />
               <TextInput
                 style={styles.innerInput}
-                placeholder="contact@..."
+                placeholder={COMPANY_PROFILE_PLACEHOLDERS.CONTACT_EMAIL}
                 placeholderTextColor={colors.textMutedLight}
                 value={form.alternate_email || ''}
                 onChangeText={(text) => handleChange('alternate_email', text)}
@@ -363,7 +348,7 @@ export default function EditCompanyProfileScreen() {
             <FileText size={16} color={colors.textMutedLight} style={[styles.fieldLeadingIcon, { marginTop: 10 }]} />
             <TextInput
               style={[styles.innerInput, styles.textAreaInput]}
-              placeholder="Tell us about your company and the work you do..."
+              placeholder={COMPANY_PROFILE_PLACEHOLDERS.ABOUT}
               placeholderTextColor={colors.textMutedLight}
               value={form.description}
               onChangeText={(text) => handleChange('description', text)}

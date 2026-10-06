@@ -13,8 +13,14 @@ import { useGetCompanyProfileQuery } from '../../services/hiringApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
 import CustomButton from '../../components/forms/CustomButton';
 import AnimatedTileGrid from '../../components/forms/AnimatedTileGrid';
-import SidebarFilterModal from '../../components/SidebarFilterModal';
 import { getAuditionLiveStatus } from '../../utils/dateUtils';
+import {
+  GENDERS_WITH_ALL,
+  PROJECT_TYPES_WITH_ALL,
+  TOP_CITIES_WITH_ALL,
+  AUDITION_MODES_WITH_ALL,
+  DEFAULT_CATEGORIES_FALLBACK
+} from '../../constants/masterData';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -127,14 +133,14 @@ export default function MyAuditionsScreen() {
   });
 
   const dynamicCategories = (professionsResponse?.data || []).map(p => p.name);
-  const categories = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : ['Actor', 'Model', 'Singer', 'Dancer', 'Technician'])];
+  const categories = ['All', ...(dynamicCategories.length > 0 ? dynamicCategories : DEFAULT_CATEGORIES_FALLBACK)];
   
   const filterConfig = [
     { key: 'category', label: 'Profession', type: 'select', options: categories, multiSelect: true },
-    { key: 'gender', label: 'Gender', type: 'select', options: ['All', 'Male', 'Female', 'Other', 'Any'], multiSelect: true },
-    { key: 'projectType', label: 'Project Type', type: 'select', options: ['All', 'Audition', 'Casting call', 'Photo shoot', 'Shoot', 'Freelance project/assignment'], multiSelect: true },
-    { key: 'city', label: 'City', type: 'select', options: ['All', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Chandigarh', 'Other'], multiSelect: true },
-    { key: 'auditionType', label: 'Audition Type', type: 'select', options: ['All', 'Online', 'Walk-in'], multiSelect: true }
+    { key: 'gender', label: 'Gender', type: 'select', options: GENDERS_WITH_ALL, multiSelect: true },
+    { key: 'projectType', label: 'Project Type', type: 'select', options: PROJECT_TYPES_WITH_ALL, multiSelect: true },
+    { key: 'city', label: 'City', type: 'select', options: TOP_CITIES_WITH_ALL, multiSelect: true },
+    { key: 'auditionType', label: 'Audition Type', type: 'select', options: AUDITION_MODES_WITH_ALL, multiSelect: true }
   ];
   const isVerified = profileResponse?.data?.is_verified;
 

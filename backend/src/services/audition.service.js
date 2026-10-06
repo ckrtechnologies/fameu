@@ -220,7 +220,7 @@ class AuditionService {
     // Normalization helper
     const normalize = (str) => (str ? String(str).toLowerCase().replace(/[-_\s]/g, '') : '');
 
-    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, logo_url, users(username, is_blacklisted))');
+    let query = supabase.from('auditions').select('*, hiring_profiles(company_name, company_type, logo_url, users(username, is_blacklisted))');
     
     if (filters.status) {
       if (filters.status !== 'all') {
@@ -322,6 +322,7 @@ class AuditionService {
           i.gender_req,
           i.gender,
           i.hiring_profiles?.company_name,
+          i.hiring_profiles?.company_type,
           i.hiring_profiles?.users?.username,
           typeof i.instructions === 'string' ? i.instructions : JSON.stringify(i.instructions || {})
         ].filter(Boolean).join(' ').toLowerCase();
@@ -449,6 +450,21 @@ class AuditionService {
         const audMin = parseInt(i.age_min, 10) || 0;
         return audMin <= actorMax;
       });
+    }
+
+    // 9. Company Type Filter (supports single string, comma-separated or array)
+    if (filters.company_type && filters.company_type !== 'All') {
+      const typesList = (Array.isArray(filters.company_type)
+        ? filters.company_type
+        : String(filters.company_type).split(',')
+      ).map(t => normalize(t)).filter(Boolean);
+
+      if (typesList.length > 0 && !typesList.includes('all')) {
+        results = results.filter(i => {
+          const itemType = normalize(i.hiring_profiles?.company_type || '');
+          return typesList.some(targetType => itemType === targetType || itemType.includes(targetType) || targetType.includes(itemType));
+        });
+      }
     }
 
     // Secondary local sorting if needed

@@ -145,71 +145,111 @@ export default function CommentsSection({ targetType, targetId, disableComment =
     }
   };
 
+  const artistCommentsCount = comments.filter(c => c.user?.role === 'artist').length;
+  const recruiterCommentsCount = comments.filter(c => c.user?.role === 'hiring').length;
+
   if (isLoading) return <ActivityIndicator style={{ margin: 20 }} color={colors.primary} />;
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'artists' && styles.activeTab]} 
-          onPress={() => setActiveTab('artists')}
-        >
-          <Text style={[styles.tabText, activeTab === 'artists' && styles.activeTabText]}>Artists</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'recruiters' && styles.activeTab]} 
-          onPress={() => setActiveTab('recruiters')}
-        >
-          <Text style={[styles.tabText, activeTab === 'recruiters' && styles.activeTabText]}>Recruiters</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.title}>Comments ({filteredComments.length})</Text>
-
-      {/* Input Area */}
-      {(!disableComment || replyingTo || editing) && (
-        <View style={styles.inputContainer}>
-          {(replyingTo || editing) && (
-            <View style={styles.replyingIndicator}>
-              <Text style={styles.replyingText}>
-                {editing ? 'Editing your comment' : `Replying to ${replyingTo.user?.display_name || (Array.isArray(replyingTo.user?.artist_profiles) ? replyingTo.user.artist_profiles[0]?.full_name : replyingTo.user?.artist_profiles?.full_name) || (Array.isArray(replyingTo.user?.hiring_profiles) ? replyingTo.user.hiring_profiles[0]?.company_name : replyingTo.user?.hiring_profiles?.company_name) || 'User'}`}
-              </Text>
-              <TouchableOpacity onPress={() => { setReplyingTo(null); setEditing(null); setInputText(''); }}>
-                <Icon name="close-circle" size={16} color={colors.textMutedLight} />
-              </TouchableOpacity>
-            </View>
-          )}
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="Write a comment..."
-              placeholderTextColor={colors.textMutedLight}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-            />
-            <TouchableOpacity onPress={handleSubmit} disabled={isAdding || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding) && styles.sendBtnDisabled]}>
-              {isAdding ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={20} color="#FFF" />}
-            </TouchableOpacity>
+      {/* 1. Comments Box Section (Top) */}
+      <View style={styles.sectionBlock}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIconBadge, { backgroundColor: colors.primary + '15' }]}>
+            <Icon name="chatbubble-ellipses" size={18} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionTitle}>Add Comment</Text>
+            <Text style={styles.sectionSubtitle}>Share public questions or feedback</Text>
           </View>
         </View>
-      )}
 
-      {/* Comments List */}
-      {filteredComments.map(comment => (
-        <CommentItem
-          key={comment.id}
-          comment={comment}
-          onReply={(c) => { setReplyingTo(c); setEditing(null); setInputText(''); }}
-          onEdit={(c) => { setEditing(c); setReplyingTo(null); setInputText(c.content); }}
-          onDelete={handleDelete}
-          currentUserId={user?.id}
-          onPressProfile={handlePressProfile}
-        />
-      ))}
-      {filteredComments.length === 0 && (
-        <Text style={styles.emptyText}>No comments yet. Be the first!</Text>
-      )}
+        {(!disableComment || replyingTo || editing) ? (
+          <View style={styles.inputContainer}>
+            {(replyingTo || editing) && (
+              <View style={styles.replyingIndicator}>
+                <Text style={styles.replyingText}>
+                  {editing ? 'Editing your comment' : `Replying to ${replyingTo.user?.display_name || (Array.isArray(replyingTo.user?.artist_profiles) ? replyingTo.user.artist_profiles[0]?.full_name : replyingTo.user?.artist_profiles?.full_name) || (Array.isArray(replyingTo.user?.hiring_profiles) ? replyingTo.user.hiring_profiles[0]?.company_name : replyingTo.user?.hiring_profiles?.company_name) || 'User'}`}
+                </Text>
+                <TouchableOpacity onPress={() => { setReplyingTo(null); setEditing(null); setInputText(''); }}>
+                  <Icon name="close-circle" size={16} color={colors.textMutedLight} />
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                placeholder="Write a comment..."
+                placeholderTextColor={colors.textMutedLight}
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+              />
+              <TouchableOpacity onPress={handleSubmit} disabled={isAdding || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding) && styles.sendBtnDisabled]}>
+                {isAdding ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={18} color="#FFF" />}
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.disabledCard}>
+            <Text style={styles.disabledText}>Commenting is disabled for this section.</Text>
+          </View>
+        )}
+      </View>
+
+      {/* 2. Historical Comments Section (Below) */}
+      <View style={[styles.sectionBlock, styles.historicalBlock]}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIconBadge, { backgroundColor: '#F3F4F6' }]}>
+            <Icon name="time-outline" size={18} color={colors.textMainLight} />
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.sectionTitle}>What others say?</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{comments.length}</Text>
+            </View>
+          </View>
+        </View>
+        <Text style={styles.historicalSubtitle}>Browse previous discussions and responses from artists & recruiters</Text>
+
+        {/* Filter Tabs strictly inside Historical Comments */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'artists' && styles.activeTab]} 
+            onPress={() => setActiveTab('artists')}
+          >
+            <Text style={[styles.tabText, activeTab === 'artists' && styles.activeTabText]}>
+              Artists ({artistCommentsCount})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'recruiters' && styles.activeTab]} 
+            onPress={() => setActiveTab('recruiters')}
+          >
+            <Text style={[styles.tabText, activeTab === 'recruiters' && styles.activeTabText]}>
+              Recruiters ({recruiterCommentsCount})
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Historical Comments List */}
+        {filteredComments.map(comment => (
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            onReply={(c) => { setReplyingTo(c); setEditing(null); setInputText(''); }}
+            onEdit={(c) => { setEditing(c); setReplyingTo(null); setInputText(c.content); }}
+            onDelete={handleDelete}
+            currentUserId={user?.id}
+            onPressProfile={handlePressProfile}
+          />
+        ))}
+        {filteredComments.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No comments from {activeTab === 'artists' ? 'artists' : 'recruiters'} yet.</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -219,13 +259,69 @@ const getStyles = (colors) => StyleSheet.create({
     marginTop: spacing.xl,
     paddingHorizontal: spacing.m,
   },
-  title: {
+  sectionBlock: {
+    backgroundColor: colors.surfaceLight || '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight || '#E5E7EB',
+    padding: spacing.m,
+    marginBottom: spacing.l,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  historicalBlock: {
+    marginTop: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  sectionIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  sectionTitle: {
     ...typography.h3,
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.textMainLight,
+  },
+  sectionSubtitle: {
+    ...typography.caption,
+    fontSize: 12,
+    color: colors.textMutedLight,
+    marginTop: 1,
+  },
+  historicalSubtitle: {
+    ...typography.caption,
+    fontSize: 12,
+    color: colors.textMutedLight,
     marginBottom: spacing.m,
+    marginLeft: 42,
+  },
+  countBadge: {
+    backgroundColor: colors.primary + '18',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  countBadgeText: {
+    ...typography.caption,
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primary,
   },
   inputContainer: {
-    marginBottom: spacing.l,
+    marginTop: spacing.s,
   },
   inputRow: {
     flexDirection: 'row',
@@ -233,22 +329,23 @@ const getStyles = (colors) => StyleSheet.create({
   },
   input: {
     flex: 1,
-    minHeight: 40,
-    maxHeight: 100,
+    minHeight: 42,
+    maxHeight: 110,
     borderWidth: 1,
     borderColor: colors.borderLight,
     borderRadius: 20,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 10,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.backgroundLight || '#F9FAFB',
     color: colors.textMainLight,
     ...typography.body,
+    fontSize: 14,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -261,7 +358,9 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: colors.primary + '10',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
     padding: spacing.s,
     borderRadius: 8,
     marginBottom: spacing.s,
@@ -270,6 +369,20 @@ const getStyles = (colors) => StyleSheet.create({
     ...typography.caption,
     color: colors.textMainLight,
     fontWeight: '600',
+    flex: 1,
+    marginRight: spacing.s,
+  },
+  disabledCard: {
+    padding: spacing.m,
+    borderRadius: 12,
+    backgroundColor: colors.backgroundLight,
+    marginTop: spacing.s,
+    alignItems: 'center',
+  },
+  disabledText: {
+    ...typography.caption,
+    color: colors.textMutedLight,
+    fontStyle: 'italic',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -288,12 +401,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   tabText: {
     ...typography.body,
+    fontSize: 13,
     color: colors.textMutedLight,
     fontWeight: '500',
   },
   activeTabText: {
     color: colors.primary,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   commentWrapper: {
     marginBottom: spacing.m,
@@ -359,11 +473,15 @@ const getStyles = (colors) => StyleSheet.create({
     paddingLeft: spacing.s,
     marginLeft: 12,
   },
+  emptyContainer: {
+    paddingVertical: spacing.l,
+    alignItems: 'center',
+  },
   emptyText: {
     ...typography.body,
+    fontSize: 13,
     color: colors.textMutedLight,
     textAlign: 'center',
     fontStyle: 'italic',
-    marginTop: spacing.m,
   }
 });
