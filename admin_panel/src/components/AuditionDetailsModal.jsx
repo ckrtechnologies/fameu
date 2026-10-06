@@ -169,7 +169,7 @@ export default function AuditionDetailsModal({ audition, onClose }) {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
                         {remainingKeys.map(([k, v]) => (
                           <div key={k} style={{ fontSize: '13px', background: '#ffffff', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                            <strong style={{ textTransform: 'capitalize' }}>{k.replace(/_/g, ' ')}:</strong> {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                            <strong style={{ textTransform: 'capitalize' }}>{k ? String(k).replace(/_/g, ' ') : ''}:</strong> {typeof v === 'object' ? JSON.stringify(v) : String(v)}
                           </div>
                         ))}
                       </div>

@@ -161,7 +161,11 @@ router.put('/kyc/:id/status', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const { role } = req.query;
-    let query = supabase.from('users').select('*').order('created_at', { ascending: false }).limit(100);
+    let query = supabase
+      .from('users')
+      .select('*, hiring_profiles(id, company_name, is_verified, verification_status), artist_profiles(id, full_name, is_verified, verification_status)')
+      .order('created_at', { ascending: false })
+      .limit(100);
     
     if (role && role !== 'all') {
       query = query.eq('role', role);
@@ -170,7 +174,14 @@ router.get('/users', async (req, res) => {
     const { data, error } = await query;
     if (error) throw error;
     
-    res.json({ success: true, data });
+    // Normalize nested joins from Supabase (convert single-item array to object)
+    const normalized = (data || []).map(u => ({
+      ...u,
+      hiring_profiles: Array.isArray(u.hiring_profiles) ? u.hiring_profiles[0] || null : u.hiring_profiles,
+      artist_profiles: Array.isArray(u.artist_profiles) ? u.artist_profiles[0] || null : u.artist_profiles,
+    }));
+    
+    res.json({ success: true, data: normalized });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -189,15 +200,44 @@ router.get('/users/:id', async (req, res) => {
     let documents = [];
     
     if (user.role === 'artist') {
-      const { data } = await supabase.from('artist_profiles').select('*').eq('id', id).single();
+      const { data } = await supabase.from('artist_profiles').select('*').eq('user_id', id).maybeSingle();
       profile = data;
     } else if (user.role === 'hiring') {
-      const { data } = await supabase.from('hiring_profiles').select('*').eq('id', id).single();
+      const { data } = await supabase.from('hiring_profiles').select('*').eq('user_id', id).maybeSingle();
       profile = data;
       
       if (profile) {
         const { data: docs } = await supabase.from('verification_documents').select('*').eq('hiring_id', profile.id);
-        documents = docs || [];
+        const docList = [];
+        const DOC_FIELDS = [
+          { key: 'pan_url', label: 'PAN Card' },
+          { key: 'aadhaar_url', label: 'Aadhaar Card' },
+          { key: 'company_reg_url', label: 'Company Registration' },
+          { key: 'gst_url', label: 'GST Certificate' },
+          { key: 'driving_license_url', label: 'Driving License' },
+          { key: 'passport_url', label: 'Passport' },
+          { key: 'voter_id_url', label: 'Voter ID' },
+          { key: 'selfie_url', label: 'Authorized Selfie' }
+        ];
+
+        (docs || []).forEach(d => {
+          if (d.document_type && d.document_url) {
+            docList.push(d);
+          } else {
+            DOC_FIELDS.forEach(field => {
+              if (d[field.key]) {
+                docList.push({
+                  id: `${d.id}_${field.key}`,
+                  document_type: field.label,
+                  document_url: d[field.key],
+                  status: d.status || 'pending',
+                  rejection_reason: d.rejection_reason
+                });
+              }
+            });
+          }
+        });
+        documents = docList;
       }
     }
     

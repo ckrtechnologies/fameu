@@ -54,6 +54,29 @@ class CommentsService {
       targetColumn = 'audition_id';
     }
 
+    // Validate that user cannot leave a top-level comment on their own profile
+    if (!parentId) {
+      if (type === 'profile' || type === 'company_profile') {
+        const { data: targetProfile } = await supabase
+          .from('hiring_profiles')
+          .select('user_id')
+          .eq('id', targetId)
+          .single();
+        if (targetProfile && targetProfile.user_id === userId) {
+          throw new Error('You cannot leave a comment on your own profile.');
+        }
+      } else if (type === 'artist_profile') {
+        const { data: targetProfile } = await supabase
+          .from('artist_profiles')
+          .select('user_id')
+          .eq('id', targetId)
+          .single();
+        if (targetProfile && targetProfile.user_id === userId) {
+          throw new Error('You cannot leave a comment on your own profile.');
+        }
+      }
+    }
+
     const insertData = {
       [targetColumn]: targetId,
       user_id: userId,

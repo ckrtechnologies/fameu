@@ -20,7 +20,7 @@ const CustomButton = ({
     if (disabled) return colors.borderDark;
     switch(variant) {
       case 'primary': return colors.primary;
-      case 'secondary': return colors.secondary || '#3B82F6';
+      case 'secondary': return colors.secondary || colors.primary;
       case 'outline': return 'transparent';
       case 'ghost': return 'transparent';
       default: return colors.primary;

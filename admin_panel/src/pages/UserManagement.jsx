@@ -28,7 +28,10 @@ import {
   LayoutGrid, 
   List,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  Clock,
+  XCircle,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function UserManagement({ role = 'artist' }) {
@@ -56,9 +59,10 @@ export default function UserManagement({ role = 'artist' }) {
   const metrics = useMemo(() => {
     const total = users.length;
     const verified = users.filter(u => u.is_verified || u.hiring_profiles?.is_verified || u.artist_profiles?.is_verified).length;
+    const pending = users.filter(u => (u.hiring_profiles?.verification_status === 'pending' || u.artist_profiles?.verification_status === 'pending')).length;
     const blacklisted = users.filter(u => u.is_blacklisted).length;
     const incomplete = users.filter(u => !u.email || (!u.display_name && !u.username)).length;
-    return { total, verified, blacklisted, incomplete };
+    return { total, verified, pending, blacklisted, incomplete };
   }, [users]);
 
   // Filtered List
@@ -68,6 +72,9 @@ export default function UserManagement({ role = 'artist' }) {
       if (selectedFilter === 'verified') {
         const isVer = u.is_verified || u.hiring_profiles?.is_verified || u.artist_profiles?.is_verified;
         if (!isVer) return false;
+      } else if (selectedFilter === 'pending') {
+        const isPend = u.hiring_profiles?.verification_status === 'pending' || u.artist_profiles?.verification_status === 'pending';
+        if (!isPend) return false;
       } else if (selectedFilter === 'blacklisted') {
         if (!u.is_blacklisted) return false;
       } else if (selectedFilter === 'active') {
@@ -114,6 +121,90 @@ export default function UserManagement({ role = 'artist' }) {
     } catch (err) {
       alert(err?.data?.error || 'Action failed');
     }
+  };
+
+  const renderKycBadge = (user) => {
+    const isVer = Boolean(user.is_verified || user.hiring_profiles?.is_verified || user.artist_profiles?.is_verified);
+    const status = user.hiring_profiles?.verification_status || user.artist_profiles?.verification_status || (isVer ? 'approved' : 'unverified');
+
+    if (isVer || status === 'approved') {
+      return (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '11px',
+            fontWeight: '700',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            backgroundColor: '#ECFDF5',
+            color: '#16A34A',
+            textTransform: 'uppercase'
+          }}
+        >
+          <ShieldCheck size={12} /> Verified
+        </span>
+      );
+    }
+    if (status === 'pending') {
+      return (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '11px',
+            fontWeight: '700',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            backgroundColor: '#FEF3C7',
+            color: '#D97706',
+            textTransform: 'uppercase'
+          }}
+        >
+          <Clock size={12} /> Pending Review
+        </span>
+      );
+    }
+    if (status === 'rejected') {
+      return (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '11px',
+            fontWeight: '700',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            backgroundColor: '#FEE2E2',
+            color: '#DC2626',
+            textTransform: 'uppercase'
+          }}
+        >
+          <XCircle size={12} /> Rejected
+        </span>
+      );
+    }
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '11px',
+          fontWeight: '700',
+          padding: '3px 8px',
+          borderRadius: '6px',
+          backgroundColor: '#F1F5F9',
+          color: '#64748B',
+          textTransform: 'uppercase'
+        }}
+      >
+        <ShieldAlert size={12} /> Unverified
+      </span>
+    );
   };
 
   return (
@@ -249,6 +340,7 @@ export default function UserManagement({ role = 'artist' }) {
               { id: 'all', label: 'All Users', count: metrics.total },
               { id: 'active', label: 'Active', count: metrics.total - metrics.blacklisted, color: 'var(--success)' },
               { id: 'verified', label: 'Verified Only', count: metrics.verified, color: '#2563EB' },
+              { id: 'pending', label: 'Pending KYC', count: metrics.pending, color: '#D97706' },
               { id: 'blacklisted', label: 'Blacklisted', count: metrics.blacklisted, color: '#DC2626' },
             ].map((tab) => (
               <button
@@ -406,19 +498,22 @@ export default function UserManagement({ role = 'artist' }) {
                       )}
                     </div>
 
-                    <span 
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        backgroundColor: user.is_blacklisted ? '#FEE2E2' : '#ECFDF5',
-                        color: user.is_blacklisted ? '#DC2626' : '#16A34A',
-                        textTransform: 'uppercase'
-                      }}
-                    >
-                      {user.is_blacklisted ? 'Blacklisted' : 'Active'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                      <span 
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          backgroundColor: user.is_blacklisted ? '#FEE2E2' : '#ECFDF5',
+                          color: user.is_blacklisted ? '#DC2626' : '#16A34A',
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        {user.is_blacklisted ? 'Blacklisted' : 'Active'}
+                      </span>
+                      {renderKycBadge(user)}
+                    </div>
                   </div>
 
                   {/* Name & Identifier */}
@@ -497,7 +592,8 @@ export default function UserManagement({ role = 'artist' }) {
                   <th style={{ padding: '14px 20px', fontWeight: '700' }}>User Profile</th>
                   <th style={{ padding: '14px 16px', fontWeight: '700' }}>Role / Type</th>
                   <th style={{ padding: '14px 16px', fontWeight: '700' }}>Contact Info</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '700' }}>Status</th>
+                  <th style={{ padding: '14px 16px', fontWeight: '700' }}>Account Status</th>
+                  <th style={{ padding: '14px 16px', fontWeight: '700' }}>KYC Status</th>
                   <th style={{ padding: '14px 16px', fontWeight: '700' }}>Joined</th>
                   <th style={{ padding: '14px 20px', fontWeight: '700', textAlign: 'right' }}>Actions</th>
                 </tr>
@@ -569,7 +665,7 @@ export default function UserManagement({ role = 'artist' }) {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)' }}>
                               <span>{phone}</span>
                               <a 
-                                href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`} 
+                                href={`https://wa.me/${String(phone).replace(/[^0-9]/g, '')}`} 
                                 target="_blank" 
                                 rel="noreferrer"
                                 style={{ color: '#16A34A', display: 'flex' }}
@@ -582,7 +678,7 @@ export default function UserManagement({ role = 'artist' }) {
                         </div>
                       </td>
 
-                      {/* Status */}
+                      {/* Account Status */}
                       <td style={{ padding: '14px 16px' }}>
                         <span 
                           style={{
@@ -597,6 +693,11 @@ export default function UserManagement({ role = 'artist' }) {
                         >
                           {user.is_blacklisted ? 'Banned' : 'Active'}
                         </span>
+                      </td>
+
+                      {/* KYC Status */}
+                      <td style={{ padding: '14px 16px' }}>
+                        {renderKycBadge(user)}
                       </td>
 
                       {/* Joined Date */}

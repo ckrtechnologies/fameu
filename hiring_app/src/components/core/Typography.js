@@ -19,7 +19,6 @@ const Typography = ({
         typography[variant], 
         { color: textColor, textAlign: align, fontFamily: typography.fontFamily }, 
         style,
-        { fontFamily: 'Comic Sans MS', fontWeight: 'normal' }
       ]} 
       {...props}
     >

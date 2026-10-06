@@ -3,14 +3,14 @@ import { Path, Rect, Circle, Defs, LinearGradient, Stop } from 'react-native-svg
 import IconBase from '../IconBase';
 
 // 1. HOME TAB ICON
-export function HomeTabIcon({ size = 26, focused = false, activeColor = '#0284C7', inactiveColor = '#94A3B8', ...props }) {
+export function HomeTabIcon({ size = 26, focused = false, activeColor = '#E3B04B', inactiveColor = '#8E9AB0', ...props }) {
   if (focused) {
     return (
       <IconBase size={size} viewBox="0 0 32 32" {...props}>
         <Defs>
           <LinearGradient id="homeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#38BDF8" />
-            <Stop offset="100%" stopColor="#0284C7" />
+            <Stop offset="0%" stopColor="#FBBF24" />
+            <Stop offset="100%" stopColor="#D97706" />
           </LinearGradient>
         </Defs>
         {/* Solid House Body */}
@@ -21,7 +21,7 @@ export function HomeTabIcon({ size = 26, focused = false, activeColor = '#0284C7
         {/* Solid Contrasting Door / Light */}
         <Path
           d="M13 29.8v-9a3 3 0 0 1 3-3h0a3 3 0 0 1 3 3v9"
-          fill="#FFFFFF"
+          fill="#172038"
         />
       </IconBase>
     );
@@ -43,14 +43,14 @@ export function HomeTabIcon({ size = 26, focused = false, activeColor = '#0284C7
 }
 
 // 2. PROFILE TAB ICON
-export function ProfileTabIcon({ size = 26, focused = false, activeColor = '#0284C7', inactiveColor = '#94A3B8', ...props }) {
+export function ProfileTabIcon({ size = 26, focused = false, activeColor = '#E3B04B', inactiveColor = '#8E9AB0', ...props }) {
   if (focused) {
     return (
       <IconBase size={size} viewBox="0 0 32 32" {...props}>
         <Defs>
           <LinearGradient id="profGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#60A5FA" />
-            <Stop offset="100%" stopColor="#2563EB" />
+            <Stop offset="0%" stopColor="#FBBF24" />
+            <Stop offset="100%" stopColor="#D97706" />
           </LinearGradient>
         </Defs>
         {/* Solid Head */}
@@ -61,7 +61,7 @@ export function ProfileTabIcon({ size = 26, focused = false, activeColor = '#028
           fill="url(#profGrad)"
         />
         {/* Inner Highlight on Chest */}
-        <Circle cx="16" cy="22" r="1.5" fill="#BFDBFE" />
+        <Circle cx="16" cy="22" r="1.5" fill="#FEF3C7" />
       </IconBase>
     );
   }
@@ -81,13 +81,13 @@ export function ProfileTabIcon({ size = 26, focused = false, activeColor = '#028
 }
 
 // 3. AUDITIONS TAB ICON (Spotlight / Search)
-export function AuditionsTabIcon({ size = 26, focused = false, activeColor = '#0284C7', inactiveColor = '#94A3B8', ...props }) {
+export function AuditionsTabIcon({ size = 26, focused = false, activeColor = '#E3B04B', inactiveColor = '#8E9AB0', ...props }) {
   if (focused) {
     return (
       <IconBase size={size} viewBox="0 0 32 32" {...props}>
         <Defs>
           <LinearGradient id="audGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#F59E0B" />
+            <Stop offset="0%" stopColor="#FBBF24" />
             <Stop offset="100%" stopColor="#D97706" />
           </LinearGradient>
         </Defs>
@@ -119,14 +119,14 @@ export function AuditionsTabIcon({ size = 26, focused = false, activeColor = '#0
 }
 
 // 4. APPLICATIONS TAB ICON (Dossier / Document)
-export function ApplicationsTabIcon({ size = 26, focused = false, activeColor = '#0284C7', inactiveColor = '#94A3B8', ...props }) {
+export function ApplicationsTabIcon({ size = 26, focused = false, activeColor = '#E3B04B', inactiveColor = '#8E9AB0', ...props }) {
   if (focused) {
     return (
       <IconBase size={size} viewBox="0 0 32 32" {...props}>
         <Defs>
           <LinearGradient id="appGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#10B981" />
-            <Stop offset="100%" stopColor="#059669" />
+            <Stop offset="0%" stopColor="#FBBF24" />
+            <Stop offset="100%" stopColor="#D97706" />
           </LinearGradient>
         </Defs>
         {/* Solid Document Sheet */}
@@ -135,11 +135,11 @@ export function ApplicationsTabIcon({ size = 26, focused = false, activeColor = 
           fill="url(#appGrad)"
         />
         {/* Folded Corner */}
-        <Path d="M20 1v6h6" fill="#A7F3D0" />
+        <Path d="M20 1v6h6" fill="#FEF3C7" />
         {/* Checkmark in Center */}
         <Path
           d="M11 16l3.5 3.5 7-7"
-          stroke="#FFFFFF"
+          stroke="#172038"
           strokeWidth="2.8"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -164,20 +164,20 @@ export function ApplicationsTabIcon({ size = 26, focused = false, activeColor = 
 }
 
 // 5. MESSAGES TAB ICON (Chat Bubbles)
-export function MessagesTabIcon({ size = 26, focused = false, activeColor = '#0284C7', inactiveColor = '#94A3B8', ...props }) {
+export function MessagesTabIcon({ size = 26, focused = false, activeColor = '#E3B04B', inactiveColor = '#8E9AB0', ...props }) {
   if (focused) {
     return (
       <IconBase size={size} viewBox="0 0 32 32" {...props}>
         <Defs>
           <LinearGradient id="chatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#EC4899" />
-            <Stop offset="100%" stopColor="#8B5CF6" />
+            <Stop offset="0%" stopColor="#FBBF24" />
+            <Stop offset="100%" stopColor="#D97706" />
           </LinearGradient>
         </Defs>
         {/* Back Bubble */}
         <Path
           d="M18 6h5a6 6 0 0 1 6 6c0 3.3-2.7 6-6 6h-1l-3 2.5V18a6 6 0 0 1-1-12z"
-          fill="#F472B6"
+          fill="#FDE68A"
           opacity="0.6"
         />
         {/* Main Solid Bubble */}
@@ -185,10 +185,10 @@ export function MessagesTabIcon({ size = 26, focused = false, activeColor = '#02
           d="M4 14a8 8 0 0 1 8-8h5a8 8 0 0 1 8 8c0 4.4-3.6 8-8 8h-2.5l-4.5 4v-4.2A7.8 7.8 0 0 1 4 14z"
           fill="url(#chatGrad)"
         />
-        {/* White Dots */}
-        <Circle cx="10" cy="14" r="1.5" fill="#FFFFFF" />
-        <Circle cx="14.5" cy="14" r="1.5" fill="#FFFFFF" />
-        <Circle cx="19" cy="14" r="1.5" fill="#FFFFFF" />
+        {/* Dots */}
+        <Circle cx="10" cy="14" r="1.5" fill="#172038" />
+        <Circle cx="14.5" cy="14" r="1.5" fill="#172038" />
+        <Circle cx="19" cy="14" r="1.5" fill="#172038" />
       </IconBase>
     );
   }
@@ -211,4 +211,5 @@ export function MessagesTabIcon({ size = 26, focused = false, activeColor = '#02
 export const MyAuditionsTabIcon = AuditionsTabIcon;
 export const ApplicantsTabIcon = ApplicationsTabIcon;
 export const CompanyTabIcon = ProfileTabIcon;
+
 

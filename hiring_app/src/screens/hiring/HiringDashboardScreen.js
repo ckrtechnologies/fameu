@@ -594,8 +594,8 @@ export default function HiringDashboardScreen({ navigation }) {
       </ReAnimated.View>
 
       <ReAnimated.View entering={FadeInDown.delay(260).duration(400)} style={styles.metricCardWrapper}>
-        <AnimatedBorderCard style={styles.metricCardInner} color="#3B82F6" delay={400} onPress={() => handleRestrictedNavigation('Applicants', { initialTab: 'shortlisted' })}>
-          <View style={[styles.metricIconBg, { backgroundColor: '#EFF6FF' }]}>
+        <AnimatedBorderCard style={styles.metricCardInner} color={colors.primary} delay={400} onPress={() => handleRestrictedNavigation('Applicants', { initialTab: 'shortlisted' })}>
+          <View style={[styles.metricIconBg, { backgroundColor: colors.primary + '15' }]}>
             <ShortlistedStat3DIcon size={28} />
           </View>
           <Text style={styles.metricValue}>{stats?.shortlisted || 0}</Text>
@@ -961,7 +961,7 @@ export default function HiringDashboardScreen({ navigation }) {
             style={{ padding: 8 }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Bell size={22} color={colors.textMainLight} />
+            <Bell size={22} color={colors.headerIcon || '#FFFFFF'} />
           </TouchableOpacity>
         }
       />
@@ -1154,11 +1154,11 @@ const getStyles = (colors) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: '#FDE68A',
   },
   profileBannerTitle: {
     fontSize: 15,

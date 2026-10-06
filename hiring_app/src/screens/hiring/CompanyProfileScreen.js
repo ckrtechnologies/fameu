@@ -220,9 +220,14 @@ export default function CompanyProfileScreen() {
   const renderFooter = () => {
     if (!profile?.id) return null;
     return (
-      <View style={{ marginHorizontal: spacing.l, marginBottom: 24, marginTop: spacing.l }}>
+      <View style={{ width: '100%', marginBottom: 32, marginTop: spacing.m }}>
         {/* Company Profile Comments */}
-        <CommentsSection targetType="profile" targetId={profile.id} />
+        <CommentsSection 
+          targetType="profile" 
+          targetId={profile.id} 
+          isOwnProfile={true}
+          profileUserId={user?.id}
+        />
       </View>
     );
   };
@@ -248,7 +253,7 @@ export default function CompanyProfileScreen() {
             style={{ padding: 6 }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <AppIcon name="options-outline" size={22} color={colors.textMainLight} />
+            <AppIcon name="options-outline" size={22} color={colors.headerIcon || '#FFFFFF'} />
           </TouchableOpacity>
         }
       />

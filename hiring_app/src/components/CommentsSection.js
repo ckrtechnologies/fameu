@@ -83,7 +83,13 @@ const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUse
   );
 };
 
-export default function CommentsSection({ targetType, targetId, disableComment = false }) {
+export default function CommentsSection({ 
+  targetType, 
+  targetId, 
+  disableComment = false, 
+  isOwnProfile = false, 
+  profileUserId = null 
+}) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
@@ -100,6 +106,9 @@ export default function CommentsSection({ targetType, targetId, disableComment =
 
   const comments = response?.data || [];
   
+  const isSelfProfile = Boolean(isOwnProfile || (profileUserId && user?.id && profileUserId === user.id));
+  const showCommentInput = (!isSelfProfile && !disableComment) || replyingTo || editing;
+
   // Filter by role and sort top-level comments descending (newest first)
   const filteredComments = comments
     .filter(c => {
@@ -122,18 +131,18 @@ export default function CommentsSection({ targetType, targetId, disableComment =
       }
       setInputText('');
     } catch (error) {
-      GlobalAlert.show('Error', error?.data?.message || error?.message || 'Failed to post comment.');
+      GlobalAlert.showError('Unable to Post Comment', error, 'Your comment could not be submitted.');
     }
   };
 
   const handleDelete = (comment) => {
-    GlobalAlert.show('Delete Comment', 'Are you sure?', [
+    GlobalAlert.show('Delete Comment', 'Are you sure you want to delete this comment? This action cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
         try {
           await deleteComment({ type: targetType, commentId: comment.id, targetId }).unwrap();
         } catch (e) {
-          GlobalAlert.show('Error', 'Failed to delete comment.');
+          GlobalAlert.showError('Unable to Delete Comment', e, 'Your comment could not be deleted.');
         }
       }}
     ]);
@@ -152,19 +161,21 @@ export default function CommentsSection({ targetType, targetId, disableComment =
 
   return (
     <View style={styles.container}>
-      {/* 1. Comments Box Section (Top) */}
-      <View style={styles.sectionBlock}>
-        <View style={styles.sectionHeader}>
-          <View style={[styles.sectionIconBadge, { backgroundColor: colors.primary + '15' }]}>
-            <Icon name="chatbubble-ellipses" size={18} color={colors.primary} />
+      {/* 1. Comments Box Section (Top) - Only shown if not self profile or actively replying/editing */}
+      {showCommentInput && (
+        <View style={styles.sectionBlock}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIconBadge, { backgroundColor: colors.primary + '15' }]}>
+              <Icon name={replyingTo ? "return-down-forward" : "chatbubble-ellipses"} size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>{replyingTo ? 'Reply to Comment' : editing ? 'Edit Comment' : 'Add Comment'}</Text>
+              <Text style={styles.sectionSubtitle}>
+                {replyingTo ? 'Reply directly to this feedback' : editing ? 'Update your comment' : 'Share public questions or feedback'}
+              </Text>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>Add Comment</Text>
-            <Text style={styles.sectionSubtitle}>Share public questions or feedback</Text>
-          </View>
-        </View>
 
-        {(!disableComment || replyingTo || editing) ? (
           <View style={styles.inputContainer}>
             {(replyingTo || editing) && (
               <View style={styles.replyingIndicator}>
@@ -179,7 +190,7 @@ export default function CommentsSection({ targetType, targetId, disableComment =
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
-                placeholder="Write a comment..."
+                placeholder={replyingTo ? "Write a reply..." : "Write a comment..."}
                 placeholderTextColor={colors.textMutedLight}
                 value={inputText}
                 onChangeText={setInputText}
@@ -190,12 +201,8 @@ export default function CommentsSection({ targetType, targetId, disableComment =
               </TouchableOpacity>
             </View>
           </View>
-        ) : (
-          <View style={styles.disabledCard}>
-            <Text style={styles.disabledText}>Commenting is disabled for this section.</Text>
-          </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* 2. Historical Comments Section (Below) */}
       <View style={[styles.sectionBlock, styles.historicalBlock]}>
@@ -256,10 +263,12 @@ export default function CommentsSection({ targetType, targetId, disableComment =
 
 const getStyles = (colors) => StyleSheet.create({
   container: {
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.m,
+    marginTop: spacing.l,
+    width: '100%',
+    paddingHorizontal: 0,
   },
   sectionBlock: {
+    width: '100%',
     backgroundColor: colors.surfaceLight || '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
@@ -305,7 +314,7 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 12,
     color: colors.textMutedLight,
     marginBottom: spacing.m,
-    marginLeft: 42,
+    marginTop: 2,
   },
   countBadge: {
     backgroundColor: colors.primary + '18',

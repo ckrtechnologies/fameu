@@ -1,4 +1,5 @@
 import { showError, showSuccess } from '../../utils/toast';
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -527,10 +528,13 @@ export default function CreateAuditionScreen({ route }) {
         setTimeout(() => {
           navigation.navigate('Drawer', { screen: 'Tabs', params: { screen: 'MyAuditions' } });
         }, 800);
-      }
     } catch (err) {
-      showError('', err?.data?.message || 'Failed to save audition. Please try again.');
-      console.error(err);
+      console.error('Failed to save audition:', err);
+      GlobalAlert.showError(
+        isEditMode ? 'Unable to Update Audition' : 'Unable to Post Audition',
+        err,
+        'Your audition details could not be saved to the system.'
+      );
     }
   };
 
@@ -541,7 +545,7 @@ export default function CreateAuditionScreen({ route }) {
       {/* Top Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>{isEditMode ? 'Edit Casting Call' : 'Post New Audition'}</Text>
@@ -1446,9 +1450,9 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.l,
     paddingBottom: spacing.s,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.headerBackground || '#172038',
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.headerBorder || '#232E4A',
   },
   backButton: {
     padding: spacing.s,
@@ -1456,26 +1460,26 @@ const getStyles = (colors) => StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    color: colors.textMainLight,
+    color: colors.headerText || '#FFFFFF',
     fontWeight: '800',
   },
   headerSubtitle: {
     ...typography.caption,
-    color: colors.textMutedLight,
+    color: colors.headerSubtitle || '#94A3B8',
     marginTop: 2,
   },
   stepBadge: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: '#E3B04B22',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.primary + '30',
+    borderColor: '#E3B04B55',
   },
   stepBadgeText: {
     fontSize: 13,
     fontWeight: '900',
-    color: colors.primary,
+    color: '#E3B04B',
   },
   wizardHeaderContainer: {
     backgroundColor: colors.surfaceLight,

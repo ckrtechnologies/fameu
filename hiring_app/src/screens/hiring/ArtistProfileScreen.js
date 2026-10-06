@@ -296,7 +296,7 @@ export default function ArtistProfileScreen() {
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <View style={styles.appBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackBtn}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
         </TouchableOpacity>
         <Text style={styles.appBarTitle}>{artist.full_name || `@${user?.username}`}</Text>
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
@@ -1274,17 +1274,17 @@ const getStyles = (colors) => StyleSheet.create({
     paddingHorizontal: spacing.l,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    backgroundColor: colors.backgroundLight,
+    borderBottomColor: colors.headerBorder || '#232E4A',
+    backgroundColor: colors.headerBackground || '#172038',
   },
   headerBackBtn: {
     padding: 6,
     borderRadius: 20,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: '#232E4A',
   },
   appBarTitle: {
     ...typography.h3,
-    color: colors.textMainLight,
+    color: colors.headerText || '#FFFFFF',
     fontWeight: '700',
   },
   headerActionBtn: {

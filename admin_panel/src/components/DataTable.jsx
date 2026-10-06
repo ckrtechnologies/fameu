@@ -193,7 +193,7 @@ export default function DataTable({
         {filterKeys.map(key => {
           // Determine title for the label based on key if it's generic, else we can pass an object.
           // For simplicity, we just use the key.
-          const formattedKey = key.replace('_', ' ');
+          const formattedKey = key ? String(key).replace('_', ' ') : '';
           return (
             <SearchableDropdown
               key={key}

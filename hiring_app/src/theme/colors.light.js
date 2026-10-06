@@ -1,26 +1,26 @@
 export const lightColors = {
   // Brand
-  primary: '#007AFF', // Vibrant Blue
-  secondary: '#1E3A8A',
-  accent: '#007AFF',
+  primary: '#C8952B', // Spotlight Gold (replaces generic AI blue)
+  secondary: '#1A1C23', // Deep Obsidian Charcoal
+  accent: '#E3B04B', // Warm Gold
   white: '#FFFFFF',
   
   // Backgrounds
-  background: '#FFFFFF', // Crisp White
-  backgroundDark: '#F8FAFC', 
-  backgroundLight: '#FFFFFF',
-  surface: '#F1F5F9', 
-  surfaceLight: '#F1F5F9',
-  surfaceDark: '#E2E8F0',
+  background: '#F8F6F1', // Warm Alabaster / Champagne Ivory (replaces basic white)
+  backgroundDark: '#EFECE4', 
+  backgroundLight: '#F8F6F1',
+  surface: '#FFFFFF', // Elevated white cards on warm background
+  surfaceLight: '#FFFFFF',
+  surfaceDark: '#EAE6DC',
   card: '#FFFFFF',
   
   // Typography
-  textMain: '#1E293B', // Slate dark text for light mode
-  textMuted: '#64748B', 
-  textMainDark: '#FFFFFF', // For text on blue buttons
-  textMutedDark: '#94A3B8',
-  textMainLight: '#1E293B',
-  textMutedLight: '#64748B',
+  textMain: '#1A1C1F', // Deep warm charcoal
+  textMuted: '#6B7280', 
+  textMainDark: '#FFFFFF', // For text on dark buttons/surfaces
+  textMutedDark: '#9CA3AF',
+  textMainLight: '#1A1C1F',
+  textMutedLight: '#6B7280',
   
   // Status
   success: '#10B981',
@@ -29,12 +29,24 @@ export const lightColors = {
   warning: '#F59E0B',
   
   // Borders
-  borderLight: '#E2E8F0',
-  borderDark: '#CBD5E1', 
+  borderLight: '#E8E4DA',
+  borderDark: '#D4CEBF', 
   
   // Aliases for missing colors
-  textDark: '#1E293B',
-  textSecondaryLight: '#64748B',
-  border: '#E2E8F0',
-  text: '#1E293B',
+  textDark: '#1A1C1F',
+  textSecondaryLight: '#6B7280',
+  border: '#E8E4DA',
+  text: '#1A1C1F',
+
+  // Header & Bottom Tab Bar (Deep Obsidian & Spotlight Gold)
+  headerBackground: '#131418',
+  headerText: '#FFFFFF',
+  headerSubtitle: '#9CA3AF',
+  headerIcon: '#FFFFFF',
+  headerBorder: '#22242B',
+  headerAccent: '#E3B04B',
+  tabBarBackground: '#131418',
+  tabBarBorder: '#22242B',
+  tabBarActive: '#E3B04B',
+  tabBarInactive: '#8A8F9E',
 };

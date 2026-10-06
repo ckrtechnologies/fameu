@@ -53,18 +53,18 @@ export default function ShrinkableHeader({
       style={[
         styles.container,
         {
-          backgroundColor: colors.backgroundLight,
+          backgroundColor: colors.headerBackground || '#131418',
           paddingTop: topPadding,
           paddingBottom: 8,
           borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.borderLight,
+          borderBottomColor: colors.headerBorder || '#22242B',
         },
         headerElevation && {
           elevation: headerElevation,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.04,
-          shadowRadius: 3,
+          shadowOpacity: 0.12,
+          shadowRadius: 4,
         },
         style,
       ]}
@@ -74,7 +74,7 @@ export default function ShrinkableHeader({
         <View style={styles.leftContainer}>
           {showBack ? (
             <TouchableOpacity onPress={handleBack} style={styles.iconButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+              <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
             </TouchableOpacity>
           ) : isDynamicMorph ? (
             <TouchableOpacity
@@ -103,7 +103,7 @@ export default function ShrinkableHeader({
                   }
                 ]}
               >
-                <Icon name="menu-outline" size={26} color={colors.textMainLight} />
+                <Icon name="menu-outline" size={26} color={colors.headerIcon || '#FFFFFF'} />
               </Animated.View>
 
               {/* Avatar DP: Hidden at top, smoothly scales/fades in as user scrolls down */}
@@ -133,7 +133,7 @@ export default function ShrinkableHeader({
                     justifyContent: 'center',
                     alignItems: 'center',
                     borderWidth: 1.5,
-                    borderColor: colors.borderLight,
+                    borderColor: colors.headerBorder || '#232E4A',
                   }}
                 >
                   {avatarUrl ? (
@@ -146,7 +146,7 @@ export default function ShrinkableHeader({
             </TouchableOpacity>
           ) : (showMenu || onMenuPress) ? (
             <TouchableOpacity onPress={onMenuPress || (() => navigation.openDrawer())} style={styles.iconButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Icon name="menu-outline" size={26} color={colors.textMainLight} />
+              <Icon name="menu-outline" size={26} color={colors.headerIcon || '#FFFFFF'} />
             </TouchableOpacity>
           ) : (avatarUrl || avatarText) ? (
             <TouchableOpacity onPress={onAvatarPress || (() => navigation.openDrawer())} style={{ marginRight: 8 }}>
@@ -178,7 +178,7 @@ export default function ShrinkableHeader({
               style={[
                 styles.title,
                 {
-                  color: colors.textMainLight,
+                  color: colors.headerText || '#FFFFFF',
                   fontSize: headerTitleSize || 17,
                 },
               ]}
@@ -196,7 +196,7 @@ export default function ShrinkableHeader({
                 overflow: 'hidden',
               }}
             >
-              <Text style={[styles.subtitle, { color: colors.textMutedLight }]} numberOfLines={1}>
+              <Text style={[styles.subtitle, { color: colors.headerSubtitle || '#94A3B8' }]} numberOfLines={1}>
                 {subtitle}
               </Text>
             </Animated.View>

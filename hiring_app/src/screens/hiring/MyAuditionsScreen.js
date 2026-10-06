@@ -231,7 +231,7 @@ export default function MyAuditionsScreen() {
             style={{ padding: 6 }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <AppIcon name="add-circle-outline" size={26} color={colors.primary} />
+            <AppIcon name="add-circle-outline" size={26} color={colors.headerAccent || '#E3B04B'} />
           </TouchableOpacity>
         }
       />

@@ -31,9 +31,10 @@ export type RootStackParamList = {
 
 const GlobalStatusBar = () => {
   const insets = useSafeAreaInsets();
+  const statusBarBg = colors.headerBackground || '#131418';
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#000000', zIndex: 99999 }}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" translucent={true} />
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: statusBarBg, zIndex: 99999 }}>
+      <StatusBar barStyle="light-content" backgroundColor={statusBarBg} translucent={true} />
     </View>
   );
 };

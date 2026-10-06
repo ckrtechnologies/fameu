@@ -102,7 +102,7 @@ export default function TalentDiscoveryScreen() {
         {mainImage ? (
           <Image source={{ uri: mainImage }} style={styles.cardCoverImage} resizeMode="cover" />
         ) : (
-          <LinearGradient colors={['#3b82f6', '#8b5cf6']} style={styles.cardCoverImage} />
+          <LinearGradient colors={['#C8952B', '#78350F']} style={styles.cardCoverImage} />
         )}
         
         <LinearGradient 

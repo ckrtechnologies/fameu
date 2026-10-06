@@ -138,25 +138,33 @@ export default function UserDetailsModal({ userId, onClose }) {
                     <p style={{ color: 'var(--text-secondary)' }}>No documents uploaded yet.</p>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                      {response.data.documents.map(doc => (
-                        <div key={doc.id} style={{ padding: '16px', background: 'var(--bg-dark)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                          <h4 style={{ fontSize: '14px', marginBottom: '8px', textTransform: 'capitalize' }}>
-                            {doc.document_type.replace(/_/g, ' ')}
-                          </h4>
-                          <span style={{ fontSize: '12px', display: 'block', marginBottom: '12px', color: 'var(--text-secondary)' }}>
-                            Status: <span className={doc.status === 'approved' ? 'text-success' : 'text-warning'}>{doc.status}</span>
-                          </span>
-                          <a 
-                            href={doc.document_url} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="btn btn-secondary"
-                            style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '12px' }}
-                          >
-                            <ExternalLink size={14} /> View Document
-                          </a>
-                        </div>
-                      ))}
+                      {response.data.documents.map(doc => {
+                        const docType = String(doc.document_type || doc.type || 'Document').replace(/_/g, ' ');
+                        const docUrl = doc.document_url || doc.url;
+                        return (
+                          <div key={doc.id || docType} style={{ padding: '16px', background: 'var(--bg-dark)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                            <h4 style={{ fontSize: '14px', marginBottom: '8px', textTransform: 'capitalize' }}>
+                              {docType}
+                            </h4>
+                            <span style={{ fontSize: '12px', display: 'block', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                              Status: <span className={doc.status === 'approved' ? 'text-success' : 'text-warning'}>{doc.status || 'Pending'}</span>
+                            </span>
+                            {docUrl ? (
+                              <a 
+                                href={docUrl} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="btn btn-secondary"
+                                style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '12px' }}
+                              >
+                                <ExternalLink size={14} /> View Document
+                              </a>
+                            ) : (
+                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No URL provided</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

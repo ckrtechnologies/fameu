@@ -1,4 +1,5 @@
 import { showError, showSuccess } from '../../utils/toast';
+import { GlobalAlert } from '../../components/core/GlobalAlert';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, RefreshControl, Modal, Platform, PermissionsAndroid } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -186,7 +187,7 @@ export default function CompanyKycScreen({ navigation }) {
         navigation.navigate('Tabs', { screen: 'Dashboard' });
       }, 1000);
     } catch (error) {
-      showError('', error?.message || 'Failed to submit KYC documents.');
+      GlobalAlert.showError('KYC Submission Failed', error, 'We could not submit your KYC documents.');
     } finally {
       setIsUploading(false);
     }

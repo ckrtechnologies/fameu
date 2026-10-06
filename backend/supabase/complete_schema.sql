@@ -363,7 +363,7 @@ CREATE TABLE IF NOT EXISTS public.auditions (
   age_min          INT,
   age_max          INT,
   gender           TEXT,                    -- 'Male', 'Female', 'Any'
-  audition_type    TEXT CHECK (audition_type IN ('walkin', 'scheduled')),
+  audition_type    TEXT CHECK (audition_type IN ('walkin', 'scheduled', 'online')),
   venue_address    TEXT,
   lat              DOUBLE PRECISION,
   lng              DOUBLE PRECISION,

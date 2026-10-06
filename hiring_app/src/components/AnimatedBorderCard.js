@@ -16,11 +16,12 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 export default function AnimatedBorderCard({ 
   children, 
   onPress, 
-  color = '#3b82f6', 
+  color, 
   delay = 0,
   style
 }) {
   const { colors } = useTheme();
+  const cardColor = color || colors.primary || '#C8952B';
   const styles = getStyles(colors);
   const progress = useSharedValue(0);
 
@@ -43,7 +44,7 @@ export default function AnimatedBorderCard({
     const borderColor = interpolateColor(
       progress.value,
       [0, 1],
-      ['rgba(0,0,0,0.05)', color]
+      ['rgba(0,0,0,0.05)', cardColor]
     );
     
     const shadowRadius = interpolate(
@@ -61,7 +62,7 @@ export default function AnimatedBorderCard({
     return {
       borderColor,
       borderWidth: 1.5,
-      shadowColor: color,
+      shadowColor: cardColor,
       shadowRadius,
       shadowOpacity,
       elevation: interpolate(progress.value, [0, 1], [2, 8]),

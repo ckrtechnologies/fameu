@@ -319,7 +319,7 @@ export default function PublicProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackBtn}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{profileData.name || `@${profileData.username}`}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -1055,8 +1055,15 @@ export default function PublicProfileScreen() {
             
             {/* Artist Profile Comments */}
             {profileData.profile && profileData.profile.id && (
-              <View style={{ marginHorizontal: spacing.l, marginBottom: 24, marginTop: 12 }}>
-                {showComments && <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />}
+              <View style={{ width: '100%', marginBottom: 24, marginTop: 12 }}>
+                {showComments && (
+                  <CommentsSection 
+                    targetType="artist_profile" 
+                    targetId={profileData.profile.id} 
+                    isOwnProfile={profileData?.id === currentUserId}
+                    profileUserId={profileData?.id}
+                  />
+                )}
               </View>
             )}
           </View>
@@ -1128,8 +1135,15 @@ export default function PublicProfileScreen() {
               )}
 
               {hiringProfile && hiringProfile.id && (
-                <View style={{ marginBottom: 24, marginTop: spacing.l }}>
-                  {showComments && <CommentsSection targetType="profile" targetId={hiringProfile.id} />}
+                <View style={{ width: '100%', marginBottom: 24, marginTop: spacing.l }}>
+                  {showComments && (
+                    <CommentsSection 
+                      targetType="profile" 
+                      targetId={hiringProfile.id} 
+                      isOwnProfile={hiringProfile?.user_id === currentUserId || profileData?.id === currentUserId}
+                      profileUserId={hiringProfile?.user_id || profileData?.id}
+                    />
+                  )}
                 </View>
               )}
             </View>
@@ -1226,18 +1240,18 @@ const getStyles = (colors) => StyleSheet.create({
     paddingHorizontal: spacing.l,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    backgroundColor: colors.backgroundLight,
+    borderBottomColor: colors.headerBorder || '#232E4A',
+    backgroundColor: colors.headerBackground || '#172038',
   },
   headerBackBtn: {
     padding: 6,
     borderRadius: 20,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: '#232E4A',
   },
   headerTitle: {
     ...typography.h3,
     fontWeight: '700',
-    color: colors.textMainLight,
+    color: colors.headerText || '#FFFFFF',
   },
   headerActionBtn: {
     width: 36,

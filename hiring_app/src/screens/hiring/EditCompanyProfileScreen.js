@@ -138,7 +138,7 @@ export default function EditCompanyProfileScreen() {
         navigation.goBack();
       }, 1000);
     } catch (error) {
-      showError('', error?.data?.error || 'Failed to update profile');
+      GlobalAlert.showError('Profile Update Failed', error, 'Your company profile details could not be saved.');
     }
   };
 
@@ -377,7 +377,7 @@ export default function EditCompanyProfileScreen() {
         </TouchableOpacity>
 
         {profile?.id && (
-          <CommentsSection targetType="profile" targetId={profile.id} disableComment={true} />
+          <CommentsSection targetType="profile" targetId={profile.id} disableComment={true} isOwnProfile={true} />
         )}
       </KeyboardAwareScrollView>
 

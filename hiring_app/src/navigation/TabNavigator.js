@@ -43,16 +43,18 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, size }) => {
           const iconSize = size || 26;
+          const activeColor = colors.tabBarActive || '#E3B04B';
+          const inactiveColor = colors.tabBarInactive || '#8E9AB0';
           if (route.name === 'Dashboard') {
-            return <HomeTabIcon size={iconSize} focused={focused} />;
+            return <HomeTabIcon size={iconSize} focused={focused} activeColor={activeColor} inactiveColor={inactiveColor} />;
           } else if (route.name === 'MyAuditions') {
-            return <MyAuditionsTabIcon size={iconSize} focused={focused} />;
+            return <MyAuditionsTabIcon size={iconSize} focused={focused} activeColor={activeColor} inactiveColor={inactiveColor} />;
           } else if (route.name === 'Inbox') {
             return (
               <View>
-                <MessagesTabIcon size={iconSize} focused={focused} />
+                <MessagesTabIcon size={iconSize} focused={focused} activeColor={activeColor} inactiveColor={inactiveColor} />
                 {totalUnreadCount > 0 && (
                   <View style={{
                     position: 'absolute', top: -3, right: -6,
@@ -60,7 +62,7 @@ export default function TabNavigator() {
                     backgroundColor: colors.error,
                     justifyContent: 'center', alignItems: 'center',
                     paddingHorizontal: 3,
-                    borderWidth: 1.5, borderColor: colors.surfaceLight,
+                    borderWidth: 1.5, borderColor: colors.tabBarBackground || '#131418',
                   }}>
                     <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.error }} />
                   </View>
@@ -68,30 +70,31 @@ export default function TabNavigator() {
               </View>
             );
           } else if (route.name === 'Applicants') {
-            return <ApplicantsTabIcon size={iconSize} focused={focused} />;
+            return <ApplicantsTabIcon size={iconSize} focused={focused} activeColor={activeColor} inactiveColor={inactiveColor} />;
           } else if (route.name === 'Profile') {
-            return <CompanyTabIcon size={iconSize} focused={focused} />;
+            return <CompanyTabIcon size={iconSize} focused={focused} activeColor={activeColor} inactiveColor={inactiveColor} />;
           }
           return null;
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMutedLight,
+        tabBarActiveTintColor: colors.tabBarActive || '#E3B04B',
+        tabBarInactiveTintColor: colors.tabBarInactive || '#8A8F9E',
         tabBarStyle: {
-          backgroundColor: colors.surfaceLight,
-          borderTopColor: colors.borderLight,
+          backgroundColor: colors.tabBarBackground || '#131418',
+          borderTopColor: colors.tabBarBorder || '#22242B',
           borderTopWidth: 1,
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom || 10,
           paddingTop: 10,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
+          shadowOpacity: 0.15,
           shadowRadius: 8,
-          elevation: 5,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontFamily: typography.fontFamily,
-          fontSize: 12,
+          fontSize: 13,
+          fontWeight: '600',
         },
       })}
       initialRouteName="Dashboard"
@@ -113,7 +116,7 @@ export default function TabNavigator() {
         options={{
           tabBarLabel: 'Messages',
           tabBarBadge: totalUnreadCount > 0 ? totalUnreadCount : undefined,
-          tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.white }
+          tabBarBadgeStyle: { backgroundColor: colors.tabBarActive || '#E3B04B', color: '#172038', fontWeight: 'bold' }
         }}
       />
       <Tab.Screen

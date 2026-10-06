@@ -2,6 +2,15 @@ import supabase from '../config/supabase.js';
 import { INDIAN_CITIES } from '../constants/cities.js';
 
 class AuditionService {
+  _normalizeAuditionType(type) {
+    if (!type) return 'walkin';
+    const t = String(type).trim().toLowerCase();
+    if (t === 'walk-in' || t === 'walkin') return 'walkin';
+    if (t === 'scheduled') return 'scheduled';
+    if (t === 'online') return 'online';
+    return t;
+  }
+
   /**
    * Create a new audition (Hiring App)
    */
@@ -58,7 +67,7 @@ class AuditionService {
       gender: gender || gender_req || 'Any',
       age_min: age_min !== undefined && age_min !== null ? Number(age_min) : 0,
       age_max: age_max !== undefined && age_max !== null ? Number(age_max) : 75,
-      audition_type: audition_type || 'walkin',
+      audition_type: this._normalizeAuditionType(audition_type),
       venue_address: venue_address || extraProps.walk_in_venue || null,
       lat: lat ? parseFloat(lat) : null,
       lng: lng ? parseFloat(lng) : null,
@@ -131,7 +140,7 @@ class AuditionService {
     if (gender !== undefined || gender_req !== undefined) payload.gender = gender || gender_req;
     if (age_min !== undefined) payload.age_min = Number(age_min);
     if (age_max !== undefined) payload.age_max = Number(age_max);
-    if (audition_type !== undefined) payload.audition_type = audition_type;
+    if (audition_type !== undefined) payload.audition_type = this._normalizeAuditionType(audition_type);
     if (venue_address !== undefined) payload.venue_address = venue_address;
     if (lat !== undefined) payload.lat = parseFloat(lat);
     if (lng !== undefined) payload.lng = parseFloat(lng);

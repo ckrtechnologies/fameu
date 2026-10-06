@@ -280,7 +280,7 @@ export default function ChatScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -395,8 +395,9 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.s,
     paddingVertical: spacing.s,
+    backgroundColor: colors.headerBackground || '#172038',
     borderBottomWidth: 1,
-    borderBottomColor: colors.textMutedLight + '20',
+    borderBottomColor: colors.headerBorder || '#232E4A',
   },
   iconButton: {
     padding: spacing.s,
@@ -410,11 +411,12 @@ const getStyles = (colors) => StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    color: colors.textMainLight,
+    color: colors.headerText || '#FFFFFF',
+    fontWeight: '700',
   },
   typingText: {
     ...typography.caption,
-    color: colors.primary,
+    color: colors.headerAccent || '#E3B04B',
     fontStyle: 'italic',
   },
   container: {

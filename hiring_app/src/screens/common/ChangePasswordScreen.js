@@ -48,7 +48,7 @@ export default function ChangePasswordScreen({ navigation }) {
     <SafeAreaView style={globalStyles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+          <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Password</Text>
       </View>
@@ -100,8 +100,8 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
     padding: spacing.m,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    backgroundColor: colors.surfaceLight,
+    borderBottomColor: colors.headerBorder || '#232E4A',
+    backgroundColor: colors.headerBackground || '#172038',
   },
   backButton: {
     padding: spacing.s,
@@ -109,7 +109,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    color: colors.textMainLight,
+    color: colors.headerText || '#FFFFFF',
+    fontWeight: '700',
   },
   content: {
     padding: spacing.xl,
