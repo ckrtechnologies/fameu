@@ -1,12 +1,14 @@
 /**
- * Fameu Artist App
+ * Fameu Hiring App
  */
 
 import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme, Alert } from 'react-native';
-import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Provider } from 'react-redux';
-import { NavigationContainer, createNavigationContainerRef, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, NavigationContainerRefWithCurrent } from '@react-navigation/native';
 import { View, Text, Image, TouchableOpacity, Vibration, TextStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { store } from './src/store/store';
@@ -16,11 +18,12 @@ import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotificatio
 import { setupPushNotifications } from './src/services/PushNotificationService';
 import { colors, typography } from './src/theme/theme';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import { navigationRef as _navigationRef, navigate } from './src/navigation/navigationRef';
+import linking from './src/navigation/linking';
 
 import Toast from 'react-native-toast-message';
 import ErrorBoundary from './src/components/core/ErrorBoundary';
 import GlobalAlertProvider, { GlobalAlertRef } from './src/components/core/GlobalAlert';
-import KeyboardHidingView from './src/components/core/KeyboardHidingView';
 
 export type RootStackParamList = {
   [key: string]: any;
@@ -35,7 +38,7 @@ const GlobalStatusBar = () => {
   );
 };
 
-export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+export const navigationRef: NavigationContainerRefWithCurrent<RootStackParamList> = _navigationRef as any;
 
 const toastConfig = {
   
@@ -219,7 +222,7 @@ const RootNavigation = () => {
   };
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} linking={linking} theme={navigationTheme}>
       <AppNavigator />
     </NavigationContainer>
   );
@@ -232,20 +235,14 @@ function App(): React.JSX.Element {
     setupPushNotifications();
 
     const unsubscribe = onMessage(getMessaging(), async remoteMessage => {
-      console.log('A new FCM message arrived in foreground!', JSON.stringify(remoteMessage));
-      
       // Check if we are currently on the ChatScreen for this conversation
       const currentRoute = navigationRef.isReady() ? navigationRef.getCurrentRoute() : null;
-      console.log('App.tsx (FCM): currentRoute', currentRoute?.name, currentRoute?.params);
-      console.log('App.tsx (FCM): remoteMessage.data', remoteMessage.data);
 
       if (remoteMessage.data?.type === 'chat_message' && currentRoute?.name === 'ChatScreen') {
         if (String(currentRoute.params?.conversationId) === String(remoteMessage.data.conversationId)) {
-          // User is already looking at this chat, do not show toast, do not vibrate
-          console.log('App.tsx (FCM): Suppressing toast because we are on ChatScreen for this conversation');
+          // User is already looking at this chat, suppress toast
           return;
-        } else {
-          console.log('App.tsx (FCM): Conversation IDs do not match!', currentRoute.params?.conversationId, remoteMessage.data.conversationId);
+        
         }
       }
 
@@ -302,7 +299,6 @@ function App(): React.JSX.Element {
 
     // Handle notification tap when app is in background
     onNotificationOpenedApp(getMessaging(), remoteMessage => {
-      console.log('Notification caused app to open from background state:', remoteMessage);
       const type = remoteMessage.data?.type;
       const conversationId = remoteMessage.data?.conversationId;
       const targetId = remoteMessage.data?.targetId;
@@ -322,7 +318,7 @@ function App(): React.JSX.Element {
         if (navigationRef.isReady()) {
           navigationRef.navigate('AuditionDetails', { auditionId: targetId, scrollToComments: true });
         }
-      } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'profile') {
+      } else if ((type === 'comment' || type === 'comment_reply') && (targetType === 'profile' || targetType === 'company_profile')) {
         if (navigationRef.isReady()) {
           navigationRef.navigate('CompanyProfile', { scrollToComments: true });
         }
@@ -337,7 +333,6 @@ function App(): React.JSX.Element {
     getInitialNotification(getMessaging())
       .then(remoteMessage => {
         if (remoteMessage) {
-          console.log('Notification caused app to open from quit state:', remoteMessage);
           const type = remoteMessage.data?.type;
           const conversationId = remoteMessage.data?.conversationId;
           const targetId = remoteMessage.data?.targetId;
@@ -355,7 +350,7 @@ function App(): React.JSX.Element {
               });
             } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'audition' && targetId) {
               navigationRef.navigate('AuditionDetails', { auditionId: targetId, scrollToComments: true });
-            } else if ((type === 'comment' || type === 'comment_reply') && targetType === 'profile') {
+            } else if ((type === 'comment' || type === 'comment_reply') && (targetType === 'profile' || targetType === 'company_profile')) {
               navigationRef.navigate('CompanyProfile', { scrollToComments: true });
             } else if (type === 'application') {
               navigationRef.navigate('AllApplicants');
@@ -369,18 +364,20 @@ function App(): React.JSX.Element {
 
   return (
     <ErrorBoundary>
-    <Provider store={store}>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <KeyboardHidingView>
-            <GlobalStatusBar />
-            <RootNavigation />
-            <Toast config={toastConfig} />
-            <GlobalAlertProvider ref={GlobalAlertRef} />
-          </KeyboardHidingView>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </Provider>  
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+          <KeyboardProvider>
+            <Provider store={store}>
+              <ThemeProvider>
+                <GlobalStatusBar />
+                <RootNavigation />
+                <Toast config={toastConfig} />
+                <GlobalAlertProvider ref={GlobalAlertRef} />
+              </ThemeProvider>
+            </Provider>
+          </KeyboardProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }

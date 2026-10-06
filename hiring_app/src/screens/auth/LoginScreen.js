@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { View, StyleSheet, Platform, Image, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,7 +30,6 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      console.log('Sending OTP to:', identifier, 'URL:', BASE_URL);
       const response = await sendOtp({ identifier }).unwrap();
       if (response.data && response.data.devOtp) {
         setGeneratedOtp(response.data.devOtp);
@@ -65,9 +64,10 @@ const LoginScreen = ({ navigation }) => {
         </SafeAreaView>
       </View>
 
-      {/* Bottom Half - Light */}
       <KeyboardAwareScrollView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        mode={Platform.OS === 'android' ? 'layout' : 'insets'}
+        bottomOffset={80}
+        keyboardShouldPersistTaps="handled"
         style={styles.bottomHalf}
       >
         <Typography variant="h1" style={styles.title}>Welcome Back</Typography>

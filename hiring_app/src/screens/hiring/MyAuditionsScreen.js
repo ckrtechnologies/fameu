@@ -183,7 +183,7 @@ export default function MyAuditionsScreen() {
           
           <View style={styles.cardMeta}>
             <Icon name="calendar-outline" size={16} color={colors.textMutedLight} />
-            <Text style={styles.cardMetaText}>{format(new Date(item.created_at), 'MMM dd, yyyy')}</Text>
+            <Text style={styles.cardMetaText}>{format(new Date(item.created_at), 'dd MMM yyyy')}</Text>
           </View>
         </View>
 

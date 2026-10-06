@@ -14,19 +14,16 @@ export const setupPushNotifications = async () => {
         authStatus === AuthorizationStatus.PROVISIONAL;
 
       if (!enabled) {
-        console.log('FCM Permission not granted');
         return null;
       }
     } else if (Platform.OS === 'android' && Platform.Version >= 33) {
       const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
       if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('FCM Permission not granted for Android');
         return null;
       }
     }
 
     const token = await getToken(messaging);
-    console.log('FCM Token generated:', token);
 
     await sendTokenToBackend(token);
 
@@ -35,8 +32,7 @@ export const setupPushNotifications = async () => {
     });
 
     return token;
-  } catch (error) {
-    console.log('Push notification setup error:', error.message || error);
+  } catch (_error) {
     return null;
   }
 };
@@ -46,7 +42,7 @@ export const sendTokenToBackend = async (fcmToken) => {
     const credentials = await Keychain.getGenericPassword();
     if (!credentials || !credentials.password) return;
 
-    const response = await fetch(`${BASE_URL}/notifications/fcm-token`, {
+    await fetch(`${BASE_URL}/notifications/fcm-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -54,11 +50,7 @@ export const sendTokenToBackend = async (fcmToken) => {
       },
       body: JSON.stringify({ fcm_token: fcmToken }),
     });
-
-    if (!response.ok) {
-      console.log('Failed to update FCM token', await response.text());
-    }
-  } catch (error) {
-    console.error('Failed to send token to backend:', error);
+  } catch (_) {
+    // silently catch background token sync errors
   }
 };

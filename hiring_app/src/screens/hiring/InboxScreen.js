@@ -77,7 +77,7 @@ export default function InboxScreen() {
             </Typography>
             {item.updated_at && (
               <Typography variant="caption" style={styles.timeText}>
-                {format(new Date(item.updated_at), 'MMM dd')}
+                {format(new Date(item.updated_at), 'dd MMM')}
               </Typography>
             )}
           </View>

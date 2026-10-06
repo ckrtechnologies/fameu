@@ -1,7 +1,7 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, RefreshControl, Modal, Platform, PermissionsAndroid } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pick, types, errorCodes, isErrorWithCode } from '@react-native-documents/picker';
 import { launchCamera } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -16,6 +16,7 @@ import ProgressBar from '../../components/core/ProgressBar';
 import { calculateCompanyProfileScore, isCompanyProfileComplete } from '../../utils/profileScoring';
 
 export default function CompanyKycScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const user = useSelector(state => state.auth.user);
@@ -458,7 +459,7 @@ export default function CompanyKycScreen({ navigation }) {
             </View>
           </ScrollView>
 
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.m) }]}>
             {isUploading && <ProgressBar progress={uploadProgress} />}
             <TouchableOpacity
               style={[

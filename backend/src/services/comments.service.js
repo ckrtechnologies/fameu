@@ -16,7 +16,7 @@ try {
 class CommentsService {
   async getComments(type, targetId) {
     let tableName, targetColumn;
-    if (type === 'profile') {
+    if (type === 'profile' || type === 'company_profile') {
       tableName = 'profile_comments';
       targetColumn = 'profile_id';
     } else if (type === 'artist_profile') {
@@ -43,7 +43,7 @@ class CommentsService {
 
   async addComment(type, targetId, userId, content, parentId = null) {
     let tableName, targetColumn;
-    if (type === 'profile') {
+    if (type === 'profile' || type === 'company_profile') {
       tableName = 'profile_comments';
       targetColumn = 'profile_id';
     } else if (type === 'artist_profile') {
@@ -76,7 +76,7 @@ class CommentsService {
 
   async updateComment(type, commentId, userId, content) {
     let tableName;
-    if (type === 'profile') tableName = 'profile_comments';
+    if (type === 'profile' || type === 'company_profile') tableName = 'profile_comments';
     else if (type === 'artist_profile') tableName = 'artist_profile_comments';
     else tableName = 'audition_comments';
 
@@ -98,7 +98,7 @@ class CommentsService {
 
   async deleteComment(type, commentId, userId) {
     let tableName;
-    if (type === 'profile') tableName = 'profile_comments';
+    if (type === 'profile' || type === 'company_profile') tableName = 'profile_comments';
     else if (type === 'artist_profile') tableName = 'artist_profile_comments';
     else tableName = 'audition_comments';
 

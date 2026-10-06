@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React from 'react';
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { View, StyleSheet, Platform, Image, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -63,9 +63,10 @@ const OtpScreen = ({ route, navigation }) => {
         </SafeAreaView>
       </View>
 
-      {/* Bottom Half - Light */}
       <KeyboardAwareScrollView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        mode={Platform.OS === 'android' ? 'layout' : 'insets'}
+        bottomOffset={80}
+        keyboardShouldPersistTaps="handled"
         style={styles.bottomHalf}
       >
         <Typography variant="h1" style={styles.title}>Verify OTP</Typography>

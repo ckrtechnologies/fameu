@@ -6,15 +6,15 @@ import {
   TextInput, 
   TouchableOpacity, 
   ActivityIndicator, 
-  KeyboardAvoidingView, 
   Platform,
   Image,
   AppState
 } from 'react-native';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector, useDispatch } from 'react-redux';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
@@ -33,6 +33,7 @@ export default function ChatScreen() {
   const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const { conversationId, otherParticipant } = route.params;
   const { user } = useSelector((state) => state.auth);
@@ -52,7 +53,6 @@ export default function ChatScreen() {
   const avatarUrl = resolvedParticipant?.avatar_url || artistProfile?.photo_urls?.[0] || hiringProfile?.logo_url;
 
   const handleHeaderPress = () => {
-    console.log('Header pressed, resolvedParticipant:', resolvedParticipant);
     if (resolvedParticipant?.artist_profiles?.id) {
       navigation.navigate('ArtistProfileScreen', { id: resolvedParticipant.artist_profiles.id });
     }
@@ -313,11 +313,7 @@ export default function ChatScreen() {
       </View>
 
       {/* Chat Area */}
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
+      <View style={styles.container}>
         {isLoading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -335,25 +331,27 @@ export default function ChatScreen() {
         )}
 
         {/* Input Area */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Type a message..."
-            placeholderTextColor={colors.textMutedLight}
-            value={inputText}
-            onChangeText={handleTyping}
-            multiline
-            maxLength={1000}
-          />
-          <TouchableOpacity 
-            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-            onPress={handleSend}
-            disabled={!inputText.trim()}
-          >
-            <Icon name="send" size={20} color={colors.backgroundLight} style={{ marginLeft: 2 }} />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+        <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }} style={{ width: '100%' }}>
+          <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, spacing.m) }]}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type a message..."
+              placeholderTextColor={colors.textMutedLight}
+              value={inputText}
+              onChangeText={handleTyping}
+              multiline
+              maxLength={1000}
+            />
+            <TouchableOpacity 
+              style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
+              onPress={handleSend}
+              disabled={!inputText.trim()}
+            >
+              <Icon name="send" size={20} color={colors.backgroundLight} style={{ marginLeft: 2 }} />
+            </TouchableOpacity>
+          </View>
+        </KeyboardStickyView>
+      </View>
 
       <Modal visible={isBlockModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsBlockModalVisible(false)}>
         <View style={styles.modalOverlay}>

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, ActivityIndicator, Image, Dimensions, RefreshControl, FlatList } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import AppIcon, { Icon } from '../../components/icons';
@@ -221,7 +222,7 @@ export default function CompanyProfileScreen() {
     return (
       <View style={{ marginHorizontal: spacing.l, marginBottom: 24, marginTop: spacing.l }}>
         {/* Company Profile Comments */}
-        <CommentsSection targetType="company_profile" targetId={profile.id} />
+        <CommentsSection targetType="profile" targetId={profile.id} />
       </View>
     );
   };
@@ -251,26 +252,34 @@ export default function CompanyProfileScreen() {
           </TouchableOpacity>
         }
       />
-      <Animated.FlatList
-        data={categoriesData}
-        keyExtractor={(item) => item.category}
-        ListHeaderComponent={renderHeader}
-        ListFooterComponent={renderFooter}
+      <KeyboardAwareScrollView
+        contentContainerStyle={[styles.listContent, { paddingBottom: 100 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bottomOffset={80}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
-        renderItem={renderCategory}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        ListEmptyComponent={!isAuditionsLoading ? (
+      >
+        {renderHeader()}
+        {categoriesData.length > 0 ? (
+          categoriesData.map(item => (
+            <React.Fragment key={item.category}>
+              {renderCategory({ item })}
+            </React.Fragment>
+          ))
+        ) : !isAuditionsLoading ? (
           <View style={styles.emptyContainer}>
             <AppIcon name="camera-outline" size={48} color={colors.borderLight} />
             <Typography variant="body2" style={styles.emptyText}>No posts yet</Typography>
           </View>
-        ) : <ActivityIndicator style={{ marginTop: spacing.xl }} />}
-      />
+        ) : (
+          <ActivityIndicator style={{ marginTop: spacing.xl }} />
+        )}
+        {renderFooter()}
+      </KeyboardAwareScrollView>
     </View>
   );
 }

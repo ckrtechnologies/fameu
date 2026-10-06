@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, StyleSheet, Animated, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, FlatList, StatusBar, Modal, Text, Easing, ScrollView, Platform } from 'react-native';
+import { View, StyleSheet, Animated, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, FlatList, StatusBar, Modal, Text, Easing, ScrollView, Platform, BackHandler, ToastAndroid } from 'react-native';
 import { ChevronRight, Lock, Bell, CheckCircle2, X } from 'lucide-react-native';
 import ReAnimated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { LineChart } from 'react-native-chart-kit';
@@ -227,13 +227,35 @@ export default function HiringDashboardScreen({ navigation }) {
   const { data: dashboardResponse, isLoading, isFetching, refetch: refetchDashboard } = useGetDashboardDataQuery();
   const { refetch: refetchNotifications } = useGetNotificationsQuery();
   const { data: profileResponse, refetch: refetchProfile } = useGetCompanyProfileQuery(user?.id, { skip: !user?.id });
+  const lastBackPressRef = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
       refetchDashboard();
       refetchNotifications();
       if (user?.id) refetchProfile();
-    }, [refetchDashboard, refetchNotifications, refetchProfile, user?.id])
+
+      if (Platform.OS !== 'android') return;
+
+      const onBackPress = () => {
+        if (isChecklistVisible) {
+          setIsChecklistVisible(false);
+          return true;
+        }
+
+        const now = Date.now();
+        if (now - lastBackPressRef.current < 2000) {
+          BackHandler.exitApp();
+          return true;
+        }
+        lastBackPressRef.current = now;
+        ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [refetchDashboard, refetchNotifications, refetchProfile, user?.id, isChecklistVisible])
   );
 
   const data = dashboardResponse?.data;

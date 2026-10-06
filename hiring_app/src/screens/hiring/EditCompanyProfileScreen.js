@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Modal, FlatList, PermissionsAndroid, Platform } from 'react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { GlobalAlert } from '../../components/core/GlobalAlert';
@@ -211,8 +211,8 @@ export default function EditCompanyProfileScreen() {
       <KeyboardAwareScrollView 
         ref={scrollViewRef} 
         contentContainerStyle={styles.scrollContent} 
-        enableOnAndroid={true}
-        extraScrollHeight={80}
+        mode={Platform.OS === 'android' ? 'layout' : 'insets'}
+        bottomOffset={80}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}

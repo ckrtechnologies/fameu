@@ -41,10 +41,9 @@ export default function ShrinkableHeader({
   };
 
   // Ensure header has clean, comfortable distance from the top status bar / camera notch
-  const statusBarHeight = StatusBar.currentHeight || 24;
-  const topPadding = Platform.OS === 'android'
-    ? Math.max(insets.top, statusBarHeight) + 6
-    : Math.max(insets.top, 14);
+  const topPadding = insets.top > 0
+    ? insets.top + 6
+    : (Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 6 : 14);
 
   // Dynamic morph between Hamburger Menu and Avatar DP on scroll
   const isDynamicMorph = (showMenu || onMenuPress) && (avatarUrl || avatarText) && scrollY;

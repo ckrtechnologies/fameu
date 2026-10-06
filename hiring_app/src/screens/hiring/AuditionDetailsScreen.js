@@ -1,7 +1,8 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Linking, ImageBackground, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, RefreshControl, Linking, ImageBackground, Share, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -13,6 +14,7 @@ import SkeletonLoader from '../../components/SkeletonLoader';
 import CustomButton from '../../components/forms/CustomButton';
 import CommentsSection from '../../components/CommentsSection';
 import { useTheme } from '../../theme/ThemeProvider';
+import { formatINR } from '../../utils/currencyUtils';
 
 export default function AuditionDetailsScreen() {
   const { colors } = useTheme();
@@ -90,10 +92,13 @@ export default function AuditionDetailsScreen() {
 
   return (
     <View style={globalStyles.container}>
-      <ScrollView 
+      <KeyboardAwareScrollView 
         ref={scrollViewRef} 
-        contentContainerStyle={{ paddingBottom: 40 }} 
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) + 80 }} 
         showsVerticalScrollIndicator={false}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        bottomOffset={Math.max(insets.bottom, 20) + 80}
         refreshControl={<RefreshControl refreshing={isFetching || false} onRefresh={refetch} tintColor={colors.primary} />}
       >
         {/* Hero Image */}
@@ -134,7 +139,7 @@ export default function AuditionDetailsScreen() {
 
             <Text style={styles.title}>{audition.title}</Text>
             <Text style={styles.postedDate}>
-              Posted on {format(new Date(audition.created_at), 'MMM dd, yyyy')}
+              Posted on {format(new Date(audition.created_at), 'dd MMM yyyy')}
             </Text>
           </View>
 
@@ -228,7 +233,7 @@ export default function AuditionDetailsScreen() {
               {(audition.budget || audition.compensation || parsedInstructions.budget) && (
                 <View style={styles.detailRow}>
                   <Icon name="cash" size={18} color={colors.textMutedLight} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>Compensation: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{parsedInstructions.budget || audition.budget || audition.compensation}</Text></Text>
+                  <Text style={styles.detailText}>Compensation: <Text style={{ color: colors.textMainLight, fontWeight: '600' }}>{formatINR(parsedInstructions.budget || audition.budget || audition.compensation)}</Text></Text>
                 </View>
               )}
               
@@ -274,7 +279,7 @@ export default function AuditionDetailsScreen() {
 
           <CommentsSection targetType="audition" targetId={auditionId} />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Floating Header Buttons */}
       <View style={[styles.floatingHeader, { top: Math.max(insets.top, 20) }]}>

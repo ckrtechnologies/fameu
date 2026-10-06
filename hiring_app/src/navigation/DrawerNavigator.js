@@ -104,7 +104,7 @@ function CustomDrawerContent(props) {
         <View style={styles.menuContainer}>
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('Tabs', { screen: 'Dashboard' })}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tabs', { screen: 'Dashboard' }); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}><Home size={22} color={colors.primary} /></View>
             <Text style={styles.menuText}>Dashboard</Text>
@@ -112,7 +112,7 @@ function CustomDrawerContent(props) {
 
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('Search')}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Search'); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: '#8b5cf615' }]}><Search size={22} color="#8b5cf6" /></View>
             <Text style={styles.menuText}>Search Users</Text>
@@ -120,7 +120,7 @@ function CustomDrawerContent(props) {
 
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('AllApplicants')}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('AllApplicants'); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: '#10b98115' }]}><Users size={22} color="#10b981" /></View>
             <Text style={styles.menuText}>All Applicants</Text>
@@ -128,7 +128,7 @@ function CustomDrawerContent(props) {
 
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('Tabs', { screen: 'Profile' })}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tabs', { screen: 'Profile' }); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: '#f59e0b15' }]}><Building size={22} color="#f59e0b" /></View>
             <Text style={styles.menuText}>Company Profile</Text>
@@ -136,7 +136,7 @@ function CustomDrawerContent(props) {
           
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('CompanyKyc')}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('CompanyKyc'); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: '#3b82f615' }]}><ShieldCheck size={22} color="#3b82f6" /></View>
             <Text style={styles.menuText}>KYC Verification</Text>
@@ -152,35 +152,35 @@ function CustomDrawerContent(props) {
         <View style={styles.menuContainer}>
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('Faq')}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Faq'); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="help-circle-outline" size={22} color={colors.textMainLight} /></View>
             <Text style={styles.menuText}>FAQ</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('ChangePassword')}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('ChangePassword'); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="lock-closed-outline" size={22} color={colors.textMainLight} /></View>
             <Text style={styles.menuText}>Change Password</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('ContactUs')}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('ContactUs'); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="mail-outline" size={22} color={colors.textMainLight} /></View>
             <Text style={styles.menuText}>Contact Us</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('Tutorial')}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tutorial'); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="play-circle-outline" size={22} color={colors.textMainLight} /></View>
             <Text style={styles.menuText}>How it Works</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.menuItem} 
-            onPress={() => props.navigation.navigate('Legal', { type: 'terms' })}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Legal', { type: 'terms' }); }}
           >
             <View style={[styles.iconContainer, { backgroundColor: colors.textMainLight + '15' }]}><Icon name="document-text-outline" size={22} color={colors.textMainLight} /></View>
             <Text style={styles.menuText}>Terms of Service</Text>

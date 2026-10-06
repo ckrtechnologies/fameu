@@ -16,27 +16,55 @@ import VerificationRequiredScreen from '../screens/hiring/VerificationRequiredSc
 import EditCompanyProfileScreen from '../screens/hiring/EditCompanyProfileScreen';
 import ConnectionListScreen from '../screens/hiring/ConnectionListScreen';
 import VideoPortfolioScreen from '../screens/hiring/VideoPortfolioScreen';
+import CompanyKycScreen from '../screens/hiring/CompanyKycScreen';
+import FaqScreen from '../screens/hiring/FaqScreen';
+import ContactUsScreen from '../screens/hiring/ContactUsScreen';
+import LegalScreen from '../screens/hiring/LegalScreen';
+import TutorialScreen from '../screens/hiring/TutorialScreen';
+import ChangePasswordScreen from '../screens/common/ChangePasswordScreen';
+import { ROUTES } from './routes';
+
 const Stack = createNativeStackNavigator();
 
 export default function MainNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Drawer" component={DrawerNavigator} />
-      <Stack.Screen name="CreateAudition" component={CreateAuditionScreen} />
-      <Stack.Screen name="AuditionDetails" component={AuditionDetailsScreen} />
-      <Stack.Screen name="ApplicantTracking" component={ApplicantTrackingScreen} />
-      <Stack.Screen name="AllApplicants" component={AllApplicantsScreen} />
-      <Stack.Screen name="ChatScreen" component={ChatScreen} />
-      <Stack.Screen name="ArtistProfileScreen" component={ArtistProfileScreen} />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} />
-      <Stack.Screen name="Search" component={SearchScreen} />
-      <Stack.Screen name="TalentDiscovery" component={TalentDiscoveryScreen} />
-      <Stack.Screen name="VideoPortfolio" component={VideoPortfolioScreen} />
-      <Stack.Screen name="FindTalent" component={FindTalentScreen} />
-      <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />
-      <Stack.Screen name="VerificationRequired" component={VerificationRequiredScreen} />
-      <Stack.Screen name="EditCompanyProfile" component={EditCompanyProfileScreen} />
-      <Stack.Screen name="ConnectionList" component={ConnectionListScreen} />
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name={ROUTES.DRAWER} component={DrawerNavigator} />
+      <Stack.Screen name={ROUTES.CREATE_AUDITION} component={CreateAuditionScreen} />
+      <Stack.Screen name={ROUTES.AUDITION_DETAILS} component={AuditionDetailsScreen} />
+      <Stack.Screen name={ROUTES.APPLICANT_TRACKING} component={ApplicantTrackingScreen} />
+      <Stack.Screen name={ROUTES.ALL_APPLICANTS} component={AllApplicantsScreen} />
+      
+      {/* Chat routes - canonical and alias */}
+      <Stack.Screen name={ROUTES.CHAT_SCREEN} component={ChatScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
+
+      {/* Artist Profile routes - canonical and alias */}
+      <Stack.Screen name={ROUTES.ARTIST_PROFILE_SCREEN} component={ArtistProfileScreen} />
+      <Stack.Screen name="ArtistProfile" component={ArtistProfileScreen} />
+
+      <Stack.Screen name={ROUTES.NOTIFICATIONS} component={NotificationsScreen} />
+      <Stack.Screen name={ROUTES.SEARCH} component={SearchScreen} />
+      <Stack.Screen name={ROUTES.TALENT_DISCOVERY} component={TalentDiscoveryScreen} />
+      <Stack.Screen name={ROUTES.VIDEO_PORTFOLIO} component={VideoPortfolioScreen} />
+      <Stack.Screen name={ROUTES.FIND_TALENT} component={FindTalentScreen} />
+      <Stack.Screen name={ROUTES.PUBLIC_PROFILE} component={PublicProfileScreen} />
+      <Stack.Screen name={ROUTES.VERIFICATION_REQUIRED} component={VerificationRequiredScreen} />
+      <Stack.Screen name={ROUTES.EDIT_COMPANY_PROFILE} component={EditCompanyProfileScreen} />
+      <Stack.Screen name={ROUTES.CONNECTION_LIST} component={ConnectionListScreen} />
+
+      {/* Shared Screens pushed from Drawer/Deep-links (Tab Bar cleanly hidden) */}
+      <Stack.Screen name={ROUTES.COMPANY_KYC} component={CompanyKycScreen} />
+      <Stack.Screen name={ROUTES.FAQ} component={FaqScreen} />
+      <Stack.Screen name={ROUTES.CONTACT_US} component={ContactUsScreen} />
+      <Stack.Screen name={ROUTES.LEGAL} component={LegalScreen} />
+      <Stack.Screen name={ROUTES.TUTORIAL} component={TutorialScreen} />
+      <Stack.Screen name={ROUTES.CHANGE_PASSWORD} component={ChangePasswordScreen} />
     </Stack.Navigator>
   );
 }

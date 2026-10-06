@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { showError, showSuccess } from '../../utils/toast';
@@ -8,7 +8,7 @@ import { useChangePasswordMutation } from '../../services/authApi';
 import { useTheme } from '../../theme/ThemeProvider';
 import CustomButton from '../../components/forms/CustomButton';
 
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 export default function ChangePasswordScreen({ navigation }) {
   const { colors } = useTheme();
@@ -55,8 +55,8 @@ export default function ChangePasswordScreen({ navigation }) {
 
       <KeyboardAwareScrollView 
         contentContainerStyle={styles.content}
-        enableOnAndroid={true}
-        extraScrollHeight={40}
+        mode={Platform.OS === 'android' ? 'layout' : 'insets'}
+        bottomOffset={80}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formGroup}>

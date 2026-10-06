@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text, TextInput, ActivityIndicator } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
@@ -56,8 +56,8 @@ export default function ContactUsScreen() {
       <KeyboardAwareScrollView 
         style={styles.container} 
         contentContainerStyle={{ paddingHorizontal: spacing.l, paddingVertical: spacing.m }}
-        enableOnAndroid={true}
-        extraScrollHeight={100}
+        mode={Platform.OS === 'android' ? 'layout' : 'insets'}
+        bottomOffset={80}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.subtitle, { color: colors.text }]}>

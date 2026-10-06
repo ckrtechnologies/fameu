@@ -14,9 +14,10 @@ import {
   Easing,
   Platform,
   ScrollView,
-  Dimensions
+  Dimensions,
+  BackHandler,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useNavigation } from '@react-navigation/native';
 import { AnimatedTileGrid } from '../../components/forms/AnimatedTileGrid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,6 +37,7 @@ import {
   INDIAN_CITIES,
 } from '../../constants/masterData';
 import { AUDITION_FORM_PLACEHOLDERS } from '../../constants/formPlaceholders';
+import { formatINRRange } from '../../utils/currencyUtils';
 
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import { useSelector } from 'react-redux';
@@ -298,6 +300,32 @@ export default function CreateAuditionScreen({ route }) {
     }
   };
 
+  const handleBackPress = () => {
+    if (currentStep > 1) {
+      animateToStep(currentStep - 1);
+      return true;
+    }
+    const isDirty = !isEditMode && !!(form.title.trim() || form.role_description.trim() || form.job_location.trim());
+    if (isDirty) {
+      Alert.alert(
+        'Discard Draft?',
+        'You have unsaved changes in this casting call. Are you sure you want to discard them?',
+        [
+          { text: 'Keep Editing', style: 'cancel' },
+          { text: 'Discard', style: 'destructive', onPress: () => navigation.goBack() },
+        ]
+      );
+      return true;
+    }
+    navigation.goBack();
+    return true;
+  };
+
+  useEffect(() => {
+    const backSub = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    return () => backSub.remove();
+  }, [currentStep, form, isEditMode]);
+
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
@@ -437,9 +465,9 @@ export default function CreateAuditionScreen({ route }) {
         'Online': 'online'
       };
 
-      const finalBudget = form.budget_min && form.budget_max
-        ? `₹${form.budget_min} - ₹${form.budget_max}`
-        : form.budget || (form.budget_min ? `₹${form.budget_min}` : 'Unspecified');
+      const finalBudget = (form.budget_min || form.budget_max)
+        ? formatINRRange(form.budget_min, form.budget_max)
+        : form.budget || 'Unspecified';
 
       const payload = {
         title: form.title.trim(),
@@ -512,7 +540,7 @@ export default function CreateAuditionScreen({ route }) {
     <View style={[globalStyles.container, { backgroundColor: colors.backgroundLight }]}>
       {/* Top Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color={colors.textMainLight} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -603,11 +631,14 @@ export default function CreateAuditionScreen({ route }) {
         </View>
       </View>
 
-      {/* Main Multi-Step Form Body */}
       <KeyboardAwareScrollView
-        contentContainerStyle={styles.scrollContent}
+        mode={Platform.OS === 'android' ? 'layout' : 'insets'}
+        bottomOffset={80}
+        keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* ==================== STEP 1: BASIC INFO ==================== */}
         {currentStep === 1 && (
@@ -1219,49 +1250,51 @@ export default function CreateAuditionScreen({ route }) {
       </KeyboardAwareScrollView>
 
       {/* Sticky Bottom Navigation Action Bar */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <View style={styles.footerRow}>
-          {currentStep > 1 && (
-            <TouchableOpacity
-              style={styles.prevButton}
-              onPress={handlePrevStep}
-              activeOpacity={0.8}
-            >
-              <Icon name="arrow-back" size={18} color={colors.textMainLight} style={{ marginRight: 6 }} />
-              <Text style={styles.prevButtonText}>Previous</Text>
-            </TouchableOpacity>
-          )}
+      <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }} style={{ width: '100%' }}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <View style={styles.footerRow}>
+            {currentStep > 1 && (
+              <TouchableOpacity
+                style={styles.prevButton}
+                onPress={handlePrevStep}
+                activeOpacity={0.8}
+              >
+                <Icon name="arrow-back" size={18} color={colors.textMainLight} style={{ marginRight: 6 }} />
+                <Text style={styles.prevButtonText}>Previous</Text>
+              </TouchableOpacity>
+            )}
 
-          {currentStep < 4 ? (
-            <TouchableOpacity
-              style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0 }]}
-              onPress={handleNextStep}
-              activeOpacity={0.85}
-            >
-              <Text style={globalStyles.primaryButtonText}>
-                Continue to Step {currentStep + 1}
-              </Text>
-              <Icon name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0, backgroundColor: '#10B981' }]}
-              onPress={handleSubmit}
-              disabled={isLoading}
-              activeOpacity={0.85}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Icon name="rocket-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                  <Text style={[globalStyles.primaryButtonText, { fontSize: 16 }]}>{isEditMode ? 'Save Changes' : 'Broadcast Casting Call'}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          )}
+            {currentStep < 4 ? (
+              <TouchableOpacity
+                style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0 }]}
+                onPress={handleNextStep}
+                activeOpacity={0.85}
+              >
+                <Text style={globalStyles.primaryButtonText}>
+                  Continue to Step {currentStep + 1}
+                </Text>
+                <Icon name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[globalStyles.primaryButton, styles.nextButton, { marginLeft: currentStep > 1 ? 12 : 0, backgroundColor: '#10B981' }]}
+                onPress={handleSubmit}
+                disabled={isLoading}
+                activeOpacity={0.85}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Icon name="rocket-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={[globalStyles.primaryButtonText, { fontSize: 16 }]}>{isEditMode ? 'Save Changes' : 'Broadcast Casting Call'}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
+      </KeyboardStickyView>
 
       {/* Category Modal with 3D Icons & Title Casing */}
       <Modal visible={showCategoryModal} animationType="slide" transparent={true} onRequestClose={() => setShowCategoryModal(false)}>
@@ -1595,7 +1628,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.l,
-    paddingBottom: 110,
+    paddingBottom: spacing.l,
   },
   stepSection: {
     gap: spacing.l,
@@ -1808,10 +1841,7 @@ const getStyles = (colors) => StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    width: '100%',
     backgroundColor: colors.surfaceLight,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,

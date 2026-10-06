@@ -90,8 +90,8 @@ export default function CommentsSection({ targetType, targetId, disableComment =
   const user = useSelector(state => state.auth.user);
   const { data: response, isLoading } = useGetCommentsQuery({ type: targetType, targetId }, { skip: !targetId, refetchOnMountOrArgChange: true });
   const [addComment, { isLoading: isAdding }] = useAddCommentMutation();
-  const [updateComment] = useUpdateCommentMutation();
-  const [deleteComment] = useDeleteCommentMutation();
+  const [updateComment, { isLoading: isUpdating }] = useUpdateCommentMutation();
+  const [deleteComment, { isLoading: isDeleting }] = useDeleteCommentMutation();
 
   const [inputText, setInputText] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
@@ -122,7 +122,7 @@ export default function CommentsSection({ targetType, targetId, disableComment =
       }
       setInputText('');
     } catch (error) {
-      GlobalAlert.show('Error', 'Failed to post comment.');
+      GlobalAlert.show('Error', error?.data?.message || error?.message || 'Failed to post comment.');
     }
   };
 
@@ -185,8 +185,8 @@ export default function CommentsSection({ targetType, targetId, disableComment =
                 onChangeText={setInputText}
                 multiline
               />
-              <TouchableOpacity onPress={handleSubmit} disabled={isAdding || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding) && styles.sendBtnDisabled]}>
-                {isAdding ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={18} color="#FFF" />}
+              <TouchableOpacity onPress={handleSubmit} disabled={isAdding || isUpdating || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding || isUpdating) && styles.sendBtnDisabled]}>
+                {(isAdding || isUpdating) ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={18} color="#FFF" />}
               </TouchableOpacity>
             </View>
           </View>
@@ -200,7 +200,7 @@ export default function CommentsSection({ targetType, targetId, disableComment =
       {/* 2. Historical Comments Section (Below) */}
       <View style={[styles.sectionBlock, styles.historicalBlock]}>
         <View style={styles.sectionHeader}>
-          <View style={[styles.sectionIconBadge, { backgroundColor: '#F3F4F6' }]}>
+          <View style={[styles.sectionIconBadge, { backgroundColor: colors.borderLight + '60' }]}>
             <Icon name="time-outline" size={18} color={colors.textMainLight} />
           </View>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>

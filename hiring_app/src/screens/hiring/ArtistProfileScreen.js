@@ -1,7 +1,7 @@
 import { GlobalAlert } from '../../components/core/GlobalAlert';
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState, useMemo } from 'react';
-import { View, Animated, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl, TextInput, Share, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Animated, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert, Modal, Dimensions , RefreshControl, TextInput, Share, Platform } from 'react-native';
 import Video from 'react-native-video';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -977,8 +977,7 @@ export default function ArtistProfileScreen() {
         animationType="slide" 
         onRequestClose={() => setIsInviteModalVisible(false)}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        <View 
           style={styles.bottomSheetOverlay}
         >
           <TouchableOpacity 
@@ -1219,7 +1218,7 @@ export default function ArtistProfileScreen() {
               />
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       <Modal visible={isReportModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsReportModalVisible(false)}>

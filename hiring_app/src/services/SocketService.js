@@ -40,8 +40,6 @@ class SocketService {
     // Build socket URL: strip /api suffix, keep protocol as https/http (socket.io handles ws upgrade)
     const socketUrl = BASE_URL.replace(/\/api$/, '');
 
-    console.log('[SocketService] Connecting to:', socketUrl);
-
     this.socket = io(socketUrl, {
       auth: { token },
       transports: ['websocket'],
@@ -52,17 +50,14 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('[SocketService] Connected:', this.socket.id);
       this._emit('connected', this.socket);
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('[SocketService] connect_error:', error.message);
       this._emit('connect_error', error);
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('[SocketService] Disconnected:', reason);
       this._emit('disconnected', reason);
     });
 
@@ -85,7 +80,7 @@ class SocketService {
 
       // 4. Show Toast notification if not currently viewing that chat
       if (message.sender_id !== currentUserId) {
-        const { navigationRef } = require('../../App');
+        const { navigationRef } = require('../navigation/navigationRef');
         const currentRoute = navigationRef.isReady() ? navigationRef.getCurrentRoute() : null;
         
         const isCurrentlyViewingChat = 

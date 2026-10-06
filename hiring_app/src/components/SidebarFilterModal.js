@@ -67,7 +67,7 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
       <ScrollView style={styles.rightContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>{activeConfig.label}</Text>
         <View style={styles.optionsGrid}>
-          {activeConfig.options.map(opt => {
+          {(activeConfig.options || []).map(opt => {
             const val = tempFilters[activeConfig.key];
             const isSelected = Array.isArray(val) ? val.includes(opt) : val === opt;
             

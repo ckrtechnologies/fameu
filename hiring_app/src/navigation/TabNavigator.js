@@ -95,6 +95,7 @@ export default function TabNavigator() {
         },
       })}
       initialRouteName="Dashboard"
+      backBehavior="initialRoute"
     >
       <Tab.Screen
         name="Dashboard"

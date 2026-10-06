@@ -1,5 +1,5 @@
 import { showError, showSuccess } from '../../utils/toast';
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, onMessage } from '@react-native-firebase/messaging';
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, FlatList, TouchableOpacity, ActivityIndicator, Image, Alert, TextInput, ScrollView, Modal, Linking , RefreshControl } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -35,7 +35,7 @@ export default function AllApplicantsScreen() {
   const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'pending');
 
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    const unsubscribe = onMessage(getMessaging(), async remoteMessage => {
       if (remoteMessage?.data?.type === 'application') {
         refetch();
       }

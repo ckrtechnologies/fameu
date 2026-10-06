@@ -33,8 +33,8 @@ export const logout = createAsyncThunk(
   async () => {
     try {
       await Keychain.resetGenericPassword();
-    } catch (e) {
-      console.log('Error clearing keychain', e);
+    } catch (_) {
+      // ignore keychain reset errors on logout
     }
     storage.clearAll();
     return null;
