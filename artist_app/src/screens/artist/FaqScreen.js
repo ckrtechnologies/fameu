@@ -114,12 +114,14 @@ const getStyles = (colors) => StyleSheet.create({
   },
   question: {
     ...typography.body,
-    fontWeight: 'bold',
+    fontSize: 15.5,
+    fontWeight: '700',
     flex: 1,
     paddingRight: spacing.m,
   },
   answer: {
     ...typography.body,
+    fontSize: 14.5,
     marginTop: spacing.m,
     lineHeight: 22,
   },

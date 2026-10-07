@@ -99,8 +99,8 @@ function LiveFeatureTicker({ items, onPress, colors }) {
       style={[
         stylesTicker.tickerContainer,
         {
-          backgroundColor: colors.surfaceLight,
-          borderColor: currentItem.themeColor + '30',
+          backgroundColor: colors.surface,
+          borderColor: currentItem.themeColor + '40',
         },
       ]}
     >
@@ -114,14 +114,14 @@ function LiveFeatureTicker({ items, onPress, colors }) {
           }}
         >
           {/* Custom Vibrant Icon Container */}
-          <View style={[stylesTicker.iconBadge, { backgroundColor: currentItem.badgeBg || (currentItem.themeColor + '15') }]}>
+          <View style={[stylesTicker.iconBadge, { backgroundColor: currentItem.badgeBg || (currentItem.themeColor + '18') }]}>
             {IconComp ? <IconComp size={18} /> : null}
           </View>
 
           {/* Headline Text */}
-          <View style={{ flex: 1, marginLeft: 8, marginRight: 6 }}>
+          <View style={{ flex: 1, marginLeft: 9, marginRight: 6 }}>
             <Text
-              style={[stylesTicker.tickerText, { color: colors.textMainLight }]}
+              style={[stylesTicker.tickerText, { color: colors.textMain }]}
               numberOfLines={1}
             >
               <Text style={{ fontWeight: '800', color: currentItem.themeColor }}>{currentItem.countHighlight} </Text>
@@ -131,13 +131,13 @@ function LiveFeatureTicker({ items, onPress, colors }) {
 
           {/* Right Highlight Badge */}
           {currentItem.highlight && (
-            <View style={[stylesTicker.tickerHighlightBadge, { backgroundColor: currentItem.themeColor + '18' }]}>
+            <View style={[stylesTicker.tickerHighlightBadge, { backgroundColor: currentItem.themeColor + '20' }]}>
               <Text style={[stylesTicker.tickerHighlightText, { color: currentItem.themeColor }]}>{currentItem.highlight}</Text>
             </View>
           )}
         </Animated.View>
       </View>
-      <ChevronRight size={14} color={currentItem.themeColor} />
+      <ChevronRight size={15} color={currentItem.themeColor} />
     </TouchableOpacity>
   );
 }
@@ -147,10 +147,12 @@ const stylesTicker = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1.2,
+    marginTop: 2,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -160,28 +162,28 @@ const stylesTicker = StyleSheet.create({
   tickerContent: {
     flex: 1,
     overflow: 'hidden',
-    height: 24,
+    height: 26,
     justifyContent: 'center',
     marginRight: 4,
   },
   iconBadge: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tickerText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13.5,
+    fontWeight: '700',
   },
   tickerHighlightBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 6,
   },
   tickerHighlightText: {
-    fontSize: 9.5,
+    fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
@@ -337,13 +339,13 @@ export default function ArtistDashboardScreen() {
 
   const nameFontSize = scrollY.interpolate({
     inputRange: [0, 50],
-    outputRange: [17, 14],
+    outputRange: [19.5, 16],
     extrapolate: 'clamp',
   });
 
   const greetingHeight = scrollY.interpolate({
     inputRange: [0, 30],
-    outputRange: [16, 0],
+    outputRange: [18, 0],
     extrapolate: 'clamp',
   });
 
@@ -424,71 +426,55 @@ export default function ArtistDashboardScreen() {
       style={[
         styles.stickyHeader,
         {
-          backgroundColor: colors.backgroundLight,
-          borderBottomColor: colors.borderLight,
+          backgroundColor: colors.headerBackground || '#131418',
+          borderBottomColor: 'rgba(227, 176, 75, 0.15)',
           borderBottomWidth: StyleSheet.hairlineWidth,
-          paddingVertical: 8,
+          paddingVertical: 10,
         },
       ]}
     >
       <View style={styles.headerTopRow}>
         <View style={styles.headerLeftGroup}>
           <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginRight: 10 }}>
-            <Animated.View style={{ width: avatarSize, height: avatarSize, borderRadius: avatarRadius, overflow: 'hidden' }}>
+            <Animated.View style={{ width: avatarSize, height: avatarSize, borderRadius: avatarRadius, overflow: 'hidden', borderWidth: 1.5, borderColor: '#E3B04B' }}>
               {profile?.avatar_url || user?.avatar_url ? (
                 <ImageWithFallback source={{ uri: profile?.avatar_url }} fallbackSource={{ uri: user?.avatar_url }} style={{ width: '100%', height: '100%' }} />
               ) : (
                 <View style={{ width: '100%', height: '100%', backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                  <Typography variant="body" style={{ color: 'white', fontWeight: 'bold' }}>{name.charAt(0).toUpperCase()}</Typography>
+                  <Typography variant="body" style={{ color: '#1A1200', fontWeight: 'bold' }}>{name.charAt(0).toUpperCase()}</Typography>
                 </View>
               )}
             </Animated.View>
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Animated.View style={{ height: greetingHeight, opacity: greetingOpacity, overflow: 'hidden' }}>
-              <Typography variant="caption" style={styles.greetingText}>Good Morning,</Typography>
+              <Text style={styles.greetingText}>Good Morning,</Text>
             </Animated.View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Animated.Text style={[styles.nameText, { color: colors.textMainLight, fontSize: nameFontSize }]} numberOfLines={1}>
+              <Animated.Text style={[styles.nameText, { fontSize: nameFontSize }]} numberOfLines={1}>
                 {name}
               </Animated.Text>
-              <ShieldCheck size={16} color={colors.primary} style={{ marginLeft: 4 }} />
+              <ShieldCheck size={18} color="#E3B04B" style={{ marginLeft: 5 }} />
             </View>
           </View>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('ArtistDiscovery')}>
-            <Search size={22} color={colors.textMainLight} />
+            <Search size={21} color="#E3B04B" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
-            <Bell size={22} color={colors.textMainLight} />
+            <Bell size={21} color="#E3B04B" />
             {hasUnreadNotifications && <View style={styles.notificationBadge} />}
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Zomato-style Animated Feature Ticker */}
-      <Animated.View
-        style={{
-          height: tickerHeight,
-          opacity: tickerOpacity,
-          overflow: 'hidden',
-          marginTop: 6,
-        }}
-      >
-        <LiveFeatureTicker
-          items={tickerItems}
-          colors={colors}
-          onPress={() => navigation.navigate('Auditions')}
-        />
-      </Animated.View>
     </Animated.View>
   );
 
   const renderBannerCarousel = () => {
     if (!banners || banners.length === 0) return null;
     return (
-      <View style={{ marginTop: 16, marginBottom: 8, marginHorizontal: -spacing.l }}>
+      <View style={{ marginBottom: 16, marginHorizontal: -spacing.l }}>  
         <FlatList
           data={banners}
           horizontal
@@ -1318,20 +1304,32 @@ export default function ArtistDashboardScreen() {
         scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
-        {renderBannerCarousel()}
-        {renderProfileBanner()}
-        {renderOverviewStats()}
-        {renderQuickActions()}
-        {renderRecentApplications()}
-        {renderLiveAuditions()}
-        {renderRecommendedAuditions()}
-        {renderTrendingAuditions()}
-        {renderSavedAuditions()}
-        {renderUpcomingSchedule()}
-        {renderActivityChart()}
-        {renderProTips()}
-        
-        <View style={styles.bottomSpacer} />
+        {/* Ticker + Banner carousel on dark header background — zero white gap */}
+        <View style={styles.tickerWrapper}>
+          <LiveFeatureTicker
+            items={tickerItems}
+            colors={colors}
+            onPress={() => navigation.navigate('Auditions')}
+          />
+          {renderBannerCarousel()}
+        </View>
+
+        {/* Body content with horizontal padding */}
+        <View style={styles.bodyContent}>
+          {renderProfileBanner()}
+          {renderOverviewStats()}
+          {renderQuickActions()}
+          {renderRecentApplications()}
+          {renderLiveAuditions()}
+          {renderRecommendedAuditions()}
+          {renderTrendingAuditions()}
+          {renderSavedAuditions()}
+          {renderUpcomingSchedule()}
+          {renderActivityChart()}
+          {renderProTips()}
+          
+          <View style={styles.bottomSpacer} />
+        </View>
       </Animated.ScrollView>
 
       {/* Peek Modal */}
@@ -1350,19 +1348,37 @@ export default function ArtistDashboardScreen() {
 }
 
 const getStyles = (colors) => StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.backgroundLight },
-  container: { flex: 1 },
-  scrollContent: { paddingHorizontal: spacing.l },
+  safeArea: { flex: 1, backgroundColor: '#131418' },
+  container: { flex: 1, backgroundColor: colors.backgroundLight },
+  scrollContent: { paddingHorizontal: 0, paddingTop: 0 },
+  tickerWrapper: {
+    backgroundColor: '#131418',
+    paddingHorizontal: spacing.l,
+    paddingBottom: 0,
+  },
+  bodyContent: {
+    paddingHorizontal: spacing.l,
+  },
   loadingSafeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundLight },
   
   // 1. Header
   stickyHeader: { paddingHorizontal: spacing.l, zIndex: 10 },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerLeftGroup: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  greetingText: { color: colors.textMutedLight, fontSize: 11, marginBottom: 1 },
-  nameText: { color: colors.textMainLight, fontWeight: 'bold' },
+  greetingText: { color: colors.headerSubtitle || '#9CA3AF', fontSize: 13, fontWeight: '600', marginBottom: 2 },
+  nameText: { color: colors.headerText || '#FFFFFF', fontWeight: '800' },
   headerIcons: { flexDirection: 'row', alignItems: 'center' },
-  iconButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginLeft: 10, borderWidth: 1, borderColor: colors.borderLight },
+  iconButton: { 
+    width: 38, 
+    height: 38, 
+    borderRadius: 19, 
+    backgroundColor: 'rgba(227, 176, 75, 0.08)', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginLeft: 10, 
+    borderWidth: 1, 
+    borderColor: 'rgba(227, 176, 75, 0.3)' 
+  },
   notificationBadge: { position: 'absolute', top: 9, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.error, borderWidth: 1, borderColor: '#fff' },
 
   // 2. Banner & Pending Cards
@@ -1370,28 +1386,28 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: spacing.l,
   },
   profileBanner: { 
-    backgroundColor: colors.surfaceLight, 
+    backgroundColor: colors.surface, 
     borderRadius: 18, 
-    padding: 14, 
-    borderWidth: 1, 
+    padding: 16, 
+    borderWidth: 1.2, 
     borderColor: colors.borderLight, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.04, 
+    shadowOpacity: 0.05, 
     shadowRadius: 6, 
     elevation: 2 
   },
   profileBannerTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  profileRocketBadge: { width: 52, height: 52, borderRadius: 16, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#DBEAFE', justifyContent: 'center', alignItems: 'center' },
-  profileBannerTitle: { fontSize: 15, fontWeight: '700', color: colors.textMainLight },
-  profileStrengthBadge: { paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8 },
-  profileStrengthText: { fontSize: 11.5, fontWeight: '800' },
-  profileBannerSub: { fontSize: 11.5, color: colors.textMutedLight, marginTop: 2 },
-  profileBannerProgressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  progressBarBg: { flex: 1, height: 7, backgroundColor: colors.borderLight, borderRadius: 4, overflow: 'hidden', marginRight: 12 },
+  profileRocketBadge: { width: 54, height: 54, borderRadius: 16, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#DBEAFE', justifyContent: 'center', alignItems: 'center' },
+  profileBannerTitle: { fontSize: 17, fontWeight: '800', color: colors.textMain },
+  profileStrengthBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  profileStrengthText: { fontSize: 13, fontWeight: '900' },
+  profileBannerSub: { fontSize: 13.5, color: colors.textMuted, marginTop: 3, lineHeight: 19 },
+  profileBannerProgressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  progressBarBg: { flex: 1, height: 8, backgroundColor: colors.borderLight, borderRadius: 4, overflow: 'hidden', marginRight: 12 },
   progressBarFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
-  viewChecklistPill: { paddingHorizontal: 4, paddingVertical: 2 },
-  viewChecklistText: { fontSize: 12, fontWeight: '700' },
+  viewChecklistPill: { paddingHorizontal: 6, paddingVertical: 3 },
+  viewChecklistText: { fontSize: 13.5, fontWeight: '800' },
 
   // Pending Cards Carousel
   pendingCardsContainer: {
@@ -1399,23 +1415,23 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 4,
   },
   pendingCardsHeader: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '900',
     color: colors.textMuted,
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: 10,
     fontFamily: typography.fontFamily,
   },
   pendingCard: {
-    width: 140,
-    backgroundColor: colors.surfaceLight,
-    padding: 10,
+    width: 148,
+    backgroundColor: colors.surface,
+    padding: 12,
     borderRadius: 16,
     marginRight: 10,
     borderWidth: 1.2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -1426,106 +1442,106 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 8,
   },
   pendingEmojiBadge: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   pendingEmojiText: {
-    fontSize: 17,
+    fontSize: 18,
   },
   pendingWeightPill: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
     borderRadius: 6,
   },
   pendingWeightText: {
-    fontSize: 10,
+    fontSize: 11.5,
     fontWeight: '800',
     fontFamily: typography.fontFamily,
   },
   pendingCardTitle: {
-    fontSize: 13,
+    fontSize: 14.5,
     fontWeight: '800',
-    marginBottom: 2,
+    marginBottom: 3,
+    color: colors.textMain,
     fontFamily: typography.fontFamily,
   },
   pendingCardHint: {
-    fontSize: 10.5,
-    color: colors.textMutedLight,
+    fontSize: 12,
+    color: colors.textMuted,
     fontWeight: '500',
-    marginBottom: 8,
+    marginBottom: 10,
     fontFamily: typography.fontFamily,
   },
   pendingCardBtn: {
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: 8,
     alignItems: 'center',
   },
   pendingCardBtnText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '800',
     fontFamily: typography.fontFamily,
   },
 
   // 3. Stats
   statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: -4, marginBottom: spacing.l },
-  statCard: { flex: 1, backgroundColor: colors.surfaceLight, paddingVertical: 14, paddingHorizontal: 6, borderRadius: 18, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 1 },
-  statIconBadge: { width: 46, height: 46, borderRadius: 14, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  statNumber: { fontSize: 17, fontWeight: 'bold', marginBottom: 2 },
-  statLabel: { fontSize: 11, fontWeight: '500' },
+  statCard: { flex: 1, backgroundColor: colors.surface, paddingVertical: 16, paddingHorizontal: 6, borderRadius: 18, alignItems: 'center', marginHorizontal: 4, borderWidth: 1.2, borderColor: colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
+  statIconBadge: { width: 48, height: 48, borderRadius: 16, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  statNumber: { fontSize: 22, fontWeight: '900', marginBottom: 2, color: colors.textMain },
+  statLabel: { fontSize: 13, fontWeight: '700', color: colors.textMuted },
 
   // 4. Quick Actions
   quickActionsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: -4, marginTop: 4, marginBottom: spacing.xl },
   actionBtn: { flex: 1, alignItems: 'center', marginHorizontal: 4 },
-  actionBtnIcon: { width: 58, height: 58, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 5, elevation: 3 },
-  actionBtnText: { fontSize: 12, color: colors.textMainLight, textAlign: 'center', fontWeight: '600', letterSpacing: 0.2 },
+  actionBtnIcon: { width: 62, height: 62, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 5, elevation: 3 },
+  actionBtnText: { fontSize: 13, color: colors.textMain, textAlign: 'center', fontWeight: '700', letterSpacing: 0.2 },
 
   // Shared Sections
   sectionContainer: { marginBottom: spacing.xl },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.m },
-  sectionTitle: { fontWeight: 'bold', color: colors.textMainLight },
-  seeAllText: { color: colors.primary, fontWeight: '600' },
+  sectionTitle: { fontSize: 17.5, fontWeight: '800', color: colors.textMain },
+  seeAllText: { fontSize: 14, color: colors.primary, fontWeight: '800' },
   listContent: { paddingRight: spacing.m },
-  emptyState: { padding: spacing.l, backgroundColor: colors.surfaceLight, borderRadius: 12, alignItems: 'center' },
-  emptyStateText: { color: colors.textMutedLight },
-
+  emptyState: { padding: spacing.l, backgroundColor: colors.surface, borderRadius: 14, alignItems: 'center' },
+  emptyStateText: { fontSize: 13.5, color: colors.textMuted },
 
   // 5. Applications
-  applicationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: colors.borderLight },
-  appIconBg: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  appTitle: { fontWeight: '600', color: colors.textMainLight, marginBottom: 4 },
-  appDate: { color: colors.textMutedLight },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4.5, borderRadius: 12 },
-  statusText: { fontWeight: '700', fontSize: 11.5, letterSpacing: 0.2 },
+  applicationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, padding: 14, borderRadius: 14, marginBottom: 12, borderWidth: 1.2, borderColor: colors.borderLight },
+  appIconBg: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  appTitle: { fontSize: 15.5, fontWeight: '700', color: colors.textMain, marginBottom: 4 },
+  appDate: { fontSize: 12.5, color: colors.textMuted },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  statusText: { fontWeight: '800', fontSize: 13, letterSpacing: 0.2 },
 
   // 9. Saved Auditions
-  savedCard: { width: 100, marginRight: 16, alignItems: 'center' },
-  savedIconBg: { width: 60, height: 60, borderRadius: 12, backgroundColor: colors.surfaceLight, justifyContent: 'center', alignItems: 'center', marginBottom: 8, borderWidth: 1, borderColor: colors.borderLight },
-  savedTitle: { fontSize: 12, textAlign: 'center', color: colors.textMainLight },
+  savedCard: { width: 105, marginRight: 16, alignItems: 'center' },
+  savedIconBg: { width: 64, height: 64, borderRadius: 14, backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', marginBottom: 8, borderWidth: 1.2, borderColor: colors.borderLight },
+  savedTitle: { fontSize: 13.5, fontWeight: '700', textAlign: 'center', color: colors.textMain },
 
   // 10. Schedule
-  scheduleCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 12, borderRadius: 12, marginBottom: 12 },
-  dateBlock: { width: 50, height: 50, backgroundColor: colors.primary + '15', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  dateMonth: { fontSize: 10, color: colors.primary, fontWeight: 'bold' },
-  dateDay: { fontSize: 18, color: colors.primary, fontWeight: 'bold' },
+  scheduleCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, padding: 14, borderRadius: 14, marginBottom: 12, borderWidth: 1.2, borderColor: colors.borderLight },
+  dateBlock: { width: 54, height: 54, backgroundColor: colors.primary + '15', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  dateMonth: { fontSize: 12, color: colors.primary, fontWeight: '800', textTransform: 'uppercase' },
+  dateDay: { fontSize: 20, color: colors.primary, fontWeight: '900' },
   scheduleInfo: { flex: 1 },
-  scheduleTitle: { fontWeight: 'bold', color: colors.textMainLight, marginBottom: 4 },
-  scheduleSub: { color: colors.textMutedLight },
+  scheduleTitle: { fontSize: 15, fontWeight: '700', color: colors.textMain, marginBottom: 4 },
+  scheduleSub: { fontSize: 13, color: colors.textMuted },
 
   // 12. Recruiters
-  recruiterCard: { width: 130, backgroundColor: colors.surfaceLight, padding: 16, borderRadius: 16, alignItems: 'center', marginRight: 16, borderWidth: 1, borderColor: colors.borderLight },
-  recruiterAvatarBg: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  recruiterName: { fontWeight: 'bold', color: colors.textMainLight, marginBottom: 4, textAlign: 'center' },
-  recruiterRole: { color: colors.textMutedLight, fontSize: 11, marginBottom: 12, textAlign: 'center' },
-  followBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.primary + '15' },
-  followBtnText: { color: colors.primary, fontWeight: 'bold' },
+  recruiterCard: { width: 136, backgroundColor: colors.surface, padding: 16, borderRadius: 16, alignItems: 'center', marginRight: 16, borderWidth: 1.2, borderColor: colors.borderLight },
+  recruiterAvatarBg: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  recruiterName: { fontSize: 14.5, fontWeight: '800', color: colors.textMain, marginBottom: 4, textAlign: 'center' },
+  recruiterRole: { color: colors.textMuted, fontSize: 12.5, marginBottom: 12, textAlign: 'center' },
+  followBtn: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 12, backgroundColor: colors.primary + '15' },
+  followBtnText: { fontSize: 13, color: colors.primary, fontWeight: '800' },
 
   // 14. Pro Tips Carousel
-  proTipCarouselCard: { padding: 16, borderRadius: 16, borderWidth: 1, marginRight: 16 },
-  proTipIconBadge: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  proTipActionBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  proTipCarouselCard: { padding: 16, borderRadius: 16, borderWidth: 1.2, marginRight: 16 },
+  proTipIconBadge: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  proTipActionBtn: { alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10 },
   proTipPagination: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12 },
   proTipDot: { height: 6, borderRadius: 3, marginHorizontal: 3 },
 

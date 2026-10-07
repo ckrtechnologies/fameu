@@ -308,13 +308,13 @@ export default function AuditionDetailScreen() {
             paddingHorizontal: 16,
             backgroundColor: scrollY.interpolate({
               inputRange: [100, 200],
-              outputRange: ['rgba(255,255,255,0)', colors.backgroundLight],
+              outputRange: ['rgba(19,20,24,0)', '#131418'],
               extrapolate: 'clamp',
             }),
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: scrollY.interpolate({
               inputRange: [100, 200],
-              outputRange: ['transparent', colors.borderLight],
+              outputRange: ['transparent', 'rgba(227,176,75,0.2)'],
               extrapolate: 'clamp',
             }),
             elevation: headerElevation,
@@ -340,7 +340,7 @@ export default function AuditionDetailScreen() {
           <Animated.Text 
             numberOfLines={1} 
             style={{ 
-              color: colors.textMainLight, 
+              color: '#FFFFFF', 
               fontWeight: '700', 
               fontSize: headerTitleSize 
             }}
@@ -436,15 +436,19 @@ const getStyles = (colors) => StyleSheet.create({
   },
   tagText: {
     ...typography.caption,
+    fontSize: 12,
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: '800',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   title: {
     ...typography.h1,
+    fontSize: 22,
+    fontWeight: '900',
     color: colors.textMainLight,
     marginBottom: spacing.m,
-    lineHeight: 34,
+    lineHeight: 30,
   },
   companyRow: {
     flexDirection: 'row',
@@ -458,7 +462,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   companyName: {
     ...typography.body,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.primary,
   },
   quickInfoGrid: {
@@ -488,12 +493,14 @@ const getStyles = (colors) => StyleSheet.create({
   },
   infoLabel: {
     ...typography.caption,
+    fontSize: 12.5,
     color: colors.textMutedLight,
     marginBottom: 2,
   },
   infoValue: {
     ...typography.body2,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: colors.textMainLight,
   },
   section: {
@@ -501,11 +508,14 @@ const getStyles = (colors) => StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
+    fontSize: 17,
+    fontWeight: '800',
     color: colors.textMainLight,
     marginBottom: spacing.m,
   },
   bodyText: {
     ...typography.body,
+    fontSize: 15,
     color: colors.textMutedLight,
     lineHeight: 24,
   },
@@ -528,6 +538,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   detailText: {
     ...typography.body,
+    fontSize: 14.5,
     color: colors.textMutedLight,
     flex: 1,
   },

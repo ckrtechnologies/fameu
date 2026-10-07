@@ -273,7 +273,10 @@ export default function AuditionDiscoveryScreen() {
             <TouchableOpacity 
               style={[
                 styles.filterBtn, 
-                { backgroundColor: activeFiltersCount > 0 ? colors.primary + '15' : colors.surfaceLight, borderColor: activeFiltersCount > 0 ? colors.primary : colors.borderLight }
+                { 
+                  backgroundColor: activeFiltersCount > 0 ? 'rgba(227, 176, 75, 0.16)' : 'rgba(227, 176, 75, 0.08)', 
+                  borderColor: activeFiltersCount > 0 ? '#E3B04B' : 'rgba(227, 176, 75, 0.3)' 
+                }
               ]} 
               onPress={() => {
                 setTempFilters(filters);
@@ -281,7 +284,7 @@ export default function AuditionDiscoveryScreen() {
               }}
               activeOpacity={0.8}
             >
-              <Icon name="options-outline" size={19} color={activeFiltersCount > 0 ? colors.primary : colors.textMainLight} />
+              <Icon name="options-outline" size={19} color="#E3B04B" />
               {activeFiltersCount > 0 && (
                 <View style={styles.filterBadge}>
                   <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
@@ -292,18 +295,18 @@ export default function AuditionDiscoveryScreen() {
           bottomComponent={
             <View style={{ marginTop: 4, marginBottom: 2 }}>
               {/* Search input */}
-              <View style={[styles.compactSearchRow, { backgroundColor: colors.surfaceLight, borderColor: colors.borderLight }]}>
-                <Icon name="search" size={16} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+              <View style={[styles.compactSearchRow, { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(227, 176, 75, 0.3)' }]}>
+                <Icon name="search" size={16} color="#E3B04B" style={{ marginRight: 8 }} />
                 <TextInput
                   placeholder={SEARCH_PLACEHOLDERS.AUDITIONS}
-                  placeholderTextColor={colors.textMutedLight}
+                  placeholderTextColor="#9CA3AF"
                   value={search}
                   onChangeText={setSearch}
-                  style={[styles.compactSearchInput, { color: colors.textMainLight }]}
+                  style={[styles.compactSearchInput, { color: '#FFFFFF' }]}
                 />
                 {search.length > 0 && (
                   <TouchableOpacity onPress={() => setSearch('')}>
-                    <Icon name="close-circle" size={16} color={colors.textMutedLight} />
+                    <Icon name="close-circle" size={16} color="#9CA3AF" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -329,7 +332,7 @@ export default function AuditionDiscoveryScreen() {
                     <View key={pill.key} style={styles.activePill}>
                       <Text style={styles.activePillText} numberOfLines={1}>{pill.label}</Text>
                       <TouchableOpacity onPress={pill.onRemove} style={styles.pillRemoveBtn}>
-                        <Icon name="close" size={13} color="#FFFFFF" />
+                        <Icon name="close" size={13} color="#1A1200" />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -487,31 +490,31 @@ const getStyles = (colors) => StyleSheet.create({
   },
   compactSearchInput: {
     flex: 1,
-    fontSize: 13.5,
+    fontSize: 14,
     paddingVertical: 0,
     height: '100%',
   },
   categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5.5,
+    paddingHorizontal: 13,
+    paddingVertical: 6,
     borderRadius: 14,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: 'rgba(227, 176, 75, 0.25)',
     marginRight: 6,
   },
   activeCategoryChip: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#E3B04B',
+    borderColor: '#E3B04B',
   },
   categoryText: {
-    fontSize: 12.5,
-    color: colors.textMainLight,
-    fontWeight: '500',
+    fontSize: 13.5,
+    color: '#E5E7EB',
+    fontWeight: '600',
   },
   activeCategoryText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: '#1A1200',
+    fontWeight: '800',
   },
   activePillsContainer: {
     flexDirection: 'row',
@@ -530,16 +533,16 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: 12,
   },
   activePillText: {
-    color: '#FFFFFF',
+    color: '#1A1200',
     fontSize: 11.5,
-    fontWeight: '700',
+    fontWeight: '800',
     marginRight: 4,
   },
   pillRemoveBtn: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(26, 18, 0, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -631,9 +634,9 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: 12,
   },
   emptyPrimaryBtnText: {
-    color: '#FFFFFF',
+    color: '#1A1200',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   emptySecondaryBtn: {
     backgroundColor: colors.surfaceLight,

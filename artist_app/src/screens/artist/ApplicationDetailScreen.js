@@ -181,22 +181,31 @@ const getStyles = (colors) => StyleSheet.create({
   },
   statusLabel: {
     ...typography.caption,
+    fontSize: 13.5,
+    fontWeight: '700',
     color: colors.textMutedLight,
     marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statusValue: {
     ...typography.h1,
+    fontSize: 22,
+    fontWeight: '900',
     marginBottom: spacing.m,
   },
   interviewDetails: {
     width: '100%',
     padding: spacing.m,
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary + '15',
     borderRadius: 8,
     marginTop: spacing.s,
+    borderWidth: 1,
+    borderColor: 'rgba(227,176,75,0.3)',
   },
   interviewText: {
     ...typography.body,
+    fontSize: 14.5,
     color: colors.textMainLight,
     marginBottom: 4,
   },
@@ -205,16 +214,22 @@ const getStyles = (colors) => StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h2,
+    fontSize: 17.5,
+    fontWeight: '800',
     color: colors.textMainLight,
     marginBottom: spacing.m,
   },
   title: {
     ...typography.h2,
+    fontSize: 18,
+    fontWeight: '800',
     color: colors.textMainLight,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
     ...typography.body,
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.textMutedLight,
   },
   dataRow: {
@@ -227,11 +242,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   dataLabel: {
     ...typography.body,
+    fontSize: 14.5,
     color: colors.textMutedLight,
   },
   dataValue: {
     ...typography.body,
+    fontSize: 15,
     color: colors.textMainLight,
-    fontWeight: '500',
+    fontWeight: '600',
   }
 });

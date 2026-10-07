@@ -254,7 +254,7 @@ export default function ChatScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.text} />
+          <Icon name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -270,7 +270,7 @@ export default function ChatScreen() {
             />
           ) : (
             <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-              <Typography style={{ color: colors.backgroundLight, fontWeight: 'bold' }}>
+              <Typography style={{ color: '#131418', fontWeight: 'bold', fontSize: 16 }}>
                 {displayName ? displayName.charAt(0).toUpperCase() : '?'}
               </Typography>
             </View>
@@ -322,7 +322,7 @@ export default function ChatScreen() {
             onPress={handleSend}
             disabled={!inputText.trim()}
           >
-            <Icon name="send" size={20} color={colors.backgroundLight} style={{ marginLeft: 2 }} />
+            <Icon name="send" size={20} color={!inputText.trim() ? 'rgba(255,255,255,0.4)' : '#1A1200'} style={{ marginLeft: 2 }} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -347,7 +347,8 @@ const getStyles = (colors) => StyleSheet.create({
     paddingHorizontal: spacing.s,
     paddingVertical: spacing.s,
     borderBottomWidth: 1,
-    borderBottomColor: colors.textMutedLight + '20',
+    borderBottomColor: 'rgba(227, 176, 75, 0.15)',
+    backgroundColor: '#131418',
   },
   iconButton: {
     padding: spacing.s,
@@ -361,10 +362,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    color: colors.textMainLight,
+    fontSize: 17.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   typingText: {
     ...typography.caption,
+    fontSize: 12.5,
     color: colors.primary,
     fontStyle: 'italic',
   },
@@ -396,21 +400,24 @@ const getStyles = (colors) => StyleSheet.create({
   },
   messageText: {
     ...typography.body,
+    fontSize: 15,
+    lineHeight: 21,
   },
   messageTextMe: {
-    color: colors.backgroundLight,
+    color: '#1A1200',
+    fontWeight: '500',
   },
   messageTextThem: {
     color: colors.textMainLight,
   },
   messageTime: {
     ...typography.caption,
-    fontSize: 10,
+    fontSize: 11.5,
     marginTop: 4,
     alignSelf: 'flex-end',
   },
   messageTimeMe: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(26, 18, 0, 0.6)',
   },
   messageTimeThem: {
     color: colors.textMutedLight,
@@ -455,6 +462,7 @@ const getStyles = (colors) => StyleSheet.create({
     minHeight: 44,
     maxHeight: 100,
     ...typography.body,
+    fontSize: 14.5,
     color: colors.textMainLight,
     borderWidth: 1,
     borderColor: colors.borderLight,

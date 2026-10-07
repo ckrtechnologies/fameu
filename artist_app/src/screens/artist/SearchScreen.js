@@ -53,14 +53,14 @@ export default function SearchScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <ArrowLeft size={24} color={colors.textMainLight} />
+            <ArrowLeft size={24} color={colors.headerIcon || '#FFFFFF'} />
           </TouchableOpacity>
           <View style={styles.searchContainer}>
-            <Search size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+            <Search size={20} color="#E3B04B" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search users..."
-              placeholderTextColor={colors.textMutedLight}
+              placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={handleSearch}
               autoCapitalize="none"
@@ -68,7 +68,7 @@ export default function SearchScreen() {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearButton}>
-                <XCircle size={20} color={colors.textMutedLight} />
+                <XCircle size={20} color="#9CA3AF" />
               </TouchableOpacity>
             )}
           </View>
@@ -110,9 +110,10 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
+    paddingVertical: spacing.s + 4,
+    backgroundColor: colors.headerBackground || '#131418',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: 'rgba(227, 176, 75, 0.15)',
   },
   backButton: {
     padding: spacing.xs,
@@ -122,10 +123,10 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 24,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.borderLight,
+    borderWidth: 1,
+    borderColor: 'rgba(227, 176, 75, 0.25)',
     paddingHorizontal: spacing.m,
     height: 44,
   },
@@ -134,8 +135,9 @@ const getStyles = (colors) => StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    ...typography.body,
-    color: colors.textMainLight,
+    fontSize: 14.5,
+    fontWeight: '500',
+    color: '#FFFFFF',
     padding: 0, // Remove default padding on Android
   },
   clearButton: {
@@ -160,7 +162,9 @@ const getStyles = (colors) => StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(0, 51, 255, 0.05)',
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 176, 75, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -44,7 +44,7 @@ const OtpScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <StatusBar barStyle="light-content" backgroundColor="#131418" />
       <KeyboardAwareScrollView 
         contentContainerStyle={{ flexGrow: 1 }}
         enableOnAndroid={true}
@@ -52,7 +52,7 @@ const OtpScreen = ({ route, navigation }) => {
         keyboardShouldPersistTaps="handled"
         bounces={false}
       >
-        {/* Top Half - Dark */}
+        {/* Top Half - Obsidian */}
         <View style={styles.topHalf}>
           <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
             <View style={styles.logoWrapper}>
@@ -66,7 +66,7 @@ const OtpScreen = ({ route, navigation }) => {
           </SafeAreaView>
         </View>
 
-        {/* Bottom Half - Light */}
+        {/* Bottom Half */}
         <View style={styles.bottomHalf}>
           <Typography variant="h1" style={styles.title}>Verify OTP</Typography>
           <Typography variant="body" style={styles.subtitle}>
@@ -80,15 +80,13 @@ const OtpScreen = ({ route, navigation }) => {
           />
 
           <View style={styles.buttonContainer}>
-            {isLoading ? (
-              <ActivityIndicator size="large" color={colors.primary} />
-            ) : (
-              <CustomButton 
-                title="Verify & Login" 
-                onPress={handleVerify} 
-                variant="primary"
-              />
-            )}
+            <CustomButton 
+              title="Verify & Login" 
+              onPress={handleVerify} 
+              variant="primary"
+              loading={isLoading}
+              disabled={isLoading}
+            />
           </View>
 
           <View style={styles.footer}>
@@ -108,10 +106,12 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   topHalf: {
-    backgroundColor: '#0F172A', 
+    backgroundColor: '#131418', 
     minHeight: 240,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(227, 176, 75, 0.25)',
     justifyContent: 'center',
     paddingVertical: spacing.xl,
   },

@@ -202,6 +202,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
+    fontSize: 13,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
     marginBottom: spacing.m,
   },
   settingItem: {
@@ -217,6 +221,8 @@ const styles = StyleSheet.create({
   },
   settingText: {
     ...typography.body,
+    fontSize: 15.5,
+    fontWeight: '600',
     marginLeft: spacing.m,
   },
 });

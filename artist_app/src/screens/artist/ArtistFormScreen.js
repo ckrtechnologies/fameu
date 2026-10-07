@@ -371,7 +371,7 @@ export default function ArtistFormScreen() {
           disabled={isLoading || isUploadingFile}
         >
           {isLoading ? (
-            <ActivityIndicator color={colors.backgroundLight} />
+            <ActivityIndicator color="#1A1200" />
           ) : (
             <Text style={styles.saveButtonText}>Save All Roles</Text>
           )}
@@ -430,7 +430,8 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMutedLight,
   },
   tabTextActive: {
-    color: colors.backgroundLight,
+    color: '#1A1200',
+    fontWeight: '800',
   },
   container: {
     flex: 1,
@@ -530,7 +531,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   saveButtonText: {
     ...typography.h3,
-    color: colors.backgroundLight,
+    color: '#1A1200',
+    fontWeight: '800',
   },
   errorText: {
     ...typography.body,

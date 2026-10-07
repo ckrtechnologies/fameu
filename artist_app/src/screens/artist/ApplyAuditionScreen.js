@@ -80,6 +80,9 @@ export default function ApplyAuditionScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Apply for Role</Text>
       </View>
       <KeyboardAwareScrollView 
@@ -137,21 +140,34 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    padding: spacing.xl,
-    paddingBottom: spacing.m,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.m,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
+  },
+  backButton: {
+    padding: spacing.xs,
+    marginRight: spacing.s,
   },
   headerTitle: {
-    ...typography.h1,
+    ...typography.h2,
+    fontSize: 18.5,
+    fontWeight: '800',
     color: colors.textMainLight,
   },
   title: {
     ...typography.h2,
+    fontSize: 18,
+    fontWeight: '800',
     color: colors.textMainLight,
     marginBottom: spacing.s,
     textAlign: 'center',
   },
   subtitle: {
     ...typography.body,
+    fontSize: 14.5,
     color: colors.textMutedLight,
     textAlign: 'center',
     lineHeight: 22,
@@ -159,10 +175,12 @@ const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.m,
   },
   label: {
     ...typography.body,
-    fontWeight: '600',
+    fontSize: 14.5,
+    fontWeight: '700',
     color: colors.textMainLight,
     marginBottom: spacing.s,
   },
@@ -170,15 +188,20 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.surfaceLight,
     padding: spacing.m,
     ...typography.body,
+    fontSize: 15,
     color: colors.textMainLight,
     minHeight: 120,
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   input: {
     ...typography.body,
+    fontSize: 15,
     padding: spacing.m,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceLight,
   },
   videoSection: {
     flexDirection: 'row',

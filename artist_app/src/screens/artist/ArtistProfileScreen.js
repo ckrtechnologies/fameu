@@ -248,10 +248,10 @@ export default function ArtistProfileScreen() {
         rightActions={
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity style={{ padding: 4, marginRight: 10 }} onPress={() => navigation.navigate('ArtistDiscovery')}>
-              <Icon name="search-outline" size={24} color={colors.textMainLight} />
+              <Icon name="search-outline" size={24} color="#E3B04B" />
             </TouchableOpacity>
             <TouchableOpacity style={{ padding: 4 }} onPress={() => navigation.navigate('Notifications')}>
-              <Icon name="notifications-outline" size={24} color={colors.textMainLight} />
+              <Icon name="notifications-outline" size={24} color="#E3B04B" />
             </TouchableOpacity>
           </View>
         }
@@ -990,7 +990,7 @@ export default function ArtistProfileScreen() {
         )}
 
         {showComments && profile && profile.id ? (
-          <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
+          <View style={{ width: '100%', paddingHorizontal: spacing.l, marginBottom: 24, marginTop: 12 }}>
             <CommentsSection targetType="artist_profile" targetId={profile.id} isOwnProfile={true} />
           </View>
         ) : null}

@@ -1,9 +1,10 @@
 import { GlobalAlert } from '../components/core/GlobalAlert';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Switch } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
+  Home,
   User, 
   Image as ImageIcon, 
   Video, 
@@ -16,8 +17,11 @@ import {
   MessageSquare, 
   Settings, 
   LogOut, 
-  Trash2 
+  Trash2,
+  Briefcase,
+  Compass
 } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import TabNavigator from './TabNavigator';
@@ -31,10 +35,10 @@ import { useGetProfileQuery } from '../services/profileApi';
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props) {
-  const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const styles = getStyles(colors, insets);
+  const { colors, isDarkMode, toggleTheme } = useTheme();
+  const styles = getStyles(colors);
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const user = useSelector(state => state.auth.user);
   const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
   const { data: profileResponse } = useGetProfileQuery();
@@ -43,11 +47,21 @@ function CustomDrawerContent(props) {
   const fullName = profile?.full_name || user?.full_name || 'Artist';
   const username = fullName;
   const avatarUrl = profile?.avatar_url || user?.avatar_url || null;
+  const verificationStatus = profile?.verification_status || user?.verification_status || 'pending';
 
   const handleLogout = () => {
-    props.navigation.closeDrawer();
-    dispatch(apiSlice.util.resetApiState());
-    dispatch(logout());
+    GlobalAlert.show('Logout', 'Are you sure you want to log out of your account?', [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Logout', 
+        style: 'destructive', 
+        onPress: () => {
+          props.navigation.closeDrawer();
+          dispatch(apiSlice.util.resetApiState());
+          dispatch(logout());
+        } 
+      },
+    ]);
   };
 
   const handleNavigation = (screenName, params) => {
@@ -56,119 +70,335 @@ function CustomDrawerContent(props) {
   };
 
   const handleDeleteAccount = () => {
-    GlobalAlert.show(
-      'Delete Account',
-      'Are you absolutely sure you want to delete your account? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAccount().unwrap();
-              dispatch(apiSlice.util.resetApiState());
-              dispatch(logout());
-            } catch (error) {
-              GlobalAlert.show('Error', 'Failed to delete account. Please try again later.');
-            }
+    GlobalAlert.show('Delete Account', 'Are you absolutely sure you want to delete your account? All applications, media, and profile data will be permanently removed. This action cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Delete', 
+        style: 'destructive', 
+        onPress: async () => {
+          try {
+            await deleteAccount().unwrap();
+            props.navigation.closeDrawer();
+            dispatch(apiSlice.util.resetApiState());
+            dispatch(logout());
+          } catch (error) {
+            GlobalAlert.showError('Unable to Delete Account', error, 'Your account could not be removed at this time.');
           }
-        },
-      ]
-    );
+        } 
+      },
+    ]);
   };
 
-  const menuItems = [
-    { title: 'Edit Profile', icon: User, screen: 'EditProfile', color: colors.primary },
-    { title: 'Photo Gallery', icon: ImageIcon, screen: 'PhotoGallery', color: '#10B981' },
-    { title: 'Video Portfolio', icon: Video, screen: 'VideoPortfolio', color: '#F59E0B' },
-    { title: 'Saved Auditions', icon: Bookmark, screen: 'SavedAuditions', color: '#8B5CF6' },
-    { title: 'Search Users', icon: Search, screen: 'Search', color: '#06B6D4' },
-    { title: 'Notifications', icon: Bell, screen: 'Notifications', color: '#EC4899' },
-    { title: 'How it Works', icon: PlayCircle, screen: 'Tutorial', color: '#3B82F6' },
-    { title: 'FAQ', icon: HelpCircle, screen: 'Faq', color: '#6366F1' },
-    { title: 'Terms & Conditions', icon: FileText, screen: 'Legal', params: { type: 'terms' }, color: '#64748B' },
-    { title: 'Contact Us', icon: MessageSquare, screen: 'ContactUs', color: '#14B8A6' },
-    { title: 'Settings', icon: Settings, screen: 'ArtistSettings', color: '#475569' },
-  ];
+  const getBadgeConfig = () => {
+    switch (verificationStatus) {
+      case 'approved':
+        return {
+          label: 'VERIFIED ARTIST',
+          color: '#10B981',
+          bgColor: 'rgba(16, 185, 129, 0.14)',
+          borderColor: 'rgba(16, 185, 129, 0.3)',
+          icon: 'shield-checkmark',
+        };
+      case 'rejected':
+        return {
+          label: 'KYC REJECTED',
+          color: '#EF4444',
+          bgColor: 'rgba(239, 68, 68, 0.14)',
+          borderColor: 'rgba(239, 68, 68, 0.3)',
+          icon: 'alert-circle',
+        };
+      default:
+        return {
+          label: 'KYC PENDING',
+          color: colors.accent || '#E3B04B',
+          bgColor: 'rgba(227, 176, 75, 0.14)',
+          borderColor: 'rgba(227, 176, 75, 0.3)',
+          icon: 'time-outline',
+        };
+    }
+  };
+
+  const badge = getBadgeConfig();
 
   return (
-    <DrawerContentScrollView 
-      {...props} 
-      style={styles.drawerContainer} 
-      contentContainerStyle={{ paddingTop: 0 }}
-      bounces={false}
-    >
-      <View style={styles.drawerHeader}>
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.drawerAvatar} />
-        ) : (
-          <View style={styles.drawerAvatarPlaceholder}>
-            <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '700' }}>
-              {fullName.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
-        <Text style={styles.drawerUsername} numberOfLines={1}>{username}</Text>
-        <Text style={styles.drawerContactText} numberOfLines={1}>
-          {user?.email || user?.mobile || user?.phone || 'No contact info'}
-        </Text>
-      </View>
-      
-      <ScrollView showsVerticalScrollIndicator={false} style={{ paddingVertical: 4 }}>
-        {menuItems.map((item, idx) => {
-          const IconComponent = item.icon;
-          return (
-            <TouchableOpacity 
-              key={idx} 
-              style={styles.drawerItem} 
-              onPress={() => handleNavigation(item.screen, item.params)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.iconWrapper, { backgroundColor: item.color + '12' }]}>
-                <IconComponent size={18} color={item.color} strokeWidth={2} />
+    <View style={styles.drawerWrapper}>
+      {/* Top Safe Area Spacing */}
+      <View style={{ height: insets.top, backgroundColor: '#131418' }} />
+
+      <DrawerContentScrollView 
+        {...props} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Card Header */}
+        <View style={styles.header}>
+          <View style={styles.avatarWrapper}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarInitial}>
+                  {fullName ? fullName.charAt(0).toUpperCase() : 'A'}
+                </Text>
               </View>
-              <Text style={styles.drawerItemText}>{item.title}</Text>
-            </TouchableOpacity>
-          );
-        })}
-        
-        <View style={styles.drawerDivider} />
-        
-        <TouchableOpacity style={styles.drawerItem} onPress={handleLogout} activeOpacity={0.7}>
-          <View style={[styles.iconWrapper, { backgroundColor: colors.danger + '12' }]}>
-            <LogOut size={18} color={colors.danger} strokeWidth={2} />
+            )}
           </View>
-          <Text style={[styles.drawerItemText, { color: colors.danger, fontWeight: '600' }]}>Log Out</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.drawerItem} onPress={handleDeleteAccount} disabled={isDeleting} activeOpacity={0.7}>
-          <View style={[styles.iconWrapper, { backgroundColor: colors.danger + '12' }]}>
-            <Trash2 size={18} color={colors.danger} strokeWidth={2} />
-          </View>
-          <Text style={[styles.drawerItemText, { color: colors.danger, fontWeight: '600' }]}>
-            {isDeleting ? 'Deleting...' : 'Delete Account'}
+
+          <Text style={styles.name} numberOfLines={1}>{username}</Text>
+          <Text style={styles.email} numberOfLines={1}>
+            {user?.email || user?.mobile || user?.phone || 'artist@fameu.in'}
           </Text>
-        </TouchableOpacity>
-        
-        <View style={{ height: 24 }} />
-      </ScrollView>
-    </DrawerContentScrollView>
+
+          <View style={[styles.badge, { backgroundColor: badge.bgColor, borderColor: badge.borderColor }]}>
+            <Icon name={badge.icon} size={12} color={badge.color} style={{ marginRight: 5 }} />
+            <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+          </View>
+        </View>
+
+        {/* Section 1: Main Navigation */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeaderTitle}>MAIN NAVIGATION</Text>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tabs', { screen: 'Dashboard' }); }}
+          >
+            <View style={styles.iconContainer}>
+              <Home size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Dashboard</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tabs', { screen: 'Auditions' }); }}
+          >
+            <View style={styles.iconContainer}>
+              <Compass size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Auditions Discovery</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tabs', { screen: 'Applications' }); }}
+          >
+            <View style={styles.iconContainer}>
+              <Briefcase size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>My Applications</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('EditProfile')}
+          >
+            <View style={styles.iconContainer}>
+              <User size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Edit Profile</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('PhotoGallery')}
+          >
+            <View style={styles.iconContainer}>
+              <ImageIcon size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Photo Gallery</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('VideoPortfolio')}
+          >
+            <View style={styles.iconContainer}>
+              <Video size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Video Portfolio</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('SavedAuditions')}
+          >
+            <View style={styles.iconContainer}>
+              <Bookmark size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Saved Auditions</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('Search')}
+          >
+            <View style={styles.iconContainer}>
+              <Search size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Search Users</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('Notifications')}
+          >
+            <View style={styles.iconContainer}>
+              <Bell size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Notifications</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Section 2: Utilities & Help */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeaderTitle}>UTILITIES & HELP</Text>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('Tutorial')}
+          >
+            <View style={styles.iconContainer}>
+              <PlayCircle size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>How it Works</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('Faq')}
+          >
+            <View style={styles.iconContainer}>
+              <HelpCircle size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>FAQ</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('Legal', { type: 'terms' })}
+          >
+            <View style={styles.iconContainer}>
+              <FileText size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Terms & Conditions</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('ContactUs')}
+          >
+            <View style={styles.iconContainer}>
+              <MessageSquare size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Contact Us</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => handleNavigation('ArtistSettings')}
+          >
+            <View style={styles.iconContainer}>
+              <Settings size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Settings</Text>
+            <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Section 3: Appearance */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeaderTitle}>APPEARANCE</Text>
+          <View style={styles.menuItem}>
+            <View style={styles.iconContainer}>
+              <Icon name={isDarkMode ? "moon-outline" : "sunny-outline"} size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.menuText}>Dark Theme</Text>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: '#374151', true: colors.primary || '#E3B04B' }}
+              thumbColor={isDarkMode ? '#FFFFFF' : '#F3F4F6'}
+            />
+          </View>
+        </View>
+
+        {/* Section 4: Account Actions */}
+        <View style={styles.footer}>
+          <TouchableOpacity 
+            style={[styles.menuItem, { paddingHorizontal: 0, paddingVertical: 8 }]} 
+            activeOpacity={0.7}
+            onPress={handleLogout}
+          >
+            <View style={styles.footerIconContainer}>
+              <LogOut size={18} color={colors.accent || '#E3B04B'} />
+            </View>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.menuItem, { paddingHorizontal: 0, paddingVertical: 8 }]} 
+            activeOpacity={0.7}
+            onPress={handleDeleteAccount}
+            disabled={isDeleting}
+          >
+            <View style={[styles.footerIconContainer, styles.dangerIconContainer]}>
+              <Trash2 size={18} color="#EF4444" />
+            </View>
+            <Text style={styles.deleteText}>
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.versionText}>Fameu Artist App v1.0.0</Text>
+        </View>
+      </DrawerContentScrollView>
+    </View>
   );
 }
 
 export default function DrawerNavigator() {
-  const { colors } = useTheme();
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
         drawerType: 'front',
-        overlayColor: 'rgba(0,0,0,0.5)',
+        overlayColor: 'rgba(0,0,0,0.65)',
         drawerStyle: {
-          backgroundColor: colors.backgroundLight,
-          width: '78%',
+          backgroundColor: '#131418',
+          width: '80%',
         },
       }}
     >
@@ -177,70 +407,159 @@ export default function DrawerNavigator() {
   );
 }
 
-const getStyles = (colors, insets) => StyleSheet.create({
-  drawerContainer: {
+const getStyles = (colors) => StyleSheet.create({
+  drawerWrapper: {
     flex: 1,
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: '#131418',
   },
-  drawerHeader: {
+  scrollContent: {
+    paddingTop: 0,
+    backgroundColor: '#131418',
+  },
+  header: {
     paddingHorizontal: 20,
-    paddingTop: Math.max(insets?.top || 0, 24) + 12,
-    paddingBottom: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.borderLight,
-    marginBottom: 4,
+    paddingTop: 16,
+    paddingBottom: 20,
+    backgroundColor: '#181A22',
+    borderBottomWidth: 1,
+    borderBottomColor: '#252834',
+    alignItems: 'center',
   },
-  drawerAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  avatarWrapper: {
+    position: 'relative',
     marginBottom: 12,
   },
-  drawerAvatarPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.primary,
+  avatar: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
+    borderColor: '#E3B04B',
+  },
+  avatarFallback: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#262936',
+    borderWidth: 2,
+    borderColor: '#E3B04B',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  drawerUsername: {
-    fontSize: 17,
+  avatarInitial: {
+    color: '#FFFFFF',
+    fontSize: 24,
     fontWeight: '700',
-    color: colors.textMainLight,
-    letterSpacing: -0.2,
   },
-  drawerContactText: {
-    fontSize: 12.5,
-    color: colors.textMutedLight,
-    marginTop: 2,
-    fontWeight: '400',
+  name: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+    maxWidth: '95%',
+    textAlign: 'center',
   },
-  drawerItem: {
+  email: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginBottom: 12,
+    maxWidth: '95%',
+    textAlign: 'center',
+  },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  iconWrapper: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  section: {
+    paddingVertical: spacing.s,
+  },
+  sectionHeaderTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#9CA3AF',
+    letterSpacing: 1,
+    paddingHorizontal: spacing.l,
+    marginTop: spacing.s,
+    marginBottom: 6,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: spacing.l,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(227, 176, 75, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 176, 75, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
-  drawerItemText: {
-    fontSize: 14.5,
-    color: colors.textMainLight,
-    fontWeight: '500',
-    letterSpacing: -0.1,
+  menuText: {
+    flex: 1,
+    fontSize: 15.5,
+    fontWeight: '600',
+    color: '#E5E7EB',
   },
-  drawerDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.borderLight,
-    marginVertical: 8,
-    marginHorizontal: 20,
-  }
+  chevron: {
+    marginLeft: 8,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#222530',
+    marginVertical: spacing.s,
+    marginHorizontal: spacing.l,
+  },
+  footer: {
+    paddingHorizontal: spacing.l,
+    paddingTop: 16,
+    paddingBottom: 28,
+    borderTopWidth: 1,
+    borderTopColor: '#222530',
+    backgroundColor: '#15171F',
+  },
+  footerIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(227, 176, 75, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 176, 75, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  dangerIconContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  logoutText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#D1D5DB',
+  },
+  deleteText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  versionText: {
+    fontSize: 11,
+    color: '#4B5563',
+    textAlign: 'center',
+    marginTop: 16,
+  },
 });

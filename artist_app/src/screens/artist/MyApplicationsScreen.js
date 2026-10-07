@@ -112,8 +112,8 @@ export default function MyApplicationsScreen() {
                     activeOpacity={0.8}
                   >
                     <IconComp 
-                      size={13} 
-                      color={isActive ? '#FFFFFF' : colors.textMutedLight} 
+                      size={14} 
+                      color={isActive ? '#1A1200' : '#E3B04B'} 
                       strokeWidth={2.4}
                       style={{ marginRight: 6 }} 
                     />
@@ -198,7 +198,7 @@ const getStyles = (colors) => StyleSheet.create({
   tabWrapper: {
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight || '#E2E8F0',
+    borderBottomColor: 'rgba(227, 176, 75, 0.15)',
   },
   tabScrollContainer: {
     paddingHorizontal: 16,
@@ -213,22 +213,22 @@ const getStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: colors.surfaceLight || '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: colors.borderLight || '#E2E8F0',
+    borderColor: 'rgba(227, 176, 75, 0.25)',
   },
   activeTabChip: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#E3B04B',
+    borderColor: '#E3B04B',
   },
   tabChipText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: colors.textMutedLight || '#64748B',
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#9CA3AF',
   },
   activeTabChipText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: '#1A1200',
+    fontWeight: '800',
   },
   listContent: {
     paddingHorizontal: 16,

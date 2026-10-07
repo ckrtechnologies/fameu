@@ -187,7 +187,7 @@ export default function PhotoGalleryScreen() {
         headerElevation={headerElevation}
         rightActions={
           <TouchableOpacity 
-            style={[styles.backButton, { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight, width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' }]} 
+            style={[styles.backButton, { backgroundColor: 'rgba(227,176,75,0.08)', borderWidth: 1, borderColor: 'rgba(227,176,75,0.3)', width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' }]} 
             onPress={handlePickImage} 
             disabled={isUploading}
           >

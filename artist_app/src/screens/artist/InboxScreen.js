@@ -138,11 +138,11 @@ export default function InboxScreen() {
           headerElevation={headerElevation}
           bottomComponent={
             <View style={[styles.searchContainer, { marginHorizontal: 0, marginTop: 4 }]}>
-              <Icon name="search" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+              <Icon name="search" size={20} color={colors.primary} style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search chats..."
-                placeholderTextColor={colors.textMutedLight}
+                placeholderTextColor="#9CA3AF"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoCapitalize="none"
@@ -150,7 +150,7 @@ export default function InboxScreen() {
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                  <Icon name="close-circle" size={20} color={colors.textMutedLight} />
+                  <Icon name="close-circle" size={20} color="#9CA3AF" />
                 </TouchableOpacity>
               )}
             </View>
@@ -222,13 +222,14 @@ const getStyles = (colors) => StyleSheet.create({
   },
   name: {
     ...typography.body,
-    fontSize: 16,
+    fontSize: 16.5,
     color: colors.textMainLight,
     fontWeight: '700',
     flex: 1,
   },
   timeText: {
     ...typography.caption,
+    fontSize: 12.5,
     color: colors.textMutedLight,
     marginLeft: spacing.s,
   },
@@ -239,14 +240,14 @@ const getStyles = (colors) => StyleSheet.create({
   },
   messageText: {
     ...typography.body,
-    fontSize: 14,
+    fontSize: 14.5,
     color: colors.textMutedLight,
     flex: 1,
     marginRight: spacing.m,
   },
   unreadText: {
     color: colors.textMainLight,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   badge: {
     backgroundColor: colors.primary,
@@ -257,9 +258,9 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
-    color: 'white',
+    color: '#1A1200',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -275,19 +276,19 @@ const getStyles = (colors) => StyleSheet.create({
   },
   emptyText: {
     ...typography.body,
-    fontSize: 14,
+    fontSize: 14.5,
     color: colors.textMutedLight,
     textAlign: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-    height: 38,
-    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    height: 42,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    paddingHorizontal: 10,
+    borderColor: 'rgba(227,176,75,0.25)',
+    paddingHorizontal: 12,
     marginBottom: 2,
   },
   searchIcon: {
@@ -295,8 +296,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 13.5,
-    color: colors.textMainLight,
+    fontSize: 14.5,
+    color: '#FFFFFF',
     paddingVertical: 0,
     height: '100%',
   },

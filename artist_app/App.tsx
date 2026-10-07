@@ -4,7 +4,9 @@
 
 import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme, Alert } from 'react-native';
-import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Provider } from 'react-redux';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { View, Text, Image, TouchableOpacity, Vibration } from 'react-native';
@@ -20,7 +22,6 @@ import { ThemeProvider } from './src/theme/ThemeProvider';
 import Toast from 'react-native-toast-message';
 import ErrorBoundary from './src/components/core/ErrorBoundary';
 import GlobalAlertProvider, { GlobalAlertRef } from './src/components/core/GlobalAlert';
-import KeyboardHidingView from './src/components/core/KeyboardHidingView';
 
 export type RootStackParamList = {
   [key: string]: any;
@@ -28,9 +29,10 @@ export type RootStackParamList = {
 
 const GlobalStatusBar = () => {
   const insets = useSafeAreaInsets();
+  const statusBarBg = colors.headerBackground || '#131418';
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#000000', zIndex: 99999 }}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" translucent={true} />
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: statusBarBg, zIndex: 99999 }}>
+      <StatusBar barStyle="light-content" backgroundColor={statusBarBg} translucent={true} />
     </View>
   );
 };
@@ -335,20 +337,22 @@ function App(): React.JSX.Element {
 
   return (
     <ErrorBoundary>
-    <Provider store={store}>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <KeyboardHidingView style={{ flex: 1 }}>
-            <GlobalStatusBar />
-            <NavigationContainer ref={navigationRef}>
-              <AppNavigator />
-            </NavigationContainer>
-            <Toast config={toastConfig} />
-            <GlobalAlertProvider ref={GlobalAlertRef} />
-          </KeyboardHidingView>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </Provider>  
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+          <KeyboardProvider statusBarTranslucent={true} navigationBarTranslucent={true}>
+            <Provider store={store}>
+              <ThemeProvider>
+                <GlobalStatusBar />
+                <NavigationContainer ref={navigationRef}>
+                  <AppNavigator />
+                </NavigationContainer>
+                <Toast config={toastConfig} />
+                <GlobalAlertProvider ref={GlobalAlertRef} />
+              </ThemeProvider>
+            </Provider>
+          </KeyboardProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }

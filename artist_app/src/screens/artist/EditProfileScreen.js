@@ -1247,7 +1247,7 @@ export default function EditProfileScreen() {
           disabled={isLoading || isUploadingMedia || isUploadingFile || uploadingField !== null}
         >
           {isLoading ? (
-            <ActivityIndicator color={colors.backgroundLight} />
+            <ActivityIndicator color="#1A1200" />
           ) : (
             <Text style={styles.saveButtonText}>Save All Changes</Text>
           )}
@@ -1279,15 +1279,15 @@ const getStyles = (colors) => StyleSheet.create({
   },
   tabsContainer: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    marginBottom: 12,
-    backgroundColor: colors.backgroundLight,
+    borderBottomColor: 'rgba(227, 176, 75, 0.15)',
+    marginBottom: 4,
+    backgroundColor: 'transparent',
   },
   tabsScroll: {
     paddingHorizontal: 16,
   },
   tab: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     marginRight: 8,
     borderBottomWidth: 2.5,
@@ -1296,16 +1296,16 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: 'center',
   },
   tabActive: {
-    borderBottomColor: colors.primary,
+    borderBottomColor: '#E3B04B',
     backgroundColor: 'transparent',
   },
   tabText: {
     fontSize: 14.5,
     fontWeight: '600',
-    color: colors.textMutedLight,
+    color: '#9CA3AF',
   },
   tabTextActive: {
-    color: colors.primary,
+    color: '#E3B04B',
     fontWeight: '800',
   },
   container: {
@@ -1423,7 +1423,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   saveButtonText: {
     ...typography.h4,
-    color: colors.backgroundLight,
+    color: '#1A1200',
+    fontWeight: '800',
   },
   avatarContainer: {
     width: 120,

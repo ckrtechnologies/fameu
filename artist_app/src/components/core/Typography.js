@@ -16,7 +16,7 @@ const Typography = ({
     <Text 
       style={[
         typography[variant], 
-        { color: color || colors.textMainLight, textAlign: align, fontFamily: typography.fontFamily }, 
+        { color: color || colors.textMain, textAlign: align, fontFamily: typography.fontFamily }, 
         style
       ]} 
       {...props}

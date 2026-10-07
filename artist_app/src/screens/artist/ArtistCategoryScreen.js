@@ -172,7 +172,7 @@ export default function ArtistCategoryScreen() {
           disabled={isLoading || selectedCategories.length === 0}
         >
           {isLoading ? (
-            <ActivityIndicator color="#FFF" />
+            <ActivityIndicator color="#1A1200" />
           ) : (
             <Text style={styles.continueButtonText}>Continue</Text>
           )}
@@ -275,6 +275,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   continueButtonText: {
     ...typography.h3,
-    color: '#FFF',
+    color: '#1A1200',
+    fontWeight: '800',
   }
 });

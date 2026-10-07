@@ -54,11 +54,11 @@ export default function ShrinkableHeader({
       style={[
         styles.container,
         {
-          backgroundColor: colors.backgroundLight,
+          backgroundColor: '#131418',
           paddingTop: topPadding,
           paddingBottom: 8,
           borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.borderLight,
+          borderBottomColor: 'rgba(227, 176, 75, 0.15)',
         },
         headerElevation && {
           elevation: headerElevation,
@@ -75,7 +75,7 @@ export default function ShrinkableHeader({
         <View style={styles.leftContainer}>
           {showBack ? (
             <TouchableOpacity onPress={handleBack} style={styles.iconButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Icon name="arrow-back" size={24} color={colors.textMainLight} />
+              <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
             </TouchableOpacity>
           ) : isDynamicMorph ? (
             <TouchableOpacity 
@@ -104,7 +104,7 @@ export default function ShrinkableHeader({
                   }
                 ]}
               >
-                <Icon name="menu-outline" size={26} color={colors.textMainLight} />
+                <Icon name="menu-outline" size={26} color={colors.headerIcon || '#FFFFFF'} />
               </Animated.View>
 
               {/* Avatar DP: Hidden at top, smoothly scales/fades in as user scrolls down */}
@@ -134,7 +134,7 @@ export default function ShrinkableHeader({
                     justifyContent: 'center',
                     alignItems: 'center',
                     borderWidth: 1.5,
-                    borderColor: colors.borderLight,
+                    borderColor: '#E3B04B',
                   }}
                 >
                   {avatarUrl ? (
@@ -147,7 +147,7 @@ export default function ShrinkableHeader({
             </TouchableOpacity>
           ) : (showMenu || onMenuPress) ? (
             <TouchableOpacity onPress={onMenuPress || (() => navigation.openDrawer())} style={styles.iconButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Icon name="menu-outline" size={26} color={colors.textMainLight} />
+              <Icon name="menu-outline" size={26} color={colors.headerIcon || '#FFFFFF'} />
             </TouchableOpacity>
           ) : (avatarUrl || avatarText) ? (
             <TouchableOpacity onPress={onAvatarPress || (() => navigation.openDrawer())} style={{ marginRight: 8 }}>
@@ -160,6 +160,8 @@ export default function ShrinkableHeader({
                   backgroundColor: colors.primary,
                   justifyContent: 'center',
                   alignItems: 'center',
+                  borderWidth: 1.5,
+                  borderColor: '#E3B04B',
                 }}
               >
                 {avatarUrl ? (
@@ -179,8 +181,8 @@ export default function ShrinkableHeader({
               style={[
                 styles.title,
                 {
-                  color: colors.textMainLight,
-                  fontSize: headerTitleSize || 17,
+                  color: colors.headerText || '#FFFFFF',
+                  fontSize: headerTitleSize || 18,
                 },
               ]}
               numberOfLines={1}
@@ -192,12 +194,12 @@ export default function ShrinkableHeader({
           {subtitle ? (
             <Animated.View
               style={{
-                height: subtitleHeight || 15,
+                height: subtitleHeight || 17,
                 opacity: subtitleOpacity !== undefined ? subtitleOpacity : 1,
                 overflow: 'hidden',
               }}
             >
-              <Text style={[styles.subtitle, { color: colors.textMutedLight }]} numberOfLines={1}>
+              <Text style={[styles.subtitle, { color: colors.headerSubtitle || '#9CA3AF' }]} numberOfLines={1}>
                 {subtitle}
               </Text>
             </Animated.View>
@@ -254,8 +256,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
     marginTop: 1,
   },

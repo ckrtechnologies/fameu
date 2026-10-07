@@ -203,7 +203,7 @@ export default function ArtistDiscoveryScreen() {
           rightActions={
             <TouchableOpacity 
               onPress={() => setShowFilterModal(true)} 
-              style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.borderLight, justifyContent: 'center', alignItems: 'center' }}
+              style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(227,176,75,0.08)', borderWidth: 1, borderColor: 'rgba(227,176,75,0.3)', justifyContent: 'center', alignItems: 'center' }}
             >
               <Filter size={18} color={colors.primary} />
             </TouchableOpacity>
@@ -211,11 +211,11 @@ export default function ArtistDiscoveryScreen() {
           bottomComponent={
             <View style={{ width: '100%' }}>
               <View style={[styles.searchContainer, { marginTop: 4, marginBottom: 8 }]}>
-                <Icon name="search-outline" size={20} color={colors.textMutedLight} style={styles.searchIcon} />
+                <Icon name="search-outline" size={20} color={colors.primary} style={styles.searchIcon} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder={`Search ${activeTab.toLowerCase()} by name, role, city...`}
-                  placeholderTextColor={colors.textMutedLight}
+                  placeholderTextColor="#9CA3AF"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoCapitalize="none"
@@ -224,7 +224,7 @@ export default function ArtistDiscoveryScreen() {
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <X size={18} color={colors.textMutedLight} />
+                    <X size={18} color="#9CA3AF" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -299,29 +299,41 @@ const getStyles = (colors) => StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.borderLight,
+    borderWidth: 1,
+    borderColor: 'rgba(227,176,75,0.25)',
     paddingHorizontal: spacing.m,
-    height: 42,
+    height: 44,
   },
   searchInput: {
     flex: 1,
     height: '100%',
-    color: colors.textMainLight,
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 14.5,
     paddingVertical: 0,
   },
   searchIcon: {
     marginRight: spacing.s,
   },
   filterButton: { padding: spacing.xs },
-  tabsContainer: { flexDirection: 'row', paddingHorizontal: spacing.m, borderBottomWidth: 1, borderBottomColor: colors.borderLight, backgroundColor: colors.backgroundLight },
-  tabButton: { flex: 1, paddingVertical: spacing.m, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabsContainer: { 
+    flexDirection: 'row', 
+    paddingHorizontal: spacing.s, 
+    borderBottomWidth: 1, 
+    borderBottomColor: 'rgba(255,255,255,0.1)', 
+    backgroundColor: 'transparent' 
+  },
+  tabButton: { 
+    flex: 1, 
+    paddingVertical: spacing.s + 2, 
+    alignItems: 'center', 
+    borderBottomWidth: 2.5, 
+    borderBottomColor: 'transparent' 
+  },
   tabButtonActive: { borderBottomColor: colors.primary },
-  tabText: { color: colors.textMutedLight },
-  tabTextActive: { color: colors.primary, fontWeight: 'bold' },
+  tabText: { color: '#9CA3AF', fontSize: 14.5, fontWeight: '600' },
+  tabTextActive: { color: colors.primary, fontWeight: '800' },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   listContainer: {
     padding: spacing.s,

@@ -151,7 +151,7 @@ function CustomDrawerContent(props) {
             activeOpacity={0.7}
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tabs', { screen: 'Dashboard' }); }}
           >
-            <View style={[styles.iconContainer, styles.iconContainerPrimary]}>
+            <View style={styles.iconContainer}>
               <Home size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>Dashboard</Text>
@@ -163,7 +163,7 @@ function CustomDrawerContent(props) {
             activeOpacity={0.7}
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Search'); }}
           >
-            <View style={[styles.iconContainer, styles.iconContainerPrimary]}>
+            <View style={styles.iconContainer}>
               <Search size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>Search Artists & Talent</Text>
@@ -175,7 +175,7 @@ function CustomDrawerContent(props) {
             activeOpacity={0.7}
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('AllApplicants'); }}
           >
-            <View style={[styles.iconContainer, styles.iconContainerPrimary]}>
+            <View style={styles.iconContainer}>
               <Users size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>All Applicants</Text>
@@ -187,7 +187,7 @@ function CustomDrawerContent(props) {
             activeOpacity={0.7}
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tabs', { screen: 'Profile' }); }}
           >
-            <View style={[styles.iconContainer, styles.iconContainerPrimary]}>
+            <View style={styles.iconContainer}>
               <Building size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>Company Profile</Text>
@@ -199,7 +199,7 @@ function CustomDrawerContent(props) {
             activeOpacity={0.7}
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('CompanyKyc'); }}
           >
-            <View style={[styles.iconContainer, { borderColor: badge.borderColor }]}>
+            <View style={[styles.iconContainer, { borderColor: badge.borderColor, backgroundColor: badge.bgColor }]}>
               <ShieldCheck size={18} color={badge.color} />
             </View>
             <Text style={styles.menuText}>KYC Verification</Text>
@@ -222,7 +222,7 @@ function CustomDrawerContent(props) {
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Faq'); }}
           >
             <View style={styles.iconContainer}>
-              <Icon name="help-circle-outline" size={18} color="#9CA3AF" />
+              <Icon name="help-circle-outline" size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>Help & FAQ</Text>
             <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
@@ -234,7 +234,7 @@ function CustomDrawerContent(props) {
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('ChangePassword'); }}
           >
             <View style={styles.iconContainer}>
-              <Icon name="lock-closed-outline" size={18} color="#9CA3AF" />
+              <Icon name="lock-closed-outline" size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>Change Password</Text>
             <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
@@ -246,7 +246,7 @@ function CustomDrawerContent(props) {
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('ContactUs'); }}
           >
             <View style={styles.iconContainer}>
-              <Icon name="mail-outline" size={18} color="#9CA3AF" />
+              <Icon name="mail-outline" size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>Contact Us</Text>
             <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
@@ -258,7 +258,7 @@ function CustomDrawerContent(props) {
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Tutorial'); }}
           >
             <View style={styles.iconContainer}>
-              <Icon name="play-circle-outline" size={18} color="#9CA3AF" />
+              <Icon name="play-circle-outline" size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>How it Works</Text>
             <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
@@ -270,20 +270,18 @@ function CustomDrawerContent(props) {
             onPress={() => { props.navigation.closeDrawer(); props.navigation.navigate('Legal', { type: 'terms' }); }}
           >
             <View style={styles.iconContainer}>
-              <Icon name="document-text-outline" size={18} color="#9CA3AF" />
+              <Icon name="document-text-outline" size={18} color={colors.accent || '#E3B04B'} />
             </View>
             <Text style={styles.menuText}>Terms & Privacy</Text>
             <Icon name="chevron-forward" size={16} color="#4B5563" style={styles.chevron} />
           </TouchableOpacity>
 
           {/* Dark Mode Switch */}
-          <View style={[styles.menuItem, { justifyContent: 'space-between' }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={[styles.iconContainer, styles.iconContainerPrimary]}>
-                <Icon name={isDarkMode ? "moon" : "sunny"} size={18} color={colors.accent || '#E3B04B'} />
-              </View>
-              <Text style={styles.menuText}>Dark Theme</Text>
+          <View style={styles.menuItem}>
+            <View style={styles.iconContainer}>
+              <Icon name={isDarkMode ? "moon" : "sunny"} size={18} color={colors.accent || '#E3B04B'} />
             </View>
+            <Text style={styles.menuText}>Dark Theme</Text>
             <Switch 
               value={isDarkMode} 
               onValueChange={toggleTheme}
@@ -298,7 +296,7 @@ function CustomDrawerContent(props) {
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <TouchableOpacity style={styles.footerItem} activeOpacity={0.7} onPress={handleLogout}>
           <View style={styles.footerIconContainer}>
-            <LogOut size={18} color="#D1D5DB" />
+            <LogOut size={18} color={colors.accent || '#E3B04B'} />
           </View>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
@@ -454,16 +452,12 @@ const getStyles = (colors) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#1E212B',
+    backgroundColor: 'rgba(227, 176, 75, 0.08)',
     borderWidth: 1,
-    borderColor: '#2A2E3B',
+    borderColor: 'rgba(227, 176, 75, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
-  },
-  iconContainerPrimary: {
-    borderColor: 'rgba(227, 176, 75, 0.3)',
-    backgroundColor: 'rgba(227, 176, 75, 0.08)',
   },
   menuText: {
     flex: 1,
@@ -501,9 +495,9 @@ const getStyles = (colors) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#1E212B',
+    backgroundColor: 'rgba(227, 176, 75, 0.08)',
     borderWidth: 1,
-    borderColor: '#2A2E3B',
+    borderColor: 'rgba(227, 176, 75, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,

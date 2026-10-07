@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
-import { spacing } from '../../theme/theme';
+import { spacing, typography } from '../../theme/theme';
 import Typography from '../core/Typography';
 
 const CustomInput = ({
@@ -93,7 +93,7 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     height: '100%',
     color: colors.textMain,
-    fontFamily: 'Comic Sans MS',
+    fontFamily: typography.fontFamily,
     fontSize: 16,
   },
   errorText: {

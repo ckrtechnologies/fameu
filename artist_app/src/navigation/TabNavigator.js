@@ -27,11 +27,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const Tab = createBottomTabNavigator();
 
 function AnimatedTabIcon({ routeName, focused, activeColor, inactiveColor }) {
-  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.08 : 1)).current;
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
-      toValue: focused ? 1.12 : 1,
+      toValue: focused ? 1.08 : 1,
       friction: 4,
       tension: 60,
       useNativeDriver: true,
@@ -53,7 +53,7 @@ function AnimatedTabIcon({ routeName, focused, activeColor, inactiveColor }) {
 
   return (
     <Animated.View style={[styles.tabIconWrapper, { transform: [{ scale: scaleAnim }] }]}>
-      <View style={[styles.tabIconPill, focused && { backgroundColor: activeColor + '15' }]}>
+      <View style={[styles.tabIconPill, focused && { backgroundColor: 'rgba(227, 176, 75, 0.12)' }]}>
         {IconComponent ? (
           <IconComponent
             size={24}
@@ -77,9 +77,8 @@ export default function TabNavigator() {
   useGetInboxQuery(undefined, { skip: !user });
   const insets = useSafeAreaInsets();
   
-  const profile = profileResponse?.data;
-  const fullName = profile?.full_name || user?.full_name || 'Artist';
-  const avatarUrl = profile?.avatar_url || user?.avatar_url || null;
+  const activeColor = colors.tabBarActive || '#E3B04B';
+  const inactiveColor = colors.tabBarInactive || '#8A8F9E';
 
   return (
     <Tab.Navigator
@@ -89,29 +88,29 @@ export default function TabNavigator() {
           <AnimatedTabIcon
             routeName={route.name}
             focused={focused}
-            activeColor={colors.primary}
-            inactiveColor={colors.textMutedLight}
+            activeColor={activeColor}
+            inactiveColor={inactiveColor}
           />
         ),
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMutedLight,
+        tabBarActiveTintColor: activeColor,
+        tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
-          backgroundColor: colors.backgroundLight,
-          borderTopColor: colors.borderLight,
+          backgroundColor: colors.tabBarBackground || '#131418',
+          borderTopColor: colors.tabBarBorder || '#22242B',
           borderTopWidth: 1,
-          height: 62 + insets.bottom,
-          paddingBottom: (insets.bottom || 8) + 2,
-          paddingTop: 6,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom || 8,
+          paddingTop: 8,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.06,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.15,
           shadowRadius: 8,
           elevation: 8,
         },
         tabBarLabelStyle: {
           fontFamily: typography.fontFamily,
-          fontSize: 11.5,
-          fontWeight: 'bold',
+          fontSize: 13,
+          fontWeight: '700',
           marginTop: -2,
         },
       })}
@@ -143,7 +142,12 @@ export default function TabNavigator() {
         options={{
           tabBarLabel: 'Messages',
           tabBarBadge: totalUnreadCount > 0 ? totalUnreadCount : undefined,
-          tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.white }
+          tabBarBadgeStyle: { 
+            backgroundColor: '#EF4444', 
+            color: '#FFFFFF',
+            fontSize: 10,
+            fontWeight: '700',
+          }
         }}
       />
     </Tab.Navigator>

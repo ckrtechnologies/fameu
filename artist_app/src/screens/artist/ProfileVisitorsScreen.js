@@ -169,16 +169,18 @@ const getStyles = (colors) => StyleSheet.create({
     marginLeft: spacing.m,
   },
   visitorName: {
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.textMainLight,
     marginBottom: 2,
   },
   visitorRole: {
+    fontSize: 13.5,
     color: colors.textMutedLight,
   },
   visitTime: {
     color: colors.textMutedLight,
-    fontSize: 12,
+    fontSize: 12.5,
   },
   emptyContainer: {
     flex: 1,
@@ -187,11 +189,14 @@ const getStyles = (colors) => StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
     marginTop: spacing.m,
     marginBottom: spacing.s,
     color: colors.textMainLight,
   },
   emptyText: {
+    fontSize: 14.5,
     textAlign: 'center',
     color: colors.textMutedLight,
   },

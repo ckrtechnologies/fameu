@@ -1036,7 +1036,7 @@ export default function PublicProfileScreen() {
             
             {/* Artist Profile Comments */}
             {profileData.profile && profileData.profile.id && (
-              <View style={{ marginHorizontal: spacing.xl, marginBottom: 24, marginTop: 12 }}>
+              <View style={{ width: '100%', paddingHorizontal: spacing.l, marginBottom: 24, marginTop: 12 }}>
                 {showComments && <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />}
               </View>
             )}
@@ -1162,7 +1162,7 @@ export default function PublicProfileScreen() {
               )}
 
               {hiringProfile && hiringProfile.id && (
-                <View style={{ marginBottom: 24, marginTop: spacing.l }}>
+                <View style={{ width: '100%', paddingHorizontal: spacing.l, marginBottom: 24, marginTop: spacing.l }}>
                   {showComments && <CommentsSection targetType="profile" targetId={hiringProfile.id} />}
                 </View>
               )}
@@ -1273,21 +1273,21 @@ const getStyles = (colors) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: 'rgba(227, 176, 75, 0.3)',
   },
   headerReportBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: 'rgba(239, 68, 68, 0.35)',
   },
   headerTitle: {
     ...typography.h3,

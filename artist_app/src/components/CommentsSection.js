@@ -1,14 +1,14 @@
+import { GlobalAlert } from './core/GlobalAlert';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image, Alert } from 'react-native';
-import { GlobalAlert } from './core/GlobalAlert';
-import Icon, { CommentsSectionIcon } from './icons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useGetCommentsQuery, useAddCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from '../services/commentsApi';
-import { useTheme } from '../theme/ThemeProvider';
 import { typography, spacing } from '../theme/theme';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useTheme } from '../theme/ThemeProvider';
 
 dayjs.extend(relativeTime);
 
@@ -64,7 +64,7 @@ const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUse
       </View>
 
       {comment.replies && comment.replies.length > 0 && (
-        <View style={[styles.repliesContainer, { borderLeftWidth: 1, borderLeftColor: colors.borderLight, marginLeft: 12, paddingLeft: 12, marginTop: 4 }]}>
+        <View style={styles.repliesContainer}>
           {comment.replies.map((reply) => (
             <CommentItem
               key={reply.id}
@@ -83,15 +83,15 @@ const CommentItem = ({ comment, depth = 0, onReply, onEdit, onDelete, currentUse
   );
 };
 
-export default function CommentsSection({ targetType, targetId, disableComment = false, isOwnProfile = false }) {
+export default function CommentsSection({ targetType, targetId, disableComment = false, isOwnProfile = false, profileUserId = null }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
   const { data: response, isLoading } = useGetCommentsQuery({ type: targetType, targetId }, { skip: !targetId, refetchOnMountOrArgChange: true });
   const [addComment, { isLoading: isAdding }] = useAddCommentMutation();
-  const [updateComment] = useUpdateCommentMutation();
-  const [deleteComment] = useDeleteCommentMutation();
+  const [updateComment, { isLoading: isUpdating }] = useUpdateCommentMutation();
+  const [deleteComment, { isLoading: isDeleting }] = useDeleteCommentMutation();
 
   const [inputText, setInputText] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
@@ -100,6 +100,9 @@ export default function CommentsSection({ targetType, targetId, disableComment =
 
   const comments = response?.data || [];
   
+  const isSelfProfile = Boolean(isOwnProfile || (profileUserId && user?.id && profileUserId === user.id));
+  const showCommentInput = (!isSelfProfile && !disableComment) || replyingTo || editing;
+
   // Filter by role and sort top-level comments descending (newest first)
   const filteredComments = comments
     .filter(c => {
@@ -122,18 +125,18 @@ export default function CommentsSection({ targetType, targetId, disableComment =
       }
       setInputText('');
     } catch (error) {
-      GlobalAlert.show('Error', 'Failed to post comment.');
+      GlobalAlert.showError('Unable to Post Comment', error, 'Your comment could not be submitted.');
     }
   };
 
   const handleDelete = (comment) => {
-    GlobalAlert.show('Delete Comment', 'Are you sure?', [
+    GlobalAlert.show('Delete Comment', 'Are you sure you want to delete this comment? This action cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
         try {
           await deleteComment({ type: targetType, commentId: comment.id, targetId }).unwrap();
         } catch (e) {
-          GlobalAlert.show('Error', 'Failed to delete comment.');
+          GlobalAlert.showError('Unable to Delete Comment', e, 'Your comment could not be deleted.');
         }
       }}
     ]);
@@ -145,29 +148,28 @@ export default function CommentsSection({ targetType, targetId, disableComment =
     }
   };
 
-  if (isLoading) return <ActivityIndicator style={{ margin: 20 }} color={colors.primary} />;
-
   const artistCommentsCount = comments.filter(c => c.user?.role === 'artist').length;
   const recruiterCommentsCount = comments.filter(c => c.user?.role === 'hiring').length;
 
+  if (isLoading) return <ActivityIndicator style={{ margin: 20 }} color={colors.primary} />;
+
   return (
     <View style={styles.container}>
-      {/* 1. Comments Box Section (Top) */}
-      <View style={styles.sectionBlock}>
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.sectionHeaderIconBadge}>
-            <CommentsSectionIcon size={22} />
+      {/* 1. Comments Box Section (Top) - Only shown if not self profile or actively replying/editing */}
+      {showCommentInput && (
+        <View style={styles.sectionBlock}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIconBadge, { backgroundColor: colors.primary + '15' }]}>
+              <Icon name={replyingTo ? "return-down-forward" : "chatbubble-ellipses"} size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>{replyingTo ? 'Reply to Comment' : editing ? 'Edit Comment' : 'Add Comment'}</Text>
+              <Text style={styles.sectionSubtitle}>
+                {replyingTo ? 'Reply directly to this feedback' : editing ? 'Update your comment' : 'Share public questions or feedback'}
+              </Text>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.sectionHeaderTitle}>Add Comment</Text>
-            <Text style={styles.sectionHeaderSubtitle}>
-              Share public questions or feedback
-            </Text>
-          </View>
-        </View>
 
-        {/* Input Area — blocked on own profile unless replying/editing */}
-        {((!disableComment && !isOwnProfile) || replyingTo || editing) ? (
           <View style={styles.inputContainer}>
             {(replyingTo || editing) && (
               <View style={styles.replyingIndicator}>
@@ -182,67 +184,51 @@ export default function CommentsSection({ targetType, targetId, disableComment =
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
-                placeholder="Write a comment..."
+                placeholder={replyingTo ? "Write a reply..." : "Write a comment..."}
                 placeholderTextColor={colors.textMutedLight}
                 value={inputText}
                 onChangeText={setInputText}
                 multiline
               />
-              <TouchableOpacity onPress={handleSubmit} disabled={isAdding || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding) && styles.sendBtnDisabled]}>
-                {isAdding ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={18} color="#FFF" />}
+              <TouchableOpacity onPress={handleSubmit} disabled={isAdding || isUpdating || !inputText.trim()} style={[styles.sendBtn, (!inputText.trim() || isAdding || isUpdating) && styles.sendBtnDisabled]}>
+                {(isAdding || isUpdating) ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={18} color="#FFF" />}
               </TouchableOpacity>
             </View>
           </View>
-        ) : isOwnProfile && !replyingTo && !editing ? (
-          <View style={styles.ownProfileNoteCard}>
-            <Text style={styles.ownProfileNoteText}>
-              💬 You can reply to feedback, but cannot post top-level comments on your own profile.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.ownProfileNoteCard}>
-            <Text style={styles.ownProfileNoteText}>
-              Commenting is disabled for this section.
-            </Text>
-          </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* 2. Historical Comments Section (Below) */}
       <View style={[styles.sectionBlock, styles.historicalBlock]}>
-        <View style={styles.sectionHeaderRow}>
-          <View style={[styles.sectionHeaderIconBadge, { backgroundColor: '#F3F4F6' }]}>
-            <Icon name="time-outline" size={20} color={colors.textMainLight} />
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIconBadge, { backgroundColor: colors.borderLight + '60' }]}>
+            <Icon name="time-outline" size={18} color={colors.textMainLight} />
           </View>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.sectionHeaderTitle}>What others say?</Text>
-            <View style={styles.headerCountBadge}>
-              <Text style={styles.headerCountText}>{comments.length}</Text>
+            <Text style={styles.sectionTitle}>What others say?</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{comments.length}</Text>
             </View>
           </View>
         </View>
-        <Text style={styles.historicalSubtitle}>
-          Past notes and reviews from artists & casting recruiters
-        </Text>
+        <Text style={styles.historicalSubtitle}>Browse previous discussions and responses from artists & recruiters</Text>
 
-        {/* Segmented Filter Pills strictly inside Historical Comments */}
-        <View style={styles.segmentedFilterRow}>
+        {/* Filter Tabs strictly inside Historical Comments */}
+        <View style={styles.tabsContainer}>
           <TouchableOpacity 
-            style={[styles.filterPill, activeTab === 'artists' && styles.filterPillActive]} 
+            style={[styles.tab, activeTab === 'artists' && styles.activeTab]} 
             onPress={() => setActiveTab('artists')}
-            activeOpacity={0.8}
           >
-            <Text style={[styles.filterPillText, activeTab === 'artists' && styles.filterPillTextActive]}>
-              🎭 Artists ({artistCommentsCount})
+            <Text style={[styles.tabText, activeTab === 'artists' && styles.activeTabText]}>
+              Artists ({artistCommentsCount})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.filterPill, activeTab === 'recruiters' && styles.filterPillActive]} 
+            style={[styles.tab, activeTab === 'recruiters' && styles.activeTab]} 
             onPress={() => setActiveTab('recruiters')}
-            activeOpacity={0.8}
           >
-            <Text style={[styles.filterPillText, activeTab === 'recruiters' && styles.filterPillTextActive]}>
-              🏢 Recruiters ({recruiterCommentsCount})
+            <Text style={[styles.tabText, activeTab === 'recruiters' && styles.activeTabText]}>
+              Recruiters ({recruiterCommentsCount})
             </Text>
           </TouchableOpacity>
         </View>
@@ -272,11 +258,11 @@ export default function CommentsSection({ targetType, targetId, disableComment =
 const getStyles = (colors) => StyleSheet.create({
   container: {
     marginTop: spacing.l,
-    marginHorizontal: spacing.l,
+    width: '100%',
     paddingHorizontal: 0,
-    marginBottom: spacing.xl,
   },
   sectionBlock: {
+    width: '100%',
     backgroundColor: colors.surfaceLight || '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
@@ -292,111 +278,53 @@ const getStyles = (colors) => StyleSheet.create({
   historicalBlock: {
     marginTop: 4,
   },
-  sectionHeaderRow: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
-  sectionHeaderIconBadge: {
-    backgroundColor: colors.primary + '15',
-    padding: 7,
-    borderRadius: 12,
-    marginRight: 10,
+  sectionIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 10,
   },
-  sectionHeaderTitle: {
+  sectionTitle: {
     ...typography.h3,
     fontSize: 16,
-    color: colors.textMainLight,
     fontWeight: '700',
+    color: colors.textMainLight,
   },
-  sectionHeaderSubtitle: {
+  sectionSubtitle: {
+    ...typography.caption,
     fontSize: 12,
     color: colors.textMutedLight,
     marginTop: 1,
   },
   historicalSubtitle: {
+    ...typography.caption,
     fontSize: 12,
     color: colors.textMutedLight,
-    marginBottom: 12,
-    marginLeft: 42,
+    marginBottom: spacing.m,
+    marginTop: 2,
   },
-  headerCountBadge: {
+  countBadge: {
     backgroundColor: colors.primary + '18',
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 12,
     marginLeft: 8,
   },
-  headerCountText: {
+  countBadgeText: {
+    ...typography.caption,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.primary,
   },
-  segmentedFilterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-    backgroundColor: colors.backgroundLight || '#F9FAFB',
-    padding: 4,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  filterPill: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterPillActive: {
-    backgroundColor: colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  filterPillText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMutedLight,
-  },
-  filterPillTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  ownProfileNoteCard: {
-    padding: 12,
-    marginBottom: 14,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-    borderRadius: 12,
-  },
-  ownProfileNoteText: {
-    color: '#1E40AF',
-    fontSize: 12.5,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  emptyContainer: {
-    paddingVertical: 24,
-    alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    marginTop: 4,
-  },
-  emptyText: {
-    color: colors.textMutedLight,
-    fontSize: 13,
-  },
   inputContainer: {
-    marginBottom: spacing.l,
+    marginTop: spacing.s,
   },
   inputRow: {
     flexDirection: 'row',
@@ -404,22 +332,23 @@ const getStyles = (colors) => StyleSheet.create({
   },
   input: {
     flex: 1,
-    minHeight: 40,
-    maxHeight: 100,
+    minHeight: 42,
+    maxHeight: 110,
     borderWidth: 1,
     borderColor: colors.borderLight,
     borderRadius: 20,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 10,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.backgroundLight || '#F9FAFB',
     color: colors.textMainLight,
     ...typography.body,
+    fontSize: 14,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -432,7 +361,9 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: colors.primary + '10',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
     padding: spacing.s,
     borderRadius: 8,
     marginBottom: spacing.s,
@@ -441,6 +372,20 @@ const getStyles = (colors) => StyleSheet.create({
     ...typography.caption,
     color: colors.textMainLight,
     fontWeight: '600',
+    flex: 1,
+    marginRight: spacing.s,
+  },
+  disabledCard: {
+    padding: spacing.m,
+    borderRadius: 12,
+    backgroundColor: colors.backgroundLight,
+    marginTop: spacing.s,
+    alignItems: 'center',
+  },
+  disabledText: {
+    ...typography.caption,
+    color: colors.textMutedLight,
+    fontStyle: 'italic',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -459,12 +404,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   tabText: {
     ...typography.body,
+    fontSize: 13,
     color: colors.textMutedLight,
     fontWeight: '500',
   },
   activeTabText: {
     color: colors.primary,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   commentWrapper: {
     marginBottom: spacing.m,
@@ -530,4 +476,15 @@ const getStyles = (colors) => StyleSheet.create({
     paddingLeft: spacing.s,
     marginLeft: 12,
   },
+  emptyContainer: {
+    paddingVertical: spacing.l,
+    alignItems: 'center',
+  },
+  emptyText: {
+    ...typography.body,
+    fontSize: 13,
+    color: colors.textMutedLight,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  }
 });

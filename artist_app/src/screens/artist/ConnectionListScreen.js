@@ -152,7 +152,9 @@ const getStyles = (colors) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 51, 255, 0.05)',
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 176, 75, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -160,13 +162,17 @@ const getStyles = (colors) => StyleSheet.create({
     marginLeft: spacing.m,
   },
   nameText: {
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.textMainLight,
   },
   handleText: {
+    fontSize: 13,
     color: colors.textMutedLight,
+    marginTop: 2,
   },
   errorText: {
+    fontSize: 14.5,
     color: colors.error,
     marginBottom: spacing.s,
   },
@@ -177,8 +183,9 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    color: colors.backgroundLight,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#1A1200',
+    fontWeight: '700',
   },
   emptyContainer: {
     padding: spacing.xl,
@@ -186,6 +193,7 @@ const getStyles = (colors) => StyleSheet.create({
     marginTop: 100,
   },
   emptyText: {
+    fontSize: 14.5,
     color: colors.textMutedLight,
     marginTop: spacing.m,
   }

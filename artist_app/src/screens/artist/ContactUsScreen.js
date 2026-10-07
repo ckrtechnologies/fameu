@@ -138,15 +138,17 @@ const getStyles = (colors) => StyleSheet.create({
   },
   subtitle: {
     ...typography.body1,
+    fontSize: 15,
     marginBottom: spacing.xl,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   inputGroup: {
     marginBottom: spacing.l,
   },
   label: {
     ...typography.body2,
-    fontWeight: 'bold',
+    fontSize: 14.5,
+    fontWeight: '700',
     marginBottom: spacing.s,
   },
 });

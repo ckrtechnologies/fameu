@@ -105,6 +105,7 @@ export default function CreateAuditionScreen({ route }) {
   const [currentStep, setCurrentStep] = useState(1);
   const progressAnim = useRef(new Animated.Value(0.25)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const scrollViewRef = useRef(null);
 
   const [createAudition, { isLoading: isCreating }] = useCreateAuditionMutation();
   const [updateAudition, { isLoading: isUpdating }] = useUpdateAuditionMutation();
@@ -224,11 +225,12 @@ export default function CreateAuditionScreen({ route }) {
 
   const animateToStep = (stepNumber) => {
     setCurrentStep(stepNumber);
+    scrollViewRef.current?.scrollTo?.({ y: 0, animated: true });
   };
 
   const validateStep = (step) => {
     if (step === 1) {
-      if (!form.title.trim()) {
+      if (!form.title?.trim()) {
         showError('Required Field', 'Please enter a Job / Audition Title.');
         return false;
       }
@@ -243,7 +245,7 @@ export default function CreateAuditionScreen({ route }) {
       return true;
     }
     if (step === 2) {
-      if (!form.role_description.trim()) {
+      if (!form.role_description?.trim()) {
         showError('Required Field', 'Please describe the character / role breakdown.');
         return false;
       }
@@ -268,13 +270,29 @@ export default function CreateAuditionScreen({ route }) {
       }
       return true;
     }
+    if (step === 4) {
+      const isAuditionReq = form.is_audition_required && form.is_audition_required.startsWith('Yes');
+      if (isAuditionReq && (form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled')) {
+        if (!form.walk_in_venue?.trim()) {
+          showError('Venue Required', 'Please provide the Venue Address for the audition.');
+          return false;
+        }
+        if (!form.walk_in_date) {
+          showError('Date Required', 'Please provide the Audition Date.');
+          return false;
+        }
+      }
+      return true;
+    }
     return true;
   };
 
   const handleApplyPresetValidity = (days) => {
-    const baseDate = form.valid_from ? new Date(form.valid_from) : new Date();
+    const numDays = Number(days) || 30;
+    const baseStr = form.valid_from ? form.valid_from.replace(/-/g, '/') : null;
+    const baseDate = baseStr ? new Date(baseStr) : new Date();
     const targetDate = new Date(baseDate);
-    targetDate.setDate(targetDate.getDate() + days);
+    targetDate.setDate(targetDate.getDate() + numDays);
     const year = targetDate.getFullYear();
     const month = String(targetDate.getMonth() + 1).padStart(2, '0');
     const day = String(targetDate.getDate()).padStart(2, '0');
@@ -283,7 +301,7 @@ export default function CreateAuditionScreen({ route }) {
       ...prev,
       valid_till: formatted,
       expiry_date: formatted,
-      job_validity_days: String(days)
+      job_validity_days: String(numDays)
     }));
   };
 
@@ -306,15 +324,16 @@ export default function CreateAuditionScreen({ route }) {
       animateToStep(currentStep - 1);
       return true;
     }
-    const isDirty = !isEditMode && !!(form.title.trim() || form.role_description.trim() || form.job_location.trim());
+    const isDirty = !isEditMode && !!(form.title?.trim() || form.role_description?.trim() || form.job_location?.trim());
     if (isDirty) {
-      Alert.alert(
+      GlobalAlert.show(
         'Discard Draft?',
         'You have unsaved changes in this casting call. Are you sure you want to discard them?',
         [
           { text: 'Keep Editing', style: 'cancel' },
           { text: 'Discard', style: 'destructive', onPress: () => navigation.goBack() },
-        ]
+        ],
+        { type: 'warning' }
       );
       return true;
     }
@@ -442,22 +461,11 @@ export default function CreateAuditionScreen({ route }) {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3) || !validateStep(4)) {
       return;
     }
 
     const isAuditionReq = form.is_audition_required && form.is_audition_required.startsWith('Yes');
-
-    if (isAuditionReq && (form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled')) {
-      if (!form.walk_in_venue?.trim()) {
-        showError('', 'Please provide the Venue Address for the audition.');
-        return;
-      }
-      if (!form.walk_in_date) {
-        showError('', 'Please provide the Audition Date.');
-        return;
-      }
-    }
 
     try {
       const typeMap = {
@@ -528,6 +536,7 @@ export default function CreateAuditionScreen({ route }) {
         setTimeout(() => {
           navigation.navigate('Drawer', { screen: 'Tabs', params: { screen: 'MyAuditions' } });
         }, 800);
+      }
     } catch (err) {
       console.error('Failed to save audition:', err);
       GlobalAlert.showError(
@@ -636,6 +645,7 @@ export default function CreateAuditionScreen({ route }) {
       </View>
 
       <KeyboardAwareScrollView
+        ref={scrollViewRef}
         mode={Platform.OS === 'android' ? 'layout' : 'insets'}
         bottomOffset={80}
         keyboardDismissMode="interactive"

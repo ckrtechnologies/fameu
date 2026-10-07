@@ -1,8 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, ActivityIndicator, StyleSheet, View } from 'react-native';
-import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, shadows } from '../../theme/theme';
 import Typography from '../core/Typography';
+import { useTheme } from '../../theme/ThemeProvider';
 
 const CustomButton = ({ 
   title, 
@@ -16,11 +16,12 @@ const CustomButton = ({
 }) => {
   const { colors } = useTheme();
   const styles = getStyles(colors);
+  
   const getBackgroundColor = () => {
-    if (disabled) return colors.borderDark;
+    if (disabled) return colors.borderDark || '#2C2F38';
     switch(variant) {
       case 'primary': return colors.primary;
-      case 'secondary': return colors.secondary || '#3B82F6';
+      case 'secondary': return colors.secondary || colors.primary;
       case 'outline': return 'transparent';
       case 'ghost': return 'transparent';
       default: return colors.primary;
@@ -28,13 +29,13 @@ const CustomButton = ({
   };
 
   const getTextColor = () => {
-    if (disabled) return colors.textMutedDark;
+    if (disabled) return colors.textMutedDark || colors.textMuted || '#6B7280';
     switch(variant) {
-      case 'primary': return colors.textMainDark; 
-      case 'secondary': return colors.textMainDark;
+      case 'primary': return colors.textOnPrimary || colors.textMainDark || '#1A1200'; 
+      case 'secondary': return colors.textMainDark || '#FFFFFF';
       case 'outline': return colors.primary;
       case 'ghost': return colors.primary;
-      default: return colors.textMainDark;
+      default: return colors.textOnPrimary || colors.textMainDark;
     }
   };
 
@@ -50,7 +51,7 @@ const CustomButton = ({
         { 
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
-          borderWidth: variant === 'outline' ? 1 : 0,
+          borderWidth: variant === 'outline' ? 1.5 : 0,
         },
         style
       ]} 
@@ -79,7 +80,7 @@ const getStyles = (colors) => StyleSheet.create({
   button: {
     paddingVertical: 14,
     paddingHorizontal: spacing.l,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 52,
