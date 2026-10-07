@@ -110,13 +110,13 @@ export default function PublicProfileScreen() {
   const [startConversation, { isLoading: isStartingChat }] = useStartConversationMutation();
   const [recordVisit] = useRecordVisitMutation();
 
-  // Record a profile visit when the profile loads (skip self-views)
+  // Record a profile visit when the profile loads
   React.useEffect(() => {
     const targetUserId = profileData?.user_id || profileData?.id;
-    if (targetUserId && currentUserId !== targetUserId) {
+    if (targetUserId) {
       recordVisit(targetUserId).catch(() => {}); // Fire-and-forget
     }
-  }, [profileData?.user_id, profileData?.id, currentUserId, recordVisit]);
+  }, [profileData?.user_id, profileData?.id, recordVisit]);
   
   const [activeTab, setActiveTab] = useState('Overview');
   const [showComments, setShowComments] = useState(false);

@@ -46,6 +46,7 @@ import { uploadFileWithProgress } from '../../utils/uploadUtils';
 import ProgressBar from '../../components/core/ProgressBar';
 import { useCreateAuditionMutation, useUpdateAuditionMutation } from '../../services/auditionApi';
 import { useGetProfessionsQuery } from '../../services/profileApi';
+import { useGetCitiesQuery } from '../../services/lookupsApi';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ProfessionCategoryIcon } from '../../components/icons/professions';
 import {
@@ -171,7 +172,8 @@ export default function CreateAuditionScreen({ route }) {
     { id: 'Job', title: 'Job', subtitle: 'Crew & production role', icon: ListingTypeJobIcon },
     { id: 'Casting Call', title: 'Casting Call', subtitle: 'Open public talent call', icon: ListingTypeCastingCallIcon }
   ];
-  const CITIES = INDIAN_CITIES;
+  const { data: dynamicCities } = useGetCitiesQuery();
+  const CITIES = Array.isArray(dynamicCities) && dynamicCities.length > 0 ? dynamicCities : INDIAN_CITIES;
 
   const STEPS = [
     { number: 1, title: 'Basic Info', subtitle: 'Project & Category', IconComponent: StepBasicInfoIcon },
@@ -240,6 +242,14 @@ export default function CreateAuditionScreen({ route }) {
       }
       if (!form.project_type || form.project_type.length === 0) {
         showError('Required Field', 'Please select at least one Project Type.');
+        return false;
+      }
+      if (!form.city?.trim()) {
+        showError('Required Field', 'Please select a Primary City from the list.');
+        return false;
+      }
+      if (!CITIES.some(c => c.toLowerCase() === form.city.trim().toLowerCase())) {
+        showError('Invalid City', 'The selected city is not in the recognized cities list. Please select a valid city.');
         return false;
       }
       return true;

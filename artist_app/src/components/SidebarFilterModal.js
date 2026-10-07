@@ -26,7 +26,9 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import { typography, spacing } from '../theme/theme';
 import CustomButton from './forms/CustomButton';
-import { COMPANY_TYPE_OPTIONS } from '../constants/masterData';
+import { COMPANY_TYPE_OPTIONS, TOP_CITIES } from '../constants/masterData';
+import { INDIAN_CITIES } from '../constants/cities';
+import { useGetCitiesQuery } from '../services/lookupsApi';
 import { FILTER_PLACEHOLDERS } from '../constants/formPlaceholders';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -52,11 +54,14 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
   
   const [activeTab, setActiveTab] = useState(filterConfig[0]?.key || 'sort_by');
   const [tempFilters, setTempFilters] = useState(initialFilters || defaultFilters || {});
+  const [citySearch, setCitySearch] = useState('');
+  const { data: dynamicCities } = useGetCitiesQuery();
 
   useEffect(() => {
     if (visible) {
       setTempFilters(initialFilters || defaultFilters || {});
       setActiveTab(filterConfig[0]?.key || 'sort_by');
+      setCitySearch('');
     }
   }, [visible, initialFilters, defaultFilters, filterConfig]);
 
@@ -353,7 +358,88 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
     );
   };
 
-  // 6. Generic Chips Panel (Profession, City, Project Type, Duration)
+  // 6. City Panel (Searchable across all backend Indian cities + Popular Hubs)
+  const renderCityPanel = () => {
+    const selectedCity = tempFilters.city || 'All';
+    const cleanSearch = citySearch.trim().toLowerCase();
+
+    const allCitiesList = Array.isArray(dynamicCities) && dynamicCities.length > 0 ? dynamicCities : INDIAN_CITIES;
+    const popularHubs = ['All', ...TOP_CITIES.filter(c => c !== 'Other')];
+    const filteredCities = cleanSearch
+      ? allCitiesList.filter(c => c.toLowerCase().includes(cleanSearch))
+      : allCitiesList;
+
+    return (
+      <ScrollView style={styles.rightContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <Text style={styles.sectionTitle}>City</Text>
+
+        {/* Search Bar for Cities */}
+        <View style={styles.citySearchBox}>
+          <Icon name="search-outline" size={17} color={colors.textMutedLight} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.citySearchInput}
+            placeholder="Search city across India..."
+            placeholderTextColor={colors.textMutedLight}
+            value={citySearch}
+            onChangeText={setCitySearch}
+            autoCapitalize="words"
+          />
+          {citySearch.length > 0 && (
+            <TouchableOpacity onPress={() => setCitySearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Icon name="close-circle" size={17} color={colors.textMutedLight} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {!cleanSearch && (
+          <>
+            <Text style={styles.citySubheader}>Popular Production Hubs</Text>
+            <View style={styles.optionsGrid}>
+              {popularHubs.map((c) => {
+                const isSelected = selectedCity === c;
+                return (
+                  <TouchableOpacity
+                    key={`hub-${c}`}
+                    style={[styles.richChip, isSelected && styles.richChipActive]}
+                    onPress={() => setTempFilters({ ...tempFilters, city: c })}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ marginRight: 6, fontSize: 13 }}>{c === 'All' ? '🌐' : '📍'}</Text>
+                    <Text style={[styles.richChipText, isSelected && styles.richChipTextActive]}>{c === 'All' ? 'All Cities' : c}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <View style={{ height: 14 }} />
+            <Text style={styles.citySubheader}>All Supported Cities ({allCitiesList.length})</Text>
+          </>
+        )}
+
+        <View style={styles.optionsGrid}>
+          {filteredCities.map((c) => {
+            const isSelected = selectedCity === c;
+            return (
+              <TouchableOpacity
+                key={`city-${c}`}
+                style={[styles.richChip, isSelected && styles.richChipActive]}
+                onPress={() => setTempFilters({ ...tempFilters, city: c })}
+                activeOpacity={0.8}
+              >
+                <Text style={{ marginRight: 6, fontSize: 13 }}>📍</Text>
+                <Text style={[styles.richChipText, isSelected && styles.richChipTextActive]}>{c}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {filteredCities.length === 0 && (
+          <Text style={styles.emptySearchText}>No cities matching "{citySearch}"</Text>
+        )}
+        <View style={{ height: 30 }} />
+      </ScrollView>
+    );
+  };
+
+  // 7. Generic Chips Panel (Profession, Project Type, Duration)
   const renderGenericPanel = (activeConfig) => {
     const getOptionBadge = (key, opt) => {
       if (key === 'category') {
@@ -441,6 +527,7 @@ export default function SidebarFilterModal({ visible, onClose, onApply, filterCo
     if (activeTab === 'sort_by' || activeTab === 'sort') return renderSortPanel();
     if (activeTab === 'min_budget' || activeTab === 'compensation') return renderCompensationPanel();
     if (activeTab === 'mode') return renderModePanel();
+    if (activeTab === 'city') return renderCityPanel();
     if (activeTab === 'gender_req' || activeTab === 'gender') return renderGenderPanel();
     if (activeTab === 'age' || activeTab === 'age_range' || activeConfig.type === 'range') return renderAgePanel();
 
@@ -865,5 +952,36 @@ const getStyles = (colors, insets) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.textMainLight,
+  },
+  citySearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 14,
+  },
+  citySearchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textMainLight,
+    paddingVertical: 0,
+  },
+  citySubheader: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMutedLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  emptySearchText: {
+    fontSize: 13,
+    color: colors.textMutedLight,
+    fontStyle: 'italic',
+    paddingVertical: 8,
   },
 });

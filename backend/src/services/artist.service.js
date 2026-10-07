@@ -171,9 +171,10 @@ class ArtistService {
       callbacksCount = apps.filter(a => a.status === 'accepted').length;
     }
 
-    const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
+    const [{ count: followersCount }, { count: followingCount }, { count: visitorsCount }] = await Promise.all([
       supabase.from('connections').select('*', { count: 'exact', head: true }).eq('following_id', profile.user_id),
-      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', profile.user_id)
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', profile.user_id),
+      supabase.from('profile_visits').select('*', { count: 'exact', head: true }).eq('profile_user_id', profile.user_id)
     ]);
     
     if (profile.users) {
@@ -181,15 +182,17 @@ class ArtistService {
       profile.users.following_count = followingCount || 0;
     }
 
+    const totalViews = Math.max(Number(profile.visit_count || 0), Number(visitorsCount || 0));
+
     return {
       ...profile,
-      visit_count: profile.visit_count || 0,
+      visit_count: totalViews,
       alt_number: profile.alt_number || profile.alternate_phone || '',
       category_details: categoryDetails,
       stats: {
         applications: applicationsCount,
         callbacks: callbacksCount,
-        views: profile.visit_count || 0
+        views: totalViews
       }
     };
   }

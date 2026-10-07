@@ -32,20 +32,29 @@ const ProfileVisitorsScreen = ({ navigation }) => {
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
       ) : (
         <View style={styles.avatarPlaceholder}>
-           <Text variant="body" style={styles.avatarPlaceholderText}>
+          <Text variant="body" style={styles.avatarPlaceholderText}>
             {item.name ? item.name.charAt(0).toUpperCase() : '?'}
           </Text>
         </View>
       )}
       <View style={styles.visitorInfo}>
-         <Text variant="body" style={styles.visitorName}>{item.name}</Text>
-         <Text variant="caption" style={styles.visitorRole}>
+        <Text variant="body" style={styles.visitorName}>{item.name}</Text>
+        <Text variant="caption" style={styles.visitorRole}>
           {item.role === 'hiring' ? 'Recruiter' : item.role === 'artist' ? 'Artist' : 'User'}
         </Text>
+        <View style={styles.visitMetaRow}>
+          <View style={styles.visitCountBadge}>
+            <Icon name="eye-outline" size={12} color={colors.primary} />
+            <Text variant="caption" style={styles.visitCountText}>
+              {item.visit_count || 1} {item.visit_count === 1 ? 'view' : 'views'}
+            </Text>
+          </View>
+          <Text variant="caption" style={styles.visitTimeDot}>•</Text>
+          <Text variant="caption" style={styles.visitTime}>
+            {timeAgo(item.visited_at)}
+          </Text>
+        </View>
       </View>
-       <Text variant="caption" style={styles.visitTime}>
-        {timeAgo(item.visited_at)}
-      </Text>
     </View>
   );
 
@@ -59,11 +68,16 @@ const ProfileVisitorsScreen = ({ navigation }) => {
     </View>
   );
 
+  const totalVisitsCount = visitors.reduce((sum, v) => sum + (v.visit_count || 1), 0);
+  const headerSubtitle = visitors.length === 0
+    ? '0 total visits'
+    : `${totalVisitsCount} ${totalVisitsCount === 1 ? 'total view' : 'total views'} across ${visitors.length} ${visitors.length === 1 ? 'visitor' : 'visitors'}`;
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ShrinkableHeader 
         title="Profile Visitors"
-        subtitle={`${visitors.length} total visits`}
+        subtitle={headerSubtitle}
         showBack={true}
         onBack={() => navigation.goBack()}
         headerPaddingVertical={headerPaddingVertical}
@@ -178,9 +192,33 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 13.5,
     color: colors.textMutedLight,
   },
+  visitMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  visitCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '18',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 12,
+  },
+  visitCountText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  visitTimeDot: {
+    color: colors.textMutedLight,
+    marginHorizontal: 6,
+    fontSize: 12,
+  },
   visitTime: {
     color: colors.textMutedLight,
-    fontSize: 12.5,
+    fontSize: 12,
   },
   emptyContainer: {
     flex: 1,

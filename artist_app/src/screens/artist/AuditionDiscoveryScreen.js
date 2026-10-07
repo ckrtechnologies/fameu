@@ -39,6 +39,7 @@ import {
   PROJECT_TYPES_WITH_ALL,
   DURATION_TYPES_WITH_ALL,
   TOP_CITIES_WITH_ALL,
+  ALL_CITIES_WITH_ALL,
   GENDERS_WITH_ALL,
 } from '../../constants/masterData';
 import { SEARCH_PLACEHOLDERS } from '../../constants/formPlaceholders';
@@ -55,7 +56,7 @@ export default function AuditionDiscoveryScreen() {
   const artistProfile = userProfileData?.data?.profile || userProfileData?.profile || {};
 
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'Relevant');
+  const [activeCategory, setActiveCategory] = useState(route.params?.initialCategory || 'All');
 
   useEffect(() => {
     if (route.params?.initialCategory) {
@@ -90,10 +91,8 @@ export default function AuditionDiscoveryScreen() {
     }
   } else if (activeCategory === 'Trending') {
     queryParams.filter = 'trending';
-  } else if (activeCategory === 'Relevant' || activeCategory === 'All') {
-    if (!search) {
-      queryParams.filter = 'relevant';
-    }
+  } else if (activeCategory === 'All') {
+    // Show all casting opportunities
   } else if (CATEGORY_MAP[activeCategory]) {
     queryParams.category = CATEGORY_MAP[activeCategory];
   }
@@ -149,7 +148,7 @@ export default function AuditionDiscoveryScreen() {
     { key: 'mode', label: 'Audition Mode', type: 'select', options: AUDITION_MODES_WITH_ALL },
     { key: 'category', label: 'Profession', type: 'select', options: CATEGORIES, multiSelect: true },
     { key: 'project_type', label: 'Project Type', type: 'select', options: PROJECT_TYPES_WITH_ALL },
-    { key: 'city', label: 'City', type: 'select', options: TOP_CITIES_WITH_ALL },
+    { key: 'city', label: 'City', type: 'select', options: ALL_CITIES_WITH_ALL },
     { key: 'duration_type', label: 'Duration', type: 'select', options: DURATION_TYPES_WITH_ALL },
     { key: 'gender_req', label: 'Gender', type: 'select', options: GENDERS_WITH_ALL },
     { key: 'age', label: 'Age Range', type: 'range', minKey: 'age_min', maxKey: 'age_max' }
@@ -234,7 +233,6 @@ export default function AuditionDiscoveryScreen() {
   const getCategoryLabel = (cat) => {
     if (cat === 'Live') return '🔴 Live';
     if (cat === 'Recommended') return '⭐ Recommended';
-    if (cat === 'Relevant') return '✨ Relevant';
     return cat;
   };
 

@@ -11,6 +11,14 @@ class AuditionService {
     return t;
   }
 
+  _parseCompensationNumbers(text) {
+    if (!text) return [];
+    // Match number sequences, handling Indian/international comma notation (e.g. "1,00,000", "25,000", "5000", "200")
+    const matches = String(text).match(/\b\d{1,3}(?:,\d{2,3})*\b|\b\d+\b/g);
+    if (!matches) return [];
+    return matches.map(m => parseInt(m.replace(/,/g, ''), 10)).filter(n => !isNaN(n) && n > 0);
+  }
+
   /**
    * Create a new audition (Hiring App)
    */
@@ -37,10 +45,18 @@ class AuditionService {
       ...extraProps 
     } = auditionData;
     
-    // Validate city if present in extraProps or auditionData
-    const city = extraProps.city || auditionData.city;
-    if (city && !INDIAN_CITIES.includes(city)) {
-      throw new Error(`Invalid city: ${city}`);
+    // Validate city against backend constant variable (prevent typos/spelling mistakes)
+    const rawCity = extraProps.city || auditionData.city;
+    let canonicalCity = null;
+    if (rawCity) {
+      const trimmed = String(rawCity).trim();
+      const matched = INDIAN_CITIES.find(c => c.toLowerCase() === trimmed.toLowerCase());
+      if (!matched) {
+        throw new Error(`Invalid city: "${rawCity}". Please select a valid city from the supported cities list.`);
+      }
+      canonicalCity = matched;
+      extraProps.city = matched;
+      if (auditionData.city) auditionData.city = matched;
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
@@ -113,7 +129,18 @@ class AuditionService {
       ...extraProps 
     } = auditionData;
 
-    const city = extraProps.city || auditionData.city;
+    const rawCity = extraProps.city || auditionData.city;
+    let city = undefined;
+    if (rawCity !== undefined) {
+      const trimmed = String(rawCity).trim();
+      const matched = INDIAN_CITIES.find(c => c.toLowerCase() === trimmed.toLowerCase());
+      if (!matched) {
+        throw new Error(`Invalid city: "${rawCity}". Please select a valid city from the supported cities list.`);
+      }
+      city = matched;
+      extraProps.city = matched;
+      if (auditionData.city !== undefined) auditionData.city = matched;
+    }
     const finalValidFrom = valid_from !== undefined ? valid_from : extraProps.valid_from;
     const finalValidTill = valid_till !== undefined ? valid_till : (expiry_date !== undefined ? expiry_date : extraProps.valid_till);
     const finalScriptText = script_text !== undefined ? script_text : (script !== undefined ? script : extraProps.script_text);
@@ -417,14 +444,17 @@ class AuditionService {
         if (comp && (comp === '0' || comp.includes('unpaid') || comp.includes('tfp') || comp.includes('expenses only'))) {
           return false;
         }
-        if (filters.min_budget) {
+        if (filters.min_budget && filters.min_budget !== 'All') {
+          if (filters.min_budget === 'Paid Only') {
+            return !comp.includes('unpaid') && !comp.includes('tfp') && comp !== '0';
+          }
           const cleanMin = String(filters.min_budget).replace(/[^\d]/g, '');
           const minVal = parseInt(cleanMin, 10);
           if (!isNaN(minVal) && minVal > 0) {
-            const numericMatch = comp.replace(/[^\d]/g, '');
-            if (numericMatch) {
-              const parsedNum = parseInt(numericMatch, 10);
-              return parsedNum >= minVal;
+            const nums = this._parseCompensationNumbers(i.compensation || i.budget);
+            if (nums.length > 0) {
+              const maxWage = Math.max(...nums);
+              return maxWage >= minVal;
             }
             return false;
           }
@@ -477,8 +507,8 @@ class AuditionService {
     if (sort === 'budget_high') {
       results.sort((a, b) => {
         const getBudgetNum = (item) => {
-          const m = String(item.compensation || item.budget || '').match(/\d[\d,]*/);
-          return m ? parseInt(m[0].replace(/,/g, ''), 10) : 0;
+          const nums = this._parseCompensationNumbers(item.compensation || item.budget);
+          return nums.length ? Math.max(...nums) : 0;
         };
         return getBudgetNum(b) - getBudgetNum(a);
       });

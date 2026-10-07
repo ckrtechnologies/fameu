@@ -123,6 +123,7 @@ export const TOP_CITIES = [
   'Other'
 ];
 export const TOP_CITIES_WITH_ALL = ['All', ...TOP_CITIES];
+export const ALL_CITIES_WITH_ALL = ['All', ...new Set([...TOP_CITIES.filter(c => c !== 'Other'), ...INDIAN_CITIES])];
 
 export const CATEGORY_MAP = {
   'Acting': 'Actor',
@@ -137,7 +138,7 @@ export const CATEGORY_MAP = {
 export const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
 
 export const QUICK_FILTER_CAPSULES = [
-  'Relevant',
+  'All',
   'Live',
   'Recommended',
   'Acting',

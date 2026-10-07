@@ -48,6 +48,7 @@ export const connectionsApi = apiSlice.injectEndpoints({
         url: `/connections/profile/${userId}/visit`,
         method: 'POST',
       }),
+      invalidatesTags: ['Profile', 'ProfileVisitors'],
     }),
   }),
 });

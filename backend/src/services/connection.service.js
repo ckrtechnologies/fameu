@@ -216,55 +216,74 @@ class ConnectionService {
         }
       }
 
-      // Skip self-visits
-      if (viewerId && viewerId === resolvedUserId) return;
-      if (!userRole) return;
-
-      if (userRole === 'artist') {
-        // Read current visit_count then increment
-        const { data: ap, error: readErr } = await supabase
+      // If userRole couldn't be determined, query artist_profiles fallback
+      if (!userRole) {
+        const { data: apFallback } = await supabase
           .from('artist_profiles')
-          .select('visit_count')
+          .select('id, user_id')
           .eq('user_id', resolvedUserId)
           .maybeSingle();
-
-        if (readErr) { console.warn('Visit read error (artist):', readErr.message); return; }
-
-        const newCount = (ap?.visit_count || 0) + 1;
-        const { error: updateErr } = await supabase
-          .from('artist_profiles')
-          .update({ visit_count: newCount })
-          .eq('user_id', resolvedUserId);
-
-        if (updateErr) console.warn('Visit update error (artist):', updateErr.message);
-
-      } else if (userRole === 'hiring') {
-        const { data: hp, error: readErr } = await supabase
-          .from('hiring_profiles')
-          .select('visit_count')
-          .eq('user_id', resolvedUserId)
-          .maybeSingle();
-
-        if (readErr) { console.warn('Visit read error (hiring):', readErr.message); return; }
-
-        const newCount = (hp?.visit_count || 0) + 1;
-        const { error: updateErr } = await supabase
-          .from('hiring_profiles')
-          .update({ visit_count: newCount })
-          .eq('user_id', resolvedUserId);
-
-        if (updateErr) console.warn('Visit update error (hiring):', updateErr.message);
+        if (apFallback) userRole = 'artist';
       }
 
-      // Add record to profile_visits table for the list view
-      if (viewerId) {
-        const { error: visitErr } = await supabase
+      // Skip self-visits (don't increment stats or record self as a visitor)
+      if (!viewerId || viewerId === resolvedUserId) {
+        return;
+      }
+
+      if (userRole === 'artist') {
+        const { data: ap } = await supabase
+          .from('artist_profiles')
+          .select('visit_count')
+          .eq('user_id', resolvedUserId)
+          .maybeSingle();
+
+        const newCount = (ap?.visit_count || 0) + 1;
+        await supabase
+          .from('artist_profiles')
+          .update({ visit_count: newCount })
+          .eq('user_id', resolvedUserId);
+
+      } else if (userRole === 'hiring') {
+        const { data: hp } = await supabase
+          .from('hiring_profiles')
+          .select('visit_count')
+          .eq('user_id', resolvedUserId)
+          .maybeSingle();
+
+        const newCount = (hp?.visit_count || 0) + 1;
+        await supabase
+          .from('hiring_profiles')
+          .update({ visit_count: newCount })
+          .eq('user_id', resolvedUserId);
+      }
+
+      // Track individual visitor and their visit frequency
+      const { data: existingVisit } = await supabase
+        .from('profile_visits')
+        .select('id, visit_count')
+        .eq('profile_user_id', resolvedUserId)
+        .eq('viewer_id', viewerId)
+        .maybeSingle();
+
+      if (existingVisit) {
+        const nextCount = (existingVisit.visit_count || 1) + 1;
+        await supabase
           .from('profile_visits')
-          .upsert(
-            { profile_user_id: resolvedUserId, viewer_id: viewerId, visit_date: new Date().toISOString() },
-            { onConflict: 'profile_user_id,viewer_id' }
-          );
-        if (visitErr) console.warn('profile_visits upsert error:', visitErr.message);
+          .update({
+            visit_count: nextCount,
+            visit_date: new Date().toISOString()
+          })
+          .eq('id', existingVisit.id);
+      } else {
+        await supabase
+          .from('profile_visits')
+          .insert({
+            profile_user_id: resolvedUserId,
+            viewer_id: viewerId,
+            visit_count: 1,
+            visit_date: new Date().toISOString()
+          });
       }
     } catch (err) {
       console.warn('recordProfileVisit error:', err.message);
@@ -322,10 +341,13 @@ class ConnectionService {
       if (conn) isFollowing = true;
     }
 
-    const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
+    const [{ count: followersCount }, { count: followingCount }, { count: visitorsCount }] = await Promise.all([
       supabase.from('connections').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
-      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', user.id)
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
+      supabase.from('profile_visits').select('*', { count: 'exact', head: true }).eq('profile_user_id', user.id)
     ]);
+
+    const totalViews = Math.max(Number(profile?.visit_count || 0), Number(visitorsCount || 0));
 
     return {
       id: user.id,
@@ -334,7 +356,7 @@ class ConnectionService {
       name: user.display_name || user.artist_profiles?.full_name || user.hiring_profiles?.company_name || 'User',
       followers_count: followersCount || 0,
       following_count: followingCount || 0,
-      visit_count: profile?.visit_count || 0,
+      visit_count: totalViews,
       is_following: isFollowing,
       role: user.role,
       email: user.email,
@@ -352,6 +374,7 @@ class ConnectionService {
       .from('profile_visits')
       .select(`
         visit_date,
+        visit_count,
         users!profile_visits_viewer_id_fkey (
           id,
           display_name,
@@ -372,18 +395,19 @@ class ConnectionService {
     // Format the response
     return data.map(v => {
       const user = v.users;
-      let name = user.display_name;
+      let name = user?.display_name;
       if (!name) {
-        if (user.role === 'artist' && user.artist_profiles?.[0]) name = user.artist_profiles[0].full_name;
-        else if (user.role === 'hiring' && user.hiring_profiles?.[0]) name = user.hiring_profiles[0].company_name;
+        if (user?.role === 'artist' && user?.artist_profiles?.[0]) name = user.artist_profiles[0].full_name;
+        else if (user?.role === 'hiring' && user?.hiring_profiles?.[0]) name = user.hiring_profiles[0].company_name;
         else name = 'User';
       }
       return {
-        id: user.id,
+        id: user?.id,
         name: name,
-        avatar_url: user.avatar_url,
-        role: user.role,
-        visited_at: v.visit_date
+        avatar_url: user?.avatar_url,
+        role: user?.role,
+        visited_at: v.visit_date,
+        visit_count: v.visit_count || 1
       };
     });
   }
