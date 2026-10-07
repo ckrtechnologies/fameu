@@ -78,20 +78,61 @@ const getFutureDateStr = (days = 30) => {
   return `${year}-${month}-${day}`;
 };
 
+const parseSafeDate = (val) => {
+  if (!val) return new Date();
+  if (val instanceof Date && !isNaN(val.getTime())) return new Date(val);
+  const str = String(val).trim();
+  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const y = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10) - 1;
+    const d = parseInt(match[3], 10);
+    return new Date(y, m, d);
+  }
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) return parsed;
+  return new Date();
+};
+
+const formatDateToYYYYMMDD = (val) => {
+  if (!val) return '';
+  if (typeof val === 'string') {
+    const match = val.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+  }
+  const d = val instanceof Date ? val : new Date(val);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const formatDateDisplay = (dateStr) => {
-  if (!dateStr) return '';
+  if (!dateStr || dateStr === 'NaN-NaN-NaN' || dateStr === 'Invalid Date') return '';
   try {
-    const parts = dateStr.split('-');
+    const parts = String(dateStr).split('T')[0].split('-');
     if (parts.length === 3) {
       const year = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;
       const day = parseInt(parts[2], 10);
+      if (isNaN(year) || isNaN(month) || isNaN(day)) return '';
       const d = new Date(year, month, day);
-      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      if (!isNaN(d.getTime())) {
+        const res = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        if (res && res !== 'Invalid Date') return res;
+      }
     }
-    return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const res = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      if (res && res !== 'Invalid Date') return res;
+    }
+    return '';
   } catch (e) {
-    return dateStr;
+    return '';
   }
 };
 
@@ -133,18 +174,32 @@ export default function CreateAuditionScreen({ route }) {
     specific_start_date: editAudition?.specific_start_date || '',
     specific_end_date: editAudition?.specific_end_date || '',
     gender_req: editAudition?.gender_req || 'Any',
-    budget_min: editAudition?.budget_min ? String(editAudition.budget_min) : '',
-    budget_max: editAudition?.budget_max ? String(editAudition.budget_max) : '',
-    budget: editAudition?.budget || '',
+    budget_min: editAudition?.budget_min ? String(editAudition.budget_min) : (() => {
+      const b = editAudition?.budget || editAudition?.compensation;
+      if (b && typeof b === 'string') {
+        const parts = b.split('-');
+        if (parts.length > 0) return parts[0].replace(/[^\d]/g, '');
+      }
+      return '';
+    })(),
+    budget_max: editAudition?.budget_max ? String(editAudition.budget_max) : (() => {
+      const b = editAudition?.budget || editAudition?.compensation;
+      if (b && typeof b === 'string') {
+        const parts = b.split('-');
+        if (parts.length > 1) return parts[1].replace(/[^\d]/g, '');
+      }
+      return '';
+    })(),
+    budget: editAudition?.budget || editAudition?.compensation || '',
     compensation_frequency: editAudition?.compensation_frequency || 'One Time',
     languages: editAudition?.languages ? (Array.isArray(editAudition.languages) ? editAudition.languages : String(editAudition.languages).split(', ')) : ['Hindi', 'English'],
     skills: editAudition?.skills ? (Array.isArray(editAudition.skills) ? editAudition.skills : String(editAudition.skills).split(', ')) : ['Acting'],
     vacancies: editAudition?.vacancies ? String(editAudition.vacancies) : '1',
     is_audition_required: editAudition?.is_audition_required !== undefined ? (editAudition.is_audition_required ? 'Yes (Audition Required)' : 'No') : 'Yes (Audition Required)',
-    valid_from: editAudition?.valid_from || getTodayDateStr(),
-    valid_till: editAudition?.valid_till || editAudition?.expiry_date || getFutureDateStr(30),
+    valid_from: editAudition?.valid_from ? formatDateToYYYYMMDD(editAudition.valid_from) : getTodayDateStr(),
+    valid_till: (editAudition?.valid_till || editAudition?.expiry_date) ? formatDateToYYYYMMDD(editAudition?.valid_till || editAudition?.expiry_date) : getFutureDateStr(30),
     job_validity_days: editAudition?.job_validity_days ? String(editAudition.job_validity_days) : '30',
-    expiry_date: editAudition?.expiry_date || editAudition?.valid_till || getFutureDateStr(30),
+    expiry_date: editAudition?.expiry_date ? formatDateToYYYYMMDD(editAudition.expiry_date) : ((editAudition?.valid_till) ? formatDateToYYYYMMDD(editAudition.valid_till) : getFutureDateStr(30)),
     tags: editAudition?.tags ? (Array.isArray(editAudition.tags) ? editAudition.tags.join(', ') : String(editAudition.tags)) : '',
     age_min: editAudition?.age_min ? String(editAudition.age_min) : '18',
     age_max: editAudition?.age_max ? String(editAudition.age_max) : '35',
@@ -157,7 +212,7 @@ export default function CreateAuditionScreen({ route }) {
       editAudition?.audition_type === 'scheduled' ? 'Scheduled' :
         editAudition?.audition_type === 'online' ? 'Online' : 'Walk-in'),
     walk_in_venue: editAudition?.venue_address || '',
-    walk_in_date: editAudition?.audition_date || '',
+    walk_in_date: editAudition?.audition_date ? formatDateToYYYYMMDD(editAudition.audition_date) : '',
     walk_in_time: editAudition?.audition_time || '10:00 AM',
     latitude: editAudition?.lat ? String(editAudition.lat) : '19.0760',
     longitude: editAudition?.lng ? String(editAudition.lng) : '72.8777',
@@ -274,7 +329,7 @@ export default function CreateAuditionScreen({ route }) {
         showError('Validity Required', 'Please choose a Validity Till date.');
         return false;
       }
-      if (new Date(form.valid_till) < new Date(form.valid_from)) {
+      if (parseSafeDate(form.valid_till) < parseSafeDate(form.valid_from)) {
         showError('Invalid Validity Range', 'Validity Till date cannot be earlier than Validity From date.');
         return false;
       }
@@ -299,14 +354,28 @@ export default function CreateAuditionScreen({ route }) {
 
   const handleApplyPresetValidity = (days) => {
     const numDays = Number(days) || 30;
-    const baseStr = form.valid_from ? form.valid_from.replace(/-/g, '/') : null;
-    const baseDate = baseStr ? new Date(baseStr) : new Date();
-    const targetDate = new Date(baseDate);
+    
+    let targetDate = new Date();
+    const baseStr = form.valid_from;
+    
+    if (baseStr && typeof baseStr === 'string') {
+      const match = baseStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        targetDate = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
+      }
+    }
+    
     targetDate.setDate(targetDate.getDate() + numDays);
+    
     const year = targetDate.getFullYear();
     const month = String(targetDate.getMonth() + 1).padStart(2, '0');
     const day = String(targetDate.getDate()).padStart(2, '0');
     const formatted = `${year}-${month}-${day}`;
+
+    if (isNaN(year) || isNaN(targetDate.getMonth()) || isNaN(targetDate.getDate())) {
+      return; // prevent setting invalid date
+    }
+
     setForm(prev => ({
       ...prev,
       valid_till: formatted,
@@ -363,20 +432,21 @@ export default function CreateAuditionScreen({ route }) {
       const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedDate.getDate()).padStart(2, '0');
       const formatted = `${year}-${month}-${day}`;
+
       if (activeDatePicker === 'walk_in') {
         handleChange('walk_in_date', formatted);
       } else if (activeDatePicker === 'start') {
         handleChange('specific_start_date', formatted);
       } else if (activeDatePicker === 'end') {
         handleChange('specific_end_date', formatted);
-      } else if (activeDatePicker === 'expiry') {
-        handleChange('expiry_date', formatted);
-        handleChange('valid_till', formatted);
+      } else if (activeDatePicker === 'expiry' || activeDatePicker === 'valid_till') {
+        setForm(prev => ({
+          ...prev,
+          valid_till: formatted,
+          expiry_date: formatted,
+        }));
       } else if (activeDatePicker === 'valid_from') {
         handleChange('valid_from', formatted);
-      } else if (activeDatePicker === 'valid_till') {
-        handleChange('valid_till', formatted);
-        handleChange('expiry_date', formatted);
       }
       setActiveDatePicker(null);
     }
@@ -523,14 +593,14 @@ export default function CreateAuditionScreen({ route }) {
       if (isAuditionReq && (form.audition_type === 'Walk-in' || form.audition_type === 'Scheduled')) {
         payload.venue_address = form.walk_in_venue || form.city;
         payload.audition_date = form.walk_in_date || form.valid_from || new Date().toISOString().split('T')[0];
-        payload.date = form.walk_in_date || form.valid_from || new Date().toISOString().split('T')[0];
+        payload.date = payload.audition_date;
         payload.audition_time = form.walk_in_time || '10:00 AM';
         payload.lat = parseFloat(form.latitude) || 19.0760;
         payload.lng = parseFloat(form.longitude) || 72.8777;
       } else {
         payload.venue_address = form.walk_in_venue || form.city;
-        payload.audition_date = form.valid_from || new Date().toISOString().split('T')[0];
-        payload.date = form.valid_from || new Date().toISOString().split('T')[0];
+        payload.audition_date = form.walk_in_date || form.valid_till || form.valid_from || new Date().toISOString().split('T')[0];
+        payload.date = payload.audition_date;
         payload.audition_time = form.walk_in_time || '10:00 AM';
       }
 
@@ -1040,7 +1110,9 @@ export default function CreateAuditionScreen({ route }) {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {[7, 15, 30, 45, 60].map((days) => {
                     const isSelected = form.valid_from && form.valid_till && (() => {
-                      const diffTime = Math.abs(new Date(form.valid_till) - new Date(form.valid_from));
+                      const d1 = parseSafeDate(form.valid_from);
+                      const d2 = parseSafeDate(form.valid_till);
+                      const diffTime = Math.abs(d2.getTime() - d1.getTime());
                       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                       return diffDays === days;
                     })();
@@ -1144,7 +1216,7 @@ export default function CreateAuditionScreen({ route }) {
                           }}
                         >
                           <Text style={{ color: form.walk_in_date ? colors.textMainLight : colors.textMutedLight, fontWeight: '700' }}>
-                            {form.walk_in_date || 'YYYY-MM-DD'}
+                            {formatDateDisplay(form.walk_in_date) || 'YYYY-MM-DD'}
                           </Text>
                           <Icon name="calendar" size={18} color={colors.primary} />
                         </TouchableOpacity>
@@ -1163,6 +1235,7 @@ export default function CreateAuditionScreen({ route }) {
                         </TouchableOpacity>
                       </View>
                     </View>
+
                   </View>
                 )}
               </>
@@ -1433,11 +1506,11 @@ export default function CreateAuditionScreen({ route }) {
       {showDatePicker && (
         <DateTimePicker
           value={
-            activeDatePicker === 'valid_from' && form.valid_from ? new Date(form.valid_from) :
-            activeDatePicker === 'valid_till' && form.valid_till ? new Date(form.valid_till) :
-            activeDatePicker === 'start' && form.specific_start_date ? new Date(form.specific_start_date) :
-            activeDatePicker === 'end' && form.specific_end_date ? new Date(form.specific_end_date) :
-            activeDatePicker === 'walk_in' && form.walk_in_date ? new Date(form.walk_in_date) :
+            activeDatePicker === 'valid_from' && form.valid_from ? parseSafeDate(form.valid_from) :
+            activeDatePicker === 'valid_till' && form.valid_till ? parseSafeDate(form.valid_till) :
+            activeDatePicker === 'start' && form.specific_start_date ? parseSafeDate(form.specific_start_date) :
+            activeDatePicker === 'end' && form.specific_end_date ? parseSafeDate(form.specific_end_date) :
+            activeDatePicker === 'walk_in' && form.walk_in_date ? parseSafeDate(form.walk_in_date) :
             new Date()
           }
           mode="date"
@@ -1445,8 +1518,10 @@ export default function CreateAuditionScreen({ route }) {
           onChange={handleDateChange}
           minimumDate={
             activeDatePicker === 'valid_till' && form.valid_from
-              ? new Date(form.valid_from)
-              : (activeDatePicker === 'end' && form.specific_start_date ? new Date(form.specific_start_date) : new Date())
+              ? parseSafeDate(form.valid_from)
+              : (activeDatePicker === 'end' && form.specific_start_date
+                  ? parseSafeDate(form.specific_start_date)
+                  : (activeDatePicker === 'walk_in' && form.valid_from ? parseSafeDate(form.valid_from) : new Date()))
           }
         />
       )}

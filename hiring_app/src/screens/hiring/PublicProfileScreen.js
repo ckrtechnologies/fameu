@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Image, ActivityIndicator, Alert, TouchableOpacity, Modal, Dimensions, Linking , RefreshControl, FlatList, Animated, Text, Share, TextInput } from 'react-native';
 import Video from 'react-native-video';
 const { width } = Dimensions.get('window');
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppIcon, {
   Icon,
   BasicInfoSectionIcon,
@@ -147,6 +147,7 @@ export default function PublicProfileScreen() {
   const styles = getStyles(colors);
   const route = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { username, scrollToComments } = route.params;
   
   const currentUserId = useSelector((state) => state.auth.user?.id);
@@ -316,8 +317,8 @@ export default function PublicProfileScreen() {
   const isSelf = currentUserId === profileData.id;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackBtn}>
           <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
         </TouchableOpacity>
@@ -1220,7 +1221,7 @@ export default function PublicProfileScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -1615,7 +1616,7 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
   },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.m },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '100%', backgroundColor: colors.surfaceLight, borderRadius: 12, padding: spacing.l },
   auditionSelectBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: colors.borderLight, borderRadius: 8, marginBottom: 8 },
   closeModalBtn: {

@@ -60,14 +60,16 @@ class AuditionService {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
+    const normType = this._normalizeAuditionType(audition_type);
     const computedValidFrom = valid_from || todayStr;
     const computedValidTill = valid_till || expiry_date || date || null;
+    const computedAuditionDate = audition_date || date || null;
     const finalScriptText = script_text !== undefined ? script_text : (script !== undefined ? script : (extraProps.script_text || null));
 
     const extraMeta = JSON.stringify({
       budget: budget || compensation,
       gender_req: gender_req || gender,
-      city,
+      city: canonicalCity || extraProps.city,
       valid_from: computedValidFrom,
       valid_till: computedValidTill,
       script_text: finalScriptText,
@@ -83,12 +85,12 @@ class AuditionService {
       gender: gender || gender_req || 'Any',
       age_min: age_min !== undefined && age_min !== null ? Number(age_min) : 0,
       age_max: age_max !== undefined && age_max !== null ? Number(age_max) : 75,
-      audition_type: this._normalizeAuditionType(audition_type),
+      audition_type: normType,
       venue_address: venue_address || extraProps.walk_in_venue || null,
       lat: lat ? parseFloat(lat) : null,
       lng: lng ? parseFloat(lng) : null,
-      audition_date: audition_date || date || null,
-      date: date || computedValidTill || audition_date || null,
+      audition_date: computedAuditionDate,
+      date: computedAuditionDate || computedValidTill || null,
       valid_from: computedValidFrom,
       valid_till: computedValidTill,
       script_text: finalScriptText,
