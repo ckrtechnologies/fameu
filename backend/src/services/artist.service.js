@@ -183,6 +183,7 @@ class ArtistService {
 
     return {
       ...profile,
+      visit_count: profile.visit_count || 0,
       alt_number: profile.alt_number || profile.alternate_phone || '',
       category_details: categoryDetails,
       stats: {

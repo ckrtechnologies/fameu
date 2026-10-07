@@ -136,6 +136,19 @@ export const CATEGORY_MAP = {
 
 export const UI_CATEGORIES = Object.keys(CATEGORY_MAP);
 
+export const QUICK_FILTER_CAPSULES = [
+  'Relevant',
+  'Live',
+  'Recommended',
+  'Acting',
+  'Modeling',
+  'Singing',
+  'Dancing',
+  'Writing',
+  'Direction',
+  'Crew / Tech'
+];
+
 export const DEFAULT_FILTERS = {
   category: 'All',
   project_type: 'All',

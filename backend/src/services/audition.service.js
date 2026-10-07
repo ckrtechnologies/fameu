@@ -241,9 +241,9 @@ class AuditionService {
 
     // Home Screen specific filters
     if (filters.filter === 'live' || filters.is_live === 'true' || filters.is_live === true) {
-      // Use IST timezone to match user's local time accurately
+      // Use IST timezone to match user's local time accurately, or check is_live flag
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-      query = query.eq('audition_date', today);
+      query = query.or(`audition_date.eq.${today},is_live.eq.true`);
     }
 
     if (filters.filter === 'trending' || filters.sort_by === 'popular') {
@@ -251,8 +251,8 @@ class AuditionService {
     }
 
     let relevantCategories = [];
-    if (filters.filter === 'relevant' && userId) {
-      const { data: profile } = await supabase.from('artist_profiles').select('categories').eq('user_id', userId).single();
+    if ((filters.filter === 'relevant' || filters.filter === 'recommended') && userId) {
+      const { data: profile } = await supabase.from('artist_profiles').select('categories, gender, city').eq('user_id', userId).single();
       if (profile && Array.isArray(profile.categories) && profile.categories.length > 0) {
         relevantCategories = profile.categories.map(c => normalize(c)).filter(Boolean);
       }
@@ -412,28 +412,25 @@ class AuditionService {
     // 6. Compensation / Paid Filtering
     if (filters.is_paid === true || filters.is_paid === 'true' || filters.is_paid === 'paid' || filters.min_budget) {
       results = results.filter(i => {
+        if (i.is_paid === false) return false;
         const comp = (i.compensation || i.budget || '').toLowerCase().trim();
-        if (!comp || comp === '0' || comp.includes('unpaid') || comp.includes('tfp') || comp.includes('expenses only')) {
+        if (comp && (comp === '0' || comp.includes('unpaid') || comp.includes('tfp') || comp.includes('expenses only'))) {
           return false;
+        }
+        if (filters.min_budget) {
+          const cleanMin = String(filters.min_budget).replace(/[^\d]/g, '');
+          const minVal = parseInt(cleanMin, 10);
+          if (!isNaN(minVal) && minVal > 0) {
+            const numericMatch = comp.replace(/[^\d]/g, '');
+            if (numericMatch) {
+              const parsedNum = parseInt(numericMatch, 10);
+              return parsedNum >= minVal;
+            }
+            return false;
+          }
         }
         return true;
       });
-    }
-
-    if (filters.min_budget) {
-      const cleanMin = String(filters.min_budget).replace(/[^\d]/g, '');
-      const minVal = parseInt(cleanMin, 10);
-      if (!isNaN(minVal) && minVal > 0) {
-        results = results.filter(i => {
-          const compStr = String(i.compensation || i.budget || '');
-          const numericMatch = compStr.replace(/[^\d]/g, '');
-          if (numericMatch) {
-            const parsedNum = parseInt(numericMatch, 10);
-            return parsedNum >= minVal;
-          }
-          return false;
-        });
-      }
     }
 
     // 7. Gender Filter

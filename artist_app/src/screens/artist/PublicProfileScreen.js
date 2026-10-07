@@ -112,10 +112,11 @@ export default function PublicProfileScreen() {
 
   // Record a profile visit when the profile loads (skip self-views)
   React.useEffect(() => {
-    if (profileData?.id && currentUserId !== profileData.id) {
-      recordVisit(profileData.id).catch(() => {}); // Fire-and-forget
+    const targetUserId = profileData?.user_id || profileData?.id;
+    if (targetUserId && currentUserId !== targetUserId) {
+      recordVisit(targetUserId).catch(() => {}); // Fire-and-forget
     }
-  }, [profileData?.id, currentUserId, recordVisit]);
+  }, [profileData?.user_id, profileData?.id, currentUserId, recordVisit]);
   
   const [activeTab, setActiveTab] = useState('Overview');
   const [showComments, setShowComments] = useState(false);
@@ -129,6 +130,7 @@ export default function PublicProfileScreen() {
   }, [profileData?.id]);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [modalImages, setModalImages] = useState([]);
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -252,7 +254,17 @@ export default function PublicProfileScreen() {
         >
           {/* Avatar & Stats Header Area */}
           <View style={styles.profileHeader}>
-            <View style={styles.avatarWrapper}>
+            <TouchableOpacity 
+              style={styles.avatarWrapper}
+              activeOpacity={profileData.avatar_url ? 0.85 : 1}
+              onPress={() => {
+                if (profileData.avatar_url) {
+                  setModalImages([profileData.avatar_url]);
+                  setSelectedImageIndex(0);
+                  setIsImageModalVisible(true);
+                }
+              }}
+            >
               {profileData.avatar_url ? (
                 <ImageWithFallback source={{ uri: profileData.avatar_url }} style={styles.avatar} />
               ) : (
@@ -262,7 +274,7 @@ export default function PublicProfileScreen() {
                   </Text>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
             
             <View style={styles.statsContainer}>
               <TouchableOpacity 
@@ -569,12 +581,12 @@ export default function PublicProfileScreen() {
                         profileData.profile.age ? { key: 'age', label: 'Age', value: `${profileData.profile.age} yrs`, IconComp: AgeProfileIcon, bg: '#FFF7ED' } : null,
                         profileData.profile.gender ? { key: 'gender', label: 'Gender', value: profileData.profile.gender, IconComp: GenderProfileIcon, bg: '#FDF2F8' } : null,
                         profileData.profile.height ? { key: 'height', label: 'Height', value: profileData.profile.height, IconComp: HeightProfileIcon, bg: '#ECFDF5' } : null,
-                        profileData.profile.weight ? { key: 'weight', label: 'Weight', value: `${profileData.profile.weight} kg`, IconComp: WeightProfileIcon, bg: '#EFF6FF' } : null,
+                        profileData.profile.weight ? { key: 'weight', label: 'Weight', value: `${profileData.profile.weight} kg`, IconComp: WeightProfileIcon, bg: '#FEF3C7' } : null,
                         (profileData.profile.alt_number || profileData.profile.alternate_phone) ? { key: 'alt_phone', label: 'Alt. Number', value: profileData.profile.alt_number || profileData.profile.alternate_phone, IconComp: PhoneProfileIcon, bg: '#ECFDF5' } : null,
-                        (Array.isArray(profileData.profile.languages) && profileData.profile.languages.length > 0) ? { key: 'languages', label: 'Languages', value: profileData.profile.languages.join(', '), IconComp: LanguagesProfileIcon, bg: '#EFF6FF' } : null,
+                        (Array.isArray(profileData.profile.languages) && profileData.profile.languages.length > 0) ? { key: 'languages', label: 'Languages', value: profileData.profile.languages.join(', '), IconComp: LanguagesProfileIcon, bg: '#FEF9C3' } : null,
                         profileData.profile.city ? { key: 'city', label: 'Base City', value: profileData.profile.city, IconComp: NearbySpotlightIcon, bg: '#F0FDF4' } : null,
                         profileData.profile.availability_type ? { key: 'availability', label: 'Availability', value: profileData.profile.availability_type, IconComp: null, iconName: 'availability_type', bg: '#FFFBEB' } : null,
-                        profileData.profile.available_dates ? { key: 'dates', label: 'Dates', value: profileData.profile.available_dates, IconComp: null, iconName: 'available_dates', bg: '#EEF2FF' } : null,
+                        profileData.profile.available_dates ? { key: 'dates', label: 'Dates', value: profileData.profile.available_dates, IconComp: null, iconName: 'available_dates', bg: '#FEF3C7' } : null,
                       ].filter(Boolean);
 
                       return standardInfoItems.map((item) => {
@@ -779,7 +791,15 @@ export default function PublicProfileScreen() {
                       {profileData.profile.photo_urls && profileData.profile.photo_urls.length > 0 ? (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: 0 }}>
                           {parseArray(profileData.profile.photo_urls).map((imgUrl, index) => (
-                            <TouchableOpacity key={index} onPress={() => { setSelectedImageIndex(index); setIsImageModalVisible(true); }} style={{ marginRight: spacing.s }}>
+                            <TouchableOpacity 
+                              key={index} 
+                              onPress={() => { 
+                                setModalImages(parseArray(profileData.profile.photo_urls));
+                                setSelectedImageIndex(index); 
+                                setIsImageModalVisible(true); 
+                              }} 
+                              style={{ marginRight: spacing.s }}
+                            >
                               <Image source={{ uri: imgUrl }} style={styles.galleryItem} />
                             </TouchableOpacity>
                           ))}
@@ -800,7 +820,7 @@ export default function PublicProfileScreen() {
                   if (!details || entries.length === 0) {
                     return (
                       <View style={styles.emptyPortfolioCard}>
-                        <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#DBEAFE' }}>
+                        <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: 'rgba(227, 176, 75, 0.12)', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(227, 176, 75, 0.3)' }}>
                           <ProfessionCategoryIcon categoryName={activeTab} size={32} />
                         </View>
                         <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMainLight, marginBottom: 4, textTransform: 'capitalize' }}>
@@ -817,7 +837,7 @@ export default function PublicProfileScreen() {
                     <View style={{ marginBottom: 20 }}>
                       {/* Profession Section Header */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 14, borderRadius: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.borderLight }}>
-                        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: '#DBEAFE' }}>
+                        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(227, 176, 75, 0.12)', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: 'rgba(227, 176, 75, 0.3)' }}>
                           <ProfessionCategoryIcon categoryName={activeTab} size={26} />
                         </View>
                         <View style={{ flex: 1 }}>
@@ -1036,7 +1056,7 @@ export default function PublicProfileScreen() {
             
             {/* Artist Profile Comments */}
             {profileData.profile && profileData.profile.id && (
-              <View style={{ width: '100%', paddingHorizontal: spacing.l, marginBottom: 24, marginTop: 12 }}>
+              <View style={{ width: '100%', paddingHorizontal: 0, marginBottom: 24, marginTop: 12 }}>
                 {showComments && <CommentsSection targetType="artist_profile" targetId={profileData.profile.id} />}
               </View>
             )}
@@ -1162,7 +1182,7 @@ export default function PublicProfileScreen() {
               )}
 
               {hiringProfile && hiringProfile.id && (
-                <View style={{ width: '100%', paddingHorizontal: spacing.l, marginBottom: 24, marginTop: spacing.l }}>
+                <View style={{ width: '100%', paddingHorizontal: 0, marginBottom: 24, marginTop: spacing.l }}>
                   {showComments && <CommentsSection targetType="profile" targetId={hiringProfile.id} />}
                 </View>
               )}
@@ -1176,9 +1196,9 @@ export default function PublicProfileScreen() {
           <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsImageModalVisible(false)}>
             <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
-          {profileData?.profile?.photo_urls && profileData.profile.photo_urls.length > 0 && (
+          {modalImages && modalImages.length > 0 && (
             <FlatList
-              data={profileData.profile.photo_urls}
+              data={modalImages}
               keyExtractor={(item, index) => index.toString()}
               horizontal
               pagingEnabled
@@ -1320,7 +1340,7 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: 44,
     borderWidth: 2,
     borderColor: colors.primary,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.08)',
   },
   avatar: {
     width: 78,
@@ -1331,7 +1351,7 @@ const getStyles = (colors) => StyleSheet.create({
     width: 78,
     height: 78,
     borderRadius: 39,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1383,7 +1403,7 @@ const getStyles = (colors) => StyleSheet.create({
   roleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -1391,12 +1411,12 @@ const getStyles = (colors) => StyleSheet.create({
     marginTop: 6,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: 'rgba(227, 176, 75, 0.35)',
   },
   roleBadgeText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#1D4ED8',
+    color: colors.primary,
     textTransform: 'capitalize',
   },
   bioCard: {
@@ -1481,9 +1501,9 @@ const getStyles = (colors) => StyleSheet.create({
   secondaryActionBtn: {
     flex: 1,
     height: 44,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(227, 176, 75, 0.35)',
     borderRadius: 14,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1501,9 +1521,9 @@ const getStyles = (colors) => StyleSheet.create({
     height: 44,
     paddingHorizontal: 14,
     borderRadius: 14,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(227, 176, 75, 0.35)',
   },
   shareProfileBtnText: {
     fontSize: 13.5,
@@ -1597,7 +1617,9 @@ const getStyles = (colors) => StyleSheet.create({
     height: '80%',
   },
   chip: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)', // Light blue for chips
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 176, 75, 0.25)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -1709,9 +1731,9 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMainLight,
   },
   languageChip: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: 'rgba(227, 176, 75, 0.3)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,

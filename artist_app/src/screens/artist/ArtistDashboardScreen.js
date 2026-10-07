@@ -692,7 +692,7 @@ export default function ArtistDashboardScreen() {
     const totalApps = myApplications.length;
     const shortlistedStatuses = ['shortlisted', 'interview_scheduled', 'hired'];
     const shortlisted = myApplications.filter(a => shortlistedStatuses.includes(a.status?.toLowerCase())).length;
-    const visits = profile?.visit_count || 0;
+    const visits = profile?.visit_count ?? profile?.stats?.views ?? 0;
 
     return (
       <View style={styles.statsContainer}>
@@ -1358,6 +1358,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   bodyContent: {
     paddingHorizontal: spacing.l,
+    paddingTop: 16,
   },
   loadingSafeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundLight },
   
@@ -1487,7 +1488,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
 
   // 3. Stats
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: -4, marginBottom: spacing.l },
+  statsContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginHorizontal: -4, 
+    marginTop: 6,
+    marginBottom: spacing.l 
+  },
   statCard: { flex: 1, backgroundColor: colors.surface, paddingVertical: 16, paddingHorizontal: 6, borderRadius: 18, alignItems: 'center', marginHorizontal: 4, borderWidth: 1.2, borderColor: colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   statIconBadge: { width: 48, height: 48, borderRadius: 16, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   statNumber: { fontSize: 22, fontWeight: '900', marginBottom: 2, color: colors.textMain },

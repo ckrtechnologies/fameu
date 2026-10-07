@@ -37,6 +37,7 @@ import { useGetArtistDetailsQuery, useInviteArtistMutation, useReportArtistMutat
 import { useStartConversationMutation } from '../../services/chatApi';
 import { useGetCompanyProfileQuery, useGetDashboardDataQuery } from '../../services/hiringApi';
 import { useGetMyAuditionsQuery } from '../../services/auditionApi';
+import { useRecordVisitMutation } from '../../services/connectionsApi';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/forms/CustomButton';
 import SkeletonLoader from '../../components/SkeletonLoader';
@@ -80,8 +81,16 @@ export default function ArtistProfileScreen() {
   const [startConversation, { isLoading: isStartingChat }] = useStartConversationMutation();
   const [inviteArtist, { isLoading: isInviting }] = useInviteArtistMutation();
   const [reportArtist, { isLoading: isReporting }] = useReportArtistMutation();
+  const [recordVisit] = useRecordVisitMutation();
   const { data: dashboardData } = useGetDashboardDataQuery();
   const { data: myAuditionsResponse } = useGetMyAuditionsQuery();
+
+  React.useEffect(() => {
+    const targetUserId = response?.data?.user_id || response?.data?.id || id;
+    if (targetUserId) {
+      recordVisit(targetUserId).catch(() => {});
+    }
+  }, [response?.data?.user_id, response?.data?.id, id, recordVisit]);
 
   
   const parseArray = (str) => {

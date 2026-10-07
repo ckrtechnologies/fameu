@@ -174,26 +174,59 @@ class ConnectionService {
    *                                    ALTER TABLE hiring_profiles ADD COLUMN visit_count INTEGER DEFAULT 0;
    */
   async recordProfileVisit(profileUserId, viewerId) {
-    // Skip self-visits
-    if (viewerId && viewerId === profileUserId) return;
+    if (!profileUserId) return;
 
     try {
-      // Get the user's role to know which profile table to update
-      const { data: userRow, error: userErr } = await supabase
+      let resolvedUserId = profileUserId;
+      let userRole = null;
+
+      // 1. Try resolving directly from users table
+      const { data: userRow } = await supabase
         .from('users')
-        .select('role')
+        .select('id, role')
         .eq('id', profileUserId)
-        .single();
+        .maybeSingle();
 
-      if (userErr || !userRow) return;
+      if (userRow) {
+        resolvedUserId = userRow.id;
+        userRole = userRow.role;
+      } else {
+        // 2. Check if profileUserId is an artist_profiles id
+        const { data: apRow } = await supabase
+          .from('artist_profiles')
+          .select('id, user_id')
+          .eq('id', profileUserId)
+          .maybeSingle();
 
-      if (userRow.role === 'artist') {
+        if (apRow) {
+          resolvedUserId = apRow.user_id;
+          userRole = 'artist';
+        } else {
+          // 3. Check if profileUserId is a hiring_profiles id
+          const { data: hpRow } = await supabase
+            .from('hiring_profiles')
+            .select('id, user_id')
+            .eq('id', profileUserId)
+            .maybeSingle();
+
+          if (hpRow) {
+            resolvedUserId = hpRow.user_id;
+            userRole = 'hiring';
+          }
+        }
+      }
+
+      // Skip self-visits
+      if (viewerId && viewerId === resolvedUserId) return;
+      if (!userRole) return;
+
+      if (userRole === 'artist') {
         // Read current visit_count then increment
         const { data: ap, error: readErr } = await supabase
           .from('artist_profiles')
           .select('visit_count')
-          .eq('user_id', profileUserId)
-          .single();
+          .eq('user_id', resolvedUserId)
+          .maybeSingle();
 
         if (readErr) { console.warn('Visit read error (artist):', readErr.message); return; }
 
@@ -201,16 +234,16 @@ class ConnectionService {
         const { error: updateErr } = await supabase
           .from('artist_profiles')
           .update({ visit_count: newCount })
-          .eq('user_id', profileUserId);
+          .eq('user_id', resolvedUserId);
 
         if (updateErr) console.warn('Visit update error (artist):', updateErr.message);
 
-      } else if (userRow.role === 'hiring') {
+      } else if (userRole === 'hiring') {
         const { data: hp, error: readErr } = await supabase
           .from('hiring_profiles')
           .select('visit_count')
-          .eq('user_id', profileUserId)
-          .single();
+          .eq('user_id', resolvedUserId)
+          .maybeSingle();
 
         if (readErr) { console.warn('Visit read error (hiring):', readErr.message); return; }
 
@@ -218,7 +251,7 @@ class ConnectionService {
         const { error: updateErr } = await supabase
           .from('hiring_profiles')
           .update({ visit_count: newCount })
-          .eq('user_id', profileUserId);
+          .eq('user_id', resolvedUserId);
 
         if (updateErr) console.warn('Visit update error (hiring):', updateErr.message);
       }
@@ -228,7 +261,7 @@ class ConnectionService {
         const { error: visitErr } = await supabase
           .from('profile_visits')
           .upsert(
-            { profile_user_id: profileUserId, viewer_id: viewerId, visit_date: new Date().toISOString() },
+            { profile_user_id: resolvedUserId, viewer_id: viewerId, visit_date: new Date().toISOString() },
             { onConflict: 'profile_user_id,viewer_id' }
           );
         if (visitErr) console.warn('profile_visits upsert error:', visitErr.message);

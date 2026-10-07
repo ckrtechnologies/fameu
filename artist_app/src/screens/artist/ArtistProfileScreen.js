@@ -374,7 +374,7 @@ export default function ArtistProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.profileActionBtn, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}
+              style={[styles.profileActionBtn, { backgroundColor: 'rgba(227, 176, 75, 0.12)', borderColor: 'rgba(227, 176, 75, 0.35)' }]}
               activeOpacity={0.8}
               onPress={async () => {
                 try {
@@ -382,7 +382,7 @@ export default function ArtistProfileScreen() {
                     message: `Check out my Fameu artist profile: https://fameu.in/artist/${profile?.username || profile?.id}`,
                     title: 'Share My Profile',
                   });
-                } catch (e) { console.log(e); }
+                } catch (e) { /* silent catch */ }
               }}
             >
               <ShareProfileIcon size={18} style={{ marginRight: 8 }} />
@@ -502,12 +502,12 @@ export default function ArtistProfileScreen() {
                     profile.age ? { key: 'age', label: 'Age', value: `${profile.age} yrs`, IconComp: AgeProfileIcon, bg: '#FFF7ED' } : null,
                     profile.gender ? { key: 'gender', label: 'Gender', value: profile.gender, IconComp: GenderProfileIcon, bg: '#FDF2F8' } : null,
                     profile.height ? { key: 'height', label: 'Height', value: profile.height, IconComp: HeightProfileIcon, bg: '#ECFDF5' } : null,
-                    profile.weight ? { key: 'weight', label: 'Weight', value: `${profile.weight} kg`, IconComp: WeightProfileIcon, bg: '#EFF6FF' } : null,
+                    profile.weight ? { key: 'weight', label: 'Weight', value: `${profile.weight} kg`, IconComp: WeightProfileIcon, bg: '#FEF3C7' } : null,
                     (profile.alt_number || profile.alternate_phone) ? { key: 'alt_phone', label: 'Alt. Number', value: profile.alt_number || profile.alternate_phone, IconComp: PhoneProfileIcon, bg: '#ECFDF5' } : null,
-                    (Array.isArray(profile.languages) && profile.languages.length > 0) ? { key: 'languages', label: 'Languages', value: profile.languages.join(', '), IconComp: LanguagesProfileIcon, bg: '#EFF6FF' } : null,
+                    (Array.isArray(profile.languages) && profile.languages.length > 0) ? { key: 'languages', label: 'Languages', value: profile.languages.join(', '), IconComp: LanguagesProfileIcon, bg: '#FEF9C3' } : null,
                     profile.city ? { key: 'city', label: 'Base City', value: profile.city, IconComp: NearbySpotlightIcon, bg: '#F0FDF4' } : null,
                     profile.availability_type ? { key: 'availability', label: 'Availability', value: profile.availability_type, IconComp: null, iconName: 'availability_type', bg: '#FFFBEB' } : null,
-                    profile.available_dates ? { key: 'dates', label: 'Dates', value: profile.available_dates, IconComp: null, iconName: 'available_dates', bg: '#EEF2FF' } : null,
+                    profile.available_dates ? { key: 'dates', label: 'Dates', value: profile.available_dates, IconComp: null, iconName: 'available_dates', bg: '#FEF3C7' } : null,
                   ].filter(Boolean);
 
                   return standardInfoItems.map((item) => {
@@ -748,7 +748,7 @@ export default function ArtistProfileScreen() {
               if (!details || entries.length === 0) {
                 return (
                   <View style={styles.emptyPortfolioCard}>
-                    <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#DBEAFE' }}>
+                    <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: 'rgba(227, 176, 75, 0.12)', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(227, 176, 75, 0.3)' }}>
                       <ProfessionCategoryIcon categoryName={activeTab} size={32} />
                     </View>
                     <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMainLight, marginBottom: 4, textTransform: 'capitalize' }}>
@@ -771,7 +771,7 @@ export default function ArtistProfileScreen() {
                 <View style={{ marginBottom: 20 }}>
                   {/* Profession Section Header */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: 14, borderRadius: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.borderLight }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: '#DBEAFE' }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(227, 176, 75, 0.12)', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: 'rgba(227, 176, 75, 0.3)' }}>
                       <ProfessionCategoryIcon categoryName={activeTab} size={26} />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -990,7 +990,7 @@ export default function ArtistProfileScreen() {
         )}
 
         {showComments && profile && profile.id ? (
-          <View style={{ width: '100%', paddingHorizontal: spacing.l, marginBottom: 24, marginTop: 12 }}>
+          <View style={{ width: '100%', paddingHorizontal: spacing.m, marginBottom: 24, marginTop: 12 }}>
             <CommentsSection targetType="artist_profile" targetId={profile.id} isOwnProfile={true} />
           </View>
         ) : null}
@@ -1326,7 +1326,9 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: 'bold',
   },
   chip: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)', // Light blue for chips
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 176, 75, 0.25)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -1438,9 +1440,9 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMainLight,
   },
   languageChip: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(227, 176, 75, 0.12)',
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: 'rgba(227, 176, 75, 0.3)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,

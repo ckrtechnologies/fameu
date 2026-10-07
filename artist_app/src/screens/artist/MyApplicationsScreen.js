@@ -12,11 +12,11 @@ import { useGetMyApplicationsQuery } from '../../services/discoverApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
 const TABS = [
-  { key: 'All', label: 'All', Icon: Layers },
-  { key: 'Pending', label: 'In Review', Icon: Clock },
-  { key: 'Shortlisted', label: 'Shortlisted', Icon: Sparkles },
-  { key: 'Hired', label: 'Hired', Icon: CheckCircle2 },
-  { key: 'Rejected', label: 'Not Selected', Icon: XCircle },
+  { key: 'All', label: 'All', fullLabel: 'All' },
+  { key: 'Pending', label: 'Review', fullLabel: 'In Review' },
+  { key: 'Shortlisted', label: 'Shortlist', fullLabel: 'Shortlisted' },
+  { key: 'Hired', label: 'Hired', fullLabel: 'Hired' },
+  { key: 'Rejected', label: 'Closed', fullLabel: 'Not Selected' },
 ];
 
 export default function MyApplicationsScreen() {
@@ -64,7 +64,7 @@ export default function MyApplicationsScreen() {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyEmoji}>📋</Text>
-        <Text style={styles.emptyText}>No {currentTabObj?.label.toLowerCase() || 'matching'} applications</Text>
+        <Text style={styles.emptyText}>No {currentTabObj?.fullLabel.toLowerCase() || 'matching'} applications</Text>
       </View>
     );
   };
@@ -83,6 +83,25 @@ export default function MyApplicationsScreen() {
       })
     : [];
 
+  const counts = React.useMemo(() => {
+    const list = Array.isArray(appsList) ? appsList : [];
+    const countMap = {
+      All: list.length,
+      Pending: 0,
+      Shortlisted: 0,
+      Hired: 0,
+      Rejected: 0,
+    };
+    list.forEach(app => {
+      const s = String(app.status || 'pending').toLowerCase().trim();
+      if (s === 'pending') countMap.Pending++;
+      else if (s === 'shortlisted' || s === 'accepted' || s === 'interview_scheduled') countMap.Shortlisted++;
+      else if (s === 'hired') countMap.Hired++;
+      else if (s === 'rejected') countMap.Rejected++;
+    });
+    return countMap;
+  }, [appsList]);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <ShrinkableHeader 
@@ -96,34 +115,29 @@ export default function MyApplicationsScreen() {
         headerElevation={headerElevation}
         bottomComponent={
           <View style={styles.tabWrapper}>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.tabScrollContainer}
-            >
+            <View style={styles.segmentedContainer}>
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key;
-                const IconComp = tab.Icon;
+                const count = counts[tab.key] || 0;
                 return (
                   <TouchableOpacity 
                     key={tab.key} 
-                    style={[styles.tabChip, isActive && styles.activeTabChip]}
+                    style={[styles.segmentBtn, isActive && styles.activeSegmentBtn]}
                     onPress={() => setActiveTab(tab.key)}
                     activeOpacity={0.8}
                   >
-                    <IconComp 
-                      size={14} 
-                      color={isActive ? '#1A1200' : '#E3B04B'} 
-                      strokeWidth={2.4}
-                      style={{ marginRight: 6 }} 
-                    />
-                    <Text style={[styles.tabChipText, isActive && styles.activeTabChipText]}>
+                    <Text style={[styles.segmentText, isActive && styles.activeSegmentText]} numberOfLines={1}>
                       {tab.label}
                     </Text>
+                    <View style={[styles.segmentBadge, isActive && styles.activeSegmentBadge]}>
+                      <Text style={[styles.segmentBadgeText, isActive && styles.activeSegmentBadgeText]}>
+                        {count}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
-            </ScrollView>
+            </View>
           </View>
         }
       />
@@ -197,38 +211,55 @@ const getStyles = (colors) => StyleSheet.create({
   },
   tabWrapper: {
     paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(227, 176, 75, 0.15)',
+    paddingHorizontal: 12,
   },
-  tabScrollContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+  segmentedContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  tabChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 14,
+    padding: 3,
     borderWidth: 1,
     borderColor: 'rgba(227, 176, 75, 0.25)',
   },
-  activeTabChip: {
-    backgroundColor: '#E3B04B',
-    borderColor: '#E3B04B',
+  segmentBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 2,
+    borderRadius: 11,
   },
-  tabChipText: {
-    fontSize: 13.5,
+  activeSegmentBtn: {
+    backgroundColor: '#E3B04B',
+  },
+  segmentText: {
+    fontSize: 12,
     fontWeight: '700',
     color: '#9CA3AF',
   },
-  activeTabChipText: {
+  activeSegmentText: {
     color: '#1A1200',
     fontWeight: '800',
+  },
+  segmentBadge: {
+    marginLeft: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  activeSegmentBadge: {
+    backgroundColor: 'rgba(26, 18, 0, 0.18)',
+  },
+  segmentBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#E3B04B',
+  },
+  activeSegmentBadgeText: {
+    color: '#1A1200',
+    fontWeight: '900',
   },
   listContent: {
     paddingHorizontal: 16,

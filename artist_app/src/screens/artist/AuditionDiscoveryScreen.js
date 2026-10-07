@@ -22,6 +22,7 @@ import AuditionCard from '../../components/artist/AuditionCard';
 import AuditionPeekModal from '../../components/artist/AuditionPeekModal';
 import SidebarFilterModal from '../../components/SidebarFilterModal';
 import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetFeedQuery } from '../../services/discoverApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
@@ -29,6 +30,7 @@ import { useGetProfessionsQuery, useGetProfileQuery } from '../../services/profi
 import {
   CATEGORY_MAP,
   UI_CATEGORIES,
+  QUICK_FILTER_CAPSULES,
   DEFAULT_FILTERS,
   COMPANY_TYPES_WITH_ALL,
   SORT_OPTIONS,
@@ -73,12 +75,10 @@ export default function AuditionDiscoveryScreen() {
   const queryParams = { search };
 
   // 1. Top Category Tabs
-  if (activeCategory === 'Live (Today)') {
+  if (activeCategory === 'Live' || activeCategory === 'Live (Today)') {
     queryParams.is_live = true;
-  } else if (activeCategory === 'Trending') {
-    queryParams.filter = 'trending';
-  } else if (activeCategory === '✨ Matches Profile') {
-    // Smart Filter: Match artist's registered profile attributes
+  } else if (activeCategory === 'Recommended' || activeCategory === '✨ Matches Profile') {
+    queryParams.filter = 'recommended';
     if (artistProfile.categories && artistProfile.categories.length > 0) {
       queryParams.category = artistProfile.categories.join(',');
     }
@@ -88,7 +88,9 @@ export default function AuditionDiscoveryScreen() {
     if (artistProfile.city || user?.city) {
       queryParams.city = artistProfile.city || user?.city;
     }
-  } else if (activeCategory === 'Relevant') {
+  } else if (activeCategory === 'Trending') {
+    queryParams.filter = 'trending';
+  } else if (activeCategory === 'Relevant' || activeCategory === 'All') {
     if (!search) {
       queryParams.filter = 'relevant';
     }
@@ -108,16 +110,26 @@ export default function AuditionDiscoveryScreen() {
   if (filters.company_type && filters.company_type !== 'All') {
     queryParams.company_type = Array.isArray(filters.company_type) ? filters.company_type.join(',') : filters.company_type;
   }
-  if (filters.project_type !== 'All') queryParams.project_type = filters.project_type;
-  if (filters.mode !== 'All') queryParams.mode = filters.mode;
-  if (filters.duration_type !== 'All') queryParams.duration_type = filters.duration_type;
-  if (filters.city !== 'All') queryParams.city = filters.city;
-  if (filters.gender_req !== 'All') queryParams.gender_req = filters.gender_req;
-  if (filters.is_paid === 'Paid Only') queryParams.is_paid = true;
+  if (filters.project_type && filters.project_type !== 'All') queryParams.project_type = filters.project_type;
+  if (filters.mode && filters.mode !== 'All') queryParams.mode = filters.mode;
+  if (filters.duration_type && filters.duration_type !== 'All') queryParams.duration_type = filters.duration_type;
+  if (filters.city && filters.city !== 'All') queryParams.city = filters.city;
+  if (filters.gender_req && filters.gender_req !== 'All') queryParams.gender_req = filters.gender_req;
   
-  if (filters.min_budget) {
-    const parsedNum = filters.min_budget.replace(/[^\d]/g, '');
-    if (parsedNum) queryParams.min_budget = parsedNum;
+  // Compensation filter fix
+  if (filters.min_budget && filters.min_budget !== 'All') {
+    if (filters.min_budget === 'Paid Only') {
+      queryParams.is_paid = true;
+    } else {
+      const parsedNum = filters.min_budget.replace(/[^\d]/g, '');
+      if (parsedNum) {
+        queryParams.min_budget = parsedNum;
+        queryParams.is_paid = true;
+      }
+    }
+  }
+  if (filters.is_paid === 'Paid Only') {
+    queryParams.is_paid = true;
   }
 
   if (filters.sort_by) {
@@ -219,6 +231,13 @@ export default function AuditionDiscoveryScreen() {
     }
   };
 
+  const getCategoryLabel = (cat) => {
+    if (cat === 'Live') return '🔴 Live';
+    if (cat === 'Recommended') return '⭐ Recommended';
+    if (cat === 'Relevant') return '✨ Relevant';
+    return cat;
+  };
+
   const renderCategory = ({ item }) => (
     <TouchableOpacity 
       style={[styles.categoryChip, activeCategory === item && styles.activeCategoryChip]}
@@ -226,7 +245,7 @@ export default function AuditionDiscoveryScreen() {
       activeOpacity={0.75}
     >
       <Text style={[styles.categoryText, activeCategory === item && styles.activeCategoryText]}>
-        {item}
+        {getCategoryLabel(item)}
       </Text>
     </TouchableOpacity>
   );
@@ -262,35 +281,51 @@ export default function AuditionDiscoveryScreen() {
         <ShrinkableHeader 
           title="Auditions"
           subtitle={`${auditions.length} active casting opportunities`}
-          avatarUrl={user?.avatar_url}
-          avatarText={user?.full_name?.charAt(0) || 'A'}
-          onAvatarPress={() => navigation.openDrawer()}
+          showMenu={true}
+          onMenuPress={() => navigation.openDrawer()}
           headerTitleSize={headerTitleSize}
           subtitleHeight={subtitleHeight}
           subtitleOpacity={subtitleOpacity}
           headerElevation={headerElevation}
           rightActions={
-            <TouchableOpacity 
-              style={[
-                styles.filterBtn, 
-                { 
-                  backgroundColor: activeFiltersCount > 0 ? 'rgba(227, 176, 75, 0.16)' : 'rgba(227, 176, 75, 0.08)', 
-                  borderColor: activeFiltersCount > 0 ? '#E3B04B' : 'rgba(227, 176, 75, 0.3)' 
-                }
-              ]} 
-              onPress={() => {
-                setTempFilters(filters);
-                setShowFilterModal(true);
-              }}
-              activeOpacity={0.8}
-            >
-              <Icon name="options-outline" size={19} color="#E3B04B" />
-              {activeFiltersCount > 0 && (
-                <View style={styles.filterBadge}>
-                  <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity 
+                style={[
+                  styles.filterBtn, 
+                  { 
+                    backgroundColor: activeFiltersCount > 0 ? 'rgba(227, 176, 75, 0.16)' : 'rgba(227, 176, 75, 0.08)', 
+                    borderColor: activeFiltersCount > 0 ? '#E3B04B' : 'rgba(227, 176, 75, 0.3)',
+                    marginRight: 10,
+                  }
+                ]} 
+                onPress={() => {
+                  setTempFilters(filters);
+                  setShowFilterModal(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <Icon name="options-outline" size={19} color="#E3B04B" />
+                {activeFiltersCount > 0 && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => navigation.openDrawer()} 
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <View style={styles.topRightAvatar}>
+                  {user?.avatar_url ? (
+                    <ImageWithFallback source={{ uri: user.avatar_url }} style={styles.fullImage} />
+                  ) : (
+                    <Text style={styles.avatarInitial}>{user?.full_name?.charAt(0)?.toUpperCase() || 'A'}</Text>
+                  )}
                 </View>
-              )}
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           }
           bottomComponent={
             <View style={{ marginTop: 4, marginBottom: 2 }}>
@@ -313,7 +348,7 @@ export default function AuditionDiscoveryScreen() {
 
               {/* Horizontal Category Chips */}
               <FlatList
-                data={UI_CATEGORIES}
+                data={QUICK_FILTER_CAPSULES}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 renderItem={renderCategory}
@@ -650,5 +685,25 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMainLight,
     fontSize: 13,
     fontWeight: '600',
+  },
+  topRightAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: 'hidden',
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E3B04B',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarInitial: {
+    color: '#1A1200',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });

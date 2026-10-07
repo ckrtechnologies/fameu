@@ -454,11 +454,10 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 14,
     color: colors.textMainLight,
     marginTop: 2,
-    marginLeft: 32,
+    lineHeight: 20,
   },
   actionsRow: {
     flexDirection: 'row',
-    marginLeft: 32,
     marginTop: 4,
   },
   actionBtn: {

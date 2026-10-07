@@ -11,6 +11,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing, globalStyles } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
 import ShrinkableHeader from '../../components/core/ShrinkableHeader';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import useShrinkableHeader from '../../hooks/useShrinkableHeader';
 import { useGetInboxQuery } from '../../services/chatApi';
 import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
@@ -126,16 +127,28 @@ export default function InboxScreen() {
         <ShrinkableHeader 
           title="Messages"
           subtitle={`${filteredConversations?.length || 0} active conversations`}
-          avatarUrl={user?.avatar_url}
-          avatarText={user?.full_name?.charAt(0) || 'U'}
-          onAvatarPress={() => navigation.openDrawer()}
+          showMenu={true}
+          onMenuPress={() => navigation.openDrawer()}
           headerPaddingVertical={headerPaddingVertical}
           headerTitleSize={headerTitleSize}
           subtitleHeight={subtitleHeight}
           subtitleOpacity={subtitleOpacity}
-          avatarSize={avatarSize}
-          avatarRadius={avatarRadius}
           headerElevation={headerElevation}
+          rightActions={
+            <TouchableOpacity 
+              onPress={() => navigation.openDrawer()} 
+              activeOpacity={0.8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <View style={styles.topRightAvatar}>
+                {user?.avatar_url ? (
+                  <ImageWithFallback source={{ uri: user.avatar_url }} style={styles.fullImage} />
+                ) : (
+                  <Text style={styles.avatarInitial}>{user?.full_name?.charAt(0)?.toUpperCase() || 'U'}</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          }
           bottomComponent={
             <View style={[styles.searchContainer, { marginHorizontal: 0, marginTop: 4 }]}>
               <Icon name="search" size={20} color={colors.primary} style={styles.searchIcon} />
@@ -303,5 +316,25 @@ const getStyles = (colors) => StyleSheet.create({
   },
   clearButton: {
     padding: 2,
+  },
+  topRightAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: 'hidden',
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E3B04B',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarInitial: {
+    color: '#1A1200',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });
