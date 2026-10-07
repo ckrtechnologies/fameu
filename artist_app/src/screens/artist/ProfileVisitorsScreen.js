@@ -26,8 +26,19 @@ const ProfileVisitorsScreen = ({ navigation }) => {
     headerElevation,
   } = useShrinkableHeader();
 
+  const handleVisitorPress = (item) => {
+    const profileParam = item.username || item.id;
+    if (profileParam) {
+      navigation.navigate('PublicProfile', { username: profileParam });
+    }
+  };
+
   const renderVisitorItem = ({ item }) => (
-    <View style={styles.visitorCard}>
+    <TouchableOpacity 
+      style={styles.visitorCard} 
+      activeOpacity={0.75}
+      onPress={() => handleVisitorPress(item)}
+    >
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
       ) : (
@@ -55,7 +66,8 @@ const ProfileVisitorsScreen = ({ navigation }) => {
           </Text>
         </View>
       </View>
-    </View>
+      <Icon name="chevron-forward" size={18} color={colors.textMutedLight} style={{ marginLeft: spacing.s }} />
+    </TouchableOpacity>
   );
 
   const renderEmptyState = () => (

@@ -377,6 +377,7 @@ class ConnectionService {
         visit_count,
         users!profile_visits_viewer_id_fkey (
           id,
+          username,
           display_name,
           avatar_url,
           role,
@@ -403,6 +404,7 @@ class ConnectionService {
       }
       return {
         id: user?.id,
+        username: user?.username,
         name: name,
         avatar_url: user?.avatar_url,
         role: user?.role,

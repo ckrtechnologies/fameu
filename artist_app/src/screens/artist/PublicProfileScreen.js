@@ -1066,9 +1066,10 @@ export default function PublicProfileScreen() {
 
           const isAuditionExpired = (item) => {
             if (item.status === 'closed' || item.status === 'expired') return true;
-            if (item.audition_date) {
+            const expiryDate = item.valid_till || item.expiry_date || item.date;
+            if (expiryDate) {
               const today = new Date().toISOString().split('T')[0];
-              return item.audition_date < today;
+              return expiryDate < today;
             }
             return false;
           };
