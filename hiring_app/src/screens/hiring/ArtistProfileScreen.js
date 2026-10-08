@@ -292,8 +292,9 @@ export default function ArtistProfileScreen() {
     if (!user || !user.username) return;
     try {
       const url = `https://fameu.app/artist/${user.username}`;
+      const playStoreUrl = `https://play.google.com/store/apps/details?id=com.fameu.artistapp`;
       await Share.share({
-        message: `Check out ${artist.full_name}'s profile on Fameu! ${url}`,
+        message: `Check out ${artist.full_name}'s profile on Fameu!\n\nOpen in App: ${url}\n\nDon't have the app? Download here: ${playStoreUrl}`,
         url: url,
       });
     } catch (error) {
@@ -302,8 +303,8 @@ export default function ArtistProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <View style={styles.appBar}>
+    <View style={styles.container}>
+      <View style={[styles.appBar, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackBtn}>
           <Icon name="arrow-back" size={24} color={colors.headerIcon || '#FFFFFF'} />
         </TouchableOpacity>
@@ -1260,10 +1261,10 @@ export default function ArtistProfileScreen() {
         onClose={() => setMediaModalUrl(null)}
       />
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <CustomButton title="Contact Talent" onPress={handleContact} />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

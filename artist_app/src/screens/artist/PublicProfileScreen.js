@@ -188,8 +188,10 @@ export default function PublicProfileScreen() {
     if (!profileData) return;
     try {
       const url = `https://fameu.app/artist/${profileData.username}`;
+      const playStoreUrl = `https://play.google.com/store/apps/details?id=com.fameu.artistapp`;
+      const name = profileData.name || profileData.username;
       await Share.share({
-        message: `Check out ${profileData.name}'s profile on Fameu! ${url}`,
+        message: `Check out ${name}'s profile on Fameu!\n\nOpen in App: ${url}\n\nDon't have the app? Download here: ${playStoreUrl}`,
         url: url,
       });
     } catch (error) {

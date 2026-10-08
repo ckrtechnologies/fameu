@@ -1,6 +1,6 @@
 import { showError, showSuccess } from '../../utils/toast';
 import React, { useState } from 'react';
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import { View, StyleSheet, Platform, Image, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,26 +50,28 @@ const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
-      {/* Top Half - Dark */}
-      <View style={styles.topHalf}>
-        <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
-          <View style={styles.logoWrapper}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require('../../assets/images/logo.jpeg')}
-                style={styles.logoImage}
-              />
-            </View>
-          </View>
-        </SafeAreaView>
-      </View>
-
-      <KeyboardAwareScrollView
-        mode={Platform.OS === 'android' ? 'layout' : 'insets'}
-        bottomOffset={80}
+      <KeyboardAwareScrollView 
+        contentContainerStyle={{ flexGrow: 1 }}
+        enableOnAndroid={true}
+        extraScrollHeight={50}
         keyboardShouldPersistTaps="handled"
-        style={styles.bottomHalf}
+        bounces={false}
       >
+        {/* Top Half - Dark */}
+        <View style={styles.topHalf}>
+          <SafeAreaView edges={['top']} style={styles.safeAreaTop}>
+            <View style={styles.logoWrapper}>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('../../assets/images/logo.jpeg')}
+                  style={styles.logoImage}
+                />
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
+
+        <View style={styles.bottomHalf}>
         <Typography variant="h1" style={styles.title}>Welcome Back</Typography>
 
         <CustomInput
@@ -92,6 +94,7 @@ const LoginScreen = ({ navigation }) => {
               variant="primary"
             />
           )}
+        </View>
         </View>
       </KeyboardAwareScrollView>
 
