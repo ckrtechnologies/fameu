@@ -43,6 +43,7 @@ import CustomButton from '../../components/forms/CustomButton';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import InAppMediaModal from '../../components/core/InAppMediaModal';
 import VideoThumbnail from '../../components/core/VideoThumbnail';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
 const INVITATION_TEMPLATES = [
   "We loved your profile and would love to invite you to audition!",
@@ -59,6 +60,7 @@ export default function ArtistProfileScreen() {
   
   const { id } = route.params;
   const { data: response, isLoading, error , isFetching, refetch} = useGetArtistDetailsQuery(id);
+  useRefetchOnFocus(refetch);
   const { data: companyResponse } = useGetCompanyProfileQuery();
   const isVerified = companyResponse?.data?.is_verified;
   
@@ -336,15 +338,15 @@ export default function ArtistProfileScreen() {
           
           <View style={styles.statsContainer}>
             <View style={styles.statCapsule}>
-              <Text style={styles.statValue}>{user?.followers_count || 0}</Text>
+              <Text style={styles.statValue}>{user?.followers_count ?? artist?.stats?.followers ?? 0}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
             <View style={styles.statCapsule}>
-              <Text style={styles.statValue}>{user?.following_count || 0}</Text>
+              <Text style={styles.statValue}>{user?.following_count ?? artist?.stats?.following ?? 0}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </View>
             <View style={styles.statCapsule}>
-              <Text style={styles.statValue}>{user?.visit_count || artist?.views || 0}</Text>
+              <Text style={styles.statValue}>{artist?.visit_count ?? artist?.stats?.views ?? user?.visit_count ?? 0}</Text>
               <Text style={styles.statLabel}>Profile Views</Text>
             </View>
           </View>

@@ -2,6 +2,17 @@ import artistService from '../../../services/artist.service.js';
 
 const AVAILABLE_LANGUAGES = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Punjabi', 'Gujarati', 'Odia', 'Bhojpuri', 'Urdu', 'Assamese'];
 
+/**
+ * CDN media must always be published over https: Android release builds block
+ * cleartext (http) image loading, which makes uploaded photos appear broken.
+ */
+const getCdnBaseUrl = () => {
+  const raw = (process.env.CDN_URL || '').trim();
+  if (!raw) return null;
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/^http:\/\//i, 'https://').replace(/\/+$/, '');
+};
+
 class ArtistProfileController {
   
   async getProfile(req, res, next) {
@@ -76,7 +87,7 @@ class ArtistProfileController {
       const { replaceAvatar } = req.body;
       const userId = req.user.id;
 
-      const cdnUrl = process.env.CDN_URL ? (process.env.CDN_URL.startsWith('http') ? process.env.CDN_URL : `https://${process.env.CDN_URL}`) : null;
+      const cdnUrl = getCdnBaseUrl();
       const baseUrl = cdnUrl ? `${cdnUrl}/artist/` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
       const mediaUrls = { photos: [] };
 
@@ -110,6 +121,12 @@ class ArtistProfileController {
       const result = await artistService.updateMediaUrls(userId, mediaUrls, isReplace);
       res.status(200).json({ success: true, data: result, message: 'Media uploaded successfully' });
     } catch (err) {
+      if (typeof err?.message === 'string' && (err.message.includes('foreign key') || err.message.includes('artist_profiles_user_id_fkey'))) {
+        return res.status(400).json({
+          success: false,
+          error: 'Your account is not fully set up yet. Please sign out and sign in again, then retry the upload.'
+        });
+      }
       next(err);
     }
   }
@@ -122,7 +139,7 @@ class ArtistProfileController {
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
       }
-      const cdnUrl = process.env.CDN_URL ? (process.env.CDN_URL.startsWith('http') ? process.env.CDN_URL : `https://${process.env.CDN_URL}`) : null;
+      const cdnUrl = getCdnBaseUrl();
       const baseUrl = cdnUrl ? `${cdnUrl}/artist/` : `${process.env.API_URL || `${req.protocol}://${req.get('host')}`}/uploads/artist/`;
       const fileUrl = baseUrl + req.file.filename;
       res.status(200).json({ success: true, url: fileUrl });

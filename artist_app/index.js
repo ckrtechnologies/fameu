@@ -12,3 +12,4 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
 import { name as appName } from './app.json';
 
 AppRegistry.registerComponent(appName, () => App);
+

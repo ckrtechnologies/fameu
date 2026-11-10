@@ -36,6 +36,8 @@ const DOC_DEFINITIONS = [
   { key: 'selfie_url', label: 'Auth. Selfie', icon: '🤳', mandatory: false, hint: 'Live face verification photo' },
 ];
 
+import { getImageUrl } from '../lib/api';
+
 export default function KYCVerification() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,10 +80,17 @@ export default function KYCVerification() {
 
   const handleStatusChange = async (id, status, rejection_reason = null) => {
     try {
-      await updateKYCStatus({ id, status, rejection_reason }).unwrap();
+      const result = await updateKYCStatus({ id, status, rejection_reason }).unwrap();
       if (rejectionModalDoc) {
         setRejectionModalDoc(null);
         setRejectionReason('');
+      }
+      if (result?.email_sent) {
+        alert(status === 'approved'
+          ? `KYC approved. Confirmation email sent to ${result.email_to}.`
+          : `KYC rejected. Email sent to ${result.email_to}.`);
+      } else if (result?.email_error) {
+        alert(`KYC ${status}, but the email could not be sent: ${result.email_error}`);
       }
     } catch (err) {
       console.error('Failed to update KYC status:', err);
@@ -90,8 +99,7 @@ export default function KYCVerification() {
   };
 
   const getCleanUrl = (url) => {
-    if (!url) return null;
-    return url.replace('10.0.2.2', 'localhost');
+    return getImageUrl(url);
   };
 
   return (

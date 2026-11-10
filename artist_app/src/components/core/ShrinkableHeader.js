@@ -54,7 +54,7 @@ export default function ShrinkableHeader({
       style={[
         styles.container,
         {
-          backgroundColor: '#131418',
+          backgroundColor: colors.headerBackground || '#131418',
           paddingTop: topPadding,
           paddingBottom: 8,
           borderBottomWidth: StyleSheet.hairlineWidth,

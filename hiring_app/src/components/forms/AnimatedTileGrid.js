@@ -198,30 +198,35 @@ const AnimatedTile = ({ option, isSelected, onSelect, index }) => {
         marginLeft: index % 3 !== 0 ? '3%' : 0 
       }}
     >
-      <View style={[
-        styles.tileItem, 
+      <Animated.View style={[
+        styles.tileItem,
         isSelected ? styles.tileItemSelected : styles.tileItemUnselected,
         {
-          borderColor: isSelected ? colors.primary : '#E2E8F0',
-          backgroundColor: isSelected ? '#EFF6FF' : '#FFFFFF',
-          borderWidth: isSelected ? 2 : 1.5,
+          borderColor: isSelected ? colors.primary : colors.borderLight,
+          backgroundColor: isSelected ? (colors.primary + '24') : colors.surfaceLight,
+          borderWidth: isSelected ? 2.5 : 1.5,
           shadowColor: isSelected ? colors.primary : '#000',
-          shadowOffset: { width: 0, height: isSelected ? 3 : 1 },
-          shadowOpacity: isSelected ? 0.12 : 0.04,
-          shadowRadius: isSelected ? 6 : 3,
-          elevation: isSelected ? 3 : 1,
+          shadowOffset: { width: 0, height: isSelected ? 4 : 1 },
+          shadowOpacity: isSelected ? 0.35 : 0.06,
+          shadowRadius: isSelected ? 8 : 3,
+          elevation: isSelected ? 5 : 1,
         }
       ]}>
+        {isSelected && (
+          <View style={[styles.selectedBadge, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.selectedBadgeText, { color: colors.textOnPrimary || '#1A1200' }]}>✓</Text>
+          </View>
+        )}
         <View style={styles.iconWrapper}>
           {getIconForOption(option)}
         </View>
         <Text 
           numberOfLines={2} 
-          style={[styles.tileText, isSelected && styles.tileTextSelected]}
+          style={[styles.tileText, { color: colors.textMainLight }, isSelected && styles.tileTextSelected]}
         >
           {option}
         </Text>
-      </View>
+      </Animated.View>
     </TouchableOpacity>
   );
 };
@@ -234,13 +239,36 @@ const getStyles = (colors, typography = {}) => StyleSheet.create({
     width: '100%',
   },
   tileItem: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 96,
+    position: 'relative',
+    overflow: 'visible',
+  },
+  tileItemSelected: {
+    transform: [{ scale: 1.02 }],
+  },
+  tileItemUnselected: {},
+  selectedBadge: {
+    position: 'absolute',
+    top: -7,
+    right: -7,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.surfaceLight,
+    zIndex: 2,
+  },
+  selectedBadgeText: {
+    fontSize: 12,
+    fontWeight: '900',
+    lineHeight: 14,
   },
   iconWrapper: {
     marginBottom: 6,
@@ -251,12 +279,11 @@ const getStyles = (colors, typography = {}) => StyleSheet.create({
     fontFamily: typography?.fontFamily || 'System',
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#475569',
     textAlign: 'center',
     lineHeight: 15,
   },
   tileTextSelected: {
     color: colors.primary,
-    fontWeight: '800',
+    fontWeight: '900',
   }
 });

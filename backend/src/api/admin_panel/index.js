@@ -29,9 +29,9 @@ router.post('/auth/login', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Access Denied: You do not have administrator privileges.' });
     }
     
-    // Issue a custom JWT for the admin session
+    // Issue a custom JWT for the admin session (sub = standard JWT subject field)
     const token = jwt.sign(
-      { id: data.user.id, role: 'admin' }, 
+      { sub: data.user.id, id: data.user.id, role: 'admin' }, 
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -104,6 +104,10 @@ router.put('/kyc/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status, rejection_reason } = req.body;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ success: false, error: 'status must be either "approved" or "rejected"' });
+    }
     
     const updatePayload = { 
       status, 
@@ -121,9 +125,13 @@ router.put('/kyc/:id/status', async (req, res) => {
     // Fetch hiring_id to update profile too
     const { data: doc } = await supabase
       .from('verification_documents')
-      .select('hiring_id, hiring_profiles(company_name, users(email))')
+      .select('hiring_id, hiring_profiles(company_name, users(id, email, display_name))')
       .eq('id', id)
       .single();
+
+    let emailSent = false;
+    let emailTo = null;
+    let emailError = null;
       
     if (doc?.hiring_id) {
       const isVerified = status === 'approved';
@@ -135,23 +143,60 @@ router.put('/kyc/:id/status', async (req, res) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', doc.hiring_id);
-        
-      if (status === 'rejected' && doc.hiring_profiles?.users?.email) {
+
+      // Supabase can return the nested relation as an object or a single-item array
+      const hiringProfile = Array.isArray(doc.hiring_profiles) ? doc.hiring_profiles[0] : doc.hiring_profiles;
+      const companyName = hiringProfile?.company_name || 'there';
+      const companyUser = Array.isArray(hiringProfile?.users) ? hiringProfile.users[0] : hiringProfile?.users;
+      const email = companyUser?.email;
+
+      if (email) {
         const emailService = (await import('../../services/email.service.js')).default;
-        const companyName = doc.hiring_profiles.company_name;
-        await emailService.sendEmail(
-          doc.hiring_profiles.users.email,
-          'FameU KYC Verification Rejected',
-          `<p>Hi ${companyName},</p>
-          <p>Unfortunately, your recent KYC verification has been rejected.</p>
-          <p><strong>Reason:</strong> ${rejection_reason}</p>
-          <p>Please update your documents and try again.</p>
+        const isApproved = status === 'approved';
+        const subject = isApproved
+          ? 'FameU KYC Verification Approved 🎉'
+          : 'FameU KYC Verification Rejected';
+        const html = isApproved
+          ? `<p>Hi ${companyName},</p>
+          <p>Great news — your KYC verification has been <strong>approved</strong>.</p>
+          <p>Your account is now verified, and you can publish auditions and contact talent directly on Fameu.</p>
           <p>Thanks,<br/>FameU Team</p>`
-        );
+          : `<p>Hi ${companyName},</p>
+          <p>Unfortunately, your recent KYC verification has been rejected.</p>
+          <p><strong>Reason:</strong> ${rejection_reason || 'Documents could not be verified'}</p>
+          <p>Please update your documents and try again.</p>
+          <p>Thanks,<br/>FameU Team</p>`;
+
+        // Never fail the KYC decision because of an SMTP hiccup
+        try {
+          await emailService.sendEmail(email, subject, html);
+          emailSent = true;
+          emailTo = email;
+        } catch (mailErr) {
+          emailError = mailErr.message || 'SMTP error';
+          console.error('KYC status email failed for', email, emailError);
+        }
+
+        // In-app notification as a fallback if the inbox/email is missed
+        try {
+          const notificationService = (await import('../../services/notification.service.js')).default;
+          if (companyUser?.id) {
+            await notificationService.sendPushNotification(
+              companyUser.id,
+              isApproved ? 'KYC Approved' : 'KYC Rejected',
+              isApproved
+                ? 'Your KYC verification is approved. You can now post auditions.'
+                : `Your KYC verification was rejected. ${rejection_reason ? `Reason: ${rejection_reason}` : ''}`,
+              { type: 'kyc_status', status }
+            );
+          }
+        } catch (notifErr) {
+          console.error('KYC status notification failed:', notifErr.message);
+        }
       }
     }
     
-    res.json({ success: true });
+    res.json({ success: true, email_sent: emailSent, email_to: emailTo, email_error: emailError });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

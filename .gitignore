@@ -21,5 +21,10 @@ build/
 .next/
 out/
 
+# Android release artifacts (too large for GitHub)
+*.apk
+*.aab
+*.ipa
+
 # MacOS
 .DS_Store

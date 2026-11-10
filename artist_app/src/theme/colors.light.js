@@ -36,7 +36,7 @@ export const lightColors = {
   textDark: '#1A1C1F',
   textSecondaryLight: '#6B7280',
 
-  // Header & Bottom Tab Bar (Deep Obsidian & Spotlight Gold)
+  // Header & Bottom Tab Bar (Deep Obsidian & Spotlight Gold — same chrome in both themes)
   headerBackground: '#131418',
   headerText: '#FFFFFF',
   headerSubtitle: '#9CA3AF',

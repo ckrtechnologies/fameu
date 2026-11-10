@@ -21,9 +21,37 @@ class ArtistService {
     return data.id === userId; // Available if it belongs to the current user
   }
   /**
+   * A login can exist in auth.users without its mirror row in public.users
+   * (for example when the public row was deleted while the auth user survived).
+   * Every artist write is FK-bound to public.users, so repair the mirror row first.
+   */
+  async ensurePublicUser(userId, role = 'artist') {
+    if (!userId) return;
+
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (existing) return;
+
+    const { error } = await supabase
+      .from('users')
+      .insert({ id: userId, role });
+
+    // 23505 = duplicate key, meaning another request created it in the meantime
+    if (error && error.code !== '23505') {
+      throw new Error(`Your account is not fully set up yet. Please sign in again. (${error.message})`);
+    }
+  }
+
+  /**
    * Upsert the base artist profile
    */
-  async createOrUpdateProfile(userId, profileData) {
+  async createOrUpdateProfile(userId, profileData, role = 'artist') {
+    await this.ensurePublicUser(userId, role);
+
     // 1. Get existing profile to see if we are updating or creating
     const { data: existing } = await supabase
       .from('artist_profiles')
@@ -176,10 +204,13 @@ class ArtistService {
       supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', profile.user_id),
       supabase.from('profile_visits').select('*', { count: 'exact', head: true }).eq('profile_user_id', profile.user_id)
     ]);
-    
+
+    // users.followers_count / following_count are maintained by the on_connection_change
+    // trigger. Never overwrite them with a lower computed value, otherwise the numbers
+    // visibly drop / look stuck.
     if (profile.users) {
-      profile.users.followers_count = followersCount || 0;
-      profile.users.following_count = followingCount || 0;
+      profile.users.followers_count = Math.max(Number(profile.users.followers_count || 0), Number(followersCount || 0));
+      profile.users.following_count = Math.max(Number(profile.users.following_count || 0), Number(followingCount || 0));
     }
 
     const totalViews = Math.max(Number(profile.visit_count || 0), Number(visitorsCount || 0));
@@ -241,23 +272,32 @@ class ArtistService {
       callbacksCount = apps.filter(a => a.status === 'accepted').length;
     }
 
-    const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
+    const [{ count: followersCount }, { count: followingCount }, { count: visitorsCount }] = await Promise.all([
       supabase.from('connections').select('*', { count: 'exact', head: true }).eq('following_id', profile.user_id),
-      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', profile.user_id)
+      supabase.from('connections').select('*', { count: 'exact', head: true }).eq('follower_id', profile.user_id),
+      supabase.from('profile_visits').select('*', { count: 'exact', head: true }).eq('profile_user_id', profile.user_id)
     ]);
-    
+
+    // Keep the trigger-maintained counters as the source of truth; only fall back to
+    // the computed row counts when the stored value is missing.
     if (profile.users) {
-      profile.users.followers_count = followersCount || 0;
-      profile.users.following_count = followingCount || 0;
+      profile.users.followers_count = Math.max(Number(profile.users.followers_count || 0), Number(followersCount || 0));
+      profile.users.following_count = Math.max(Number(profile.users.following_count || 0), Number(followingCount || 0));
     }
+
+    // Profile views live on artist_profiles.visit_count / profile_visits, not on users
+    const totalViews = Math.max(Number(profile.visit_count || 0), Number(visitorsCount || 0));
 
     return {
       ...profile,
+      visit_count: totalViews,
       category_details: categoryDetails,
       stats: {
         applications: applicationsCount,
         callbacks: callbacksCount,
-        views: profile.visit_count || 0
+        views: totalViews,
+        followers: profile.users?.followers_count || 0,
+        following: profile.users?.following_count || 0
       }
     };
   }

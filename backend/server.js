@@ -70,8 +70,17 @@ app.use('/api/banners', bannerRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/lookups', lookupRoutes);
-// Health Check
-app.get('/health', (req, res) => {
+// Root API Status
+app.get(['/api', '/api/'], (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'Fameu Backend API',
+    version: '1.0.0'
+  });
+});
+
+// Health Check (Supports both direct and proxied /api/health)
+app.get(['/health', '/api/health'], (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Fameu Backend is running' });
 });
 

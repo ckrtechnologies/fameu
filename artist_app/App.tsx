@@ -2,10 +2,10 @@
  * Fameu Artist App
  */
 
-import React, { useEffect } from 'react';
-import { StatusBar, useColorScheme, Alert } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Provider } from 'react-redux';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
@@ -16,8 +16,8 @@ import { apiSlice } from './src/services/apiSlice';
 import AppNavigator from './src/navigation/AppNavigator';
 import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification } from '@react-native-firebase/messaging';
 import { setupPushNotifications } from './src/services/PushNotificationService';
-import { colors, typography } from './src/theme/theme';
-import { ThemeProvider } from './src/theme/ThemeProvider';
+import { typography } from './src/theme/theme';
+import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 
 import Toast from 'react-native-toast-message';
 import ErrorBoundary from './src/components/core/ErrorBoundary';
@@ -29,6 +29,8 @@ export type RootStackParamList = {
 
 const GlobalStatusBar = () => {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  // Header chrome is Deep Obsidian in both themes, so the status bar must follow it.
   const statusBarBg = colors.headerBackground || '#131418';
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: statusBarBg, zIndex: 99999 }}>
@@ -39,9 +41,9 @@ const GlobalStatusBar = () => {
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
-const toastConfig = {
+const createToastConfig = (colors: any) => ({
   
-  fameuSuccess: ({ text1, text2, props, onPress }: any) => (
+  fameuSuccess: ({ text1, text2, onPress }: any) => (
 
     <TouchableOpacity 
       style={{
@@ -72,7 +74,7 @@ const toastConfig = {
       </View>
     </TouchableOpacity>
   ),
-  fameuError: ({ text1, text2, props, onPress }: any) => (
+  fameuError: ({ text1, text2, onPress }: any) => (
 
     <TouchableOpacity 
       style={{
@@ -103,7 +105,7 @@ const toastConfig = {
       </View>
     </TouchableOpacity>
   ),
-  fameuWarning: ({ text1, text2, props, onPress }: any) => (
+  fameuWarning: ({ text1, text2, onPress }: any) => (
 
     <TouchableOpacity 
       style={{
@@ -134,7 +136,7 @@ const toastConfig = {
       </View>
     </TouchableOpacity>
   ),
-  fameuInfo: ({ text1, text2, props, onPress }: any) => (
+  fameuInfo: ({ text1, text2, onPress }: any) => (
 
     <TouchableOpacity 
       style={{
@@ -203,11 +205,15 @@ const toastConfig = {
       </View>
     </TouchableOpacity>
   )
+});
+
+const ThemedToast = () => {
+  const { colors } = useTheme();
+  const config = useMemo(() => createToastConfig(colors), [colors]);
+  return <Toast config={config} />;
 };
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
   useEffect(() => {
     setupPushNotifications();
 
@@ -346,7 +352,7 @@ function App(): React.JSX.Element {
                 <NavigationContainer ref={navigationRef}>
                   <AppNavigator />
                 </NavigationContainer>
-                <Toast config={toastConfig} />
+                <ThemedToast />
                 <GlobalAlertProvider ref={GlobalAlertRef} />
               </ThemeProvider>
             </Provider>

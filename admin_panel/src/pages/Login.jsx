@@ -36,7 +36,7 @@ export default function Login() {
       <div className="card animate-fade-in" style={{ width: '100%', maxWidth: '420px', padding: '40px', margin: '20px' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <img 
-            src="/logo.jpeg" 
+            src="/admin/logo.jpeg" 
             alt="Fameu Logo" 
             style={{ 
               width: '80px', height: '80px', 

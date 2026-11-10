@@ -10,7 +10,7 @@ import DocumentPicker from '@react-native-documents/picker';
 import Video from 'react-native-video';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography } from '../../theme/theme';
-import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery, useGetProfessionsQuery, useUploadGenericFileMutation } from '../../services/profileApi';
+import { useGetProfileQuery, useUpsertProfileMutation, useUpdateCategoryMutation, useUploadMediaMutation, useLazyCheckUsernameQuery, useGetProfessionsQuery, useUploadGenericFileMutation, profileApi } from '../../services/profileApi';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import TagInput from '../../components/core/TagInput';
 import BottomSheetSelect from '../../components/core/BottomSheetSelect';
@@ -19,9 +19,11 @@ import MediaOrLinkInput from '../../components/core/MediaOrLinkInput';
 import DateRangePicker from '../../components/core/DateRangePicker';
 import { parseArray } from '../../utils/dataUtils';
 import CustomButton from '../../components/forms/CustomButton';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { uploadFileWithProgress } from '../../utils/uploadUtils';
+import { setCredentials } from '../../store/slices/authSlice';
 import ProgressBar from '../../components/core/ProgressBar';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import { ProfessionCategoryIcon } from '../../components/icons';
 import ShrinkableHeader from '../../components/core/ShrinkableHeader';
 import useShrinkableHeader from '../../hooks/useShrinkableHeader';
@@ -48,9 +50,12 @@ export default function EditProfileScreen() {
   const [checkUsername, { isFetching: isCheckingUsername }] = useLazyCheckUsernameQuery();
   
   const token = useSelector(state => state.auth.token);
+  const user = useSelector(state => state.auth.user);
+  const dispatch = useDispatch();
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [localAvatarUri, setLocalAvatarUri] = useState(null);
   const { data: professionsResponse, isLoading: isLoadingProfessions } = useGetProfessionsQuery();
   const professionsList = professionsResponse?.data || [];
 
@@ -60,35 +65,50 @@ export default function EditProfileScreen() {
 
   const handleImageUpload = async (res) => {
 
-    if (res.didCancel) return;
-    if (res.errorMessage) {
+    if (res?.didCancel) return;
+    if (res?.errorMessage) {
       GlobalAlert.show('Camera Error', res.errorMessage);
       return;
     }
-    if (!res.assets?.length) return;
+    if (!res?.assets?.length) return;
+
+    const asset = res.assets[0];
+    const previousAvatar = profileResponse?.data?.users?.avatar_url || profileResponse?.data?.avatar_url || null;
 
     const formData = new FormData();
     formData.append('replaceAvatar', 'true');
     formData.append('photos', {
-      uri: res.assets[0].uri,
-      type: res.assets[0].type || 'image/jpeg',
-      name: res.assets[0].fileName || `avatar_${Date.now()}.jpg`,
+      uri: asset.uri,
+      type: asset.type || 'image/jpeg',
+      name: asset.fileName || `avatar_${Date.now()}.jpg`,
     });
 
+    setLocalAvatarUri(asset.uri);
     setIsUploadingMedia(true);
     setUploadProgress(0);
     try {
-      await uploadFileWithProgress('/artist_app/profile/upload', formData, (progress) => {
+      const response = await uploadFileWithProgress('/artist_app/profile/upload', formData, (progress) => {
         setUploadProgress(progress);
       }, token);
-      showSuccess('', 'Profile photo updated!');
+
+      const newAvatarUrl = response?.data?.avatar_url || response?.data?.users?.avatar_url || null;
+      if (newAvatarUrl) {
+        setLocalAvatarUri(newAvatarUrl);
+        // Keep the signed-in user in sync so Home, Inbox and the drawer show the new photo immediately
+        if (user && token) {
+          dispatch(setCredentials({ token, user: { ...user, avatar_url: newAvatarUrl } }));
+        }
+      }
+      dispatch(profileApi.util.invalidateTags(['Profile']));
       refetch();
+      showSuccess('', 'Profile photo updated!');
     } catch (error) {
+      setLocalAvatarUri(previousAvatar);
       console.error('Upload photo error:', error);
-      const errMsg = error?.message || 'Failed to upload photo';
-      showError('', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+      GlobalAlert.showError('Photo Upload Failed', error, 'Your profile photo could not be uploaded. Please try again.');
     } finally {
       setIsUploadingMedia(false);
+      setUploadProgress(0);
     }
   };
 
@@ -623,11 +643,12 @@ export default function EditProfileScreen() {
                       {
                         text: 'Take Photo',
                         onPress: async () => {
+                          const cameraOptions = { mediaType: 'photo', cameraType: 'front', quality: 0.8, maxWidth: 1080, maxHeight: 1080 };
                           if (Platform.OS === 'android') {
                             try {
                               const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
                               if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                                launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8 }, handleImageUpload);
+                                launchCamera(cameraOptions, handleImageUpload).catch(err => showError('Camera Error', err?.message || 'Could not open the camera'));
                               } else {
                                 showError('Permission Denied', "Camera permission is required to update your profile photo.");
                               }
@@ -636,22 +657,23 @@ export default function EditProfileScreen() {
                               showError('Error', err?.message || 'Failed to request camera permission');
                             }
                           } else {
-                            launchCamera({ mediaType: 'photo', cameraType: 'front', quality: 0.8, maxWidth: 1080, maxHeight: 1080 }, handleImageUpload);
+                            launchCamera(cameraOptions, handleImageUpload).catch(err => showError('Camera Error', err?.message || 'Could not open the camera'));
                           }
                         }
                       },
                       {
                         text: 'Choose from Gallery',
                         onPress: () => {
-                          launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8, maxWidth: 1080, maxHeight: 1080 }, handleImageUpload);
+                          launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8, maxWidth: 1080, maxHeight: 1080 }, handleImageUpload)
+                            .catch(err => showError('Gallery Error', err?.message || 'Could not open the gallery'));
                         }
                       }
                     ]
                   );
                 }}
               >
-                {(profileResponse?.data?.users?.avatar_url || profileResponse?.data?.avatar_url) ? (
-                  <Image source={{ uri: (profileResponse?.data?.users?.avatar_url || profileResponse?.data?.avatar_url) }} style={styles.avatarImage} />
+                {(localAvatarUri || profileResponse?.data?.users?.avatar_url || profileResponse?.data?.avatar_url) ? (
+                  <ImageWithFallback source={{ uri: (localAvatarUri || profileResponse?.data?.users?.avatar_url || profileResponse?.data?.avatar_url) }} style={styles.avatarImage} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Icon name="person" size={60} color={colors.borderLight} />

@@ -8,6 +8,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { typography, spacing } from '../../theme/theme';
 import Typography from '../../components/core/Typography';
+import ImageWithFallback from '../../components/core/ImageWithFallback';
 import { useGetMessagesQuery, useGetInboxQuery, chatApi } from '../../services/chatApi';
 import SocketService from '../../services/SocketService';
 import { markConversationAsRead } from '../../store/slices/chatSlice';
@@ -37,7 +38,6 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
-  const [imageError, setImageError] = useState(false);
   
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -196,8 +196,9 @@ export default function ChatScreen() {
     const isMe = item.sender_id === myId;
     
     // Parse [AUDITION_INVITE:id|title|image_url]
-    const inviteMatch = item.content.match(/\[AUDITION_INVITE:([^|\]]+)(?:\|([^|\]]+))?(?:\|([^|\]]*))?\]/);
-    let displayText = item.content;
+    const content = item.content || '';
+    const inviteMatch = content.match(/\[AUDITION_INVITE:([^|\]]+)(?:\|([^|\]]+))?(?:\|([^|\]]*))?\]/);
+    let displayText = content;
     let auditionId = null;
     let auditionTitle = null;
     let auditionImage = null;
@@ -206,7 +207,7 @@ export default function ChatScreen() {
       auditionId = inviteMatch[1];
       auditionTitle = inviteMatch[2] || 'Audition Details';
       auditionImage = inviteMatch[3];
-      displayText = item.content.replace(inviteMatch[0], '').trim();
+      displayText = content.replace(inviteMatch[0], '').trim();
     }
 
     return (
@@ -262,11 +263,10 @@ export default function ChatScreen() {
           onPress={handleHeaderPress}
           activeOpacity={0.7}
         >
-          {avatarUrl && !imageError ? (
-            <Image 
+          {avatarUrl ? (
+            <ImageWithFallback 
               source={{ uri: avatarUrl }} 
               style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
-              onError={() => setImageError(true)}
             />
           ) : (
             <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>

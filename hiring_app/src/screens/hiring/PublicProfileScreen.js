@@ -47,6 +47,7 @@ import { useGetFeedQuery } from '../../services/discoverApi';
 import { useReportArtistMutation } from '../../services/discoveryApi';
 import CommentsSection from '../../components/CommentsSection';
 import InAppMediaModal from '../../components/core/InAppMediaModal';
+import { useRefetchOnFocus } from '../../hooks/useRefetchOnFocus';
 
 const CustomAudioPlayerItem = ({ uri, label }) => {
   const { colors } = useTheme();
@@ -152,6 +153,7 @@ export default function PublicProfileScreen() {
   
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const { data: profileData, isLoading, isError, refetch , isFetching} = useGetPublicProfileQuery(username);
+  useRefetchOnFocus(refetch);
   const { data: companyResponse } = useGetCompanyProfileQuery();
   const isVerified = companyResponse?.data?.is_verified;
 
@@ -241,9 +243,14 @@ export default function PublicProfileScreen() {
   // Record a profile visit when the profile loads (skip self-views)
   React.useEffect(() => {
     if (profileData?.id && currentUserId !== profileData.id) {
-      recordVisit(profileData.id).catch(() => {}); // Fire-and-forget
+      // Record the visit, then refresh once so the counters reflect the new numbers
+      recordVisit(profileData.id)
+        .unwrap()
+        .then(() => refetch())
+        .catch(() => {});
     }
-  }, [profileData?.id, currentUserId, recordVisit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileData?.id, currentUserId]);
   
   const [activeTab, setActiveTab] = useState('Overview');
   const [showComments, setShowComments] = useState(false);

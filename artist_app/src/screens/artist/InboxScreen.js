@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, Text, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -72,7 +72,7 @@ export default function InboxScreen() {
       >
         <View style={styles.avatarContainer}>
           {avatarUrl ? (
-            <Image 
+            <ImageWithFallback 
               source={{ uri: avatarUrl }} 
               style={{ width: '100%', height: '100%', borderRadius: 25 }} 
             />

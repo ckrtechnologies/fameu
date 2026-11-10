@@ -4,10 +4,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from '../icons';
 import { getVideoInfo } from '../../utils/media';
 
-// Proxy endpoint on our backend that fetches and pipes external CDN images.
-// This is needed because some network environments (e.g. emulators, corporate NAT)
-// cannot reach img.youtube.com or images.unsplash.com directly.
-const PROXY_BASE = 'https://api.fameu.in/api/proxy/thumbnail?url=';
+import { BASE_URL } from '../../utils/uploadUtils';
+
+const PROXY_BASE = `${BASE_URL}/proxy/thumbnail?url=`;
 
 const ytThumb = (id, quality = 'hqdefault') =>
   `${PROXY_BASE}${encodeURIComponent(`https://img.youtube.com/vi/${id}/${quality}.jpg`)}`;

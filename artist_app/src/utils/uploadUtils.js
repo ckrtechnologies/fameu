@@ -26,7 +26,7 @@ export const uploadFileWithProgress = (endpoint, formData, onProgress, token) =>
       } else {
         try {
           const errorResp = JSON.parse(xhr.responseText);
-          reject(new Error(errorResp.message || `Upload failed with status ${xhr.status}`));
+          reject(new Error(errorResp.error || errorResp.message || `Upload failed with status ${xhr.status}`));
         } catch (e) {
           reject(new Error(`Upload failed with status ${xhr.status}`));
         }

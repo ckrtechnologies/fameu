@@ -90,7 +90,25 @@ export function formatEducatedError(error, defaultContext = 'An unexpected error
     };
   }
 
-  // 8. General cleaned error
+  // 8. Account record incomplete (foreign key on the public user row)
+  if (lower.includes('foreign key') || lower.includes('artist_profiles_user_id_fkey')) {
+    return {
+      message: 'Your account is not fully set up yet.',
+      reason: 'The profile record linked to your login is missing on the server.',
+      guidance: 'Please sign out and sign in again. If the problem continues, contact Fameu support so we can restore your account.'
+    };
+  }
+
+  // 9. Upload too large
+  if (lower.includes('under 5mb') || lower.includes('file too large') || lower.includes('payload too large') || lower.includes('413')) {
+    return {
+      message: 'That file is too large.',
+      reason: 'Photos must be 5 MB or smaller.',
+      guidance: 'Pick a smaller photo, or take a new one with the camera, then try again.'
+    };
+  }
+
+  // 10. General cleaned error
   let cleaned = rawMessage
     .replace(/^Error:\s*/i, '')
     .replace(/^Failed to [^:]+:\s*/i, '')

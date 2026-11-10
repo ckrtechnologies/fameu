@@ -26,6 +26,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import TabNavigator from './TabNavigator';
 import { useTheme } from '../theme/ThemeProvider';
+import ImageWithFallback from '../components/core/ImageWithFallback';
 import { typography, spacing } from '../theme/theme';
 import { logout } from '../store/slices/authSlice';
 import { apiSlice } from '../services/apiSlice';
@@ -134,7 +135,7 @@ function CustomDrawerContent(props) {
         <View style={styles.header}>
           <View style={styles.avatarWrapper}>
             {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              <ImageWithFallback source={{ uri: avatarUrl }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarFallback}>
                 <Text style={styles.avatarInitial}>
@@ -149,10 +150,13 @@ function CustomDrawerContent(props) {
             {user?.email || user?.mobile || user?.phone || 'artist@fameu.in'}
           </Text>
 
-          <View style={[styles.badge, { backgroundColor: badge.bgColor, borderColor: badge.borderColor }]}>
-            <Icon name={badge.icon} size={12} color={badge.color} style={{ marginRight: 5 }} />
-            <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-          </View>
+          {/* Phase 2: Artist Verification Badge (hidden in Phase 1) */}
+          {verificationStatus === 'approved' && (
+            <View style={[styles.badge, { backgroundColor: badge.bgColor, borderColor: badge.borderColor }]}>
+              <Icon name={badge.icon} size={12} color={badge.color} style={{ marginRight: 5 }} />
+              <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+            </View>
+          )}
         </View>
 
         {/* Section 1: Main Navigation */}

@@ -52,7 +52,7 @@ const ProtectedRoute = ({ children }) => {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
         <Route path="/login" element={<Login />} />
         
@@ -81,6 +81,9 @@ export default function App() {
           <Route path="nms" element={<NMS />} />
           <Route path="support" element={<SupportTickets />} />
         </Route>
+
+        {/* Fallback to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
