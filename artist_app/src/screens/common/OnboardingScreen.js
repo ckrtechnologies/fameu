@@ -163,6 +163,7 @@ const getStyles = (colors) => StyleSheet.create({
   slide: {
     width,
     height,
+    overflow: 'hidden',
   },
   image: {
     width,

@@ -7,4 +7,19 @@
    <FileRef
       location = "group:Pods/Pods.xcodeproj">
    </FileRef>
+   <FileRef
+      location = "group:update_info_plist.sh">
+   </FileRef>
+   <FileRef
+      location = "group:build_and_fix.sh">
+   </FileRef>
+   <FileRef
+      location = "group:BUILD_INSTRUCTIONS.md">
+   </FileRef>
+   <FileRef
+      location = "group:fix_and_prepare.py">
+   </FileRef>
+   <FileRef
+      location = "group:set_build_number.sh">
+   </FileRef>
 </Workspace>
