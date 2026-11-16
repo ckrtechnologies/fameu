@@ -33,10 +33,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Fameu needs your location to show auditions near you.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Fameu needs access to your camera so you can take and upload a profile picture or audition video.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Fameu needs your location to show auditions near you.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Fameu needs access to your photo library to upload profile pictures and portfolio media.</string>
 	<key>RCTNewArchEnabled</key>
